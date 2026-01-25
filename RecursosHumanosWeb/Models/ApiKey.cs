@@ -23,5 +23,5 @@ public partial class ApiKey
 
     public virtual Usuario IdUsuarioCreaNavigation { get; set; } = null!;
 
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; } = null!;
+    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
 }

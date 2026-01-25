@@ -9,7 +9,7 @@ using AutoMapper.QueryableExtensions;
 namespace RecursosHumanosWeb.Controllers.Api
 {
     // Heredamos de ControllerBase para API
-    [Route("api/[controller]")]
+    [Route("api/Usuarios")]
     [ApiController]
     public class UsuariosApiController : ControllerBase
     {

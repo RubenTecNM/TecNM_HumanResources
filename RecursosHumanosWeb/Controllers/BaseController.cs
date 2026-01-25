@@ -7,13 +7,17 @@ namespace RecursosHumanosWeb.Controllers
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            ViewData["IsAuthenticated"] = User.Identity.IsAuthenticated;
-            ViewData["IsAutorizador"] = User.HasClaim("TipoUsuario", "1");
-            ViewData["IsRH"] = User.HasClaim("TipoUsuario", "2");
-            ViewData["IsEmpleado"] = User.HasClaim("TipoUsuario", "3");
-            ViewData["IsAdministrador"] = User.HasClaim("TipoUsuario", "4");
-            ViewData["UserName"] = User.Identity.Name;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                // Buscamos el valor de forma segura
+                var tipo = User.Claims.FirstOrDefault(c => c.Type == "TipoUsuario")?.Value;
 
+                ViewData["IsAuthenticated"] = true;
+                ViewData["IsAdministrador"] = tipo == "1"; // Compara strings directamente
+                ViewData["IsAutorizador"]   = tipo == "2";
+                ViewData["IsRH"]            = tipo == "3";
+                ViewData["UserName"]        = User.Identity.Name;
+            }
             base.OnActionExecuting(context);
         }
     }

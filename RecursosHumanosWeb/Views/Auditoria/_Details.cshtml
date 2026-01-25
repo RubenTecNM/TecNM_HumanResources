@@ -1,0 +1,35 @@
+@model RecursosHumanosWeb.Models.Auditoria
+
+<div class="audit-details-header mb-4">
+    <div class="row">
+        <div class="col-md-6">
+            <p><strong>Tabla:</strong> @Model.IdTablaNavigation.Descripcion</p>
+            <p><strong>Registro ID:</strong> @Model.IdRegistro</p>
+            <p><strong>Operación:</strong> @Model.IdApiFunctionNavigation.Descripcion</p>
+        </div>
+        <div class="col-md-6 text-md-right">
+            <p><strong>Fecha:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm:ss")</p>
+            <p><strong>Usuario:</strong> @Model.IdUsuarioCreaNavigation.Nombre</p>
+            <p><strong>Origen:</strong> @(Model.IdApiKey != null ? Model.IdApiKeyNavigation.Clave : "Interno/Directo")</p>
+        </div>
+    </div>
+</div>
+
+<div class="audit-payload">
+    <h6 class="text-primary font-weight-bold mb-2">
+        <i class="fas fa-database mr-1"></i> Estado Anterior (Datos Históricos)
+    </h6>
+    @if (string.IsNullOrEmpty(Model.DatosAnteriores))
+    {
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle mr-1"></i> No hay datos anteriores para mostrar (Operación de Inserción).
+        </div>
+    }
+    else
+    {
+        <div class="json-viewer">@Model.DatosAnteriores</div>
+        <p class="small text-muted mt-2">
+            <i class="fas fa-exclamation-triangle mr-1"></i> Estos datos representan los valores exactamente antes de que se ejecutara la operación @Model.IdApiFunctionNavigation.Descripcion.
+        </p>
+    }
+</div>

@@ -5,8 +5,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Permisos/create.css" asp-append-version="true" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 }
 
 <div class="permission-request-container">
@@ -100,7 +99,7 @@
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-calendar input-icon"></i>
-                            <input asp-for="Fecha1Date" type="date" class="form-control" />
+                            <input asp-for="Fecha1Date" type="date" class="form-control" placeholder="DD/MM/YYYY" />
                         </div>
                         <span asp-validation-for="Fecha1Date" class="text-danger validation-message"></span>
                     </div>
@@ -110,7 +109,7 @@
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-clock input-icon"></i>
-                            <input asp-for="Hora1Time" type="time" class="form-control" />
+                            <input asp-for="Hora1Time" type="time" class="form-control" placeholder="HH:MM AM/PM" />
                         </div>
                         <span asp-validation-for="Hora1Time" class="text-danger validation-message"></span>
                     </div>
@@ -120,7 +119,7 @@
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-calendar input-icon"></i>
-                            <input asp-for="Fecha2Date" type="date" class="form-control" />
+                            <input asp-for="Fecha2Date" type="date" class="form-control" placeholder="DD/MM/YYYY" />
                         </div>
                         <span asp-validation-for="Fecha2Date" class="text-danger validation-message"></span>
                     </div>
@@ -130,7 +129,7 @@
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-clock input-icon"></i>
-                            <input asp-for="Hora2Time" type="time" class="form-control" />
+                            <input asp-for="Hora2Time" type="time" class="form-control" placeholder="HH:MM AM/PM" />
                         </div>
                         <span asp-validation-for="Hora2Time" class="text-danger validation-message"></span>
                     </div>
@@ -149,7 +148,7 @@
                         <span class="required">*</span>
                     </label>
                     <div class="textarea-wrapper">
-                        <textarea asp-for="Motivo" class="form-control" rows="4" placeholder="Describa las razones por las cuales necesita este permiso..." maxlength="255"></textarea>
+                        <textarea asp-for="Motivo" class="form-control" rows="4" placeholder="Ej: Cita médica en el IMSS o Trámite personal..." maxlength="255"></textarea>
                         <div class="char-counter">
                             <span id="char-count">0</span>/255 caracteres
                         </div>
@@ -204,10 +203,7 @@
         <!-- Botones de Acción -->
         <div class="form-actions">
             <div class="actions-content">
-                <a asp-action="Index" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i>
-                    Cancelar
-                </a>
+
                 <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="fas fa-save"></i>
                     Guardar Cambios

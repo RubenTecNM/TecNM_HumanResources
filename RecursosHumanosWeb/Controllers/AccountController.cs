@@ -3,10 +3,10 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
-using RecursosHumanosWeb.Models.DTOs;
 using RecursosHumanosWeb.Models.ViewModels;
 using System.Security.Claims;
-using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography; // Necesario para SHA256
+using System.Text; // Necesario para Encoding
 
 namespace RecursosHumanosWeb.Controllers
 {
@@ -21,7 +21,6 @@ namespace RecursosHumanosWeb.Controllers
             _logger = logger;
         }
 
-        // 1) Mostrar vista de login
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -31,91 +30,99 @@ namespace RecursosHumanosWeb.Controllers
             return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
 
-        // 2) Procesar login
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            _logger.LogWarning("Errores de validación: {Errores}", string.Join(" | ", errors));
-
             if (!ModelState.IsValid)
                 return View(model);
 
             try
             {
-                // Ejecutar SP o consulta con FromSqlRaw
-                // The stored procedure hashes the password in the database (HASHBYTES('SHA2_256', CONVERT(VARCHAR(100), @password), 2)),
-                // so pass the plain password and let the SP perform hashing/comparison.
-                var result = await _context.LoginResultDTO
-                    .FromSqlInterpolated($"EXEC dbo.LoginUsuario @mail={model.Correo}, @password={model.Clave}")
-                    .ToListAsync();
+                // 1. Encriptar la clave recibida del formulario
+                string claveEncriptada = ConvertirSha256(model.Clave);
 
-                var usuario = result.FirstOrDefault();
+                // 2. Buscar usuario que coincida con correo Y clave encriptada
+                var usuario = await _context.Usuarios
+                    .Where(u => u.Correo == model.Correo && u.Clave == claveEncriptada && u.Estatus == true)
+                    .FirstOrDefaultAsync();
 
-
-                // Validar si no se encontró usuario
                 if (usuario == null)
                 {
                     ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos");
                     return View(model);
                 }
 
-                // Validar campos nulos (defensivo)
-                if (string.IsNullOrEmpty(usuario.Correo) || string.IsNullOrEmpty(usuario.Nombre))
-                {
-                    ModelState.AddModelError(string.Empty, "Los datos del usuario son inválidos");
-                    return View(model);
-                }
-
-                // Crear claims (para el cookie)
+                // 3. Crear los Claims para la sesión
                 var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-            new Claim(ClaimTypes.Name, usuario.Nombre),
-            new Claim(ClaimTypes.Email, usuario.Correo),
-            new Claim("TipoUsuario", usuario.IdTipoUsuario.ToString())
-        };
+                {
+                    new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                    new Claim(ClaimTypes.Name, usuario.Nombre),
+                    new Claim(ClaimTypes.Email, usuario.Correo),
+                    new Claim("TipoUsuario", usuario.IdTipoUsuario.ToString())
+                };
 
-                var claimsIdentity = new ClaimsIdentity(
-                    claims, CookieAuthenticationDefaults.AuthenticationScheme
-                );
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
                 var authProperties = new AuthenticationProperties
                 {
-                    IsPersistent = model.RememberMe, // "Recordarme"
-                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8) // Expira en 8h
+                    IsPersistent = model.RememberMe,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
                 };
 
-                // Guardar cookie de autenticación
                 await HttpContext.SignInAsync(
                     CookieAuthenticationDefaults.AuthenticationScheme,
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties
                 );
 
-                // Redirigir a la URL de retorno o a Usuarios/Index
-                return Redirect(model.ReturnUrl ?? Url.Action("Index", "Permisos")!);
+                _logger.LogInformation("Usuario {Correo} inició sesión correctamente.", model.Correo);
+
+                if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+                {
+                    return Redirect(model.ReturnUrl);
+                }
+
+                return RedirectToAction("Index", "Permisos");
             }
             catch (Exception ex)
             {
-                // Loguear el error en el logger inyectado
-                _logger.LogError(ex, "Error procesando el login para {Correo}", model.Correo);
-
-                // Mostrar mensaje genérico al usuario
+                _logger.LogError(ex, "Error crítico en el login para {Correo}", model.Correo);
                 ModelState.AddModelError(string.Empty, "Error interno al procesar el inicio de sesión");
                 return View(model);
             }
         }
 
-
-        // 3) Logout
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login", "Account");
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        // Función auxiliar para encriptar en SHA256
+        private string ConvertirSha256(string texto)
+        {
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                // Computar el hash a partir de los bytes del texto
+                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(texto));
+
+                // Convertir el array de bytes a una cadena hexadecimal
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2"));
+                }
+                return builder.ToString();
+            }
         }
     }
 }

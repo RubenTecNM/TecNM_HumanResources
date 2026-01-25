@@ -19,7 +19,7 @@ namespace RecursosHumanosWeb.Models.ViewModels.Usuario
         public string Correo { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria.")]
-        [StringLength(50, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 50 caracteres.")]
+        [StringLength(50, MinimumLength = 4, ErrorMessage = "La contraseña debe tener entre 4 y 50 caracteres.")]
         [DataType(DataType.Password)]
         [Display(Name = "Contraseña")]
         public string Clave { get; set; } = string.Empty;

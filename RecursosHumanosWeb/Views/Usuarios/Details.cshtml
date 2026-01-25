@@ -5,13 +5,13 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Permisos/create.css" asp-append-version="true" />
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 }
 
 <div class="details-container">
-    <div class="card details-card shadow-lg rounded-3 overflow-hidden mb-4">
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden">
         
         <div class="details-header-gradient text-white px-4 px-md-5 py-4">
             <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
@@ -26,9 +26,11 @@
                         </p>
                     </div>
                 </div>
-                <div class="badge @(Model.Estatus == true ? "bg-success" : "bg-danger") px-3 py-2 rounded-pill shadow-sm">
-                    <i class="@(Model.Estatus == true ? "fas fa-check-circle" : "fas fa-times-circle") me-2"></i>
-                    @(Model.Estatus == true ? "Activo" : "Inactivo")
+                <div class="status-glass rounded-pill shadow-sm">
+                    <span class="status-dot @(Model.Estatus == true ? "dot-active" : "dot-closed")"></span>
+                    <span class="small text-uppercase">
+                         @(Model.Estatus == true ? "Usuario Activo" : "Usuario Inactivo")
+                    </span>
                 </div>
             </div>
         </div>
@@ -141,12 +143,9 @@
             </div>
         </div>
 
-        <div class="card-footer py-4 px-4 px-md-5 bg-gray border-top-0 d-flex justify-content-end align-items-center">
+        <div class="card-footer pt-4 pb-3 px-4 px-md-5 bg-gray border-top-0 d-flex justify-content-end align-items-center">
             <div class="d-flex gap-2">
-                <a asp-action="Index" class="btn btn-primary shadow-sm">
-                    <i class="fas fa-chevron-left"></i>
-                    Volver al Listado
-                </a>
+
             </div>
         </div>
     </div>

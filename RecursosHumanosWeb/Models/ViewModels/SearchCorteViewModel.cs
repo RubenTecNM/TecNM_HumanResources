@@ -10,6 +10,7 @@ namespace RecursosHumanosWeb.Models.ViewModels
         public string FechaDesde { get; set; }
         public string FechaHasta { get; set; }
         public string UsuarioCreadorFilter { get; set; }
+        public string CorreoCreadorFilter { get; set; }
         public string StatusFilter { get; set; }
         public bool IsAdministrador { get; set; }
     }

@@ -18,12 +18,14 @@ namespace RecursosHumanosWeb.Controllers
         private readonly RecursosHumanosContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly AutoMapper.IMapper _mapper;
+        private readonly ILogger<PermisosController> _logger;
 
-        public PermisosController(RecursosHumanosContext context, IWebHostEnvironment environment, AutoMapper.IMapper mapper)
+        public PermisosController(RecursosHumanosContext context, IWebHostEnvironment environment, AutoMapper.IMapper mapper, ILogger<PermisosController> logger)
         {
             _context = context;
             _environment = environment;
             _mapper = mapper;
+            _logger = logger;
         }
 
         // AJAX: Buscar usuarios por término para select2/autocomplete (original en Permisos)
@@ -59,10 +61,10 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> Index(string nombreUsuario = null, int? idArea = null, DateTime? delDia = null, DateTime? alDia = null, int? page = 1)
         {
             // Obtener información del usuario autenticado
-            bool isAutorizador = User.HasClaim("TipoUsuario", "1");
-            bool isRH = User.HasClaim("TipoUsuario", "2");
-            bool isAdministrador = User.HasClaim("TipoUsuario", "4");
-            bool isEmpleado = User.HasClaim("TipoUsuario", "3");
+            bool isAutorizador = User.HasClaim("TipoUsuario", "2");
+            bool isRH = User.HasClaim("TipoUsuario", "3");
+            bool isAdministrador = User.HasClaim("TipoUsuario", "1");
+            bool isEmpleado = User.HasClaim("TipoUsuario", "4");
             int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             // Exponer datos al View para condicionar links (Details)
@@ -128,9 +130,12 @@ namespace RecursosHumanosWeb.Controllers
 
             if (alDia.HasValue)
             {
+                // Fix: Handle cases where delDia is null directly in the query to avoid "Nullable object must have a value" exception
+                // Fix: Use 1900-01-01 instead of DateTime.MinValue to avoid SqlDateTime overflow (min 1753)
+                var startDate = delDia ?? new DateTime(1900, 1, 1); 
                 permisosQuery = permisosQuery.Where(p =>
                     p.Fecha1 <= alDia.Value ||
-                    (p.Fecha2 != null && p.Fecha2 >= delDia.Value && p.Fecha2 <= alDia.Value));
+                    (p.Fecha2 != null && p.Fecha2 >= startDate && p.Fecha2 <= alDia.Value));
             }
 
             // Mapeo a DTO y paginación usando AutoMapper.ProjectTo (evita materializar entidades completas)
@@ -251,8 +256,8 @@ namespace RecursosHumanosWeb.Controllers
         private async Task PrepareCreateEditViewBag(int? selectedUserId = null)
         {
             int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            bool isRH = User.HasClaim("TipoUsuario", "2");
-            bool isAdministrador = User.HasClaim("TipoUsuario", "4");
+            bool isRH = User.HasClaim("TipoUsuario", "3");
+            bool isAdministrador = User.HasClaim("TipoUsuario", "1");
 
             ViewBag.UserType = User.FindFirst("TipoUsuario")?.Value;
             ViewBag.IdUsuario = idUsuario;
@@ -335,7 +340,7 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             // Validar que NO sea un autorizador
-            bool isAutorizador = User.HasClaim("TipoUsuario", "1");
+            bool isAutorizador = User.HasClaim("TipoUsuario", "2");
             if (isAutorizador)
             {
                 TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new
@@ -429,8 +434,8 @@ namespace RecursosHumanosWeb.Controllers
                 return Json(new AlertResponseDTO { Success = false, Title = "Error de Sesión", Message = "No se pudo obtener el ID del usuario autenticado." });
             }
 
-            bool isRH = User.HasClaim("TipoUsuario", "2");
-            bool isAdministrador = User.HasClaim("TipoUsuario", "4");
+            bool isRH = User.HasClaim("TipoUsuario", "3");
+            bool isAdministrador = User.HasClaim("TipoUsuario", "1");
 
             try
             {
@@ -617,9 +622,15 @@ namespace RecursosHumanosWeb.Controllers
             {
                 // 9. Manejo de errores y limpieza de archivo
                 if (evidenciaPath != null) DeleteFile(evidenciaPath);
-                // Loguear la excepción
-                // _logger.LogError(ex, "Error al crear permiso en POST");
-                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = $"Error al crear el permiso: {ex.Message}" });
+                
+                var inner = ex.InnerException?.Message ?? "No inner exception";
+                _logger.LogError(ex, "Error al crear permiso. Detalle: {Inner}", inner);
+                
+                return Json(new AlertResponseDTO { 
+                    Success = false, 
+                    Title = "Error del Servidor", 
+                    Message = $"Error al crear el permiso: {ex.Message}. Detalle: {inner}" 
+                });
             }
         }
 
@@ -634,7 +645,7 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // Validar que NO sea un autorizador
-            bool isAutorizador = User.HasClaim("TipoUsuario", "1");
+            bool isAutorizador = User.HasClaim("TipoUsuario", "2");
             if (isAutorizador)
             {
                 return Json(new AlertResponseDTO 
@@ -776,6 +787,121 @@ namespace RecursosHumanosWeb.Controllers
 
         #endregion
 
+        // GET: Permisos/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var permiso = await _context.Permisos
+                .Include(p => p.IdUsuarioSolicitaNavigation)
+                .Include(p => p.IdTipoPermisoNavigation)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (permiso == null) return NotFound();
+
+            // Validar acceso (si es empleado, solo sus propios permisos)
+            if (!CanAccessPermiso(permiso))
+            {
+                TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new { icon = "error", title = "Acceso Denegado", text = "No tiene permisos para eliminar esta solicitud." });
+                return RedirectToAction("Index");
+            }
+
+            return View(permiso);
+        }
+
+        // POST: Permisos/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var permiso = await _context.Permisos.FindAsync(id);
+            
+            if (permiso != null)
+            {
+                 // Validar acceso antes de borrar
+                if (!CanAccessPermiso(permiso))
+                {
+                     return RedirectToAction("Index");
+                }
+
+                if (permiso.Revisado == true)
+                {
+                     TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new { icon = "error", title = "No permitido", text = "No se puede eliminar un permiso ya revisado." });
+                     return RedirectToAction("Index");
+                }
+
+                permiso.Estatus = false; // Borrado lógico
+                permiso.FechaModificacion = DateTime.Now;
+                _context.Update(permiso);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // AJAX: Delete via fetch (Consistent with Usuarios/Cortes)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAjax([FromBody] ActionRequestDTO request)
+        {
+            if (request == null || request.Id <= 0)
+            {
+                return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "ID no válido.", Icon = "error" });
+            }
+
+            var permiso = await _context.Permisos
+                .Include(p => p.IdUsuarioSolicitaNavigation)
+                .FirstOrDefaultAsync(p => p.Id == request.Id);
+
+            if (permiso == null || !permiso.Estatus)
+            {
+                return Json(new AlertResponseDTO { Success = false, Title = "No encontrado", Message = "Permiso no encontrado o ya eliminado.", Icon = "error" });
+            }
+
+            // Validar seguridad/acceso
+            if (!CanAccessPermiso(permiso))
+            {
+                 return Json(new AlertResponseDTO { Success = false, Title = "Acceso Denegado", Message = "No tienes permiso para eliminar este registro.", Icon = "error" });
+            }
+
+            if (permiso.Revisado == true)
+            {
+                return Json(new AlertResponseDTO { Success = false, Title = "No permitido", Message = "No se puede eliminar un permiso que ya ha sido revisado/autorizado.", Icon = "warning" });
+            }
+
+            if (!request.Confirmed)
+            {
+                return Json(new AlertResponseDTO
+                {
+                    ShowConfirmation = true,
+                    Title = "¿Eliminar Solicitud?",
+                    Message = $"¿Estás seguro de que deseas eliminar la solicitud de {permiso.IdUsuarioSolicitaNavigation.Nombre}? Esta acción es irreversible.",
+                    Icon = "question",
+                    ConfirmButtonText = "Sí, eliminar"
+                });
+            }
+
+            try
+            {
+                permiso.Estatus = false;
+                permiso.FechaModificacion = DateTime.Now;
+                _context.Update(permiso);
+                await _context.SaveChangesAsync();
+
+                return Json(new AlertResponseDTO
+                {
+                    Success = true,
+                    Title = "Eliminado",
+                    Message = "La solicitud fue eliminada correctamente.",
+                    Icon = "success",
+                    RedirectUrl = Url.Action("Index", "Permisos")
+                });
+            }
+            catch (Exception)
+            {
+                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = "Ocurrió un error al eliminar el registro.", Icon = "error" });
+            }
+        }
+
         #region MÉTODOS PRIVADOS Y HELPERS
 
         private PermissionsCreateViewModel MapToEditViewModel(Permiso permiso)
@@ -790,15 +916,15 @@ namespace RecursosHumanosWeb.Controllers
                 Fecha2 = permiso.Fecha2,
                 Motivo = permiso.Motivo,
                 Evidencia = permiso.Evidencia,
-                Goce = permiso.Goce ?? false
+                Goce = permiso.Goce
             };
         }
 
         private bool CanAccessPermiso(Permiso permiso)
         {
             int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            bool isRH = User.HasClaim("TipoUsuario", "2");
-            bool isAdministrador = User.HasClaim("TipoUsuario", "4");
+            bool isRH = User.HasClaim("TipoUsuario", "3");
+            bool isAdministrador = User.HasClaim("TipoUsuario", "1");
 
             // RH and Admin can access any permiso.
             if (isRH || isAdministrador)
@@ -812,8 +938,8 @@ namespace RecursosHumanosWeb.Controllers
                 return true;
             }
 
-            // Authorizer (TipoUsuario = 1) can only access permisos from their area.
-            if (User.HasClaim("TipoUsuario", "1"))
+            // Authorizer (TipoUsuario = 2) can only access permisos from their area.
+            if (User.HasClaim("TipoUsuario", "2"))
             {
                 var userArea = _context.Usuarios.AsNoTracking().Where(u => u.Id == idUsuario).Select(u => u.IdArea).FirstOrDefault();
                 if (permiso.IdUsuarioSolicitaNavigation.IdArea == userArea)
@@ -835,7 +961,7 @@ namespace RecursosHumanosWeb.Controllers
                     System.IO.File.Delete(filePath);
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log the error, but don't fail the business transaction, as the business operation has already failed.
                 // _logger.LogError(ex, "Error al intentar eliminar el archivo: {FileName}", fileName);
@@ -851,7 +977,7 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> Review(int id)
         {
             // Solo autorizadores (jefes de área) pueden revisar permisos
-            bool isAutorizador = User.HasClaim("TipoUsuario", "1");
+            bool isAutorizador = User.HasClaim("TipoUsuario", "2");
             if (!isAutorizador)
             {
                 TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new
@@ -902,7 +1028,7 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // Validar que el permiso no haya sido revisado previamente
-            if (permiso.Revisado ?? false)
+            if (permiso.Revisado)
             {
                 TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new
                 {
@@ -939,7 +1065,7 @@ namespace RecursosHumanosWeb.Controllers
                 Dias = permiso.Dias ?? 0,
                 Motivo = permiso.Motivo,
                 Evidencia = permiso.Evidencia,
-                Goce = permiso.Goce ?? false, // Valor actual
+                Goce = permiso.Goce, // Valor actual
                 FechaCreacion = permiso.FechaCreacion,
                 CreadoPor = permiso.IdUsuarioCreaNavigation?.Nombre,
                 IdCorte = permiso.IdCorte,
@@ -966,7 +1092,7 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // Solo autorizadores pueden revisar
-            bool isAutorizador = User.HasClaim("TipoUsuario", "1");
+            bool isAutorizador = User.HasClaim("TipoUsuario", "2");
             if (!isAutorizador)
             {
                 return Json(new AlertResponseDTO 
@@ -1014,7 +1140,7 @@ namespace RecursosHumanosWeb.Controllers
                 }
 
                 // Validar que no haya sido revisado
-                if (permiso.Revisado ?? false)
+                if (permiso.Revisado)
                 {
                     return Json(new AlertResponseDTO 
                     { 
@@ -1133,7 +1259,7 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> GenerateTestData()
         {
             // Solo administradores pueden generar datos de prueba
-            bool isAdministrador = User.HasClaim("TipoUsuario", "4");
+            bool isAdministrador = User.HasClaim("TipoUsuario", "1");
             if (!isAdministrador)
             {
                 return Json(new AlertResponseDTO 
@@ -1218,6 +1344,11 @@ namespace RecursosHumanosWeb.Controllers
                 var permisosAGenerar = new List<Permiso>();
                 var random = new Random();
                 var fechaActual = DateTime.Now;
+
+                if (diasEnRango <= 0)
+                {
+                    return Json(new AlertResponseDTO { Success = false, Title = "Error de Rango", Message = "El rango de fechas del corte no es válido para generar datos." });
+                }
 
                 // 8. Generar 100,000 permisos
                 for (int i = 0; i < 100000; i++)

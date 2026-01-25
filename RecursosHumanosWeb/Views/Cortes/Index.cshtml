@@ -4,19 +4,45 @@
 
 @{
     ViewData["Title"] = "Gestión de Cortes";
-    bool isAdministrador = Model.IsAdministrador;
-    bool isRecursosHumanos = (bool)ViewData["IsRH"]!;
 }
 
 @section Styles {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-    <link href="~/css/Cortes/Index.css" rel="stylesheet" />
-    <!-- Eliminamos la referencia a dataTables.dataTables.min.css -->
+
+    <style>
+        /* Mobile-specific adjustments utilizing Site.css variables without external file */
+        @@media (max-width: 992px) {
+            .table-container { display: none !important; }
+            .mobile-view-container { display: flex; flex-direction: column; gap: 1rem; }
+            
+            .mobile-card-header {
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+            .mobile-card-header:hover { background-color: var(--surface-alt); }
+            
+            .rotate-icon { transition: transform 0.3s ease; }
+            .expanded .rotate-icon { transform: rotate(180deg); }
+            
+            .expandable-content {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .expanded .expandable-content {
+                max-height: 500px; /* limit for transition */
+                border-top: 1px solid var(--border-light);
+            }
+        }
+        @@media (min-width: 993px) {
+            .mobile-view-container { display: none !important; }
+        }
+    </style>
 }
 
 <div class="index-container">
     <!-- Header Section -->
-    <div class="page-header fade-in">
+    <div class="permission-header fade-in">
         <div class="header-content">
             <h1 class="page-title text-gradient">
                 <i class="fas fa-calendar-alt"></i>
@@ -24,73 +50,249 @@
             </h1>
             <p class="page-subtitle">Administra los períodos de corte del sistema</p>
         </div>
-        @if (isAdministrador || isRecursosHumanos)
-        {
-            <div class="header-actions">
-                <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo corte">
-                    <i class="fas fa-plus"></i>
-                    Crear Corte
-                </a>
-            </div>
-        }
+        <div class="header-decoration">
+            <authorize-section policy="RHOrAdmin">
+                <div class="header-actions">
+                    <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo corte">
+                        <i class="fas fa-plus"></i>
+                        Crear Corte
+                    </a>
+                </div>
+            </authorize-section>
+            <authorize-section policy="!RHOrAdmin">
+                <div class="floating-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </authorize-section>
+        </div>
     </div>
 
     <!-- Filters Section -->
     <div class="filters-section slide-in-left">
-        <div class="card">
-            <form id="searchForm" method="get" asp-action="Index">
-                @Html.AntiForgeryToken()
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="filter-group">
-                            <label for="usuarioCreadorFilter">
-                                <i class="fas fa-user-plus" style="color: var(--accent-indigo);"></i>
-                                Creado por
-                            </label>
-                            <select id="usuarioCreadorFilter" name="usuarioCreadorFilter" class="form-control user-autocomplete" data-user-value="id" aria-label="Usuario creador" style="width:100%">
-                                <option value="">Todos los usuarios</option>
-                            </select>
+        <div class="card filter-card-premium">
+            <div class="filter-header-premium">
+                <i class="fas fa-filter fa-lg"></i>
+                <h5 class="m-0 fw-bold" style="letter-spacing: 0.5px;">Panel de Búsqueda</h5>
+            </div>
+            <div class="filter-body-premium">
+                <form id="searchForm" method="get" asp-action="Index">
+                    @Html.AntiForgeryToken()
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Registrado por (Nombre)</label>
+                                <select id="usuarioCreadorFilter" name="usuarioCreadorFilter" class="form-control user-autocomplete w-100">
+                                    <option value="">-- Seleccionar Usuario --</option>
+                                    @if (ViewBag.UsuarioCreadorFilter != null)
+                                    {
+                                        <option value="@ViewBag.UsuarioCreadorFilter" selected="selected">@ViewBag.SelectedNombreText</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Registrado por (CORREO)</label>
+                                <select id="correoCreadorFilter" name="correoCreadorFilter" class="form-control user-autocomplete w-100">
+                                    <option value="">-- Seleccionar Correo --</option>
+                                    @if (ViewBag.CorreoCreadorFilter != null)
+                                    {
+                                        <option value="@ViewBag.CorreoCreadorFilter" selected="selected">@ViewBag.SelectedCorreoText</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Estatus del Período</label>
+                                <select id="statusFilter" name="statusFilter" class="form-control filter-input-pill form-select">
+                                    <option value="" selected="@(string.IsNullOrEmpty(ViewBag.StatusFilter?.ToString()) ? "selected" : null)">Todos los estatus</option>
+                                    <option value="true" selected="@(ViewBag.StatusFilter is true ? "selected" : null)">Activo</option>
+                                    <option value="false" selected="@(ViewBag.StatusFilter is false ? "selected" : null)">Inactivo</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="filter-group">
-                            <label for="statusFilter">
-                                <i class="fas fa-info-circle" style="color: var(--accent-slate);"></i>
-                                Estatus
-                            </label>
-                            <select id="statusFilter" name="statusFilter" class="form-control" aria-label="Estatus">
-                                <option value="" selected="@(string.IsNullOrEmpty(ViewBag.StatusFilter?.ToString()) ? "selected" : null)">Todos los estatus</option>
-                                <option value="true" selected="@(ViewBag.StatusFilter is true ? "selected" : null)">Activo</option>
-                                <option value="false" selected="@(ViewBag.StatusFilter is false ? "selected" : null)">Inactivo</option>
-                            </select>
-                        </div>
+
+                    <div class="d-flex justify-content-end mt-4 pt-3 border-top gap-3">
+                        <button type="button" onclick="clearAllFilters()" class="btn btn-light rounded-pill px-4 fw-bold text-secondary border hover-shadow" style="transition: all 0.2s;">
+                            <i class="fas fa-undo me-2"></i> Limpiar
+                        </button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" 
+                                style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); border: none;">
+                            <i class="fas fa-search me-2"></i> Aplicar Filtros
+                        </button>
                     </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-4">
-                        <div class="filter-group">
-                            <label>&nbsp;</label>
-                            <button type="submit" class="btn btn-search">
-                                <i class="fas fa-search"></i> Buscar
-                            </button>
-                            <button type="button" onclick="clearAllFilters()" class="btn btn-clear">
-                                <i class="fas fa-refresh"></i> Limpiar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Table Section -->
-    <div class="table-container fade-in mb-5">
-        <div class="card">
+    @if (Model.Cortes.Any())
+    {
+        <!-- MOBILE CARD VIEW (Visible < 992px) -->
+        <div class="mobile-view-container fade-in">
+            @foreach (var item in Model.Cortes)
+            {
+                var uniqueId = "mob-" + item.Id;
+                var usuarioCrea = Model.Usuarios.FirstOrDefault(u => u.Id == item.IdUsuarioCrea)?.Nombre ?? "Sistema";
+                
+                // Cloudflare-inspired varied palette
+                var colorIndex = item.Id % 5;
+                var boxGradient = "";
+                var accentColor = "";
+                
+                switch (colorIndex) {
+                    case 0: // Indigo
+                        boxGradient = "linear-gradient(135deg, #6366f1, #4338ca)";
+                        accentColor = "#4338ca";
+                        break;
+                    case 1: // Emerald
+                        boxGradient = "linear-gradient(135deg, #10b981, #059669)";
+                        accentColor = "#059669";
+                        break;
+                    case 2: // Amber
+                        boxGradient = "linear-gradient(135deg, #f59e0b, #d97706)";
+                        accentColor = "#d97706";
+                        break;
+                    case 3: // Rose
+                        boxGradient = "linear-gradient(135deg, #f43f5e, #e11d48)";
+                        accentColor = "#e11d48";
+                        break;
+                    case 4: // Sky
+                        boxGradient = "linear-gradient(135deg, #0ea5e9, #0284c7)";
+                        accentColor = "#0284c7";
+                        break;
+                }
+
+                <div class="card shadow-sm border-0 mb-3 mobile-card" id="card-@uniqueId" style="border-radius: 12px; overflow: hidden; transition: all 0.2s ease;">
+                    <!-- Clickable Header -->
+                    <div class="mobile-card-header p-3 d-flex align-items-center justify-content-between bg-white position-relative" 
+                        onclick="toggleMobileCard('@uniqueId')"
+                        style="border-left: 4px solid @accentColor;">
+                        
+                        <div class="d-flex align-items-center gap-3 flex-grow-1">
+                            <!-- ID Box (Initial of Creator) -->
+                            <div class="rounded-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
+                                style="width: 48px; height: 48px; background: @boxGradient; font-size: 1.25rem; flex-shrink: 0;">
+                                @(usuarioCrea.Length > 0 ? usuarioCrea.Substring(0, 1).ToUpper() : "C")
+                            </div>
+                            
+                            <!-- Info -->
+                            <div class="flex-grow-1" style="min-width: 0;">
+                                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 1rem;">
+                                    Corte #@item.Id
+                                </h6>
+                                <div class="d-flex align-items-center mt-1 flex-wrap gap-2">
+                                    <small class="text-muted" style="font-size: 0.8rem;">
+                                        Del: @item.Inicia.ToString("dd MMM")
+                                    </small>
+                                    
+                                    <!-- Status Badge -->
+                                    <span class="badge rounded-pill border d-none d-sm-inline-flex align-items-center px-2 py-0" 
+                                        style="@(item.Estatus ? "background-color: #ecfdf5; color: #059669; border-color: #a7f3d0 !important;" : "background-color: #fef2f2; color: #ef4444; border-color: #fecaca !important;") font-weight: 600; height: 22px;">
+                                        <i class="fas @(item.Estatus ? "fa-check" : "fa-ban") me-1" style="font-size: 0.7rem;"></i>
+                                        @(item.Estatus ? "ACTIVO" : "INACTIVO")
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chevron -->
+                        <div class="ms-3 text-muted">
+                            <i class="fas fa-chevron-down rotate-icon" style="transition: transform 0.3s ease;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Expandable Content -->
+                    <div class="expandable-content bg-light" id="body-@uniqueId" style="border-top: 1px solid var(--border-light);">
+                        <div class="p-3">
+                            <!-- XS Screen Status -->
+                            <div class="d-block d-sm-none mb-3">
+                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 @(item.Estatus ? "bg-success-subtle border border-success-subtle" : "bg-danger-subtle border border-danger-subtle")">
+                                    <span class="fw-semibold @(item.Estatus ? "text-success" : "text-danger")">Estado:</span>
+                                    <span class="badge rounded-pill @(item.Estatus ? "bg-success" : "bg-danger")">
+                                        @(item.Estatus ? "Activo" : "Inactivo")
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Details Grid -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="p-2 bg-white border border-light rounded-3 shadow-sm h-100">
+                                        <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
+                                            <i class="fas fa-play me-1"></i> Inicia
+                                        </small>
+                                        <span class="fw-semibold text-dark small">
+                                            @item.Inicia.ToString("dd MMM yyyy")
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-2 bg-white border border-light rounded-3 shadow-sm h-100">
+                                        <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
+                                            <i class="fas fa-stop me-1"></i> Termina
+                                        </small>
+                                        <span class="fw-semibold text-dark small">
+                                            @item.Termina.ToString("dd MMM yyyy")
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="p-2 bg-white border border-light rounded-3 shadow-sm">
+                                        <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
+                                            <i class="fas fa-user-tag me-1"></i> Creado por
+                                        </small>
+                                        <span class="fw-semibold text-dark small text-break">
+                                            @usuarioCrea
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="row g-2">
+                                <authorize-section policy="AdminOnly">
+                                    <div class="col-6">
+                                        <a href="#" class="btn btn-sm btn-danger w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white"
+                                            data-action="DeleteAjax" 
+                                            data-controller="Cortes" 
+                                            data-id="@item.Id">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </authorize-section>
+                                <authorize-section policy="AdminOnly">
+                                    <div class="col-6">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </a>
+                                    </div>
+                                </authorize-section>
+                                <authorize-section policy="!AdminOnly">
+                                    <div class="col-12">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </a>
+                                    </div>
+                                </authorize-section>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <!-- Table Section -->
+        <div class="table-container fade-in mb-4">
             <div class="table-inner">
                 <div class="overflow-x-auto">
-                    <table id="cortesTable" class="data-table" style="width:100%" aria-label="Tabla de cortes">
+                    <table id="cortesTable" class="data-table" style="width:100%; border: none; overflow: hidden; padding: 0;" aria-label="Tabla de cortes">
                         <thead>
                             <tr>
+                                <th class="text-center">ID</th>
                                 <th class="text-center">Inicia</th>
                                 <th class="text-center">Termina</th>
                                 <th class="text-center">Creación</th>
@@ -105,15 +307,16 @@
                                 var usuarioCrea = Model.Usuarios.FirstOrDefault(u => u.Id == item.IdUsuarioCrea)?.Nombre ?? "-";
                                 var usuarioModifica = Model.Usuarios.FirstOrDefault(u => u.Id == item.IdUsuarioModifica)?.Nombre ?? "-";
                                 <tr>
-                                    <td>@(item.Inicia.ToString("dd/MM/yyyy") ?? "-")</td>
-                                    <td>@(item.Termina.ToString("dd/MM/yyyy") ?? "-")</td>
-                                    <td>
+                                    <td class="text-center">@item.Id</td>
+                                    <td class="text-center"><strong>@(item.Inicia.ToString("dd/MM/yyyy") ?? "-")</strong></td>
+                                    <td class="text-center">@(item.Termina.ToString("dd/MM/yyyy") ?? "-")</td>
+                                    <td class="text-center">
                                         <div style="color: var(--text-medium); font-weight: 500;">
                                             <div style="font-size: 0.875rem;">@item.FechaCreacion.ToString("dd/MM/yyyy")</div>
                                                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem;">@item.FechaCreacion.ToString("h:mm tt")</div>
                                             </div>
                                         </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if (item.FechaModificacion.HasValue)
                                         {
                                             <div style="color: var(--text-medium); font-weight: 500;">
@@ -126,18 +329,19 @@
                                             <div style="font-style: italic; color: var(--text-muted);">Sin modificar</div>
                                         }
                                     </td>
-                                    <td class="@(item.Estatus ? "status-cell-active" : "status-cell-inactive")">
-                                        @(item.Estatus ? "Activo" : "Inactivo")
+                                    <td class="text-center">
+                                        <span class="badge-soft @(item.Estatus ? "badge-success-soft" : "badge-danger-soft")">
+                                            @(item.Estatus ? "Activo" : "Inactivo")
+                                        </span>
                                     </td>
-                           
+                            
                                     <td class="text-center">
                                         <div class="flex justify-center gap-2">
-                                            @if (isAdministrador)
-                                            {
-                                                <a href="#" class="action-btn btn-delete" title="Eliminar" aria-label="Eliminar corte" data-action="Delete" data-controller="Cortes" data-id="@item.Id">
+                                            <authorize-section policy="AdminOnly">
+                                                <a href="#" class="action-btn btn-delete" title="Eliminar" aria-label="Eliminar corte" data-action="DeleteAjax" data-controller="Cortes" data-id="@item.Id">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
-                                            }
+                                            </authorize-section>
                                             <a asp-action="Details" asp-route-id="@item.Id" class="action-btn btn-view" title="Ver detalles" aria-label="Ver detalles del corte">
                                                 <i class="fas fa-eye"></i>
                                             </a>
@@ -148,6 +352,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
+                                <th class="text-center">ID</th>
                                 <th class="text-center">Inicia</th>
                                 <th class="text-center">Termina</th>
                                 <th class="text-center">Creación</th>
@@ -157,47 +362,45 @@
                             </tr>
                         </tfoot>
                     </table>
-                   
                 </div>
-
-                <!-- Control de paginación con PagedList -->
-                @if (Model.Cortes.Any())
-                {
-                    <!-- Paginación -->
-                    <div class="pagination-container">
-                        <div class="pagination-info">
-                            Mostrando @Model.Cortes.FirstItemOnPage - @Model.Cortes.LastItemOnPage de @Model.Cortes.TotalItemCount cortes
-                        </div>
-
-                        @Html.PagedListPager(
-                        Model.Cortes,
-                                        page => Url.Action("Index", new
-                                        {
-                                            page,
-                                            sortOrder = ViewBag.CurrentSort,
-                                            nombreFilter = ViewBag.NombreFilter,
-                                            correoFilter = ViewBag.CorreoFilter,
-                                            departamentoFilter = ViewBag.DepartamentoFilter,
-                                            estadoFilter = ViewBag.EstadoFilter
-                                        }),
-                                        new PagedListRenderOptions
-                                        {
-                                            DisplayLinkToFirstPage = PagedListDisplayMode.Always,
-                                            DisplayLinkToLastPage = PagedListDisplayMode.Always,
-                                            DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
-                                            DisplayLinkToNextPage = PagedListDisplayMode.Always,
-                                            DisplayLinkToIndividualPages = true,
-                                            MaximumPageNumbersToDisplay = 5,
-                                            DisplayEllipsesWhenNotShowingAllPageNumbers = true,
-                                            UlElementClasses = new[] { "pagination" },
-                                            LiElementClasses = new[] { "page-item" },
-                                            PageClasses = new[] { "page-link" }
-                                        })
-                </div>
-                                }
             </div>
         </div>
-    </div>
+    }
+    
+    <!-- Shared Pagination (Visible for both) -->
+    @if (Model.Cortes.Any())
+    {
+        <div class="pagination-container fade-in">
+            <div class="pagination-info">
+                Mostrando @Model.Cortes.FirstItemOnPage - @Model.Cortes.LastItemOnPage de @Model.Cortes.TotalItemCount cortes
+            </div>
+
+            @Html.PagedListPager(
+            Model.Cortes,
+                            page => Url.Action("Index", new
+                            {
+                                page,
+                                sortOrder = ViewBag.CurrentSort,
+                                nombreFilter = ViewBag.NombreFilter,
+                                correoFilter = ViewBag.CorreoFilter,
+                                departamentoFilter = ViewBag.DepartamentoFilter,
+                                estadoFilter = ViewBag.EstadoFilter
+                            }),
+                            new PagedListRenderOptions
+                            {
+                                DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                                DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                                DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                                DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                                DisplayLinkToIndividualPages = true,
+                                MaximumPageNumbersToDisplay = 5,
+                                DisplayEllipsesWhenNotShowingAllPageNumbers = true,
+                                UlElementClasses = new[] { "pagination" },
+                                LiElementClasses = new[] { "page-item" },
+                                PageClasses = new[] { "page-link" }
+                            })
+        </div>
+    }
 
     <!-- Empty State -->
     @if (!Model.Cortes.Any())
@@ -217,6 +420,7 @@
         (function(){
             // Inicializar select2 en el select de usuarios para búsqueda remota
             $(document).ready(function(){
+                // Inicializar select2 en el select de usuarios para búsqueda remota (por Nombre)
                 $('#usuarioCreadorFilter').select2({
                     placeholder: '-- Seleccionar Usuario --',
                     minimumInputLength: 2,
@@ -226,7 +430,7 @@
                         dataType: 'json',
                         delay: 250,
                         data: function (params) {
-                            return { term: params.term };
+                            return { term: params.term, type: 'name' };
                         },
                         processResults: function (data) {
                             return { results: data };
@@ -235,20 +439,56 @@
                     }
                 });
 
-                // Abrir el dropdown automáticamente al recibir foco para poder escribir inmediatamente
-                $('#usuarioCreadorFilter').on('focus', function () {
+                // Inicializar select2 en el select de usuarios para búsqueda remota (por Correo)
+                $('#correoCreadorFilter').select2({
+                    placeholder: '-- Seleccionar Correo --',
+                    minimumInputLength: 2,
+                    allowClear: true,
+                    ajax: {
+                        url: '/Usuarios/SearchUsers',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function (params) {
+                            return { term: params.term, type: 'email' };
+                        },
+                        processResults: function (data) {
+                            return { results: data };
+                        },
+                        cache: true
+                    }
+                });
+
+                // Abrir el dropdown automáticamente al recibir foco
+                $('#usuarioCreadorFilter, #correoCreadorFilter').on('focus', function () {
                     $(this).select2('open');
                 });
 
                 // Asegurar que el campo de búsqueda interno reciba foco cuando se abra
-                $('#usuarioCreadorFilter').on('select2:open', function () {
+                $('#usuarioCreadorFilter, #correoCreadorFilter').on('select2:open', function () {
                     const searchField = document.querySelector('.select2-container--open .select2-search__field');
                     if (searchField) searchField.focus();
+                });
+
+                // Limpiar filtros conflictivos (si se busca por nombre, limpiar correo y viceversa)
+                $('#usuarioCreadorFilter').on('select2:select', function() {
+                    $('#correoCreadorFilter').val(null).trigger('change');
+                });
+                $('#correoCreadorFilter').on('select2:select', function() {
+                    $('#usuarioCreadorFilter').val(null).trigger('change');
+                });
+
+                // Initialize Status Filter with premium styles
+                $('#statusFilter').select2({
+                    placeholder: 'Todos los estatus',
+                    width: '100%',
+                    allowClear: true,
+                    minimumResultsForSearch: Infinity // Hide search box
                 });
             });
         })();
         function clearAllFilters() {
             document.getElementById('usuarioCreadorFilter').value = '';
+            document.getElementById('correoCreadorFilter').value = '';
             document.getElementById('statusFilter').value = '';
             document.getElementById('searchForm').submit();
             // Usar helper global
@@ -260,7 +500,7 @@
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top-end',
-                showConfirmButton: false,
+                showConfirmButton: element.classList.contains('slide-in-left'),
                 timer: 3000,
                 timerProgressBar: true,
                 didOpen: (toast) => {
@@ -280,7 +520,7 @@
             elements.forEach(element => {
                 element.style.opacity = '0';
                 element.style.transform = element.classList.contains('slide-in-left')
-                    ? 'translateX(-30px)'
+                    ? 'translateY(20px)'
                     : 'translateY(20px)';
             });
 

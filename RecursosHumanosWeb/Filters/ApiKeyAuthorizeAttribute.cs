@@ -56,7 +56,7 @@ namespace RecursosHumanosWeb.Filters
 
             if (apiKeyEntity == null)
             {
-                context.Result = new ForbidResult();
+                context.Result = new ObjectResult(new { error = "Forbidden", message = "API Key no válida o inactiva." }) { StatusCode = 403 };
                 return;
             }
 
@@ -71,12 +71,13 @@ namespace RecursosHumanosWeb.Filters
 
                 if (!tienePermiso)
                 {
-                    context.Result = new ForbidResult();
+                    context.Result = new ObjectResult(new { error = "Forbidden", message = $"La API Key no tiene permiso '{PermisoRequerido}' para la tabla '{TablaObjetivo}'." }) { StatusCode = 403 };
                     return;
                 }
             }
 
             // 6. ÉXITO: Continuar
+            context.HttpContext.Items["ApiKeyId"] = apiKeyEntity.Id;
             context.HttpContext.Items["ApiUserId"] = apiKeyEntity.IdUsuarioCrea;
         }
     }

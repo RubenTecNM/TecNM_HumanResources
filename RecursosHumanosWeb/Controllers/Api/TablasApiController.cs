@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RecursosHumanosWeb.Controllers.Api
 {
-    [Route("api/[controller]")]
+    [Route("api/Tablas")]
     [ApiController]
     public class TablasApiController : ControllerBase
     {

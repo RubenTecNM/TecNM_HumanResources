@@ -1,3 +1,10 @@
+> [!IMPORTANT]
+> **Seguridad y Estabilidad Cr铆tica**
+> 
+> - **Autorizaci贸n por Roles:** Todos los controladores administrativos (`Usuarios`, `Auditoria`, `ApiKeys`) **deben** estar decorados con `[Authorize(Policy = "AdminOnly")]`. El uso de `[Authorize]` a secas permite el acceso a cualquier usuario autenticado, lo cual representa un riesgo de seguridad.
+> - **Configuraci贸n de Autenticaci贸n:** El `LoginPath` en `Program.cs` debe estar configurado estrictamente como `/Account/Login`. Redirigir a `/Home/Index` para usuarios no autenticados causar谩 errores de referencia nula.
+> - **Resoluci贸n de BadImageFormatException:** Si la aplicaci贸n falla con este error o comportamientos err谩ticos tras cambios en los ensamblados, ejecute: `find . -type d \( -name "obj" -o -name "bin" \) -exec rm -rf {} +` y recompile.
+
 # Sistema de Gesti髇 de Recursos Humanos
 
 [![.NET Version](https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)

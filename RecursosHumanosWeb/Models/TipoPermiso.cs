@@ -14,13 +14,14 @@ public partial class TipoPermiso
     public DateTime? FechaModificacion { get; set; }
 
     public bool Estatus { get; set; }
+
     public int IdUsuarioCrea { get; set; }
 
     public int? IdUsuarioModifica { get; set; }
 
     public virtual Usuario IdUsuarioCreaNavigation { get; set; } = null!;
 
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; } = null!;
+    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
 
     public virtual ICollection<Permiso> Permisos { get; set; } = new List<Permiso>();
 }

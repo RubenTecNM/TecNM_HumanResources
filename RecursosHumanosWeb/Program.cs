@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using RecursosHumanosWeb.Controllers;
 using RecursosHumanosWeb.Models;
 using Microsoft.Extensions.Options;
+using RecursosHumanosWeb.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,12 +18,19 @@ builder.Services.AddLogging(logging =>
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<AuthenticationDataAttribute>();
+    options.Filters.Add<ApiExceptionFilter>();
+})
+.AddJsonOptions(options =>
+{
+    // Esto es vital para que el Usuario 1 (que se creó a sí mismo) no rompa la página
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.PropertyNamingPolicy = null; 
 });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Home/Index";
+        options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
@@ -46,6 +54,16 @@ builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpS
 // IEmailSender implementation
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
+// Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireClaim("TipoUsuario", "1"));
+    options.AddPolicy("RHOnly", policy => policy.RequireClaim("TipoUsuario", "3"));
+    options.AddPolicy("AutorizadorOnly", policy => policy.RequireClaim("TipoUsuario", "2"));
+    options.AddPolicy("RHOrAdmin", policy => policy.RequireClaim("TipoUsuario", "1", "3"));
+    options.AddPolicy("AutorizadorOrAbove", policy => policy.RequireClaim("TipoUsuario", "1", "3", "2"));
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -63,7 +81,7 @@ else
             if (exception != null)
             {
                 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(exception.Error, "Excepci�n no manejada: {Message}", exception.Error.Message);
+                logger.LogError(exception.Error, "Excepci�n no manejada: {Message}", exception.Error.Message);
                 await context.Response.WriteAsync($"Error: {exception.Error.Message}");
             }
         });

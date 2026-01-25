@@ -15,22 +15,22 @@
             <input type="hidden" asp-for="Id" />
             <div class="form-group">
                 <label asp-for="Inicia" class="control-label"></label>
-                <input asp-for="Inicia" class="form-control" />
+                <input asp-for="Inicia" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
                 <span asp-validation-for="Inicia" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Termina" class="control-label"></label>
-                <input asp-for="Termina" class="form-control" />
+                <input asp-for="Termina" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
                 <span asp-validation-for="Termina" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="FechaCreacion" class="control-label"></label>
-                <input asp-for="FechaCreacion" class="form-control" />
+                <input asp-for="FechaCreacion" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
                 <span asp-validation-for="FechaCreacion" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="FechaModificacion" class="control-label"></label>
-                <input asp-for="FechaModificacion" class="form-control" />
+                <input asp-for="FechaModificacion" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
                 <span asp-validation-for="FechaModificacion" class="text-danger"></span>
             </div>
             <div class="form-group">
@@ -55,9 +55,7 @@
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

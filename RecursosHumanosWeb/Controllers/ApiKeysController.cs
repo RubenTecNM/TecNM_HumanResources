@@ -9,9 +9,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RecursosHumanosWeb.Controllers
 {
+    [Authorize(Policy = "AdminOnly")]
     public class ApiKeysController : Controller
     {
         public string Clave { get; set; }
@@ -25,10 +27,34 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         // GET: ApiKeys
-        public async Task<IActionResult> Index()
+        // GET: ApiKeys
+        public async Task<IActionResult> Index(string nombreUsuario, DateTime? delDia, DateTime? alDia)
         {
-            var recursosHumanosContext = _context.ApiKeys.Include(a => a.IdUsuarioCreaNavigation).Include(a => a.IdUsuarioModificaNavigation);
-            return View(await recursosHumanosContext.ToListAsync());
+            var query = _context.ApiKeys
+                .Include(a => a.IdUsuarioCreaNavigation)
+                .Include(a => a.IdUsuarioModificaNavigation)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(nombreUsuario))
+            {
+                query = query.Where(a => a.IdUsuarioCreaNavigation.Nombre.Contains(nombreUsuario));
+            }
+
+            if (delDia.HasValue)
+            {
+                query = query.Where(a => a.FechaCreacion.Date >= delDia.Value.Date);
+            }
+
+            if (alDia.HasValue)
+            {
+                query = query.Where(a => a.FechaCreacion.Date <= alDia.Value.Date);
+            }
+
+            ViewBag.NombreUsuario = nombreUsuario;
+            ViewBag.DelDia = delDia?.ToString("yyyy-MM-dd");
+            ViewBag.AlDia = alDia?.ToString("yyyy-MM-dd");
+
+            return View(await query.OrderByDescending(a => a.FechaCreacion).ToListAsync());
         }
 
         // GET: ApiKeys/Details/5
@@ -43,10 +69,26 @@ namespace RecursosHumanosWeb.Controllers
                 .Include(a => a.IdUsuarioCreaNavigation)
                 .Include(a => a.IdUsuarioModificaNavigation)
                 .FirstOrDefaultAsync(m => m.Id == id);
+            
             if (apiKey == null)
             {
                 return NotFound();
             }
+
+            // Cargar permisos asignados agrupados por tabla
+            var permisosAsignados = await _context.ApiPermisosApiKeysTablas
+                .Where(p => p.IdApiKey == id && p.Estatus)
+                .Include(p => p.IdTablaNavigation)
+                .Include(p => p.IdApiPermisoNavigation)
+                .GroupBy(p => p.IdTablaNavigation.Descripcion)
+                .Select(g => new
+                {
+                    Tabla = g.Key,
+                    Permisos = g.Select(p => p.IdApiPermisoNavigation.Descripcion).ToList()
+                })
+                .ToListAsync();
+
+            ViewBag.PermisosAsignados = permisosAsignados;
 
             return View(apiKey);
         }
@@ -69,7 +111,7 @@ namespace RecursosHumanosWeb.Controllers
             ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
 
             // Lógica de roles (ajusta según tus necesidades reales)
-            ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "4");
+            ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
 
             return View(new ApiKeyCreateViewModel());
         }
@@ -109,7 +151,7 @@ namespace RecursosHumanosWeb.Controllers
                 ViewData["Usuarios"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
                 ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
                 ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
-                ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "4");
+                ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
 
                 return View(viewModel);
             }
@@ -192,7 +234,7 @@ namespace RecursosHumanosWeb.Controllers
                     ViewData["Usuarios"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
                     ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
                     ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
-                    ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "4");
+                    ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
 
                     return View(viewModel);
                 }
@@ -235,46 +277,157 @@ namespace RecursosHumanosWeb.Controllers
             {
                 return NotFound();
             }
-            ViewData["IdUsuarioCrea"] = new SelectList(_context.Usuarios, "Id", "Id", apiKey.IdUsuarioCrea);
-            ViewData["IdUsuarioModifica"] = new SelectList(_context.Usuarios, "Id", "Id", apiKey.IdUsuarioModifica);
-            return View(apiKey);
+
+            // Cargar permisos actuales
+            var permisosActuales = await _context.ApiPermisosApiKeysTablas
+                .Where(p => p.IdApiKey == id && p.Estatus)
+                .GroupBy(p => p.IdTabla)
+                .ToDictionaryAsync(
+                    g => g.Key,
+                    g => g.Select(p => p.IdApiPermiso).ToList()
+                );
+
+            var viewModel = new ApiKeyCreateViewModel
+            {
+                Id = apiKey.Id,
+                Clave = apiKey.Clave,
+                FechaCreacion = apiKey.FechaCreacion,
+                IdUsuarioTitular = apiKey.IdUsuarioCrea // Asumiendo que el titular es quien creó
+            };
+
+            // Preparar listas para la vista
+            var usuariosActivos = _context.Usuarios
+                .Where(u => u.Estatus)
+                .Select(u => new { u.Id, u.Nombre })
+                .OrderBy(u => u.Nombre)
+                .ToList();
+
+            ViewData["Usuarios"] = new SelectList(usuariosActivos, "Id", "Nombre", viewModel.IdUsuarioTitular);
+            ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
+            ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
+            ViewBag.PermisosActuales = permisosActuales;
+            ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+
+            return View(viewModel);
         }
 
         // POST: ApiKeys/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Clave,FechaCreacion,FechaModificacion,Estatus,IdUsuarioCrea,IdUsuarioModifica")] ApiKey apiKey)
+        public async Task<IActionResult> Edit(int id, ApiKeyCreateViewModel viewModel)
         {
-            if (id != apiKey.Id)
+            if (id != viewModel.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            if (userId == 0)
+            {
+                ModelState.AddModelError("", "No se pudo identificar al usuario en sesión.");
+            }
+
+            if (!ModelState.IsValid || userId == 0)
+            {
+                // Recargar listas en caso de error
+                var usuariosList = _context.Usuarios
+                    .Where(u => u.Estatus)
+                    .Select(u => new { u.Id, u.Nombre })
+                    .OrderBy(u => u.Nombre)
+                    .ToList();
+
+                ViewData["Usuarios"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
+                ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
+                ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
+                ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+
+                return View(viewModel);
+            }
+
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
-                    _context.Update(apiKey);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ApiKeyExists(apiKey.Id))
+                    var currentDateTime = DateTime.Now;
+
+                    // Actualizar ApiKey
+                    var apiKey = await _context.ApiKeys.FindAsync(id);
+                    if (apiKey == null)
                     {
                         return NotFound();
                     }
-                    else
+
+                    apiKey.FechaModificacion = currentDateTime;
+                    apiKey.IdUsuarioModifica = userId;
+                    _context.Update(apiKey);
+                    await _context.SaveChangesAsync();
+
+                    // Eliminar permisos anteriores (soft delete)
+                    var permisosAnteriores = await _context.ApiPermisosApiKeysTablas
+                        .Where(p => p.IdApiKey == id)
+                        .ToListAsync();
+
+                    foreach (var permiso in permisosAnteriores)
                     {
-                        throw;
+                        permiso.Estatus = false;
+                        permiso.FechaModificacion = currentDateTime;
+                        permiso.IdUsuarioModifica = userId;
                     }
+                    await _context.SaveChangesAsync();
+
+                    // Crear nuevos permisos
+                    if (viewModel.Assignments != null)
+                    {
+                        foreach (var assignment in viewModel.Assignments)
+                        {
+                            if (assignment.IdsApiPermisosSeleccionados != null)
+                            {
+                                foreach (var idPermiso in assignment.IdsApiPermisosSeleccionados.Distinct())
+                                {
+                                    var newAssignment = new ApiPermisosApiKeysTabla
+                                    {
+                                        IdApiKey = apiKey.Id,
+                                        IdApiPermiso = idPermiso,
+                                        IdTabla = assignment.IdTabla,
+                                        Estatus = true,
+                                        FechaCreacion = currentDateTime,
+                                        FechaModificacion = currentDateTime,
+                                        IdUsuarioCrea = userId,
+                                        IdUsuarioModifica = userId,
+                                    };
+                                    _context.Add(newAssignment);
+                                }
+                            }
+                        }
+                        await _context.SaveChangesAsync();
+                    }
+
+                    await transaction.CommitAsync();
+
+                    TempData["SuccessAlert"] = "API Key actualizada exitosamente";
+                    return RedirectToAction(nameof(Index));
                 }
-                return RedirectToAction(nameof(Index));
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    ModelState.AddModelError("", $"Error al actualizar la API Key: {ex.Message}");
+
+                    // Recargar listas
+                    var usuariosList = _context.Usuarios
+                        .Where(u => u.Estatus)
+                        .Select(u => new { u.Id, u.Nombre })
+                        .OrderBy(u => u.Nombre)
+                        .ToList();
+
+                    ViewData["Usuarios"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
+                    ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
+                    ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
+                    ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+
+                    return View(viewModel);
+                }
             }
-            ViewData["IdUsuarioCrea"] = new SelectList(_context.Usuarios, "Id", "Id", apiKey.IdUsuarioCrea);
-            ViewData["IdUsuarioModifica"] = new SelectList(_context.Usuarios, "Id", "Id", apiKey.IdUsuarioModifica);
-            return View(apiKey);
         }
 
         // GET: ApiKeys/Delete/5
@@ -316,7 +469,7 @@ namespace RecursosHumanosWeb.Controllers
         // AJAX: Delete via fetch with confirmation flow
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete([FromBody] ActionRequestDTO request)
+        public async Task<IActionResult> DeleteAjax([FromBody] ActionRequestDTO request)
         {
             if (request == null || request.Id <= 0)
             {
@@ -331,36 +484,46 @@ namespace RecursosHumanosWeb.Controllers
 
             if (!request.Confirmed)
             {
+                // Truncar clave de forma segura
+                var claveDisplay = apiKey.Clave.Length > 16 
+                    ? apiKey.Clave.Substring(0, 16) + "..." 
+                    : apiKey.Clave;
+                
                 return Json(new AlertResponseDTO
                 {
                     ShowConfirmation = true,
                     Title = "¿Eliminar API Key?",
-                    Message = $"¿Estás seguro de que deseas eliminar la API Key " + apiKey.Clave + "?",
+                    Message = $"¿Estás seguro de que deseas eliminar la API Key **{claveDisplay}**? Esta acción es un borrado lógico.",
                     Icon = "question",
                     ConfirmButtonText = "Sí, eliminar"
                 });
             }
 
-                try
+            try
+            {
+                // Obtener usuario actual
+                int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+                
+                // Borrado lógico
+                apiKey.Estatus = false;
+                apiKey.FechaModificacion = DateTime.Now;
+                apiKey.IdUsuarioModifica = userId;
+                _context.Update(apiKey);
+                await _context.SaveChangesAsync();
+                
+                return Json(new AlertResponseDTO
                 {
-                    // Borrado lógico
-                    apiKey.Estatus = false;
-                    apiKey.FechaModificacion = DateTime.Now;
-                    _context.Update(apiKey);
-                    await _context.SaveChangesAsync();
-                    return Json(new AlertResponseDTO
-                    {
-                        Success = true,
-                        Title = "Eliminado",
-                        Message = "API Key inactivada correctamente.",
-                        Icon = "success",
-                        RedirectUrl = "/ApiKeys/Index"
-                    });
-                }
-                catch (Exception ex)
-                {
-                    return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = $"Ocurrió un error al inactivar: {ex.Message}", Icon = "error" });
-                }
+                    Success = true,
+                    Title = "¡Eliminado!",
+                    Message = "API Key inactivada correctamente.",
+                    Icon = "success",
+                    RedirectUrl = "/ApiKeys/Index"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = $"Ocurrió un error al inactivar: {ex.Message}", Icon = "error" });
+            }
         }
 
         private bool ApiKeyExists(int id)

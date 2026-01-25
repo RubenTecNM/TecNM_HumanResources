@@ -20,23 +20,25 @@ namespace RecursosHumanosWeb.Controllers
     {
         private readonly RecursosHumanosContext _context;
         private readonly AutoMapper.IMapper _mapper;
+        private readonly ILogger<CortesController> _logger;
 
-        public CortesController(RecursosHumanosContext context, AutoMapper.IMapper mapper)
+        public CortesController(RecursosHumanosContext context, AutoMapper.IMapper mapper, ILogger<CortesController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 5, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, bool? statusFilter = null)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 5, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, bool? statusFilter = null)
         {
             // Validar parámetros de paginación
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 5;
 
             // Obtener información del usuario autenticado
-            bool isAdministrador = User.HasClaim("TipoUsuario", "4");
-            bool isRecursosHumanos = User.HasClaim("TipoUsuario", "2");
+            bool isAdministrador = User.HasClaim("TipoUsuario", "1");
+            bool isRecursosHumanos = User.HasClaim("TipoUsuario", "3");
 
             // Construir la consulta base
             var cortesQuery = _context.Cortes
@@ -56,6 +58,10 @@ namespace RecursosHumanosWeb.Controllers
             if (usuarioCreadorFilter.HasValue)
             {
                 cortesQuery = cortesQuery.Where(c => c.IdUsuarioCrea == usuarioCreadorFilter.Value);
+            }
+            if (correoCreadorFilter.HasValue)
+            {
+                cortesQuery = cortesQuery.Where(c => c.IdUsuarioCrea == correoCreadorFilter.Value);
             }
             if (statusFilter.HasValue)
             {
@@ -82,6 +88,7 @@ namespace RecursosHumanosWeb.Controllers
                 FechaDesde = fechaDesde?.ToString("yyyy-MM-dd")!,
                 FechaHasta = fechaHasta?.ToString("yyyy-MM-dd")!,
                 UsuarioCreadorFilter = usuarioCreadorFilter?.ToString()!,
+                CorreoCreadorFilter = correoCreadorFilter?.ToString()!,
                 StatusFilter = statusFilter?.ToString()!,
                 IsAdministrador = isAdministrador
             };
@@ -91,7 +98,19 @@ namespace RecursosHumanosWeb.Controllers
             ViewBag.FechaDesde = fechaDesde;
             ViewBag.FechaHasta = fechaHasta;
             ViewBag.UsuarioCreadorFilter = usuarioCreadorFilter;
+            ViewBag.CorreoCreadorFilter = correoCreadorFilter;
             ViewBag.StatusFilter = statusFilter;
+
+            if (usuarioCreadorFilter.HasValue)
+            {
+                var u = await _context.Usuarios.FindAsync(usuarioCreadorFilter.Value);
+                ViewBag.SelectedNombreText = u?.Nombre;
+            }
+            if (correoCreadorFilter.HasValue)
+            {
+                var u = await _context.Usuarios.FindAsync(correoCreadorFilter.Value);
+                ViewBag.SelectedCorreoText = u?.Correo;
+            }
 
             return View(model);
         }
@@ -147,7 +166,7 @@ namespace RecursosHumanosWeb.Controllers
                                 DÍAS_SOLICITADOS = p.Fecha1.HasValue && p.Fecha2.HasValue 
                                     ? (int)((p.Fecha2.Value - p.Fecha1.Value).TotalDays + 1)
                                     : (p.Dias ?? 0),
-                                CON_GOCE = (p.Goce ?? false) ? "Sí" : "No",
+                                CON_GOCE = p.Goce ? "Sí" : "No",
                                 EVIDENCIA = p.Evidencia ?? "",
                                 DESDE_EL_DÍA = p.Fecha1,
                                 HASTA_EL_DÍA = p.Fecha2,
@@ -221,7 +240,7 @@ namespace RecursosHumanosWeb.Controllers
                                 TIPO_PERMISO = p.IdTipoPermisoNavigation.Descripcion,
                                 DESCRIPCIÓN = p.Motivo ?? "",
                                 DÍAS_SOLICITADOS = p.Dias ?? 0,
-                                CON_GOCE = (p.Goce ?? false) ? "Sí" : "No",
+                                CON_GOCE = p.Goce ? "Sí" : "No",
                                 EVIDENCIA = p.Evidencia ?? "",
                                 DEL_DÍA = p.Fecha1,
                                 POR_EL_DÍA = p.Fecha2,
@@ -390,10 +409,10 @@ namespace RecursosHumanosWeb.Controllers
                         $"\"{p.IdTipoPermisoNavigation?.Descripcion}\"," +
                         $"\"{p.Motivo?.Replace("\"", "\"\"")}\"," +
                         $"{p.Dias ?? 0}," +
-                        $"{(p.Goce ?? false ? "Sí" : "No")}," +
+                        $"{(p.Goce ? "Sí" : "No")}," +
                         $"{p.Fecha1?.ToString("yyyy-MM-dd")}," +
                         $"{p.Fecha2?.ToString("yyyy-MM-dd")}," +
-                        $"{(p.Revisado ?? false ? "Sí" : "No")}," +
+                        $"{(p.Revisado ? "Sí" : "No")}," +
                         $"\"{p.IdUsuarioAutorizaNavigation?.Nombre}\"," +
                         $"{p.FechaCreacion.ToString("yyyy-MM-dd HH:mm")}");
                 }
@@ -459,8 +478,8 @@ namespace RecursosHumanosWeb.Controllers
                     Estadisticas = new
                     {
                         Total = permisos.Count,
-                        Aprobados = permisos.Count(p => p.Revisado ?? false),
-                        Pendientes = permisos.Count(p => !(p.Revisado ?? false)),
+                        Aprobados = permisos.Count(p => p.Revisado ),
+                        Pendientes = permisos.Count(p => p.Revisado),
                         DiasPromedio = permisos.Any() ? permisos.Average(p => p.Dias ?? 0) : 0
                     }
                 };
@@ -512,8 +531,8 @@ namespace RecursosHumanosWeb.Controllers
 
                     xmlWriter.WriteStartElement("Estadisticas");
                     xmlWriter.WriteElementString("Total", permisos.Count.ToString());
-                    xmlWriter.WriteElementString("Aprobados", permisos.Count(p => p.Revisado ?? false).ToString());
-                    xmlWriter.WriteElementString("Pendientes", permisos.Count(p => !(p.Revisado ?? false)).ToString());
+                    xmlWriter.WriteElementString("Aprobados", permisos.Count(p => p.Revisado).ToString());
+                    xmlWriter.WriteElementString("Pendientes", permisos.Count(p => p.Revisado).ToString());
                     xmlWriter.WriteElementString("DiasPromedio", (permisos.Any() ? permisos.Average(p => p.Dias ?? 0) : 0).ToString("F2"));
                     xmlWriter.WriteEndElement(); // Estadisticas
 
@@ -527,10 +546,10 @@ namespace RecursosHumanosWeb.Controllers
                         xmlWriter.WriteElementString("TipoPermiso", p.IdTipoPermisoNavigation?.Descripcion ?? "");
                         xmlWriter.WriteElementString("Motivo", p.Motivo ?? "");
                         xmlWriter.WriteElementString("Dias", (p.Dias ?? 0).ToString());
-                        xmlWriter.WriteElementString("ConGoce", (p.Goce ?? false) ? "Sí" : "No");
+                        xmlWriter.WriteElementString("ConGoce", p.Goce ? "Sí" : "No");
                         xmlWriter.WriteElementString("DelDia", p.Fecha1?.ToString("yyyy-MM-dd") ?? "");
                         xmlWriter.WriteElementString("AlDia", p.Fecha2?.ToString("yyyy-MM-dd") ?? "");
-                        xmlWriter.WriteElementString("Revisado", (p.Revisado ?? false) ? "Sí" : "No");
+                        xmlWriter.WriteElementString("Revisado", p.Revisado ? "Sí" : "No");
                         xmlWriter.WriteElementString("AutorizadoPor", p.IdUsuarioAutorizaNavigation?.Nombre ?? "");
                         xmlWriter.WriteElementString("FechaCreacion", p.FechaCreacion.ToString("yyyy-MM-dd HH:mm") ?? "");
                         xmlWriter.WriteEndElement(); // Permiso
@@ -558,8 +577,8 @@ namespace RecursosHumanosWeb.Controllers
             // Preparar información de usuario para la vista y site.js
             ViewData["IsAuthenticated"] = User.Identity?.IsAuthenticated ?? false;
             ViewData["UserName"] = User.Identity?.Name ?? string.Empty;
-            ViewBag.IsRH = User.HasClaim("TipoUsuario", "2");
-            ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "4");
+            ViewBag.IsRH = User.HasClaim("TipoUsuario", "3");
+            ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
             ViewData["IdUsuario"] = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             var viewModel = new CorteCreateViewModel();
@@ -606,30 +625,40 @@ namespace RecursosHumanosWeb.Controllers
 
             }
 
-            // Desactivar corte activo actual (si existe)
-            if (corteActivo != null)
+            try
             {
-                corteActivo.Estatus = false;
-                corteActivo.FechaModificacion = ahora;
-                corteActivo.IdUsuarioModifica = idUsuario;
-                _context.Update(corteActivo);
-            }
+                // Desactivar corte activo actual (si existe)
+                if (corteActivo != null)
+                {
+                    corteActivo.Estatus = false;
+                    corteActivo.FechaModificacion = ahora;
+                    corteActivo.IdUsuarioModifica = idUsuario;
+                    _context.Update(corteActivo);
+                }
 
-            // Crear el nuevo corte activo (sin crear marcadores de futuro)
-            var nuevoCorte = new Corte
-            {
-                Inicia = viewModel.Inicia,
-                Termina = viewModel.Termina,
-                IdUsuarioCrea = idUsuario,
-                IdUsuarioModifica = idUsuario,
-                FechaCreacion = ahora,
-                FechaModificacion = ahora,
-                Estatus = true
-            };
+                // Crear el nuevo corte activo (sin crear marcadores de futuro)
+                var nuevoCorte = new Corte
+                {
+                    Inicia = viewModel.Inicia,
+                    Termina = viewModel.Termina,
+                    IdUsuarioCrea = idUsuario,
+                    IdUsuarioModifica = idUsuario,
+                    FechaCreacion = ahora,
+                    FechaModificacion = ahora,
+                    Estatus = true
+                };
                 _context.Add(nuevoCorte);
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? "No inner exception";
+                _logger.LogError(ex, "Error al crear corte. Detalle: {Inner}", inner);
+                ModelState.AddModelError("", $"Error al guardar el corte: {ex.Message}. Detalle: {inner}");
+                return View(viewModel);
+            }
         }
 
         // GET: Cortes/Edit/5
@@ -678,6 +707,12 @@ namespace RecursosHumanosWeb.Controllers
                     {
                         throw;
                     }
+                }
+                catch (Exception ex)
+                {
+                    var inner = ex.InnerException?.Message ?? "No inner exception";
+                    _logger.LogError(ex, "Error al editar corte {Id}. Detalle: {Inner}", corte.Id, inner);
+                    ModelState.AddModelError("", $"Error al actualizar el corte: {ex.Message}. Detalle: {inner}");
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -733,7 +768,7 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // Authorization: only Administrador can delete cortes
-            if (!User.HasClaim("TipoUsuario", "4"))
+            if (!User.HasClaim("TipoUsuario", "1"))
             {
                 return Json(new AlertResponseDTO { Success = false, Title = "Acceso denegado", Message = "No tiene permisos para eliminar cortes.", Icon = "error" });
             }
@@ -813,7 +848,7 @@ namespace RecursosHumanosWeb.Controllers
             // 4. Procesar Datos para JSON (Gráficas)
             var permisosPorArea = permisos
                 .Where(p => p.IdUsuarioSolicitaNavigation?.IdAreaNavigation != null)
-                .GroupBy(p => p.IdUsuarioSolicitaNavigation.IdAreaNavigation)
+                .GroupBy(p => p.IdUsuarioSolicitaNavigation!.IdAreaNavigation!)
                 .Select((g, index) => new {
                     Id = g.Key.Id,
                     Name = g.Key.Descripcion,
@@ -822,7 +857,7 @@ namespace RecursosHumanosWeb.Controllers
                 }).OrderByDescending(x => x.Value).ToList();
 
             var permisosPorTipo = permisos
-                .GroupBy(p => p.IdTipoPermisoNavigation)
+                .GroupBy(p => p.IdTipoPermisoNavigation!)
                 .Select((g, index) => new {
                     Name = g.Key?.Descripcion ?? "Otros",
                     Value = g.Count(),

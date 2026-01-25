@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -10,22 +11,27 @@ using RecursosHumanosWeb.Models.ViewModels;
 using RecursosHumanosWeb.Models.ViewModels.Usuario;
 using X.PagedList.Extensions;
 using RecursosHumanosWeb.Helpers;
+using AutoMapper.QueryableExtensions;
 
 namespace RecursosHumanosWeb.Controllers
 {
+    [Authorize(Policy = "AdminOnly")]
     public class UsuariosController : Controller
     {
         private readonly RecursosHumanosContext _context;
         private readonly AutoMapper.IMapper _mapper;
+        private readonly ILogger<UsuariosController> _logger;
 
-        public UsuariosController(RecursosHumanosContext context, AutoMapper.IMapper mapper)
+        public UsuariosController(RecursosHumanosContext context, AutoMapper.IMapper mapper, ILogger<UsuariosController> logger)
         {
             _context = context;
             _mapper = mapper;
+            _logger = logger;
         }
 
 
         // GET: Usuarios
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Index(
             string nombreFilter,
             string correoFilter,
@@ -36,7 +42,7 @@ namespace RecursosHumanosWeb.Controllers
             string currentFilter)
         {
             // Verificar si el usuario es administrador
-            ViewData["IsAdministrador"] = User.HasClaim(c => c.Type == "TipoUsuario" && c.Value == "4");
+            ViewData["IsAdministrador"] = User.HasClaim(c => c.Type == "TipoUsuario" && c.Value == "1");
 
             // Parámetros de ordenamiento
             ViewBag.CurrentSort = sortOrder;
@@ -133,59 +139,115 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         // GET: Usuarios/Details/5 (Sin cambios)
-        [HttpGet]public async Task<IActionResult> Details(int? id)
+        [HttpGet]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
 
-            // 1️⃣ Cargar usuario con todas sus relaciones
-            var usuario = await _context.Usuarios
+            // 1. Obtenemos los datos base SIN cargar navegaciones conflictivas primero
+            var usuarioBasico = await _context.Usuarios
                 .AsNoTracking()
-                .Include(u => u.IdAreaNavigation)
-                .Include(u => u.IdDepartamentoNavigation)
-                .Include(u => u.IdPuestoNavigation)
-                .Include(u => u.IdTipoUsuarioNavigation)
-                .Include(u => u.IdUsuarioCreaNavigation)
-                .Include(u => u.IdUsuarioModificaNavigation)
-                .FirstOrDefaultAsync(u => u.Id == id);
+                .Where(u => u.Id == id)
+                .FirstOrDefaultAsync();
 
-            if (usuario == null)
-                return NotFound();
+            if (usuarioBasico == null) return NotFound();
 
-            // 2️⃣ Mapear a ViewModel
-            var vm = _mapper.Map<UsuarioDetailsViewModel>(usuario);
+            // 2. Creamos el ViewModel
+            var vm = new UsuarioDetailsViewModel
+            {
+                Id = usuarioBasico.Id,
+                Nombre = usuarioBasico.Nombre,
+                Correo = usuarioBasico.Correo,
+                Estatus = usuarioBasico.Estatus,
+                FechaCreacion = usuarioBasico.FechaCreacion,
+                FechaModificacion = usuarioBasico.FechaModificacion
+            };
 
-            if (vm == null)
-                return Problem("Error al mapear Usuario → UsuarioDetailsViewModel");
+            // 3. Condicional de C# puro: Si es Root, asignamos manual y salimos.
+            // Esto garantiza que EF NUNCA toque IdDepartamentoNavigation para el ID 1.
+            if (usuarioBasico.Id == 1)
+            {
+                vm.TipoUsuarioNombre = "Administrador Root";
+                vm.AreaDescripcion = "Sistemas / TI";
+                vm.DepartamentoDescripcion = "Sistema";
+                vm.PuestoDescripcion = "Administrador Global";
+                vm.UsuarioCreaNombre = "Sistema";
+                vm.UsuarioModificaNombre = "N/A";
+            }
+            else
+            {
+                // 4. Para cualquier otro usuario, cargamos las descripciones de forma segura
+                // Podemos hacer una consulta rápida o cargar las navegaciones aquí
+                var infoExtra = await _context.Usuarios
+                    .Where(u => u.Id == id)
+                    .Select(u => new
+                    {
+                        Tipo = u.IdTipoUsuarioNavigation.Descripcion,
+                        Area = u.IdAreaNavigation.Descripcion,
+                        Depto = u.IdDepartamentoNavigation.Descripcion,
+                        Puesto = u.IdPuestoNavigation.Descripcion,
+                        Creador = u.IdUsuarioCreaNavigation.Nombre
+                    })
+                    .FirstOrDefaultAsync();
 
-            // 3️⃣ Renderizar vista por convención: Views/Usuarios/Details.cshtml
+                vm.TipoUsuarioNombre = infoExtra?.Tipo ?? "Estándar";
+                vm.AreaDescripcion = infoExtra?.Area ?? "N/A";
+                vm.DepartamentoDescripcion = infoExtra?.Depto ?? "N/A";
+                vm.PuestoDescripcion = infoExtra?.Puesto ?? "N/A";
+                vm.UsuarioCreaNombre = infoExtra?.Creador ?? "Sistema";
+            }
+
             return View(vm);
         }
 
-
         // GET: Usuarios/Create
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult Create()
         {
             PrepareUserSelectLists();
             var vm = new UsuarioCreateViewModel();
             return View(vm);
         }
-
+        
         // POST: Usuarios/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Create(UsuarioCreateViewModel model)
         {
             if (ModelState.IsValid)
             {
                 var usuario = _mapper.Map<Usuario>(model);
+                
+                // Get current user ID safely from claims
+                var currentUserIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                int currentUserId = int.TryParse(currentUserIdStr, out int id) ? id : 1; 
+
+                // Set required auditor and status fields missing from the form
+                usuario.Estatus = true;
+                usuario.FechaCreacion = DateTime.Now;
+                usuario.IdUsuarioCrea = currentUserId;
+                usuario.IdUsuarioModifica = currentUserId;
+
                 // Prevent assigning ApiKey directly here; ApiKeysController manages keys
                 usuario.IdApiKey = null;
-                // Hash password before saving (SHA-256, matches DB/SP expectation if needed)
+                
+                // Hash password before saving
                 usuario.Clave = string.IsNullOrWhiteSpace(model.Clave) ? string.Empty : PasswordHasher.HashSha256(model.Clave);
-                _context.Add(usuario);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                
+                try 
+                {
+                    _context.Add(usuario);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    var inner = ex.InnerException?.Message ?? "No inner exception";
+                    _logger.LogError(ex, "Error al crear usuario. Detalle: {Inner}", inner);
+                    ModelState.AddModelError("", $"Error al guardar: {ex.Message}. Detalle: {inner}");
+                }
             }
 
             PrepareUserSelectLists();
@@ -193,6 +255,7 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         // GET: Usuarios/Edit/5 (Sin cambios)
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -216,6 +279,7 @@ namespace RecursosHumanosWeb.Controllers
         // POST: Usuarios/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Edit(UsuarioUpdateViewModel model)
         {
             if (!ModelState.IsValid)
@@ -232,6 +296,12 @@ namespace RecursosHumanosWeb.Controllers
 
             // Map the fields from viewmodel onto the entity (preserve other fields)
             _mapper.Map(model, usuario);
+            
+            // Auditor fields
+            var currentUserIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            usuario.IdUsuarioModifica = int.TryParse(currentUserIdStr, out int mid) ? mid : 1;
+            usuario.FechaModificacion = DateTime.Now;
+
             usuario.IdApiKey = existingApiKey;
             if (string.IsNullOrWhiteSpace(model.Clave))
             {
@@ -259,6 +329,7 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         // GET: Usuarios/Delete/5 (Sin cambios)
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -285,6 +356,7 @@ namespace RecursosHumanosWeb.Controllers
         // POST: Usuarios/Delete/5 (Flujo MVC tradicional - borrado lógico)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> Delete(int id)
         {
             var usuario = await _context.Usuarios.FindAsync(id);
@@ -311,7 +383,8 @@ namespace RecursosHumanosWeb.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangeStatus([FromBody] ActionRequestDTO request)
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> DeleteAjax([FromBody] ActionRequestDTO request)
         {
             // 1. Validar la solicitud (Input)
             if (request == null || request.Id <= 0)
@@ -345,10 +418,10 @@ namespace RecursosHumanosWeb.Controllers
                 return Json(new AlertResponseDTO
                 {
                     ShowConfirmation = true,
-                    Title = "¿Desactivar Usuario?",
-                    Message = $"¿Estás seguro de que deseas desactivar al usuario **{usuario.Nombre}**? Esto es un borrado lógico.",
+                    Title = "¿Eliminar Usuario?",
+                    Message = $"¿Estás seguro de que deseas eliminar al usuario **{usuario.Nombre}**? Esta acción es un borrado lógico.",
                     Icon = "question",
-                    ConfirmButtonText = "Sí, Desactivar"
+                    ConfirmButtonText = "Sí, Eliminar"
                 });
             }
 
@@ -364,8 +437,8 @@ namespace RecursosHumanosWeb.Controllers
                 return Json(new AlertResponseDTO
                 {
                     Success = true,
-                    Title = "¡Desactivado!",
-                    Message = $"El usuario **{usuario.Nombre}** ha sido desactivado lógicamente.",
+                    Title = "¡Eliminado!",
+                    Message = $"El usuario **{usuario.Nombre}** ha sido eliminado lógicamente.",
                     Icon = "success",
                     RedirectUrl = "/Usuarios/Index"
                 });
@@ -407,20 +480,30 @@ namespace RecursosHumanosWeb.Controllers
 
         // AJAX: Buscar usuarios por término para select2/autocomplete (centralizado)
         [HttpGet]
-        public async Task<IActionResult> SearchUsers(string term)
+        public async Task<IActionResult> SearchUsers(string term, string type = "name")
         {
             if (string.IsNullOrWhiteSpace(term))
             {
                 return Json(new List<object>());
             }
 
-            var results = await _context.Usuarios
-                .Where(u => u.Estatus && u.Nombre.Contains(term))
-                .OrderBy(u => u.Nombre)
+            var query = _context.Usuarios.Where(u => u.Estatus);
+
+            if (type == "email")
+            {
+                query = query.Where(u => u.Correo.Contains(term));
+            }
+            else
+            {
+                query = query.Where(u => u.Nombre.Contains(term));
+            }
+
+            var results = await query
+                .OrderBy(u => type == "email" ? u.Correo : u.Nombre)
                 .Select(u => new
                 {
                     id = u.Id,
-                    text = u.Nombre,
+                    text = type == "email" ? u.Correo : u.Nombre,
                     areaId = u.IdArea
                 })
                 .Take(10)
