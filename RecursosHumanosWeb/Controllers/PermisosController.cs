@@ -100,21 +100,21 @@ namespace RecursosHumanosWeb.Controllers
                 .Where(p => p.Estatus == true) // Solo activos, a menos que se requiera ver el historial completo
                 .AsQueryable();
 
-            // Restricciones por tipo de usuario
-            if (isAutorizador)
+            // Restricciones por tipo de usuario (Refined for Privacy and Traceability)
+            if (isRH || isAdministrador)
             {
-                userArea = await _context.Usuarios
-                    .Where(u => u.Id == idUsuario)
-                    .Select(u => u.IdArea)
-                    .FirstOrDefaultAsync();
-
-                // Autorizador solo ve los permisos de su área en el corte actual
-                permisosQuery = permisosQuery
-                    .Where(p => p.IdUsuarioSolicitaNavigation.IdArea == userArea && p.IdCorte == currentCourtId);
+                // Full visibility
             }
-            else if (isEmpleado)
+            else if (isAutorizador)
             {
-                // Empleado solo ve sus propios permisos
+                // Authorizers see their own AND permissions from their area for current cut (for review)
+                permisosQuery = permisosQuery
+                    .Where(p => p.IdUsuarioSolicita == idUsuario || 
+                               (p.IdUsuarioSolicitaNavigation.IdArea == userArea && p.IdCorte == currentCourtId));
+            }
+            else
+            {
+                // Regular employees strictly only see their own
                 permisosQuery = permisosQuery.Where(p => p.IdUsuarioSolicita == idUsuario);
             }
 
@@ -371,27 +371,21 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // Validaciones de negocio antes de editar
-            if (permiso.IdCorteNavigation != null && !(permiso.IdCorteNavigation.Estatus))
+            // Regla de Traceabilidad: Solo se puede modificar si el corte está vigente
+            if (permiso.IdCorteNavigation != null && !permiso.IdCorteNavigation.Estatus)
             {
                 TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new
                 {
                     icon = "warning",
                     title = "Corte No Vigente",
-                    text = "No se puede modificar un permiso asociado a un corte no vigente."
+                    text = "No se puede modificar un permiso asociado a un corte cerrado o no vigente."
                 });
                 return RedirectToAction("Index");
             }
-
-            if (permiso.Revisado == true)
-            {
-                TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new
-                {
-                    icon = "info",
-                    title = "Permiso Revisado",
-                    text = "No se puede modificar un permiso que ya fue revisado por un autorizador."
-                });
-                return RedirectToAction("Index");
-            }
+            
+            // Si ya fue revisado, se permite editar SOLO si el corte sigue vigente (según requerimiento)
+            // pero avisamos que se perderá la revisión anterior si cambia algo crítico.
+            // Para mantener consistencia, cualquier cambio en un permiso revisado debería resetear el 'Revisado' a false.
 
             if (!CanAccessPermiso(permiso))
             {
@@ -757,6 +751,14 @@ namespace RecursosHumanosWeb.Controllers
                 originalPermiso.IdUsuarioModifica = idUsuarioModifica;
                 originalPermiso.FechaModificacion = DateTime.Now;
 
+                // Resetear estado de revisión si un permiso revisado es modificado en un corte vigente
+                if (originalPermiso.Revisado)
+                {
+                    originalPermiso.Revisado = false;
+                    originalPermiso.IdUsuarioAutoriza = null;
+                    originalPermiso.FechaAutorizacion = null;
+                }
+
                 _context.Update(originalPermiso);
                 await _context.SaveChangesAsync();
 
@@ -824,9 +826,16 @@ namespace RecursosHumanosWeb.Controllers
                      return RedirectToAction("Index");
                 }
 
-                if (permiso.Revisado == true)
+                // Regla de Traceabilidad: Se puede borrar si no ha sido revisado O si el corte es vigente
+                bool isCorteVigente = permiso.IdCorteNavigation?.Estatus ?? false;
+                if (permiso.Revisado && !isCorteVigente)
                 {
-                     TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new { icon = "error", title = "No permitido", text = "No se puede eliminar un permiso ya revisado." });
+                     TempData["ErrorAlert"] = System.Text.Json.JsonSerializer.Serialize(new 
+                     { 
+                         icon = "error", 
+                         title = "No permitido", 
+                         text = "No se puede eliminar un permiso revisado de un corte ya cerrado." 
+                     });
                      return RedirectToAction("Index");
                 }
 
@@ -863,9 +872,17 @@ namespace RecursosHumanosWeb.Controllers
                  return Json(new AlertResponseDTO { Success = false, Title = "Acceso Denegado", Message = "No tienes permiso para eliminar este registro.", Icon = "error" });
             }
 
-            if (permiso.Revisado == true)
+            // Regla de Traceabilidad: Borrar si no ha sido revisado O si el corte es vigente
+            bool isCorteVigenteAjax = permiso.IdCorteNavigation?.Estatus ?? false;
+            if (permiso.Revisado && !isCorteVigenteAjax)
             {
-                return Json(new AlertResponseDTO { Success = false, Title = "No permitido", Message = "No se puede eliminar un permiso que ya ha sido revisado/autorizado.", Icon = "warning" });
+                return Json(new AlertResponseDTO 
+                { 
+                    Success = false, 
+                    Title = "No permitido", 
+                    Message = "No se puede eliminar un permiso que ya ha sido revisado en un corte cerrado.", 
+                    Icon = "warning" 
+                });
             }
 
             if (!request.Confirmed)

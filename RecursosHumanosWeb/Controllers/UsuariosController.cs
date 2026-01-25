@@ -15,7 +15,7 @@ using AutoMapper.QueryableExtensions;
 
 namespace RecursosHumanosWeb.Controllers
 {
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize]
     public class UsuariosController : Controller
     {
         private readonly RecursosHumanosContext _context;
@@ -31,7 +31,7 @@ namespace RecursosHumanosWeb.Controllers
 
 
         // GET: Usuarios
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize]
         public async Task<IActionResult> Index(
             string nombreFilter,
             string correoFilter,
@@ -140,7 +140,7 @@ namespace RecursosHumanosWeb.Controllers
 
         // GET: Usuarios/Details/5 (Sin cambios)
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();

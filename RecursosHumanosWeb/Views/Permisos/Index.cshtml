@@ -3,7 +3,10 @@
 
 @{
     ViewData["Title"] = "Gestión de Permisos";
-    string currentUserId = ViewData["IdUsuario"]?.ToString();
+    int currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+    bool isRH = User.HasClaim("TipoUsuario", "3");
+    bool isAdministrador = User.HasClaim("TipoUsuario", "1");
+    int currentCourtId = ViewBag.CurrentCourtId ?? 0;
 }
 
 @section Styles {
@@ -241,23 +244,15 @@
 
                             <!-- Action Buttons -->
                             <div class="row g-2">
-                                <authorize-section policy="AutorizadorOnly">
-                                    <div class="col-12">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
-                                            <i class="fas fa-eye"></i> Ver
-                                        </a>
-                                    </div>
-                                </authorize-section>
-                                <authorize-section policy="!AutorizadorOnly">
-                                    <div class="col-@(item.Revisado ? "12" : "4")">
-                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
-                                            <i class="fas fa-eye"></i> Ver
-                                        </a>
-                                    </div>
-                                </authorize-section>
+                                @{
+                                    bool isOwner = item.IdUsuarioSolicita == currentUserId;
+                                    bool inActiveCourt = item.IdCorte == currentCourtId;
+                                    bool canEdit = (isAdministrador || isRH || isOwner) && inActiveCourt;
+                                    bool canDelete = (isAdministrador || isRH || isOwner) && (!item.Revisado || inActiveCourt);
+                                }
 
                                 <authorize-section policy="AutorizadorOnly">
-                                    @if (!item.Revisado)
+                                    @if (!item.Revisado && inActiveCourt)
                                     {
                                         <div class="col-12">
                                             <a asp-action="Review" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white" style="background: var(--gradient-glass);">
@@ -265,15 +260,39 @@
                                             </a>
                                         </div>
                                     }
+                                    <div class="col-12">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </a>
+                                    </div>
                                 </authorize-section>
+
                                 <authorize-section policy="!AutorizadorOnly">
-                                    @if (!item.Revisado)
+                                    @if (canEdit)
                                     {
                                         <div class="col-4">
                                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
                                                 <i class="fas fa-pen"></i> Editar
                                             </a>
                                         </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-secondary w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white opacity-50" disabled title="No se puede editar fuera del corte vigente">
+                                                <i class="fas fa-lock"></i>
+                                            </button>
+                                        </div>
+                                    }
+
+                                    <div class="col-4">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
+                                            <i class="fas fa-eye"></i> Ver
+                                        </a>
+                                    </div>
+
+                                    @if (canDelete)
+                                    {
                                         <div class="col-4">
                                             <a href="#" class="btn btn-sm btn-danger w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white"
                                             data-action="DeleteAjax" 
@@ -281,6 +300,14 @@
                                             data-id="@item.Id">
                                                 <i class="fas fa-trash"></i>
                                             </a>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-4">
+                                            <button class="btn btn-sm btn-secondary w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white opacity-50" disabled title="No se puede eliminar un permiso revisado de un corte cerrado">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
                                         </div>
                                     }
                                 </authorize-section>
@@ -357,15 +384,38 @@
                                                         </a>
                                                     }
                                                 </authorize-section>
-                                                <authorize-section policy="!AutorizadorOnly">
-                                                    @if (!item.Revisado)
+                                                 <authorize-section policy="!AutorizadorOnly">
+                                                    @{
+                                                        bool isOwnerDesktop = item.IdUsuarioSolicita == currentUserId;
+                                                        bool inActiveCourtDesktop = item.IdCorte == currentCourtId;
+                                                        bool canEditDesktop = (isAdministrador || isRH || isOwnerDesktop) && inActiveCourtDesktop;
+                                                        bool canDeleteDesktop = (isAdministrador || isRH || isOwnerDesktop) && (!item.Revisado || inActiveCourtDesktop);
+                                                    }
+
+                                                    @if (canEditDesktop)
                                                     {
                                                         <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn btn-edit" title="Editar permiso" aria-label="Editar permiso">
                                                             <i class="fas fa-edit"></i>
                                                         </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="action-btn btn-secondary opacity-50" disabled title="No se puede editar fuera del corte vigente" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                            <i class="fas fa-lock"></i>
+                                                        </button>
+                                                    }
+
+                                                    @if (canDeleteDesktop)
+                                                    {
                                                         <a href="#" class="action-btn btn-delete" data-action="DeleteAjax" data-controller="Permisos" data-id="@item.Id" title="Eliminar permiso" aria-label="Eliminar permiso">
                                                             <i class="fas fa-trash"></i>
                                                         </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button class="action-btn btn-secondary opacity-50" disabled title="No se puede eliminar un permiso revisado de un corte cerrado" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
                                                     }
                                                 </authorize-section>
 
