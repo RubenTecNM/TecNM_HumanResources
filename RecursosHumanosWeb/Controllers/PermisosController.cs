@@ -57,9 +57,41 @@ namespace RecursosHumanosWeb.Controllers
 
         #region VISTAS Y FILTROS (Index, GetPermisos, GetStats)
 
+        private async Task AutoCloseCorteIfNeeded()
+        {
+            try
+            {
+                var corteActivo = await _context.Cortes
+                    .Where(c => c.Estatus)
+                    .OrderByDescending(c => c.Termina)
+                    .FirstOrDefaultAsync();
+
+                if (corteActivo != null && corteActivo.Termina < DateTime.Now)
+                {
+                    // Solo cerrar si NO hay permisos pendientes (Regla de datos limpios)
+                    if (!await _context.Permisos.AnyAsync(p => p.IdCorte == corteActivo.Id && !p.Revisado && p.Estatus))
+                    {
+                        corteActivo.Estatus = false;
+                        corteActivo.FechaModificacion = DateTime.Now;
+                        corteActivo.IdUsuarioModifica = corteActivo.IdUsuarioCrea;
+                        
+                        _context.Update(corteActivo);
+                        await _context.SaveChangesAsync();
+                        _logger.LogInformation("Corte {Id} cerrado automáticamente desde Permisos por expiración.", corteActivo.Id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en el cierre automático de corte desde Permisos.");
+            }
+        }
+
         [HttpGet]
         public async Task<IActionResult> Index(string nombreUsuario = null, int? idArea = null, DateTime? delDia = null, DateTime? alDia = null, int? page = 1)
         {
+            // Cierre automático lazy del corte activo
+            await AutoCloseCorteIfNeeded();
             // Obtener información del usuario autenticado
             bool isAutorizador = User.HasClaim("TipoUsuario", "2");
             bool isRH = User.HasClaim("TipoUsuario", "3");

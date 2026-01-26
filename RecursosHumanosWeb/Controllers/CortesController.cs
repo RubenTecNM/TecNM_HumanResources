@@ -46,6 +46,9 @@ namespace RecursosHumanosWeb.Controllers
                 .Include(c => c.IdUsuarioModificaNavigation)
                 .AsQueryable();
 
+            // Cierre automático lazy
+            await AutoCloseCorteIfNeeded();
+
             // Aplicar filtros
             if (fechaDesde.HasValue)
             {
@@ -581,6 +584,9 @@ namespace RecursosHumanosWeb.Controllers
             ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
             ViewData["IdUsuario"] = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
 
+            // Cierre automático lazy
+            await AutoCloseCorteIfNeeded();
+
             var viewModel = new CorteCreateViewModel();
 
             // Buscar el último corte con fechas (que sería el corte "actual" o "penúltimo")
@@ -616,13 +622,24 @@ namespace RecursosHumanosWeb.Controllers
             // Validaciones estándar
             if (viewModel.Termina <= viewModel.Inicia)
                 ModelState.AddModelError("Termina", "La fecha de fin no puede ser anterior a la fecha de inicio.");
-            if (viewModel.Termina >= viewModel.Termina)
-                ModelState.AddModelError("Termina", "La fecha de fin no puede ser mayor o igual a la fecha de fin en el periodo actual.");
+            
+            // Si hay un corte activo, la nueva fecha de fin debe ser posterior a la anterior
+            if (corteActivo != null && viewModel.Termina <= corteActivo.Termina)
+                ModelState.AddModelError("Termina", "La fecha de fin debe ser posterior al fin del corte actual.");
 
             if (!ModelState.IsValid)
             {
                 return View(viewModel);
+            }
 
+            // Validar que el corte anterior no tenga pendientes
+            if (corteActivo != null)
+            {
+                if (await HasPendingPermissions(corteActivo.Id))
+                {
+                    ModelState.AddModelError("", "No se puede crear un nuevo corte porque el corte actual tiene permisos pendientes de revisión.");
+                    return View(viewModel);
+                }
             }
 
             try
@@ -749,8 +766,15 @@ namespace RecursosHumanosWeb.Controllers
             var corte = await _context.Cortes.FindAsync(id);
             if (corte != null)
             {
+                if (await HasPendingPermissions(corte.Id))
+                {
+                    TempData["ErrorAlert"] = JsonConvert.SerializeObject(new { icon = "error", title = "Permisos Pendientes", text = "No se puede cerrar el corte porque tiene permisos sin revisar." });
+                    return RedirectToAction(nameof(Index));
+                }
+
                 corte.Estatus = false;
                 corte.FechaModificacion = DateTime.Now;
+                corte.IdUsuarioModifica = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
                 _context.Update(corte);
                 await _context.SaveChangesAsync();
             }
@@ -777,6 +801,18 @@ namespace RecursosHumanosWeb.Controllers
             if (corte == null)
             {
                 return Json(new AlertResponseDTO { Success = false, Title = "No encontrado", Message = "Corte no encontrado.", Icon = "error" });
+            }
+
+            // Validar permisos pendientes antes de inactivar via AJAX
+            if (await HasPendingPermissions(corte.Id))
+            {
+                return Json(new AlertResponseDTO 
+                { 
+                    Success = false, 
+                    Title = "Permisos Pendientes", 
+                    Message = "No se puede cerrar este corte porque tiene permisos que aún no han sido revisados.", 
+                    Icon = "warning" 
+                });
             }
 
             if (!request.Confirmed)
@@ -814,10 +850,50 @@ namespace RecursosHumanosWeb.Controllers
             }
         }
 
+        #region MÉTODOS PRIVADOS Y HELPERS
+
         private bool CorteExists(int id)
         {
             return _context.Cortes.Any(e => e.Id == id);
         }
+
+        private async Task<bool> HasPendingPermissions(int corteId)
+        {
+            return await _context.Permisos.AnyAsync(p => p.IdCorte == corteId && !p.Revisado && p.Estatus);
+        }
+
+        private async Task AutoCloseCorteIfNeeded()
+        {
+            try
+            {
+                var corteActivo = await _context.Cortes
+                    .Where(c => c.Estatus)
+                    .OrderByDescending(c => c.Termina)
+                    .FirstOrDefaultAsync();
+
+                if (corteActivo != null && corteActivo.Termina < DateTime.Now)
+                {
+                    // Solo cerrar si NO hay permisos pendientes (Regla de datos limpios)
+                    if (!await HasPendingPermissions(corteActivo.Id))
+                    {
+                        corteActivo.Estatus = false;
+                        corteActivo.FechaModificacion = DateTime.Now;
+                        // Trazabilidad: Usar el ID del usuario que creó el corte para el cierre automático
+                        corteActivo.IdUsuarioModifica = corteActivo.IdUsuarioCrea;
+                        
+                        _context.Update(corteActivo);
+                        await _context.SaveChangesAsync();
+                        _logger.LogInformation("Corte {Id} cerrado automáticamente por expiración.", corteActivo.Id);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en el cierre automático de corte.");
+            }
+        }
+
+        #endregion
 
         // Reemplaza tu método [HttpGet] Details(int? id) existente por este:
 
