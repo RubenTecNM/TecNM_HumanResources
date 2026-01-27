@@ -345,7 +345,8 @@ body {
     overflow-x: hidden;
     margin: 0;
     padding: 0;
-    background: #0A192F;
+    background: #0a0a0f;
+    /* Nuevo background minimalista */
     padding-bottom: 0 !important;
     /* Zero padding at body level */
 }
@@ -863,944 +864,1344 @@ body {
     height: 4rem;
 }
 
+/* COMENTADO - OLD BACKGROUND: /* ================================= */
+/* COMENTADO - OLD BACKGROUND:    ANIMACIONES MODERNAS - FONDO DINÁMICO MEJORADO */
+/* COMENTADO - OLD BACKGROUND:    Estilo: Minimalista Mágico con Profundidad */
+/* COMENTADO - OLD BACKGROUND:    ================================= */
+*/
 /* =================================
-   ANIMACIONES MODERNAS - FONDO DINÁMICO MEJORADO
-   Estilo: Minimalista Mágico con Profundidad
+   NUEVO BACKGROUND ANIMADO MINIMALISTA
+   Diseño: Partículas Flotantes + Gradientes Dinámicos
    ================================= */
 
-/* Contenedor principal - Fixed para cubrir siempre toda la pantalla */
-.modern-container {
+/* Variables para el nuevo background */
+:root {
+    --color-bg: #0a0a0f;
+    --color-primary: #4facfe;
+    --color-secondary: #00f2fe;
+    --color-accent: #ff6b9d;
+}
+
+/* Background animado con partículas flotantes */
+.animated-background {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden;
     z-index: -1;
-    background: linear-gradient(135deg,
-            #0a0e27 0%,
-            #151b35 25%,
-            #1a1f3a 50%,
-            #151b35 75%,
-            #0a0e27 100%);
-}
-
-/* Rejilla dinámica infinita - Más sutil y elegante */
-.grid-overlay {
-    position: absolute;
-    top: -100%;
-    left: -100%;
-    width: 300%;
-    height: 300%;
-    background-image:
-        linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59, 130, 246, 0.08) 1px, transparent 1px);
-    background-size: 80px 80px;
-    animation: grid-flow 30s linear infinite;
-    opacity: 0.4;
-}
-
-/* Efecto de niebla suave en capas */
-.aurora {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background:
-        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.12), transparent 60%),
-        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(139, 92, 246, 0.08), transparent 50%),
-        radial-gradient(ellipse 70% 50% at 0% 80%, rgba(6, 182, 212, 0.1), transparent 60%);
-    animation: aurora-breathe 20s ease-in-out infinite;
-}
-
-/* Nebulosas - Más difusas y sutiles */
-.nebula {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(60px);
-    opacity: 0;
-    animation: nebula-gentle-drift 25s ease-in-out infinite;
-    will-change: transform, opacity;
-}
-
-.nebula-1 {
-    width: 500px;
-    height: 350px;
-    top: 5%;
-    left: -15%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.1), transparent 65%);
-    animation-delay: 0s;
-}
-
-.nebula-2 {
-    width: 450px;
-    height: 320px;
-    top: 45%;
-    right: -18%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.18), rgba(168, 85, 247, 0.09), transparent 65%);
-    animation-delay: -8s;
-}
-
-.nebula-3 {
-    width: 400px;
-    height: 280px;
-    bottom: 8%;
-    left: 55%;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.16), rgba(59, 130, 246, 0.08), transparent 65%);
-    animation-delay: -16s;
-}
-
-/* Haces de luz más sutiles y elegantes */
-.light-ray {
-    position: absolute;
-    height: 1px;
-    opacity: 0;
-    animation: ray-elegant-sweep 22s ease-in-out infinite;
-    filter: blur(0.5px);
-    will-change: transform, opacity;
-}
-
-.ray-1 {
-    width: 500px;
-    top: 20%;
-    left: -150px;
-    background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(59, 130, 246, 0.4) 30%,
-            rgba(255, 255, 255, 0.25) 50%,
-            rgba(6, 182, 212, 0.4) 70%,
-            transparent 100%);
-    transform: rotate(12deg);
-    animation-delay: 0s;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-}
-
-.ray-2 {
-    width: 450px;
-    top: 52%;
-    right: -150px;
-    background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(139, 92, 246, 0.4) 30%,
-            rgba(255, 255, 255, 0.25) 50%,
-            rgba(168, 85, 247, 0.4) 70%,
-            transparent 100%);
-    transform: rotate(-18deg);
-    animation-delay: -7s;
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
-}
-
-.ray-3 {
-    width: 380px;
-    top: 72%;
-    left: 15%;
-    background: linear-gradient(90deg,
-            transparent 0%,
-            rgba(6, 182, 212, 0.4) 30%,
-            rgba(255, 255, 255, 0.25) 50%,
-            rgba(37, 99, 235, 0.4) 70%,
-            transparent 100%);
-    transform: rotate(25deg);
-    animation-delay: -14s;
-    box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
-}
-
-/* Rayos verticales más sutiles */
-.light-beam {
-    position: absolute;
-    width: 1px;
-    height: 100%;
-    background: linear-gradient(180deg,
-            transparent 0%,
-            rgba(59, 130, 246, 0.15) 25%,
-            rgba(255, 255, 255, 0.1) 50%,
-            rgba(6, 182, 212, 0.15) 75%,
-            transparent 100%);
-    animation: beam-gentle-pulse 15s ease-in-out infinite;
-    filter: blur(1px);
-    opacity: 0.3;
-}
-
-.beam-1 {
-    left: 28%;
-    animation-delay: 0s;
-}
-
-.beam-2 {
-    right: 22%;
-    animation-delay: -7.5s;
-    background: linear-gradient(180deg,
-            transparent 0%,
-            rgba(139, 92, 246, 0.15) 25%,
-            rgba(255, 255, 255, 0.1) 50%,
-            rgba(168, 85, 247, 0.15) 75%,
-            transparent 100%);
-}
-
-/* Destellos más delicados */
-.light-flash {
-    position: absolute;
-    width: 3px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 50%;
-    animation: flash-delicate 10s ease-in-out infinite;
-    will-change: transform, opacity;
-}
-
-.flash-1 {
-    top: 12%;
-    left: 18%;
-    animation-delay: 0s;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-}
-
-.flash-2 {
-    top: 42%;
-    right: 23%;
-    animation-delay: -2.5s;
-    background: rgba(59, 130, 246, 0.7);
-    box-shadow: 0 0 18px rgba(59, 130, 246, 0.5);
-}
-
-.flash-3 {
-    bottom: 28%;
-    left: 58%;
-    animation-delay: -5s;
-    background: rgba(6, 182, 212, 0.7);
-    box-shadow: 0 0 18px rgba(6, 182, 212, 0.5);
-}
-
-.flash-4 {
-    top: 63%;
-    left: 13%;
-    animation-delay: -7.5s;
-    background: rgba(139, 92, 246, 0.7);
-    box-shadow: 0 0 18px rgba(139, 92, 246, 0.5);
-}
-
-/* Líneas de conexión más sutiles */
-.connection-lines {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
     overflow: hidden;
+}
+
+/* Gradiente de fondo con animación */
+.gradient-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: float 20s ease-in-out infinite;
+}
+
+.orb-1 {
+    width: 500px;
+    height: 500px;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    top: -150px;
+    left: -150px;
+    animation-delay: 0s;
+}
+
+.orb-2 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(225deg, var(--color-accent), #c471ed);
+    bottom: -100px;
+    right: -100px;
+    animation-delay: -10s;
+}
+
+.orb-3 {
+    width: 350px;
+    height: 350px;
+    background: linear-gradient(45deg, var(--color-secondary), var(--color-primary));
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: -5s;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(30px, -50px) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-20px, 30px) scale(0.9);
+    }
+}
+
+/* Patrón de cuadrícula animada */
+.grid-pattern {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(79, 172, 254, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79, 172, 254, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(50px, 50px);
+    }
+}
+
+/* Partículas flotantes */
+.particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    opacity: 0;
+    animation: particleFloat 15s ease-in-out infinite;
+    box-shadow: 0 0 10px var(--color-primary);
+}
+
+@keyframes particleFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(100vh) scale(0);
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-100vh) scale(1);
+    }
+}
+
+/* Generación de partículas con diferentes delays */
+.particle:nth-child(1) {
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+    left: 20%;
+    animation-delay: 2s;
+}
+
+.particle:nth-child(3) {
+    left: 30%;
+    animation-delay: 4s;
+}
+
+.particle:nth-child(4) {
+    left: 40%;
+    animation-delay: 1s;
+}
+
+.particle:nth-child(5) {
+    left: 50%;
+    animation-delay: 3s;
+}
+
+.particle:nth-child(6) {
+    left: 60%;
+    animation-delay: 5s;
+}
+
+.particle:nth-child(7) {
+    left: 70%;
+    animation-delay: 2.5s;
+}
+
+.particle:nth-child(8) {
+    left: 80%;
+    animation-delay: 4.5s;
+}
+
+.particle:nth-child(9) {
+    left: 90%;
+    animation-delay: 1.5s;
+}
+
+.particle:nth-child(10) {
+    left: 15%;
+    animation-delay: 3.5s;
+}
+
+.particle:nth-child(11) {
+    left: 25%;
+    animation-delay: 5.5s;
+}
+
+.particle:nth-child(12) {
+    left: 35%;
+    animation-delay: 0.5s;
+}
+
+.particle:nth-child(13) {
+    left: 45%;
+    animation-delay: 2.2s;
+}
+
+.particle:nth-child(14) {
+    left: 55%;
+    animation-delay: 4.2s;
+}
+
+.particle:nth-child(15) {
+    left: 65%;
+    animation-delay: 1.2s;
+}
+
+.particle:nth-child(16) {
+    left: 75%;
+    animation-delay: 3.2s;
+}
+
+.particle:nth-child(17) {
+    left: 85%;
+    animation-delay: 5.2s;
+}
+
+.particle:nth-child(18) {
+    left: 95%;
+    animation-delay: 0.8s;
+}
+
+.particle:nth-child(19) {
+    left: 5%;
+    animation-delay: 2.8s;
+}
+
+.particle:nth-child(20) {
+    left: 47%;
+    animation-delay: 4.8s;
+}
+
+/* Líneas geométricas animadas */
+.geometric-lines {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0.1;
 }
 
 .line {
     position: absolute;
+    background: linear-gradient(90deg, transparent, var(--color-secondary), transparent);
     height: 1px;
-    opacity: 0;
-    animation: line-gentle-flow 20s linear infinite;
-}
-
-/* =================================
-   STANDARD FORM COMPONENTS (Centralized)
-   ================================= */
-.permission-form,
-.standard-form {
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: 0 8px 32px var(--shadow-color);
-    overflow: hidden;
-    backdrop-filter: blur(10px);
     width: 100%;
-    margin-bottom: var(--spacing-xl);
+    animation: lineMove 10s ease-in-out infinite;
 }
 
-.form-sections {
-    padding: var(--spacing-xl);
-}
-
-.form-section {
-    margin-bottom: var(--spacing-2xl);
-    padding-bottom: var(--spacing-xl);
-    border-bottom: 1px solid var(--border-light);
-    animation: fadeIn 0.6s ease-out;
-}
-
-.form-section:last-child {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-lg);
-    gap: var(--spacing-sm);
-}
-
-.section-header h3 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: var(--primary-dark);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    margin: 0;
-}
-
-.section-indicator {
-    width: 32px;
-    height: 32px;
-    background: var(--gradient-primary);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-/* Form Actions Footer */
-.form-actions {
-    background: var(--surface-alt);
-    padding: var(--spacing-xl);
-    border-top: 1px solid var(--border-light);
-}
-
-.actions-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--spacing-md);
-    flex-wrap: wrap;
-}
-
-/* =================================
-   PAGE HELPERS & TYPOGRAPHY
-   ================================= */
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-xl) var(--spacing-2xl);
-    background: linear-gradient(135deg, var(--primary-lightest) 0%, rgba(255, 255, 255, 0.95) 100%);
-    border-radius: var(--radius-xl);
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 20px var(--shadow-color);
-}
-
-/* Decorative background for headers */
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 150px;
-    height: 200%;
-    background: var(--gradient-secondary);
-    opacity: 0.08;
-    transform: rotate(15deg);
-    pointer-events: none;
-}
-
-.page-title {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--primary-dark);
-    margin: 0 0 var(--spacing-xs) 0;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    line-height: 1.2;
-}
-
-.page-subtitle {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-    margin: 0;
-    font-weight: 500;
-}
-
-.text-gradient {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* =================================
-   INPUTS & CONTROLS SPECIFIC
-   ================================= */
-.input-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.input-icon {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--primary-medium);
-    z-index: 2;
-    pointer-events: none;
-}
-
-.form-control {
-    padding-left: 2.8rem;
-    /* Space for icon */
-    height: 48px;
-    /* Consistent height */
-    border-radius: var(--radius-md);
-    border: 2px solid var(--border-color);
-    font-size: 1rem;
-    transition: all var(--transition-smooth);
-}
-
-.form-control:focus {
-    border-color: var(--primary-strong);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    background: white;
-}
-
-/* Select2 Customization overrides */
-.select2-container .select2-selection--single {
-    height: 48px !important;
-    border: 2px solid var(--border-color) !important;
-    border-radius: var(--radius-md) !important;
-    display: flex !important;
-    align-items: center !important;
-}
-
-.select2-container .select2-selection--single .select2-selection__rendered {
-    padding-left: 1rem !important;
-    font-size: 1rem !important;
-    color: var(--text-dark) !important;
-}
-
-/* =================================
-   DECORATIVE ELEMENTS
-   ================================= */
-.floating-icon {
-    width: 80px;
-    height: 80px;
-    background: var(--gradient-primary);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 2rem;
-    animation: floatGentle 3s ease-in-out infinite;
-    box-shadow: 0 10px 30px var(--shadow-hover);
-    position: relative;
-}
-
-.floating-icon::after {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    border-radius: 50%;
-    border: 2px solid var(--primary-medium);
-    opacity: 0.3;
-    animation: pulseRing 2s ease-out infinite;
-}
-
-@keyframes floatGentle {
-
-    0%,
-    100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-
-    50% {
-        transform: translateY(-8px) rotate(3deg);
-    }
-}
-
-@keyframes pulseRing {
-    0% {
-        transform: scale(1);
-        opacity: 0.3;
-    }
-
-    100% {
-        transform: scale(1.3);
-        opacity: 0;
-    }
-}
-
-.line-2 {
-    top: 68%;
-    width: 420px;
-    right: -420px;
-    background: linear-gradient(90deg,
-            transparent,
-            rgba(139, 92, 246, 0.3),
-            transparent);
-    animation-delay: -10s;
-}
-
-/* Campo de estrellas */
-.star-field {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-}
-
-.star {
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-    animation: star-gentle-twinkle 5s ease-in-out infinite;
-    box-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
-}
-
-/* Partículas flotantes - Movimiento más suave y orgánico */
-.floating-particle {
-    position: absolute;
-    width: 5px;
-    height: 5px;
-    background: rgba(59, 130, 246, 0.7);
-    border-radius: 50%;
-    animation: float-organic 28s ease-in-out infinite;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
-    will-change: transform;
-    opacity: 0.8;
-}
-
-/* Partículas que derivan suavemente */
-.particle-drift {
-    position: absolute;
-    width: 2.5px;
-    height: 2.5px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
-    animation: particle-gentle-wander 35s ease-in-out infinite;
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
-    will-change: transform;
-    opacity: 0.7;
-}
-
-/* Chispas de energía más delicadas */
-.energy-spark {
-    position: absolute;
-    width: 2px;
-    height: 2px;
-    background: rgba(59, 130, 246, 0.8);
-    border-radius: 50%;
-    animation: spark-gentle-dance 18s ease-in-out infinite;
-    box-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
-    will-change: transform, opacity;
-    opacity: 0.75;
-}
-
-/* Meteoros más sutiles */
-.meteor {
-    position: absolute;
-    width: 1.5px;
-    height: 1.5px;
-    background: white;
-    border-radius: 50%;
-    box-shadow:
-        0 0 8px rgba(255, 255, 255, 0.6),
-        -80px 0 15px 1.5px rgba(255, 255, 255, 0.2);
-    animation: meteor-gentle-fall 10s linear infinite;
-    right: -100px;
-    opacity: 0.8;
-}
-
-/* Pulsos de energía más sutiles */
-.energy-pulse {
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(59, 130, 246, 0.2);
-    animation: pulse-gentle-expand 8s ease-out infinite;
-}
-
-.pulse-1 {
-    top: 18%;
-    left: 13%;
+.line:nth-child(1) {
+    top: 20%;
     animation-delay: 0s;
 }
 
-.pulse-2 {
-    bottom: 22%;
-    right: 18%;
-    animation-delay: -2.7s;
-    border-color: rgba(139, 92, 246, 0.2);
+.line:nth-child(2) {
+    top: 40%;
+    animation-delay: 2s;
 }
 
-.pulse-3 {
-    top: 58%;
-    left: 48%;
-    animation-delay: -5.4s;
-    border-color: rgba(6, 182, 212, 0.2);
+.line:nth-child(3) {
+    top: 60%;
+    animation-delay: 4s;
 }
 
-/* =================================
-   ANIMACIONES SUAVES Y ORGÁNICAS
-   ================================= */
+.line:nth-child(4) {
+    top: 80%;
+    animation-delay: 6s;
+}
 
-@keyframes aurora-breathe {
+@keyframes lineMove {
 
     0%,
     100% {
-        opacity: 0.6;
-        transform: scale(1) rotate(0deg);
-    }
-
-    33% {
-        opacity: 0.8;
-        transform: scale(1.05) rotate(1deg);
-    }
-
-    66% {
-        opacity: 0.7;
-        transform: scale(0.98) rotate(-1deg);
-    }
-}
-
-@keyframes grid-flow {
-    0% {
-        transform: translate(0, 0);
-    }
-
-    100% {
-        transform: translate(80px, 80px);
-    }
-}
-
-@keyframes nebula-gentle-drift {
-
-    0%,
-    100% {
-        transform: translate(0, 0) rotate(0deg) scale(1);
-        opacity: 0.5;
-    }
-
-    25% {
-        transform: translate(60px, -40px) rotate(3deg) scale(1.08);
-        opacity: 0.7;
-    }
-
-    50% {
-        transform: translate(120px, 25px) rotate(-2deg) scale(0.96);
-        opacity: 0.6;
-    }
-
-    75% {
-        transform: translate(40px, 50px) rotate(4deg) scale(1.04);
-        opacity: 0.75;
-    }
-}
-
-@keyframes ray-elegant-sweep {
-    0% {
+        transform: translateX(-100%);
         opacity: 0;
-        transform: translateX(-200px) scaleX(0.6);
-    }
-
-    15% {
-        opacity: 0.5;
-    }
-
-    30% {
-        opacity: 0.8;
-        transform: translateX(0) scaleX(1);
     }
 
     50% {
         opacity: 1;
-        transform: translateX(60px) scaleX(1.15);
-    }
-
-    70% {
-        opacity: 0.6;
-        transform: translateX(120px) scaleX(0.9);
-    }
-
-    85% {
-        opacity: 0.3;
     }
 
     100% {
-        opacity: 0;
-        transform: translateX(250px) scaleX(0.4);
+        transform: translateX(100%);
     }
 }
 
-@keyframes beam-gentle-pulse {
+/* Puntos brillantes aleatorios */
+.sparkle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: sparkle 3s ease-in-out infinite;
+    box-shadow: 0 0 6px white;
+}
+
+@keyframes sparkle {
 
     0%,
     100% {
-        opacity: 0.2;
-        transform: scaleY(0.9);
-    }
-
-    50% {
-        opacity: 0.5;
-        transform: scaleY(1.1);
-    }
-}
-
-@keyframes flash-delicate {
-
-    0%,
-    100% {
-        opacity: 0.2;
-        transform: scale(0.6);
-    }
-
-    20% {
-        opacity: 0.6;
-        transform: scale(1.1);
+        opacity: 0;
+        transform: scale(0);
     }
 
     50% {
         opacity: 1;
-        transform: scale(1.8);
-    }
-
-    80% {
-        opacity: 0.5;
-        transform: scale(1.3);
+        transform: scale(1);
     }
 }
 
-@keyframes line-gentle-flow {
-    0% {
-        transform: translateX(0);
-        opacity: 0;
-    }
-
-    15% {
-        opacity: 0.4;
-    }
-
-    85% {
-        opacity: 0.4;
-    }
-
-    100% {
-        transform: translateX(calc(100vw + 450px));
-        opacity: 0;
-    }
+.sparkle:nth-child(1) {
+    top: 10%;
+    left: 20%;
+    animation-delay: 0s;
 }
 
-@keyframes star-gentle-twinkle {
-
-    0%,
-    100% {
-        opacity: 0.4;
-        transform: scale(0.9);
-    }
-
-    50% {
-        opacity: 1;
-        transform: scale(1.15);
-    }
+.sparkle:nth-child(2) {
+    top: 30%;
+    left: 80%;
+    animation-delay: 1s;
 }
 
-/* Movimiento orgánico para partículas flotantes */
-@keyframes float-organic {
-    0% {
-        transform: translate(0, 0) rotate(0deg);
-        opacity: 0.7;
-    }
-
-    20% {
-        transform: translate(90px, -60px) rotate(72deg);
-        opacity: 0.9;
-    }
-
-    40% {
-        transform: translate(160px, 40px) rotate(144deg);
-        opacity: 1;
-    }
-
-    60% {
-        transform: translate(110px, 100px) rotate(216deg);
-        opacity: 0.85;
-    }
-
-    80% {
-        transform: translate(30px, 60px) rotate(288deg);
-        opacity: 0.95;
-    }
-
-    100% {
-        transform: translate(0, 0) rotate(360deg);
-        opacity: 0.7;
-    }
+.sparkle:nth-child(3) {
+    top: 70%;
+    left: 30%;
+    animation-delay: 2s;
 }
 
-/* Vagabundeo suave de partículas */
-@keyframes particle-gentle-wander {
-    0% {
-        transform: translate(0, 0);
-        opacity: 0.6;
-    }
-
-    16.67% {
-        transform: translate(110px, -75px);
-        opacity: 0.8;
-    }
-
-    33.33% {
-        transform: translate(220px, 55px);
-        opacity: 0.9;
-    }
-
-    50% {
-        transform: translate(330px, -35px);
-        opacity: 0.75;
-    }
-
-    66.67% {
-        transform: translate(200px, 90px);
-        opacity: 0.85;
-    }
-
-    83.33% {
-        transform: translate(80px, -45px);
-        opacity: 0.95;
-    }
-
-    100% {
-        transform: translate(0, 0);
-        opacity: 0.6;
-    }
+.sparkle:nth-child(4) {
+    top: 50%;
+    left: 60%;
+    animation-delay: 1.5s;
 }
 
-/* Danza delicada de chispas */
-@keyframes spark-gentle-dance {
-    0% {
-        transform: translate(0, 0) scale(1);
-        opacity: 0.7;
-    }
-
-    12.5% {
-        transform: translate(45px, -30px) scale(1.3);
-        opacity: 0.95;
-    }
-
-    25% {
-        transform: translate(85px, 20px) scale(0.9);
-        opacity: 0.8;
-    }
-
-    37.5% {
-        transform: translate(60px, 60px) scale(1.15);
-        opacity: 0.9;
-    }
-
-    50% {
-        transform: translate(-30px, 40px) scale(1);
-        opacity: 0.85;
-    }
-
-    62.5% {
-        transform: translate(-60px, -20px) scale(0.95);
-        opacity: 0.9;
-    }
-
-    75% {
-        transform: translate(-40px, -50px) scale(1.2);
-        opacity: 1;
-    }
-
-    87.5% {
-        transform: translate(-15px, -30px) scale(1.05);
-        opacity: 0.95;
-    }
-
-    100% {
-        transform: translate(0, 0) scale(1);
-        opacity: 0.7;
-    }
+.sparkle:nth-child(5) {
+    top: 85%;
+    left: 15%;
+    animation-delay: 0.5s;
 }
 
-@keyframes meteor-gentle-fall {
-    0% {
-        transform: translate(0, 0);
-        opacity: 0.9;
-    }
-
-    75% {
-        opacity: 0.9;
-    }
-
-    100% {
-        transform: translate(-100vw, 100vh);
-        opacity: 0;
-    }
-}
-
-@keyframes pulse-gentle-expand {
-    0% {
-        transform: scale(0.85);
-        opacity: 0.6;
-    }
-
-    50% {
-        transform: scale(1.4);
-        opacity: 0.15;
-    }
-
-    100% {
-        transform: scale(1.8);
-        opacity: 0;
-    }
-}
-
-/* Optimización de rendimiento */
-.modern-container * {
+/* Textura de ruido sutil */
+.noise {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     pointer-events: none;
 }
 
-body {
-    position: relative;
-    z-index: 1;
-}
-
-/* Responsive - Reducir efectos en móviles para mejor rendimiento */
+/* Responsive - Ajustar orbes en mobile */
 @media (max-width: 768px) {
-    .nebula {
-        filter: blur(40px);
-        opacity: 0.6 !important;
-    }
 
-    .floating-particle,
-    .particle-drift,
-    .energy-spark {
-        animation-duration: 20s;
-    }
-
-    .light-ray,
-    .light-beam {
-        opacity: 0.4;
-    }
-
-    .grid-overlay {
-        opacity: 0.25;
+    .orb-1,
+    .orb-2,
+    .orb-3 {
+        width: 300px;
+        height: 300px;
     }
 }
 
-/* Accesibilidad - Respetar preferencias de movimiento reducido */
-@media (prefers-reduced-motion: reduce) {
-    .modern-container * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
+/* FIN NUEVO BACKGROUND ANIMADO MINIMALISTA */
+
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Contenedor principal - Fixed para cubrir siempre toda la pantalla */
+*/
+/* COMENTADO - OLD BACKGROUND: .modern-container { */
+/* COMENTADO - OLD BACKGROUND:     position: fixed; */
+/* COMENTADO - OLD BACKGROUND:     top: 0; */
+/* COMENTADO - OLD BACKGROUND:     left: 0; */
+/* COMENTADO - OLD BACKGROUND:     width: 100%; */
+/* COMENTADO - OLD BACKGROUND:     height: 100%; */
+/* COMENTADO - OLD BACKGROUND:     overflow: hidden; */
+/* COMENTADO - OLD BACKGROUND:     z-index: -1; */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(135deg, */
+/* COMENTADO - OLD BACKGROUND:             #0a0e27 0%, */
+/* COMENTADO - OLD BACKGROUND:             #151b35 25%, */
+/* COMENTADO - OLD BACKGROUND:             #1a1f3a 50%, */
+/* COMENTADO - OLD BACKGROUND:             #151b35 75%, */
+/* COMENTADO - OLD BACKGROUND:             #0a0e27 100%); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Rejilla dinámica infinita - Más sutil y elegante */
+*/
+/* COMENTADO - OLD BACKGROUND: .grid-overlay { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     top: -100%; */
+/* COMENTADO - OLD BACKGROUND:     left: -100%; */
+/* COMENTADO - OLD BACKGROUND:     width: 300%; */
+/* COMENTADO - OLD BACKGROUND:     height: 300%; */
+/* COMENTADO - OLD BACKGROUND:     background-image: */
+/* COMENTADO - OLD BACKGROUND:         linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px), */
+/* COMENTADO - OLD BACKGROUND:         linear-gradient(90deg, rgba(59, 130, 246, 0.08) 1px, transparent 1px); */
+/* COMENTADO - OLD BACKGROUND:     background-size: 80px 80px; */
+/* COMENTADO - OLD BACKGROUND:     animation: grid-flow 30s linear infinite; */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.4; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Efecto de niebla suave en capas */
+*/
+/* COMENTADO - OLD BACKGROUND: .aurora { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     top: 0; */
+/* COMENTADO - OLD BACKGROUND:     left: 0; */
+/* COMENTADO - OLD BACKGROUND:     width: 100%; */
+/* COMENTADO - OLD BACKGROUND:     height: 100%; */
+/* COMENTADO - OLD BACKGROUND:     background: */
+/* COMENTADO - OLD BACKGROUND:         radial-gradient(ellipse 80% 50% at 50% 0%, rgba(59, 130, 246, 0.12), transparent 60%), */
+/* COMENTADO - OLD BACKGROUND:         radial-gradient(ellipse 60% 40% at 100% 50%, rgba(139, 92, 246, 0.08), transparent 50%), */
+/* COMENTADO - OLD BACKGROUND:         radial-gradient(ellipse 70% 50% at 0% 80%, rgba(6, 182, 212, 0.1), transparent 60%); */
+/* COMENTADO - OLD BACKGROUND:     animation: aurora-breathe 20s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Nebulosas - Más difusas y sutiles */
+*/
+/* COMENTADO - OLD BACKGROUND: .nebula { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     filter: blur(60px); */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     animation: nebula-gentle-drift 25s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     will-change: transform, opacity; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .nebula-1 { */
+/* COMENTADO - OLD BACKGROUND:     width: 500px; */
+/* COMENTADO - OLD BACKGROUND:     height: 350px; */
+/* COMENTADO - OLD BACKGROUND:     top: 5%; */
+/* COMENTADO - OLD BACKGROUND:     left: -15%; */
+/* COMENTADO - OLD BACKGROUND:     background: radial-gradient(circle, rgba(59, 130, 246, 0.2), rgba(6, 182, 212, 0.1), transparent 65%); */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: 0s; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .nebula-2 { */
+/* COMENTADO - OLD BACKGROUND:     width: 450px; */
+/* COMENTADO - OLD BACKGROUND:     height: 320px; */
+/* COMENTADO - OLD BACKGROUND:     top: 45%; */
+/* COMENTADO - OLD BACKGROUND:     right: -18%; */
+/* COMENTADO - OLD BACKGROUND:     background: radial-gradient(circle, rgba(139, 92, 246, 0.18), rgba(168, 85, 247, 0.09), transparent 65%); */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -8s; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .nebula-3 { */
+/* COMENTADO - OLD BACKGROUND:     width: 400px; */
+/* COMENTADO - OLD BACKGROUND:     height: 280px; */
+/* COMENTADO - OLD BACKGROUND:     bottom: 8%; */
+/* COMENTADO - OLD BACKGROUND:     left: 55%; */
+/* COMENTADO - OLD BACKGROUND:     background: radial-gradient(circle, rgba(6, 182, 212, 0.16), rgba(59, 130, 246, 0.08), transparent 65%); */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -16s; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Haces de luz más sutiles y elegantes */
+*/
+/* COMENTADO - OLD BACKGROUND: .light-ray { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     height: 1px; */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     animation: ray-elegant-sweep 22s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     filter: blur(0.5px); */
+/* COMENTADO - OLD BACKGROUND:     will-change: transform, opacity; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .ray-1 { */
+/* COMENTADO - OLD BACKGROUND:     width: 500px; */
+/* COMENTADO - OLD BACKGROUND:     top: 20%; */
+/* COMENTADO - OLD BACKGROUND:     left: -150px; */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(90deg, */
+/* COMENTADO - OLD BACKGROUND:             transparent 0%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(59, 130, 246, 0.4) 30%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(255, 255, 255, 0.25) 50%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(6, 182, 212, 0.4) 70%, */
+/* COMENTADO - OLD BACKGROUND:             transparent 100%); */
+/* COMENTADO - OLD BACKGROUND:     transform: rotate(12deg); */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: 0s; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .ray-2 { */
+/* COMENTADO - OLD BACKGROUND:     width: 450px; */
+/* COMENTADO - OLD BACKGROUND:     top: 52%; */
+/* COMENTADO - OLD BACKGROUND:     right: -150px; */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(90deg, */
+/* COMENTADO - OLD BACKGROUND:             transparent 0%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(139, 92, 246, 0.4) 30%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(255, 255, 255, 0.25) 50%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(168, 85, 247, 0.4) 70%, */
+/* COMENTADO - OLD BACKGROUND:             transparent 100%); */
+/* COMENTADO - OLD BACKGROUND:     transform: rotate(-18deg); */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -7s; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 15px rgba(139, 92, 246, 0.3); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .ray-3 { */
+/* COMENTADO - OLD BACKGROUND:     width: 380px; */
+/* COMENTADO - OLD BACKGROUND:     top: 72%; */
+/* COMENTADO - OLD BACKGROUND:     left: 15%; */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(90deg, */
+/* COMENTADO - OLD BACKGROUND:             transparent 0%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(6, 182, 212, 0.4) 30%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(255, 255, 255, 0.25) 50%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(37, 99, 235, 0.4) 70%, */
+/* COMENTADO - OLD BACKGROUND:             transparent 100%); */
+/* COMENTADO - OLD BACKGROUND:     transform: rotate(25deg); */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -14s; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 15px rgba(6, 182, 212, 0.3); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Rayos verticales más sutiles */
+*/
+/* COMENTADO - OLD BACKGROUND: .light-beam { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 1px; */
+/* COMENTADO - OLD BACKGROUND:     height: 100%; */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(180deg, */
+/* COMENTADO - OLD BACKGROUND:             transparent 0%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(59, 130, 246, 0.15) 25%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(255, 255, 255, 0.1) 50%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(6, 182, 212, 0.15) 75%, */
+/* COMENTADO - OLD BACKGROUND:             transparent 100%); */
+/* COMENTADO - OLD BACKGROUND:     animation: beam-gentle-pulse 15s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     filter: blur(1px); */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.3; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .beam-1 { */
+/* COMENTADO - OLD BACKGROUND:     left: 28%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: 0s; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .beam-2 { */
+/* COMENTADO - OLD BACKGROUND:     right: 22%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -7.5s; */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(180deg, */
+/* COMENTADO - OLD BACKGROUND:             transparent 0%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(139, 92, 246, 0.15) 25%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(255, 255, 255, 0.1) 50%, */
+/* COMENTADO - OLD BACKGROUND:             rgba(168, 85, 247, 0.15) 75%, */
+/* COMENTADO - OLD BACKGROUND:             transparent 100%); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Destellos más delicados */
+*/
+/* COMENTADO - OLD BACKGROUND: .light-flash { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 3px; */
+/* COMENTADO - OLD BACKGROUND:     height: 3px; */
+/* COMENTADO - OLD BACKGROUND:     background: rgba(255, 255, 255, 0.7); */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     animation: flash-delicate 10s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     will-change: transform, opacity; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .flash-1 { */
+/* COMENTADO - OLD BACKGROUND:     top: 12%; */
+/* COMENTADO - OLD BACKGROUND:     left: 18%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: 0s; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .flash-2 { */
+/* COMENTADO - OLD BACKGROUND:     top: 42%; */
+/* COMENTADO - OLD BACKGROUND:     right: 23%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -2.5s; */
+/* COMENTADO - OLD BACKGROUND:     background: rgba(59, 130, 246, 0.7); */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 18px rgba(59, 130, 246, 0.5); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .flash-3 { */
+/* COMENTADO - OLD BACKGROUND:     bottom: 28%; */
+/* COMENTADO - OLD BACKGROUND:     left: 58%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -5s; */
+/* COMENTADO - OLD BACKGROUND:     background: rgba(6, 182, 212, 0.7); */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 18px rgba(6, 182, 212, 0.5); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .flash-4 { */
+/* COMENTADO - OLD BACKGROUND:     top: 63%; */
+/* COMENTADO - OLD BACKGROUND:     left: 13%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -7.5s; */
+/* COMENTADO - OLD BACKGROUND:     background: rgba(139, 92, 246, 0.7); */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 18px rgba(139, 92, 246, 0.5); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Líneas de conexión más sutiles */
+*/
+/* COMENTADO - OLD BACKGROUND: .connection-lines { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 100%; */
+/* COMENTADO - OLD BACKGROUND:     height: 100%; */
+/* COMENTADO - OLD BACKGROUND:     top: 0; */
+/* COMENTADO - OLD BACKGROUND:     left: 0; */
+/* COMENTADO - OLD BACKGROUND:     overflow: hidden; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .line { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     height: 1px; */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     animation: line-gentle-flow 20s linear infinite; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* ================================= */
+/* COMENTADO - OLD BACKGROUND:    STANDARD FORM COMPONENTS (Centralized) */
+/* COMENTADO - OLD BACKGROUND:    ================================= */
+*/
+/* COMENTADO - OLD BACKGROUND: .permission-form, */
+/* COMENTADO - OLD BACKGROUND: .standard-form { */
+/* COMENTADO - OLD BACKGROUND:     background: white; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: var(--radius-lg); */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 8px 32px var(--shadow-color); */
+/* COMENTADO - OLD BACKGROUND:     overflow: hidden; */
+/* COMENTADO - OLD BACKGROUND:     backdrop-filter: blur(10px); */
+/* COMENTADO - OLD BACKGROUND:     width: 100%; */
+/* COMENTADO - OLD BACKGROUND:     margin-bottom: var(--spacing-xl); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .form-sections { */
+/* COMENTADO - OLD BACKGROUND:     padding: var(--spacing-xl); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .form-section { */
+/* COMENTADO - OLD BACKGROUND:     margin-bottom: var(--spacing-2xl); */
+/* COMENTADO - OLD BACKGROUND:     padding-bottom: var(--spacing-xl); */
+/* COMENTADO - OLD BACKGROUND:     border-bottom: 1px solid var(--border-light); */
+/* COMENTADO - OLD BACKGROUND:     animation: fadeIn 0.6s ease-out; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .form-section:last-child { */
+/* COMENTADO - OLD BACKGROUND:     border-bottom: none; */
+/* COMENTADO - OLD BACKGROUND:     margin-bottom: 0; */
+/* COMENTADO - OLD BACKGROUND:     padding-bottom: 0; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .section-header { */
+/* COMENTADO - OLD BACKGROUND:     display: flex; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center; */
+/* COMENTADO - OLD BACKGROUND:     justify-content: space-between; */
+/* COMENTADO - OLD BACKGROUND:     margin-bottom: var(--spacing-lg); */
+/* COMENTADO - OLD BACKGROUND:     gap: var(--spacing-sm); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .section-header h3 { */
+/* COMENTADO - OLD BACKGROUND:     font-size: 1.3rem; */
+/* COMENTADO - OLD BACKGROUND:     font-weight: 600; */
+/* COMENTADO - OLD BACKGROUND:     color: var(--primary-dark); */
+/* COMENTADO - OLD BACKGROUND:     display: flex; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center; */
+/* COMENTADO - OLD BACKGROUND:     gap: var(--spacing-sm); */
+/* COMENTADO - OLD BACKGROUND:     margin: 0; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .section-indicator { */
+/* COMENTADO - OLD BACKGROUND:     width: 32px; */
+/* COMENTADO - OLD BACKGROUND:     height: 32px; */
+/* COMENTADO - OLD BACKGROUND:     background: var(--gradient-primary); */
+/* COMENTADO - OLD BACKGROUND:     color: white; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     display: flex; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center; */
+/* COMENTADO - OLD BACKGROUND:     justify-content: center; */
+/* COMENTADO - OLD BACKGROUND:     font-weight: 700; */
+/* COMENTADO - OLD BACKGROUND:     font-size: 1rem; */
+/* COMENTADO - OLD BACKGROUND:     flex-shrink: 0; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Form Actions Footer */
+*/
+/* COMENTADO - OLD BACKGROUND: .form-actions { */
+/* COMENTADO - OLD BACKGROUND:     background: var(--surface-alt); */
+/* COMENTADO - OLD BACKGROUND:     padding: var(--spacing-xl); */
+/* COMENTADO - OLD BACKGROUND:     border-top: 1px solid var(--border-light); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .actions-content { */
+/* COMENTADO - OLD BACKGROUND:     display: flex; */
+/* COMENTADO - OLD BACKGROUND:     justify-content: space-between; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center; */
+/* COMENTADO - OLD BACKGROUND:     gap: var(--spacing-md); */
+/* COMENTADO - OLD BACKGROUND:     flex-wrap: wrap; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* ================================= */
+/* COMENTADO - OLD BACKGROUND:    PAGE HELPERS & TYPOGRAPHY */
+/* COMENTADO - OLD BACKGROUND:    ================================= */
+*/
+/* COMENTADO - OLD BACKGROUND: .page-header { */
+/* COMENTADO - OLD BACKGROUND:     display: flex; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center; */
+/* COMENTADO - OLD BACKGROUND:     justify-content: space-between; */
+/* COMENTADO - OLD BACKGROUND:     margin-bottom: var(--spacing-lg); */
+/* COMENTADO - OLD BACKGROUND:     padding: var(--spacing-xl) var(--spacing-2xl); */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(135deg, var(--primary-lightest) 0%, rgba(255, 255, 255, 0.95) 100%); */
+/* COMENTADO - OLD BACKGROUND:     border-radius: var(--radius-xl); */
+/* COMENTADO - OLD BACKGROUND:     position: relative; */
+/* COMENTADO - OLD BACKGROUND:     overflow: hidden; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 4px 20px var(--shadow-color); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Decorative background for headers */
+*/
+/* COMENTADO - OLD BACKGROUND: .page-header::before { */
+/* COMENTADO - OLD BACKGROUND:     content: ''; */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     top: -50%; */
+/* COMENTADO - OLD BACKGROUND:     right: -10%; */
+/* COMENTADO - OLD BACKGROUND:     width: 150px; */
+/* COMENTADO - OLD BACKGROUND:     height: 200%; */
+/* COMENTADO - OLD BACKGROUND:     background: var(--gradient-secondary); */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.08; */
+/* COMENTADO - OLD BACKGROUND:     transform: rotate(15deg); */
+/* COMENTADO - OLD BACKGROUND:     pointer-events: none; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .page-title { */
+/* COMENTADO - OLD BACKGROUND:     font-size: 2rem; */
+/* COMENTADO - OLD BACKGROUND:     font-weight: 800; */
+/* COMENTADO - OLD BACKGROUND:     color: var(--primary-dark); */
+/* COMENTADO - OLD BACKGROUND:     margin: 0 0 var(--spacing-xs) 0; */
+/* COMENTADO - OLD BACKGROUND:     display: flex; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center; */
+/* COMENTADO - OLD BACKGROUND:     gap: var(--spacing-md); */
+/* COMENTADO - OLD BACKGROUND:     line-height: 1.2; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .page-subtitle { */
+/* COMENTADO - OLD BACKGROUND:     color: var(--text-muted); */
+/* COMENTADO - OLD BACKGROUND:     font-size: 1.1rem; */
+/* COMENTADO - OLD BACKGROUND:     margin: 0; */
+/* COMENTADO - OLD BACKGROUND:     font-weight: 500; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .text-gradient { */
+/* COMENTADO - OLD BACKGROUND:     background: var(--gradient-primary); */
+/* COMENTADO - OLD BACKGROUND:     -webkit-background-clip: text; */
+/* COMENTADO - OLD BACKGROUND:     -webkit-text-fill-color: transparent; */
+/* COMENTADO - OLD BACKGROUND:     background-clip: text; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* ================================= */
+/* COMENTADO - OLD BACKGROUND:    INPUTS & CONTROLS SPECIFIC */
+/* COMENTADO - OLD BACKGROUND:    ================================= */
+*/
+/* COMENTADO - OLD BACKGROUND: .input-wrapper { */
+/* COMENTADO - OLD BACKGROUND:     position: relative; */
+/* COMENTADO - OLD BACKGROUND:     width: 100%; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .input-icon { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     left: 15px; */
+/* COMENTADO - OLD BACKGROUND:     top: 50%; */
+/* COMENTADO - OLD BACKGROUND:     transform: translateY(-50%); */
+/* COMENTADO - OLD BACKGROUND:     color: var(--primary-medium); */
+/* COMENTADO - OLD BACKGROUND:     z-index: 2; */
+/* COMENTADO - OLD BACKGROUND:     pointer-events: none; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .form-control { */
+/* COMENTADO - OLD BACKGROUND:     padding-left: 2.8rem; */
+/* COMENTADO - OLD BACKGROUND:     /* Space for icon */
+*/
+/* COMENTADO - OLD BACKGROUND:     height: 48px; */
+/* COMENTADO - OLD BACKGROUND:     /* Consistent height */
+*/
+/* COMENTADO - OLD BACKGROUND:     border-radius: var(--radius-md); */
+/* COMENTADO - OLD BACKGROUND:     border: 2px solid var(--border-color); */
+/* COMENTADO - OLD BACKGROUND:     font-size: 1rem; */
+/* COMENTADO - OLD BACKGROUND:     transition: all var(--transition-smooth); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .form-control:focus { */
+/* COMENTADO - OLD BACKGROUND:     border-color: var(--primary-strong); */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); */
+/* COMENTADO - OLD BACKGROUND:     background: white; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Select2 Customization overrides */
+*/
+/* COMENTADO - OLD BACKGROUND: .select2-container .select2-selection--single { */
+/* COMENTADO - OLD BACKGROUND:     height: 48px !important; */
+/* COMENTADO - OLD BACKGROUND:     border: 2px solid var(--border-color) !important; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: var(--radius-md) !important; */
+/* COMENTADO - OLD BACKGROUND:     display: flex !important; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center !important; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .select2-container .select2-selection--single .select2-selection__rendered { */
+/* COMENTADO - OLD BACKGROUND:     padding-left: 1rem !important; */
+/* COMENTADO - OLD BACKGROUND:     font-size: 1rem !important; */
+/* COMENTADO - OLD BACKGROUND:     color: var(--text-dark) !important; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* ================================= */
+/* COMENTADO - OLD BACKGROUND:    DECORATIVE ELEMENTS */
+/* COMENTADO - OLD BACKGROUND:    ================================= */
+*/
+/* COMENTADO - OLD BACKGROUND: .floating-icon { */
+/* COMENTADO - OLD BACKGROUND:     width: 80px; */
+/* COMENTADO - OLD BACKGROUND:     height: 80px; */
+/* COMENTADO - OLD BACKGROUND:     background: var(--gradient-primary); */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     display: flex; */
+/* COMENTADO - OLD BACKGROUND:     align-items: center; */
+/* COMENTADO - OLD BACKGROUND:     justify-content: center; */
+/* COMENTADO - OLD BACKGROUND:     color: white; */
+/* COMENTADO - OLD BACKGROUND:     font-size: 2rem; */
+/* COMENTADO - OLD BACKGROUND:     animation: floatGentle 3s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 10px 30px var(--shadow-hover); */
+/* COMENTADO - OLD BACKGROUND:     position: relative; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .floating-icon::after { */
+/* COMENTADO - OLD BACKGROUND:     content: ''; */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     inset: -3px; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     border: 2px solid var(--primary-medium); */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.3; */
+/* COMENTADO - OLD BACKGROUND:     animation: pulseRing 2s ease-out infinite; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes floatGentle { */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     0%, */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translateY(0px) rotate(0deg); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translateY(-8px) rotate(3deg); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes pulseRing { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.3; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.3); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .line-2 { */
+/* COMENTADO - OLD BACKGROUND:     top: 68%; */
+/* COMENTADO - OLD BACKGROUND:     width: 420px; */
+/* COMENTADO - OLD BACKGROUND:     right: -420px; */
+/* COMENTADO - OLD BACKGROUND:     background: linear-gradient(90deg, */
+/* COMENTADO - OLD BACKGROUND:             transparent, */
+/* COMENTADO - OLD BACKGROUND:             rgba(139, 92, 246, 0.3), */
+/* COMENTADO - OLD BACKGROUND:             transparent); */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -10s; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Campo de estrellas */
+*/
+/* COMENTADO - OLD BACKGROUND: .star-field { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 100%; */
+/* COMENTADO - OLD BACKGROUND:     height: 100%; */
+/* COMENTADO - OLD BACKGROUND:     top: 0; */
+/* COMENTADO - OLD BACKGROUND:     left: 0; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .star { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     background: white; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     animation: star-gentle-twinkle 5s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 2px rgba(255, 255, 255, 0.5); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Partículas flotantes - Movimiento más suave y orgánico */
+*/
+/* COMENTADO - OLD BACKGROUND: .floating-particle { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 5px; */
+/* COMENTADO - OLD BACKGROUND:     height: 5px; */
+/* COMENTADO - OLD BACKGROUND:     background: rgba(59, 130, 246, 0.7); */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     animation: float-organic 28s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); */
+/* COMENTADO - OLD BACKGROUND:     will-change: transform; */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.8; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Partículas que derivan suavemente */
+*/
+/* COMENTADO - OLD BACKGROUND: .particle-drift { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 2.5px; */
+/* COMENTADO - OLD BACKGROUND:     height: 2.5px; */
+/* COMENTADO - OLD BACKGROUND:     background: rgba(255, 255, 255, 0.6); */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     animation: particle-gentle-wander 35s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 6px rgba(255, 255, 255, 0.4); */
+/* COMENTADO - OLD BACKGROUND:     will-change: transform; */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.7; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Chispas de energía más delicadas */
+*/
+/* COMENTADO - OLD BACKGROUND: .energy-spark { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 2px; */
+/* COMENTADO - OLD BACKGROUND:     height: 2px; */
+/* COMENTADO - OLD BACKGROUND:     background: rgba(59, 130, 246, 0.8); */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     animation: spark-gentle-dance 18s ease-in-out infinite; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: 0 0 5px rgba(59, 130, 246, 0.6); */
+/* COMENTADO - OLD BACKGROUND:     will-change: transform, opacity; */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.75; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Meteoros más sutiles */
+*/
+/* COMENTADO - OLD BACKGROUND: .meteor { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 1.5px; */
+/* COMENTADO - OLD BACKGROUND:     height: 1.5px; */
+/* COMENTADO - OLD BACKGROUND:     background: white; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     box-shadow: */
+/* COMENTADO - OLD BACKGROUND:         0 0 8px rgba(255, 255, 255, 0.6), */
+/* COMENTADO - OLD BACKGROUND:         -80px 0 15px 1.5px rgba(255, 255, 255, 0.2); */
+/* COMENTADO - OLD BACKGROUND:     animation: meteor-gentle-fall 10s linear infinite; */
+/* COMENTADO - OLD BACKGROUND:     right: -100px; */
+/* COMENTADO - OLD BACKGROUND:     opacity: 0.8; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Pulsos de energía más sutiles */
+*/
+/* COMENTADO - OLD BACKGROUND: .energy-pulse { */
+/* COMENTADO - OLD BACKGROUND:     position: absolute; */
+/* COMENTADO - OLD BACKGROUND:     width: 120px; */
+/* COMENTADO - OLD BACKGROUND:     height: 120px; */
+/* COMENTADO - OLD BACKGROUND:     border-radius: 50%; */
+/* COMENTADO - OLD BACKGROUND:     border: 1.5px solid rgba(59, 130, 246, 0.2); */
+/* COMENTADO - OLD BACKGROUND:     animation: pulse-gentle-expand 8s ease-out infinite; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .pulse-1 { */
+/* COMENTADO - OLD BACKGROUND:     top: 18%; */
+/* COMENTADO - OLD BACKGROUND:     left: 13%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: 0s; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .pulse-2 { */
+/* COMENTADO - OLD BACKGROUND:     bottom: 22%; */
+/* COMENTADO - OLD BACKGROUND:     right: 18%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -2.7s; */
+/* COMENTADO - OLD BACKGROUND:     border-color: rgba(139, 92, 246, 0.2); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: .pulse-3 { */
+/* COMENTADO - OLD BACKGROUND:     top: 58%; */
+/* COMENTADO - OLD BACKGROUND:     left: 48%; */
+/* COMENTADO - OLD BACKGROUND:     animation-delay: -5.4s; */
+/* COMENTADO - OLD BACKGROUND:     border-color: rgba(6, 182, 212, 0.2); */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* ================================= */
+/* COMENTADO - OLD BACKGROUND:    ANIMACIONES SUAVES Y ORGÁNICAS */
+/* COMENTADO - OLD BACKGROUND:    ================================= */
+*/
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes aurora-breathe { */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     0%, */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1) rotate(0deg); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     33% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.8; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.05) rotate(1deg); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     66% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.7; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(0.98) rotate(-1deg); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes grid-flow { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(80px, 80px); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes nebula-gentle-drift { */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     0%, */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0) rotate(0deg) scale(1); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.5; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     25% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(60px, -40px) rotate(3deg) scale(1.08); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.7; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(120px, 25px) rotate(-2deg) scale(0.96); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     75% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(40px, 50px) rotate(4deg) scale(1.04); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.75; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes ray-elegant-sweep { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:         transform: translateX(-200px) scaleX(0.6); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     15% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.5; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     30% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.8; */
+/* COMENTADO - OLD BACKGROUND:         transform: translateX(0) scaleX(1); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 1; */
+/* COMENTADO - OLD BACKGROUND:         transform: translateX(60px) scaleX(1.15); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     70% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6; */
+/* COMENTADO - OLD BACKGROUND:         transform: translateX(120px) scaleX(0.9); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     85% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.3; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:         transform: translateX(250px) scaleX(0.4); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes beam-gentle-pulse { */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     0%, */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.2; */
+/* COMENTADO - OLD BACKGROUND:         transform: scaleY(0.9); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.5; */
+/* COMENTADO - OLD BACKGROUND:         transform: scaleY(1.1); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes flash-delicate { */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     0%, */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.2; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(0.6); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     20% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.1); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 1; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.8); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     80% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.5; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.3); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes line-gentle-flow { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translateX(0); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     15% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.4; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     85% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.4; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translateX(calc(100vw + 450px)); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes star-gentle-twinkle { */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     0%, */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.4; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(0.9); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 1; */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.15); */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Movimiento orgánico para partículas flotantes */
+*/
+/* COMENTADO - OLD BACKGROUND: @keyframes float-organic { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0) rotate(0deg); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.7; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     20% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(90px, -60px) rotate(72deg); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.9; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     40% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(160px, 40px) rotate(144deg); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 1; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     60% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(110px, 100px) rotate(216deg); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.85; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     80% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(30px, 60px) rotate(288deg); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.95; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0) rotate(360deg); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.7; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Vagabundeo suave de partículas */
+*/
+/* COMENTADO - OLD BACKGROUND: @keyframes particle-gentle-wander { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     16.67% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(110px, -75px); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.8; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     33.33% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(220px, 55px); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.9; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(330px, -35px); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.75; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     66.67% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(200px, 90px); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.85; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     83.33% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(80px, -45px); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.95; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Danza delicada de chispas */
+*/
+/* COMENTADO - OLD BACKGROUND: @keyframes spark-gentle-dance { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0) scale(1); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.7; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     12.5% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(45px, -30px) scale(1.3); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.95; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     25% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(85px, 20px) scale(0.9); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.8; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     37.5% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(60px, 60px) scale(1.15); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.9; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(-30px, 40px) scale(1); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.85; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     62.5% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(-60px, -20px) scale(0.95); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.9; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     75% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(-40px, -50px) scale(1.2); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 1; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     87.5% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(-15px, -30px) scale(1.05); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.95; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0) scale(1); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.7; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes meteor-gentle-fall { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(0, 0); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.9; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     75% { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.9; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: translate(-100vw, 100vh); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: @keyframes pulse-gentle-expand { */
+/* COMENTADO - OLD BACKGROUND:     0% { */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(0.85); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     50% { */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.4); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.15; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     100% { */
+/* COMENTADO - OLD BACKGROUND:         transform: scale(1.8); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Optimización de rendimiento */
+*/
+/* COMENTADO - OLD BACKGROUND: .modern-container * { */
+/* COMENTADO - OLD BACKGROUND:     pointer-events: none; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: body { */
+/* COMENTADO - OLD BACKGROUND:     position: relative; */
+/* COMENTADO - OLD BACKGROUND:     z-index: 1; */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Responsive - Reducir efectos en móviles para mejor rendimiento */
+*/
+/* COMENTADO - OLD BACKGROUND: @media (max-width: 768px) { */
+/* COMENTADO - OLD BACKGROUND:     .nebula { */
+/* COMENTADO - OLD BACKGROUND:         filter: blur(40px); */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.6 !important; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     .floating-particle, */
+/* COMENTADO - OLD BACKGROUND:     .particle-drift, */
+/* COMENTADO - OLD BACKGROUND:     .energy-spark { */
+/* COMENTADO - OLD BACKGROUND:         animation-duration: 20s; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     .light-ray, */
+/* COMENTADO - OLD BACKGROUND:     .light-beam { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.4; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND:     .grid-overlay { */
+/* COMENTADO - OLD BACKGROUND:         opacity: 0.25; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
+/* COMENTADO - OLD BACKGROUND:  */
+/* COMENTADO - OLD BACKGROUND: /* Accesibilidad - Respetar preferencias de movimiento reducido */
+*/
+/* COMENTADO - OLD BACKGROUND: @media (prefers-reduced-motion: reduce) { */
+/* COMENTADO - OLD BACKGROUND:     .modern-container * { */
+/* COMENTADO - OLD BACKGROUND:         animation-duration: 0.01ms !important; */
+/* COMENTADO - OLD BACKGROUND:         animation-iteration-count: 1 !important; */
+/* COMENTADO - OLD BACKGROUND:         transition-duration: 0.01ms !important; */
+/* COMENTADO - OLD BACKGROUND:     } */
+/* COMENTADO - OLD BACKGROUND: } */
 
 /* =================================
    HEADER HÍBRIDO: NEÓN & GLASS
