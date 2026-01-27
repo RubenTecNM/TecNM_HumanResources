@@ -26,56 +26,23 @@
 </head>
 <body>
     <!-- Background animado minimalista -->
-    <div class="animated-background">
-        <!-- Orbes de gradiente -->
-        <div class="gradient-orb orb-1"></div>
-        <div class="gradient-orb orb-2"></div>
-        <div class="gradient-orb orb-3"></div>
-        
-        <!-- Patrón de cuadrícula -->
-        <div class="grid-pattern"></div>
-        
-        <!-- Partículas flotantes -->
-        <div class="particles">
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
-            <div class="particle"></div>
+    <!-- Modern Web Background -->
+    <div class="modern-bg">
+        <div class="gradient-overlay"></div>
+        <div class="dot-mesh"></div>
+        <div class="glow-spots">
+            <div class="glow glow-1"></div>
+            <div class="glow glow-2"></div>
         </div>
-        
-        <!-- Líneas geométricas -->
-        <div class="geometric-lines">
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
-            <div class="line"></div>
+        <div class="wave-container">
+            <svg class="wave wave-1" viewBox="0 0 1200 600" preserveAspectRatio="none">
+                <path d="M0,300 Q300,250 600,300 T1200,300" />
+            </svg>
+            <svg class="wave wave-2" viewBox="0 0 1200 600" preserveAspectRatio="none">
+                <path d="M0,320 Q300,370 600,320 T1200,320" />
+            </svg>
         </div>
-        
-        <!-- Puntos brillantes -->
-        <div class="sparkle"></div>
-        <div class="sparkle"></div>
-        <div class="sparkle"></div>
-        <div class="sparkle"></div>
-        <div class="sparkle"></div>
-        
-        <!-- Textura de ruido -->
-        <div class="noise"></div>
+        <div class="particles" id="particlesContainer"></div>
     </div>
 
     @{
@@ -308,18 +275,28 @@
             });
         });
 
-        function createStarField() {
-            const starField = document.getElementById('starField');
-            if (!starField) return;
-            for (let i = 0; i < 40; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                star.style.left = Math.random() * 100 + '%';
-                star.style.top = Math.random() * 100 + '%';
-                star.style.animationDelay = Math.random() * 4 + 's';
-                starField.appendChild(star);
+        // Optimized particle generation - reduced count
+        function createParticles() {
+            const container = document.getElementById('particlesContainer');
+            if (!container) return; // Guard clause
+            const particleCount = 15; // Optimized for performance
+            const fragment = document.createDocumentFragment();
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = (Math.random() * 18) + 's';
+                particle.style.animationDuration = (15 + Math.random() * 6) + 's';
+                fragment.appendChild(particle);
             }
+
+            container.appendChild(fragment);
         }
+
+        // Initialize particles on load
+        document.addEventListener('DOMContentLoaded', createParticles);
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
