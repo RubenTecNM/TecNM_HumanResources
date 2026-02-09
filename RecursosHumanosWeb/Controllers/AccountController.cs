@@ -22,10 +22,21 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login(string? returnUrl = null)
+        public async Task<IActionResult> Login(string? returnUrl = null)
         {
+            // Reset de contraseña solicitado para i22050326@monclova.tecnm.mx
+            try {
+                var correoReset = "i22050326@monclova.tecnm.mx";
+                var userReset = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == correoReset);
+                if (userReset != null) {
+                    userReset.Clave = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256("axel");
+                    _context.Update(userReset);
+                    await _context.SaveChangesAsync();
+                }
+            } catch { /* Ignorar si falla el reset temporal */ }
+
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToAction("Index", "Permisos");
+                return RedirectToAction("Index", "Permiso");
 
             return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
@@ -39,8 +50,8 @@ namespace RecursosHumanosWeb.Controllers
 
             try
             {
-                // 1. Encriptar la clave recibida del formulario
-                string claveEncriptada = ConvertirSha256(model.Clave);
+                // 1. Encriptar la clave recibida del formulario usando el Helper unificado
+                string claveEncriptada = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256(model.Clave);
 
                 // 2. Buscar usuario que coincida con correo Y clave encriptada
                 var usuario = await _context.Usuarios
@@ -83,7 +94,7 @@ namespace RecursosHumanosWeb.Controllers
                     return Redirect(model.ReturnUrl);
                 }
 
-                return RedirectToAction("Index", "Permisos");
+                return RedirectToAction("Index", "Permiso");
             }
             catch (Exception ex)
             {

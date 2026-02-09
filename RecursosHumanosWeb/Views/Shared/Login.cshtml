@@ -1,107 +1,152 @@
-﻿@model RecursosHumanosWeb.Models.ViewModels.LoginViewModel
+@model RecursosHumanosWeb.Models.ViewModels.LoginViewModel
 @{
     ViewData["Title"] = "Iniciar Sesión";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/Account/login.css" asp-append-version="true" />
-}
+<div class="index-container">
+    <!-- Page Header (Premium Style) -->
+    <div class="permission-header fade-in">
+        <div class="header-content">
+            <h1 class="page-title text-gradient">
+                <i class="fas fa-shield-alt"></i>
+                Control de Acceso
+            </h1>
+            <p class="page-subtitle">Ingrese sus credenciales para acceder al sistema institucional</p>
+        </div>
+    </div>
 
-<!-- Contenedor de notificaciones -->
-<div class="notification-container" id="notificationContainer"></div>
-
-<main class="login-main">
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="header-content">
-                    <div class="login-logo">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h1 class="login-title">Bienvenido</h1>
-                    <p class="login-subtitle">Ingrese sus credenciales para acceder al sistema</p>
+    <!-- Formulario (Premium Layout) -->
+    <div class="filters-section slide-in-left">
+        <div class="card filter-card-premium shadow-lg border-0">
+            <div class="filter-header-premium d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                    <i class="fas fa-lock fa-lg"></i>
+                    <h5 class="m-0 fw-bold text-truncate" style="letter-spacing: 0.5px; text-transform: uppercase;">Autenticaci&oacute;n</h5>
+                </div>
+                <!-- Badge ajustado para movil para evitar desborde -->
+                <div class="status-glass rounded-pill d-flex align-items-center gap-2 px-2 px-sm-3 py-1 flex-shrink-0" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); min-width: fit-content;">
+                    <span class="status-dot dot-active" style="animation: icon-pulse-soft 2s infinite ease-in-out;"></span>
+                    <span class="small uppercase tracking-wide fw-bold d-none d-sm-inline" style="font-size: 0.7rem;">Certificado</span>
+                    <span class="small fw-bold d-inline d-sm-none" style="font-size: 0.65rem;">SSL</span>
                 </div>
             </div>
 
-            <!-- Errores generales -->
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+            <div class="filter-body-premium p-3 p-sm-4">
+                <form asp-action="Login" asp-controller="Account" method="post" id="loginForm" autocomplete="off">
+                    @Html.AntiForgeryToken()
+                    @Html.HiddenFor(m => m.ReturnUrl)
 
-            <!-- Formulario -->
-            <form asp-action="Login" asp-controller="Account"
-                  method="post" class="login-form" id="loginForm"
-                  autocomplete="off" novalidate>
-
-                @Html.AntiForgeryToken()
-                @Html.HiddenFor(m => m.ReturnUrl)
-
-                <!-- Email -->
-                <div class="form-group">
-                    <label class="form-label" asp-for="Correo"></label>
-                    <div class="input-wrapper">
-                        @Html.TextBoxFor(m => m.Correo, new {
-                        @class = "form-input",
-                                                type = "email",
-                                                placeholder = "tu@ejemplo.com",
-                                                autocomplete = "off"
-                                                })
-                        <i class="input-icon fas fa-envelope" aria-hidden="true"></i>
-                    </div>
-                    <span asp-validation-for="Correo" class="error-message text-danger"></span>
-                </div>
-
-                <!-- Contraseña -->
-                <div class="form-group">
-                    <label class="form-label" asp-for="Clave"></label>
-                    <div class="input-wrapper">
-                        @Html.PasswordFor(m => m.Clave, new {
-                                                @class = "form-input",
-                                                placeholder = "••••••••••",
-                                                autocomplete = "new-password"
-                                                })
-                        <i class="input-icon fas fa-lock" aria-hidden="true"></i>
-                        <button type="button" class="password-toggle" aria-label="Mostrar contraseña">
-                            <i id="passwordIcon" class="fas fa-eye" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                    <span asp-validation-for="Clave" class="error-message text-danger"></span>
-                </div>
-
-               @*  <!-- Checkbox -->
-                <div class="form-group">
-                    <div class="checkbox-group">
-                        <div class="custom-checkbox">
-                            @Html.CheckBoxFor(m => m.RememberMe, new { id = "RememberMe" })
-                            <label for="RememberMe" class="checkbox-label">
-                                <div class="checkmark" aria-hidden="true">
-                                    <i class="fas fa-check"></i>
+                    <div class="row g-3">
+                        <!-- Email -->
+                        <div class="col-12 col-md-6">
+                            <div class="filter-group">
+                                <!-- Solo un emoji, sin FontAwesome en label -->
+                                <label asp-for="Correo" class="fw-bold text-muted small text-uppercase mb-2 ms-1 d-block">
+                                    &#128231; Correo Electr&oacute;nico
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3" style="border: 2px solid #ced4da; border-right: none;">
+                                        <i class="fas fa-at text-primary"></i>
+                                    </span>
+                                    <input asp-for="Correo" 
+                                           class="form-control border-start-0 rounded-end-pill py-2 shadow-sm" 
+                                           placeholder="usuario@@monclova.tecnm.mx" 
+                                           required 
+                                           style="height: 52px; border: 2px solid #ced4da; border-left: none;" />
                                 </div>
-                                <span>@Html.DisplayNameFor(m => m.RememberMe)</span>
-                            </label>
+                                <span asp-validation-for="Correo" class="text-danger small ms-1 fw-semibold"></span>
+                            </div>
+                        </div>
+
+                        <!-- Contrasena -->
+                        <div class="col-12 col-md-6">
+                            <div class="filter-group">
+                                <!-- Solo un emoji, sin FontAwesome en label -->
+                                <label asp-for="Clave" class="fw-bold text-muted small text-uppercase mb-2 ms-1 d-block">
+                                    &#128274; Contrase&ntilde;a
+                                </label>
+                                <div class="position-relative">
+                                    <input asp-for="Clave" 
+                                           type="password" 
+                                           class="form-control rounded-pill pe-5 shadow-sm" 
+                                           id="password-input" 
+                                           placeholder="••••••••" 
+                                           required 
+                                           style="height: 52px; border: 2px solid #ced4da;" />
+                                    <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-2 text-muted text-decoration-none" id="toggle-password">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <span asp-validation-for="Clave" class="text-danger small ms-1 fw-semibold"></span>
+                            </div>
                         </div>
                     </div>
-                </div> *@
 
-                <!-- Botón -->
-                <button type="submit" class="login-button" id="loginBtn">
-                    Iniciar Sesión
-                </button>
-            </form>
-
-            <!-- Footer -->
-            <div class="login-footer">
-                @* Use ResetPassword flow if available *@
-                <a href="@Url.Action("RequestToken", "ResetPassword")" class="forgot-password">
-                    ¿Olvidaste tu contraseña?
-                </a>
+                    <!-- Acciones Verticales en Movil -->
+                    <div class="d-flex flex-column gap-3 mt-4 mt-sm-5">
+                        <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold shadow-sm" id="loginBtn"
+                                style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); border: none; height: 52px;">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Acceder al Sistema
+                        </button>
+                        
+                        <div class="text-center">
+                            <a href="@Url.Action("RequestToken", "ResetPassword")" class="text-primary fw-bold text-decoration-none small hover-link">
+                                &iquest;Olvidaste tu contrase&ntilde;a?
+                            </a>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-</main>
+</div>
+
+<style>
+    @@keyframes icon-pulse-soft {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.7; }
+    }
+    .hover-link:hover {
+        text-decoration: underline !important;
+        opacity: 0.8;
+    }
+</style>
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/Account/login.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const togglePassword = document.getElementById('toggle-password');
+            const passwordInput = document.getElementById('password-input');
+            
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const icon = this.querySelector('i');
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    icon.classList.toggle('fa-eye');
+                    icon.classList.toggle('fa-eye-slash');
+                });
+            }
+
+            // Animacion
+            const elements = document.querySelectorAll('.fade-in, .slide-in-left');
+            elements.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+            });
+            setTimeout(() => {
+                elements.forEach((element, index) => {
+                    setTimeout(() => {
+                        element.style.transition = 'all 0.6s ease-out';
+                        element.style.opacity = '1';
+                        element.style.transform = 'translate(0, 0)';
+                    }, index * 100);
+                });
+            }, 100);
+        });
+    </script>
 }

@@ -1,0 +1,469 @@
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+using RecursosHumanosWeb.Models;
+using RecursosHumanosWeb.Models.DTOs;
+using RecursosHumanosWeb.Models.ViewModels;
+using RecursosHumanosWeb.Models.Enums;
+using RecursosHumanosWeb.Services;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using X.PagedList;
+using AutoMapper;
+
+namespace RecursosHumanosWeb.Controllers
+{
+    [Authorize]
+    public class PermisoController : Controller
+    {
+        private readonly RecursosHumanosContext _context;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IMapper _mapper;
+        private readonly ILogger<PermisoController> _logger;
+        private readonly IPermisoService _permisoService;
+        private readonly ICorteService _corteService;
+
+        public PermisoController(
+            RecursosHumanosContext context,
+            IWebHostEnvironment environment,
+            IMapper mapper,
+            ILogger<PermisoController> logger,
+            IPermisoService permisoService,
+            ICorteService corteService)
+        {
+            _context = context;
+            _environment = environment;
+            _mapper = mapper;
+            _logger = logger;
+            _permisoService = permisoService;
+            _corteService = corteService;
+        }
+
+        #region VISTAS Y FILTROS
+
+        [HttpGet]
+        public async Task<IActionResult> Index(string nombreUsuario = null, int? idArea = null, DateTime? delDia = null, DateTime? alDia = null, int? page = 1)
+        {
+            await _corteService.AutoCloseCorteIfNeededAsync();
+            
+            int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int tipoUsuario = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            var permisos = await _permisoService.GetPermisosPagedAsync(idUsuario, idArea, nombreUsuario, delDia, alDia, page ?? 1, 10);
+
+            var areas = (tipoUsuario == (int)TipoUsuarioEnum.RecursosHumanos || tipoUsuario == (int)TipoUsuarioEnum.Administrador)
+                ? await _context.Areas.Where(a => a.Estatus).Select(a => new AreasDTO { Id = a.Id, Descripcion = a.Descripcion }).OrderBy(a => a.Descripcion).ToListAsync()
+                : new List<AreasDTO>();
+
+            var model = new SearchPermissionsViewModel
+            {
+                Permisos = permisos,
+                Areas = areas,
+                SelectedUser = nombreUsuario,
+                SelectedArea = idArea
+            };
+
+            ViewBag.DelDia = delDia?.ToString("yyyy-MM-dd");
+            ViewBag.AlDia = alDia?.ToString("yyyy-MM-dd");
+            ViewBag.IsAutorizador = tipoUsuario == (int)TipoUsuarioEnum.Autorizador;
+            ViewBag.IsRH = tipoUsuario == (int)TipoUsuarioEnum.RecursosHumanos;
+            ViewBag.IsAdministrador = tipoUsuario == (int)TipoUsuarioEnum.Administrador;
+
+            var corteActivo = await _corteService.GetActiveCorteAsync();
+            ViewBag.CurrentCourtId = corteActivo?.Id ?? 0;
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetStats()
+        {
+            int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int tipoUsuario = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            var stats = await _permisoService.GetStatsAsync(idUsuario, tipoUsuario);
+            return Json(stats);
+        }
+
+        #endregion
+
+        #region CREATE Y EDIT (GET)
+
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            await PrepareCreateEditViewBag();
+            int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            return View(new PermissionsCreateViewModel { IdUsuarioSolicita = idUsuario });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            if (User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.Autorizador).ToString()))
+            {
+                TempData["ErrorAlert"] = GetAlertJson("Acceso Denegado", "Los jefes de área deben usar 'Revisar' para autorizar permisos.");
+                return RedirectToAction("Index");
+            }
+
+            var permiso = await _context.Permisos.Include(p => p.IdCorteNavigation).AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+            if (permiso == null) return NotFound();
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso))
+            {
+                TempData["ErrorAlert"] = GetAlertJson("Acceso Denegado", "No tiene permisos para modificar esta solicitud.");
+                return RedirectToAction("Index");
+            }
+
+            if (permiso.Revisado || !(permiso.IdCorteNavigation?.Estatus ?? false))
+            {
+                TempData["ErrorAlert"] = GetAlertJson("No permitido", "No se puede editar un permiso revisado o de un corte cerrado.");
+                return RedirectToAction("Index");
+            }
+
+            await PrepareCreateEditViewBag(permiso.IdUsuarioSolicita);
+            return View(_mapper.Map<PermissionsCreateViewModel>(permiso));
+        }
+
+        #endregion
+
+        #region CREATE Y EDIT (POST)
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(PermissionsCreateViewModel model, bool? confirmed)
+        {
+            string? evidenciaPath = null;
+            int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int tipoUsuario = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            try
+            {
+                if (tipoUsuario != (int)TipoUsuarioEnum.RecursosHumanos && tipoUsuario != (int)TipoUsuarioEnum.Administrador)
+                    model.IdUsuarioSolicita = idUsuario;
+
+                if (!ModelState.IsValid)
+                    return Json(new AlertResponseDTO { Success = false, Title = "Validación", Message = "Corrija los errores.", Errors = GetModelStateErrors() });
+
+                var corte = await _corteService.GetActiveCorteAsync();
+                if (corte == null) return Json(new AlertResponseDTO { Success = false, Message = "No hay corte activo." });
+
+                if (model.Fecha1!.Value.Date < corte.Inicia.Date)
+                    return Json(new AlertResponseDTO { Success = false, Message = "La fecha de inicio está fuera del corte." });
+
+                if (model.Fecha2 != null && model.Fecha2.Value.Date > corte.Termina.Date && !(confirmed ?? false))
+                {
+                    return Json(new AlertResponseDTO { Success = false, ShowConfirmation = true, Title = "Fuera de corte", Message = "¿Desea crear el permiso aun si excede el corte?", Icon = "warning", ConfirmButtonText = "Sí, crear" });
+                }
+
+                if (model.EvidenceFile != null)
+                {
+                    evidenciaPath = await SaveEvidenceFile(model.EvidenceFile, model.IdUsuarioSolicita.Value);
+                }
+
+                var permiso = _mapper.Map<Permiso>(model);
+                permiso.Evidencia = evidenciaPath;
+                await _permisoService.CreatePermisoAsync(permiso, idUsuario);
+
+                return Json(new AlertResponseDTO(controllerName: "Permiso", message: "Permiso creado con éxito."));
+            }
+            catch (Exception ex)
+            {
+                if (evidenciaPath != null) DeleteFile(evidenciaPath);
+                return Json(new AlertResponseDTO { Success = false, Message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, PermissionsCreateViewModel model)
+        {
+            if (id != model.Id) return Json(new AlertResponseDTO { Success = false, Message = "ID mismatch" });
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            try
+            {
+                var original = await _context.Permisos.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+                if (original == null) return NotFound();
+
+                if (!_permisoService.CanUserAccessPermiso(userId, userType, original))
+                    return Json(new AlertResponseDTO { Success = false, Message = "Deniado" });
+
+                if (!ModelState.IsValid)
+                    return Json(new AlertResponseDTO { Success = false, Errors = GetModelStateErrors() });
+
+                string? newPath = original.Evidencia;
+                if (model.EvidenceFile != null)
+                {
+                    newPath = await SaveEvidenceFile(model.EvidenceFile, original.IdUsuarioSolicita);
+                    if (original.Evidencia != null) DeleteFile(original.Evidencia);
+                }
+
+                var edited = _mapper.Map<Permiso>(model);
+                edited.Evidencia = newPath;
+
+                bool success = await _permisoService.UpdatePermisoAsync(edited, userId);
+                if (!success) return Json(new AlertResponseDTO { Success = false, Message = "No se pudo actualizar." });
+
+                return Json(new AlertResponseDTO(controllerName: "Permiso", message: "Modificado."));
+            }
+            catch (Exception ex)
+            {
+                return Json(new AlertResponseDTO { Success = false, Message = ex.Message });
+            }
+        }
+
+        #endregion
+
+        #region DELETE
+
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+            var permiso = await _context.Permisos.Include(p => p.IdUsuarioSolicitaNavigation).Include(p => p.IdTipoPermisoNavigation).FirstOrDefaultAsync(m => m.Id == id);
+            if (permiso == null) return NotFound();
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Forbid();
+
+            return View(permiso);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            var permiso = await _context.Permisos.Include(p => p.IdCorteNavigation).FirstOrDefaultAsync(p => p.Id == id);
+            if (permiso != null && _permisoService.CanUserAccessPermiso(userId, userType, permiso))
+            {
+                if (permiso.Revisado && !(permiso.IdCorteNavigation?.Estatus ?? false))
+                {
+                    TempData["ErrorAlert"] = GetAlertJson("Error", "No se puede borrar un permiso revisado de un corte cerrado.");
+                    return RedirectToAction("Index");
+                }
+                await _permisoService.DeletePermisoAsync(id, userId);
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteAjax([FromBody] ActionRequestDTO request)
+        {
+            try
+            {
+                if (request == null || request.Id <= 0) return Json(new AlertResponseDTO { Success = false, Message = "ID no válido." });
+
+                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+                var permiso = await _context.Permisos.Include(p => p.IdUsuarioSolicitaNavigation).Include(p => p.IdCorteNavigation).FirstOrDefaultAsync(p => p.Id == request.Id);
+                if (permiso == null || !permiso.Estatus) return Json(new AlertResponseDTO { Success = false, Message = "No encontrado o ya eliminado." });
+
+                if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
+
+                if (permiso.Revisado && !(permiso.IdCorteNavigation?.Estatus ?? false))
+                    return Json(new AlertResponseDTO { Success = false, Message = "Permiso revisado de corte cerrado." });
+
+                if (!request.Confirmed)
+                {
+                    return Json(new AlertResponseDTO { ShowConfirmation = true, Title = "¿Eliminar?", Message = $"¿Borrar solicitud de **{permiso.IdUsuarioSolicitaNavigation.Nombre}**?", Icon = "question", ConfirmButtonText = "Sí, eliminar" });
+                }
+
+                bool success = await _permisoService.DeletePermisoAsync(request.Id, userId);
+                if (!success) return Json(new AlertResponseDTO { Success = false, Message = "Error al intentar eliminar el registro." });
+
+                return Json(new AlertResponseDTO { Success = true, Title = "Eliminado", RedirectUrl = Url.Action("Index", "Permiso") });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en DeleteAjax");
+                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = ex.Message }); // En producción, no mostrar ex.Message directo si es sensible
+            }
+        }
+
+        #endregion
+
+        #region REVIEW (AUTORIZADORES)
+
+        [HttpGet]
+        public async Task<IActionResult> Review(int id)
+        {
+            if (!User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.Autorizador).ToString())) return Forbid();
+
+            var permiso = await _context.Permisos.Include(p => p.IdTipoPermisoNavigation).Include(p => p.IdUsuarioSolicitaNavigation).ThenInclude(u => u.IdAreaNavigation).Include(p => p.IdCorteNavigation).AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
+            if (permiso == null) return NotFound();
+
+            int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (permiso.IdUsuarioSolicitaNavigation.IdArea != await _context.Usuarios.Where(u => u.Id == idUsuario).Select(u => u.IdArea).FirstOrDefaultAsync()) return Forbid();
+
+            if (permiso.Revisado) return RedirectToAction("Details", new { id });
+            if (!(permiso.IdCorteNavigation?.Estatus ?? false)) return RedirectToAction("Index");
+
+            return View(new PermissionReviewViewModel
+            {
+                Id = permiso.Id,
+                NombreSolicitante = permiso.IdUsuarioSolicitaNavigation?.Nombre,
+                AreaSolicitante = permiso.IdUsuarioSolicitaNavigation?.IdAreaNavigation?.Descripcion,
+                TipoPermisoDescripcion = permiso.IdTipoPermisoNavigation?.Descripcion,
+                Fecha1 = permiso.Fecha1,
+                Fecha2 = permiso.Fecha2,
+                Dias = permiso.Dias ?? 0,
+                Motivo = permiso.Motivo,
+                Evidencia = permiso.Evidencia,
+                Goce = permiso.Goce
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Review(int id, PermissionReviewViewModel model)
+        {
+            if (id != model.Id) return Json(new AlertResponseDTO { Success = false, Message = "ID mismatch" });
+            int authId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            bool success = await _permisoService.AutorizarPermisoAsync(id, authId, model.Goce, "Revisado");
+            if (!success) return Json(new AlertResponseDTO { Success = false, Message = "Error al revisar" });
+
+            return Json(new AlertResponseDTO { Success = true, RedirectUrl = Url.Action("Index", "Permiso") });
+        }
+
+        #endregion
+
+        #region DETAILS
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null) return NotFound();
+            var permiso = await _context.Permisos.Include(p => p.IdTipoPermisoNavigation).Include(p => p.IdUsuarioSolicitaNavigation).Include(p => p.IdUsuarioAutorizaNavigation).Include(p => p.IdCorteNavigation).FirstOrDefaultAsync(p => p.Id == id);
+            if (permiso == null) return NotFound();
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Forbid();
+            return View(permiso);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DetailsCheck(int id)
+        {
+            var permiso = await _context.Permisos.FindAsync(id);
+            if (permiso == null) return Json(new { exists = false });
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Json(new { exists = true, hasAccess = false });
+            return Json(new { exists = true, hasAccess = true, url = Url.Action("Details", "Permiso", new { id }) });
+        }
+
+        #endregion
+
+        #region TEST DATA
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GenerateTestData()
+        {
+            if (!User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.Administrador).ToString())) return Forbid();
+
+            // Simplified: logic remains largely same but cleaned up
+            var corte = await _corteService.GetActiveCorteAsync();
+            if (corte == null) return Json(new AlertResponseDTO { Success = false, Message = "No hay corte activo." });
+
+            var usuarios = await _context.Usuarios.Where(u => u.Estatus).Take(10).ToListAsync();
+            var autorizadores = await _context.Usuarios.Where(u => u.Estatus && u.IdTipoUsuario == (int)TipoUsuarioEnum.Autorizador).GroupBy(u => u.IdArea).ToDictionaryAsync(g => g.Key, g => g.First().Id);
+
+            int adminId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
+            var random = new Random();
+            var lot = new List<Permiso>();
+
+            for (int i = 0; i < 1000; i++) // Reduced to 1000 for safety in this refactoring step, can be increased later
+            {
+                var user = usuarios[random.Next(usuarios.Count)];
+                var start = corte.Inicia.AddDays(random.Next((int)(corte.Termina - corte.Inicia).TotalDays));
+                lot.Add(new Permiso
+                {
+                    Fecha1 = start,
+                    Motivo = "Prueba " + i,
+                    IdCorte = corte.Id,
+                    IdTipoPermiso = random.Next(2, 6),
+                    IdUsuarioSolicita = user.Id,
+                    IdUsuarioCrea = adminId,
+                    IdUsuarioModifica = autorizadores.ContainsKey(user.IdArea) ? autorizadores[user.IdArea] : adminId,
+                    FechaCreacion = DateTime.Now,
+                    FechaModificacion = DateTime.Now,
+                    Estatus = true,
+                    Revisado = false,
+                    Goce = random.Next(100) < 70
+                });
+
+                if (lot.Count >= 500)
+                {
+                    _context.Permisos.AddRange(lot);
+                    await _context.SaveChangesAsync();
+                    lot.Clear();
+                }
+            }
+            if (lot.Any()) { _context.Permisos.AddRange(lot); await _context.SaveChangesAsync(); }
+
+            return Json(new AlertResponseDTO { Success = true, Message = "Datos generados." });
+        }
+
+        #endregion
+
+        #region HELPERS
+
+        private async Task PrepareCreateEditViewBag(int? selectedUserId = null)
+        {
+            int tipoUsuario = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            var usersQuery = _context.Usuarios.Where(u => u.Estatus);
+            if (tipoUsuario != (int)TipoUsuarioEnum.RecursosHumanos && tipoUsuario != (int)TipoUsuarioEnum.Administrador)
+                usersQuery = usersQuery.Where(u => u.Id == userId);
+
+            ViewBag.Usuarios = new SelectList(await usersQuery.OrderBy(u => u.Nombre).ToListAsync(), "Id", "Nombre", selectedUserId);
+            ViewBag.TipoPermisos = new SelectList(await _context.TipoPermisos.ToListAsync(), "Id", "Descripcion");
+        }
+
+        private Dictionary<string, string[]> GetModelStateErrors() => 
+            ModelState.Where(x => x.Value!.Errors.Any()).ToDictionary(kvp => kvp.Key, kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+
+        private async Task<string?> SaveEvidenceFile(IFormFile file, int userId)
+        {
+            if (file.Length > 5 * 1024 * 1024) return null;
+            string uploads = Path.Combine(_environment.WebRootPath, "Evidences");
+            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+            string name = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(file.FileName).ToLower()}";
+            using (var stream = new FileStream(Path.Combine(uploads, name), FileMode.Create)) await file.CopyToAsync(stream);
+            return "/Evidences/" + name;
+        }
+
+        private void DeleteFile(string webPath)
+        {
+            try { string path = Path.Combine(_environment.WebRootPath, "Evidences", Path.GetFileName(webPath)); if (System.IO.File.Exists(path)) System.IO.File.Delete(path); } catch { }
+        }
+
+        private string GetAlertJson(string title, string text) => System.Text.Json.JsonSerializer.Serialize(new { icon = "error", title, text });
+
+        #endregion
+    }
+}

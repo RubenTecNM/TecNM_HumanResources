@@ -1,0 +1,218 @@
+﻿@model RecursosHumanosWeb.Models.ViewModels.ApiKeyCreateViewModel
+@{
+    ViewData["Title"] = "Crear API Key";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+}
+
+<div class="permission-request-container">
+    <div class="permission-header">
+        <div class="header-content">
+            <h1 class="page-title text-gradient">
+                <i class="fas fa-key"></i>
+                Nueva API Key
+            </h1>
+            <p class="page-subtitle">Genere y configure una llave de acceso para la API</p>
+        </div>
+        <div class="header-decoration">
+            <div class="floating-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" class="permission-form" id="apiKeyForm">
+        
+
+        <div class="form-sections">
+            @{
+                bool isAdmin = ViewBag.IsAdministrador as bool? ?? false;
+            }
+
+            <!-- Sección 1: Usuario Titular -->
+            <div class="form-section" id="user-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-user-shield"></i> Usuario Titular de la API Key</h3>
+                    <span class="section-indicator">1</span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="IdUsuarioTitular" class="form-label">
+                        Usuario al que se asociará la nueva clave
+                        <span class="required">*</span>
+                    </label>
+                    <select asp-for="IdUsuarioTitular" class="form-control user-select" id="idUsuarioTitular"
+                            asp-items="@(ViewData["Usuario"] as SelectList)">
+                        <option value="">Seleccione el usuario titular</option>
+                    </select>
+                    <span asp-validation-for="IdUsuarioTitular" class="text-danger validation-message"></span>
+                    <small class="form-text text-muted mt-2">
+                        <i class="fas fa-info-circle"></i> La clave API se generará automáticamente al crear el registro
+                    </small>
+                </div>
+            </div>
+
+            <!-- Sección 2: Permisos de Acceso a Tablas -->
+            <div class="form-section" id="permissions-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-database"></i> Permisos de Acceso a Tablas</h3>
+                    <span class="section-indicator">2</span>
+                </div>
+
+                @if (ViewBag.Tablas != null && ViewBag.ApiPermisos != null)
+                {
+                    var tablas = ViewBag.Tablas as List<RecursosHumanosWeb.Models.Tabla> ?? new List<RecursosHumanosWeb.Models.Tabla>();
+                    var apiPermisos = ViewBag.ApiPermisos as List<RecursosHumanosWeb.Models.ApiPermiso> ?? new List<RecursosHumanosWeb.Models.ApiPermiso>();
+
+                    <p class="page-subtitle mb-4">Seleccione los permisos (operaciones) que tendrá la clave sobre cada tabla.</p>
+
+                    int tableIndex = 0;
+                    @foreach (var tabla in tablas)
+                    {
+                        <div class="permission-card mb-4 p-4 border rounded shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid #e2e8f0 !important;">
+                            <div class="table-header d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="mb-0" style="color: var(--primary-strong); font-weight: 700;">
+                                    <i class="fas fa-table me-2"></i> @tabla.Descripcion
+                                </h4>
+                                <span class="badge" style="background: var(--gradient-primary); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
+                                    Tabla #@tabla.Id
+                                </span>
+                            </div>
+
+                            <input type="hidden" name="Assignments[@tableIndex].IdTabla" value="@tabla.Id" />
+
+                            <div class="row row-cols-2 row-cols-md-4 g-3 permission-options">
+                                @foreach (var permiso in apiPermisos)
+                                {
+                                    var iconClass = permiso.Descripcion switch
+                                    {
+                                        "Leer" => "fa-eye",
+                                        "Escribir" => "fa-pen",
+                                        "Actualizar" => "fa-sync",
+                                        "Eliminar" => "fa-trash",
+                                        _ => "fa-wrench"
+                                    };
+
+                                    var colorClass = permiso.Descripcion switch
+                                    {
+                                        "Leer" => "text-info",
+                                        "Escribir" => "text-success",
+                                        "Actualizar" => "text-warning",
+                                        "Eliminar" => "text-danger",
+                                        _ => "text-primary"
+                                    };
+
+                                    <div class="col">
+                                        <div class="form-check permission-checkbox-item" style="background: white; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; transition: all 0.3s ease;">
+                                            <input class="form-check-input" type="checkbox"
+                                                   id="tabla_@tabla.Id@permiso.Id"
+                                                   name="Assignments[@tableIndex].IdsApiPermisosSeleccionados"
+                                                   value="@permiso.Id"
+                                                   style="width: 20px; height: 20px; cursor: pointer;">
+                                            <label class="form-check-label ms-2" for="tabla_@tabla.Id@permiso.Id" style="cursor: pointer; font-weight: 600;">
+                                                <i class="fas @iconClass @colorClass me-1"></i>
+                                                @permiso.Descripcion
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        tableIndex++;
+                    }
+                }
+                else
+                {
+                    <p class="alert alert-warning">No se encontraron tablas o permisos para configurar.</p>
+                }
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <div class="actions-content">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-magic"></i>
+                    Generar API Key
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Inicializar Select2
+            $('.user-select').select2({
+                placeholder: "Seleccione un usuario",
+                allowClear: true
+            });
+
+            // Animaciones de entrada
+            const sections = document.querySelectorAll('.form-section');
+            sections.forEach((section, index) => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+
+                setTimeout(() => {
+                    section.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                }, 100 * (index + 1));
+            });
+
+            // Hover effects en checkboxes
+            $('.permission-checkbox-item').hover(
+                function() {
+                    $(this).css({
+                        'border-color': 'var(--primary-strong)',
+                        'box-shadow': '0 4px 12px rgba(59, 130, 246, 0.15)',
+                        'transform': 'translateY(-2px)'
+                    });
+                },
+                function() {
+                    if (!$(this).find('input[type="checkbox"]').is(':checked')) {
+                        $(this).css({
+                            'border-color': '#e2e8f0',
+                            'box-shadow': 'none',
+                            'transform': 'translateY(0)'
+                        });
+                    }
+                }
+            );
+
+            // Marcar checkbox al hacer clic en el contenedor
+            $('.permission-checkbox-item').click(function(e) {
+                if (e.target.tagName !== 'INPUT') {
+                    var checkbox = $(this).find('input[type="checkbox"]');
+                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+                }
+            });
+
+            // Estilo cuando está checked
+            $('input[type="checkbox"]').change(function() {
+                var container = $(this).closest('.permission-checkbox-item');
+                if ($(this).is(':checked')) {
+                    container.css({
+                        'background': 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)',
+                        'border-color': 'var(--primary-strong)',
+                        'box-shadow': '0 4px 12px rgba(59, 130, 246, 0.15)'
+                    });
+                } else {
+                    container.css({
+                        'background': 'white',
+                        'border-color': '#e2e8f0',
+                        'box-shadow': 'none'
+                    });
+                }
+            });
+        });
+    </script>
+}

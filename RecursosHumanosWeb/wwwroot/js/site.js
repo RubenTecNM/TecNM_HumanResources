@@ -245,6 +245,38 @@ $(document).ready(function () {
         }
     }
 
+    // ----------------------------------------------------------------------
+    // MANEJO DE ERRORES DE VALIDACIÓN (Asp.NET ModelSummary)
+    // ----------------------------------------------------------------------
+    function checkAndShowValidationErrors() {
+        const $summary = $(".validation-summary-errors");
+        if ($summary.length > 0) {
+            // Extraer los textos de los errores
+            let errorText = "";
+            $summary.find("ul li").each(function () {
+                errorText += `${$(this).text()}<br>`;
+            });
+
+            if (errorText) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Se encontraron errores',
+                    html: `<div style="text-align: center; font-weight: 500;">${errorText}</div>`,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#3085d6',
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg'
+                    }
+                });
+            }
+            // Ocultar el sumario original para evitar duplicación visual
+            $summary.hide();
+        }
+    }
+
+    // Ejecutar inmediatamente
+    checkAndShowValidationErrors();
+
     // Event listener para botones con data-action
     $(document).on('click', '[data-action]', function (e) {
         e.preventDefault();

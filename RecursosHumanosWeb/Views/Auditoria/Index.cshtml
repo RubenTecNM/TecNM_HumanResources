@@ -20,6 +20,26 @@
             overflow-y: auto;
             white-space: pre-wrap;
         }
+        /* Origen Badges */
+        .badge-origin {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+            border-radius: 50rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+        }
+        .badge-origin i { font-size: 0.8rem; }
+        
+        .origin-web { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .origin-api { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .origin-system { background-color: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+        .origin-job { background-color: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+        .origin-ldap { background-color: #cffafe; color: #0e7490; border: 1px solid #a5f3fc; }
+        .origin-migration { background-color: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
+        .origin-default { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
         /* Mobile-specific adjustments utilizing Site.css variables without external file */
         @@media (max-width: 992px) {
             .table-container { display: none !important; }
@@ -124,7 +144,7 @@
         <div class="mobile-view-container fade-in">
             @foreach (var item in Model)
             {
-                var uniqueId = "mob-" + item.IdRegistro; // Usar IdRegistro como único
+                var uniqueId = "mob-" + item.IdRegistro; 
                 var badgeClass = item.Accion.Contains("POST") ? "background-color: #ecfdf5; color: #059669; border-color: #a7f3d0 !important;" : 
                                 item.Accion.Contains("PUT") ? "background-color: #fffbeb; color: #d97706; border-color: #fde68a !important;" :
                                 item.Accion.Contains("DELETE") ? "background-color: #fef2f2; color: #ef4444; border-color: #fecaca !important;" : 
@@ -133,6 +153,17 @@
                 var iconClass = item.Accion.Contains("POST") ? "fa-plus" : 
                                 item.Accion.Contains("PUT") ? "fa-pen" :
                                 item.Accion.Contains("DELETE") ? "fa-trash" : "fa-info";
+
+                // Origin Logic
+                var originClass = "origin-default";
+                var originIcon = "fa-question";
+                var originText = item.TipoOrigenDesc ?? "Desconocido";
+
+                if (originText.Contains("Web")) { originClass = "origin-web"; originIcon = "fa-user"; }
+                else if (originText.Contains("API")) { originClass = "origin-api"; originIcon = "fa-key"; }
+                else if (originText.Contains("Sistema")) { originClass = "origin-system"; originIcon = "fa-robot"; }
+                else if (originText.Contains("Job")) { originClass = "origin-job"; originIcon = "fa-clock"; }
+                else if (originText.Contains("LDAP")) { originClass = "origin-ldap"; originIcon = "fa-sync"; }
 
                 // Cloudflare-inspired varied palette
                 var colorIndex = (item.IdRegistro % 5);
@@ -181,14 +212,13 @@
                                     @item.Tabla
                                 </h6>
                                 <div class="d-flex align-items-center mt-1 flex-wrap gap-2">
-                                    <small class="text-muted" style="font-size: 0.8rem;">
-                                        @item.Usuario
-                                    </small>
+                                    <span class="badge-origin @originClass py-0" style="height: 22px;">
+                                        <i class="fas @originIcon" style="font-size: 0.7rem;"></i> @originText
+                                    </span>
                                     
                                     <!-- Status Badge (Action) -->
                                     <span class="badge rounded-pill border d-none d-sm-inline-flex align-items-center px-2 py-0" 
                                         style="@badgeClass font-weight: 600; height: 22px;">
-                                        <i class="fas @iconClass me-1" style="font-size: 0.7rem;"></i>
                                         @item.Accion
                                     </span>
                                 </div>
@@ -204,16 +234,6 @@
                     <!-- Expandable Content -->
                     <div class="expandable-content bg-light" id="body-@uniqueId" style="border-top: 1px solid var(--border-light);">
                         <div class="p-3">
-                            <!-- XS Screen Status -->
-                            <div class="d-block d-sm-none mb-3">
-                                <div class="d-flex align-items-center justify-content-between p-2 rounded-3 bg-white border">
-                                    <span class="fw-semibold text-muted">Acción:</span>
-                                    <span class="badge rounded-pill" style="@badgeClass color: black;">
-                                        @item.Accion
-                                    </span>
-                                </div>
-                            </div>
-
                             <!-- Details Grid -->
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
@@ -229,23 +249,25 @@
                                 <div class="col-6">
                                     <div class="p-2 bg-white border border-light rounded-3 shadow-sm h-100">
                                         <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
-                                            <i class="fas fa-clock me-1"></i> Hora
+                                            <i class="fas fa-user me-1"></i> Usuario
                                         </small>
                                         <span class="fw-semibold text-dark small">
-                                            @item.FechaCreacion.ToString("h:mm tt")
+                                            @item.Usuario
                                         </span>
                                     </div>
                                 </div>
+                                @if(!string.IsNullOrEmpty(item.ApiKeyDesc) && item.ApiKeyDesc != "N/A") {
                                 <div class="col-12">
                                     <div class="p-2 bg-white border border-light rounded-3 shadow-sm">
                                         <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
-                                            <i class="fas fa-key me-1"></i> Origen
+                                            <i class="fas fa-key me-1"></i> Detalle Origen
                                         </small>
                                         <span class="fw-semibold text-dark small">
                                             @item.ApiKeyDesc
                                         </span>
                                     </div>
                                 </div>
+                                }
                             </div>
 
                             <!-- Action Buttons -->
@@ -284,6 +306,17 @@
                                 var badgeClass = item.Accion.Contains("POST") ? "badge-success-soft" :
                                                 item.Accion.Contains("PUT") ? "badge-warning-soft" :
                                                 item.Accion.Contains("DELETE") ? "badge-danger-soft" : "badge-info-soft";
+                                
+                                var originClass = "origin-default";
+                                var originIcon = "fa-question";
+                                var originText = item.TipoOrigenDesc ?? "Desconocido";
+
+                                if (originText.Contains("Web")) { originClass = "origin-web"; originIcon = "fa-user"; }
+                                else if (originText.Contains("API")) { originClass = "origin-api"; originIcon = "fa-key"; }
+                                else if (originText.Contains("Sistema")) { originClass = "origin-system"; originIcon = "fa-robot"; }
+                                else if (originText.Contains("Job")) { originClass = "origin-job"; originIcon = "fa-clock"; }
+                                else if (originText.Contains("LDAP")) { originClass = "origin-ldap"; originIcon = "fa-sync"; }
+
                                 <tr>
                                     <td class="text-center">@item.IdRegistro</td>
                                     <td class="text-center">
@@ -297,7 +330,13 @@
                                         <span class="badge-soft @badgeClass">@item.Accion</span>
                                     </td>
                                     <td class="text-center">
-                                        <small class="text-muted">@item.ApiKeyDesc</small>
+                                        <span class="badge-origin @originClass">
+                                            <i class="fas @originIcon"></i> @originText
+                                        </span>
+                                        @if(!string.IsNullOrEmpty(item.ApiKeyDesc) && item.ApiKeyDesc != "N/A" && item.ApiKeyDesc != "Directo/Interno")
+                                        {
+                                            <div class="mt-1"><small class="text-muted" style="font-size: 0.7rem;">@item.ApiKeyDesc</small></div>
+                                        }
                                     </td>
                                     <td>@item.Usuario</td>
                                     <td class="text-center">

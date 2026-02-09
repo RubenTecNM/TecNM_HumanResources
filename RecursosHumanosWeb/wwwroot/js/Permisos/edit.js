@@ -81,7 +81,7 @@
         // Mostrar/ocultar campos de hora
         const hora1Group = document.getElementById('hora1Time-group');
         const hora2Group = document.getElementById('hora2Time-group');
-        
+
         hora1Group.style.display = currentConfig.hora1Visible ? 'block' : 'none';
         hora2Group.style.display = currentConfig.hora2Visible ? 'block' : 'none';
 
@@ -96,7 +96,7 @@
         // Configurar required en Fecha2
         const fecha2Group = document.getElementById('fecha2Date-group');
         fecha2Group.style.display = tipoPermiso === 3 ? 'none' : 'block';
-        
+
         if (elements.fecha2Date) {
             elements.fecha2Date.required = currentConfig.fecha2Required;
             if (!currentConfig.fecha2Required) {
@@ -111,18 +111,18 @@
     function handleTipoPermisoChange(e) {
         const nuevoTipo = parseInt(e.target.value);
         console.log(`🔄 Tipo de permiso cambiado: ${tipoPermisoActual} → ${nuevoTipo}`);
-        
+
         tipoPermisoActual = nuevoTipo;
         form.dataset.tipoPermiso = nuevoTipo;
-        
+
         // Reconfigurar campos
         configurarCamposSegunTipo(nuevoTipo);
-        
+
         // Agregar clase activa a la tarjeta seleccionada
         document.querySelectorAll('.permission-type-card').forEach(card => {
-            card.classList.remove('active');
+            card.classList.remove('selected', 'active');
         });
-        e.target.closest('.permission-type-card').classList.add('active');
+        e.target.closest('.permission-type-card').classList.add('selected', 'active');
     }
 
     // --- COMBINAR FECHA Y HORA EN CAMPOS HIDDEN ---
@@ -152,7 +152,7 @@
     function updateCharCount() {
         const count = elements.motivo.value.length;
         elements.charCount.textContent = count;
-        
+
         if (count > 255) {
             elements.charCount.style.color = '#ef4444';
         } else if (count > 200) {
@@ -207,7 +207,7 @@
     // --- ENVÍO DEL FORMULARIO ---
     function handleFormSubmit(e) {
         e.preventDefault();
-        
+
         // Validar que haya un tipo seleccionado
         if (!tipoPermisoActual) {
             Swal.fire({
@@ -267,62 +267,62 @@
             },
             body: formData
         })
-        .then(response => {
-            if (!response.ok) throw new Error('Error HTTP: ' + response.status);
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: data.title || '¡Éxito!',
-                    text: data.message || 'Permiso actualizado exitosamente',
-                    showConfirmButton: false,
-                    timer: 2000
-                }).then(() => {
-                    if (data.redirectUrl) {
-                        window.location.href = data.redirectUrl;
-                    } else {
-                        window.location.href = '/Permisos/Index';
-                    }
-                });
-            } else {
-                // Manejar errores de validación
-                if (data.errors) {
-                    let errorHtml = '<ul style="text-align: left;">';
-                    for (const field in data.errors) {
-                        data.errors[field].forEach(error => {
-                            errorHtml += `<li>${error}</li>`;
-                        });
-                    }
-                    errorHtml += '</ul>';
-                    
+            .then(response => {
+                if (!response.ok) throw new Error('Error HTTP: ' + response.status);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
                     Swal.fire({
-                        icon: 'error',
-                        title: data.title || 'Error de Validación',
-                        html: errorHtml
+                        icon: 'success',
+                        title: data.title || '¡Éxito!',
+                        text: data.message || 'Permiso actualizado exitosamente',
+                        showConfirmButton: false,
+                        timer: 2000
+                    }).then(() => {
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            window.location.href = '/Permisos/Index';
+                        }
                     });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: data.title || 'Error',
-                        text: data.message || 'No se pudo actualizar el permiso'
-                    });
+                    // Manejar errores de validación
+                    if (data.errors) {
+                        let errorHtml = '<ul style="text-align: left;">';
+                        for (const field in data.errors) {
+                            data.errors[field].forEach(error => {
+                                errorHtml += `<li>${error}</li>`;
+                            });
+                        }
+                        errorHtml += '</ul>';
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: data.title || 'Error de Validación',
+                            html: errorHtml
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: data.title || 'Error',
+                            text: data.message || 'No se pudo actualizar el permiso'
+                        });
+                    }
                 }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error del servidor',
-                text: error.message || 'No se pudo conectar con el servidor'
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error del servidor',
+                    text: error.message || 'No se pudo conectar con el servidor'
+                });
+            })
+            .finally(() => {
+                elements.submitBtn.disabled = false;
+                elements.submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
             });
-        })
-        .finally(() => {
-            elements.submitBtn.disabled = false;
-            elements.submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
-        });
     }
 
     // --- INICIALIZACIÓN ---
@@ -335,7 +335,7 @@
         // Marcar la tarjeta activa inicial
         const radioChecked = document.querySelector(`input[name="IdTipoPermiso"]:checked`);
         if (radioChecked) {
-            radioChecked.closest('.permission-type-card').classList.add('active');
+            radioChecked.closest('.permission-type-card').classList.add('selected', 'active');
         }
 
         // Event listeners para cambio de tipo

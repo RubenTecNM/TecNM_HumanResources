@@ -41,7 +41,12 @@ namespace RecursosHumanosWeb.Mapping
                 .ForMember(d => d.Nombre, o => o.MapFrom(s => s.IdUsuarioSolicitaNavigation.Nombre ?? "N/A"))
                 .ForMember(d => d.TipoPermiso, o => o.MapFrom(s => s.IdTipoPermisoNavigation.Descripcion ?? "N/A"));
 
-            CreateMap<Permiso, PermissionsCreateViewModel>().ReverseMap();
+            CreateMap<Permiso, PermissionsCreateViewModel>()
+                .ForMember(dest => dest.Fecha1Date, opt => opt.MapFrom(src => src.Fecha1))
+                .ForMember(dest => dest.Hora1Time, opt => opt.MapFrom(src => src.Fecha1.HasValue ? src.Fecha1.Value.ToString("HH:mm") : null))
+                .ForMember(dest => dest.Fecha2Date, opt => opt.MapFrom(src => src.Fecha2))
+                .ForMember(dest => dest.Hora2Time, opt => opt.MapFrom(src => src.Fecha2.HasValue ? src.Fecha2.Value.ToString("HH:mm") : null))
+                .ReverseMap();
 
             // 4. Listados
             CreateMap<Corte, CortesDTO>();
@@ -82,7 +87,8 @@ namespace RecursosHumanosWeb.Mapping
                 .ForMember(d => d.Tabla, o => o.MapFrom(s => s.IdTablaNavigation.Descripcion))
                 .ForMember(d => d.Accion, o => o.MapFrom(s => s.IdApiFunctionNavigation.Descripcion))
                 .ForMember(d => d.Usuario, o => o.MapFrom(s => s.IdUsuarioCreaNavigation.Nombre))
-                .ForMember(d => d.ApiKeyDesc, o => o.MapFrom(s => s.IdApiKeyNavigation != null ? (s.IdApiKeyNavigation.Clave.Length >= 8 ? s.IdApiKeyNavigation.Clave.Substring(0, 8) + "..." : s.IdApiKeyNavigation.Clave) : "Directo/Interno"));
+                .ForMember(d => d.ApiKeyDesc, o => o.MapFrom(s => s.IdApiKeyNavigation != null ? (s.IdApiKeyNavigation.Clave.Length >= 8 ? s.IdApiKeyNavigation.Clave.Substring(0, 8) + "..." : s.IdApiKeyNavigation.Clave) : "N/A"))
+                .ForMember(d => d.TipoOrigenDesc, o => o.MapFrom(s => s.IdTipoOrigenNavigation.Descripcion));
         }
     }
 }

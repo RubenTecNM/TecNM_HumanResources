@@ -7,9 +7,11 @@ namespace RecursosHumanosWeb.Models.ViewModels
         [Required(ErrorMessage = "El correo es obligatorio")]
         [RegularExpression(@"^[^@\s]+@monclova\.tecnm\.mx$",
          ErrorMessage = "El correo debe pertenecer al dominio monclova.tecnm.mx")]
+        [Display(Name = "Correo Electr&oacute;nico")]
         public string Correo { get; set; }
 
-        [Required(ErrorMessage = "La contraseña es obligatoria")]
+        [Required(ErrorMessage = "La contrase&ntilde;a es obligatoria")]
+        [Display(Name = "Contrase&ntilde;a")]
         public string Clave { get; set; }
 
         public bool RememberMe { get; set; }

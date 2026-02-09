@@ -33,6 +33,7 @@ namespace RecursosHumanosWeb.Controllers
                     .Include(a => a.IdApiFunctionNavigation)
                     .Include(a => a.IdUsuarioCreaNavigation)
                     .Include(a => a.IdApiKeyNavigation)
+                    .Include(a => a.IdTipoOrigenNavigation)
                     .OrderByDescending(a => a.FechaCreacion)
                     .AsQueryable();
 
@@ -74,6 +75,7 @@ namespace RecursosHumanosWeb.Controllers
                 .Include(a => a.IdApiFunctionNavigation)
                 .Include(a => a.IdUsuarioCreaNavigation)
                 .Include(a => a.IdApiKeyNavigation)
+                .Include(a => a.IdTipoOrigenNavigation)
                 .FirstOrDefaultAsync(a => a.Id == id);
 
             if (audit == null) return NotFound();

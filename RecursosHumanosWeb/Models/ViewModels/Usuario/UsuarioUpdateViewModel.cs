@@ -10,6 +10,13 @@ namespace RecursosHumanosWeb.Models.ViewModels.Usuario
         [Required(ErrorMessage = "El ID del usuario es obligatorio para la actualización.")]
         public int IdUsuario { get; set; }
 
+        // Alias para compatibilidad con controlador
+        public int Id 
+        {
+            get => IdUsuario;
+            set => IdUsuario = value;
+        }
+
         // --- 2. Propiedades a modificar ---
 
         [Required(ErrorMessage = "El nombre es obligatorio.")]

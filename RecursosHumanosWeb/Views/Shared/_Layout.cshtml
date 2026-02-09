@@ -70,18 +70,18 @@
                 <ul class="drawer-menu">
                     <li class="drawer-section">Navegación</li>
                     <li>
-                        <a asp-controller="Permisos" asp-action="Index" class="drawer-link @(currentCtrl == "Permisos" ? "active" : "")">
+                        <a asp-controller="Permiso" asp-action="Index" class="drawer-link @(currentCtrl == "Permiso" ? "active" : "")">
                             <i class="fas fa-file-contract"></i> Permisos
                         </a>
                     </li>
                     <authorize-section policy="RHOrAdmin">
                         <li>
-                            <a asp-controller="Cortes" asp-action="Index" class="drawer-link @(currentCtrl == "Cortes" ? "active" : "")">
+                            <a asp-controller="Corte" asp-action="Index" class="drawer-link @(currentCtrl == "Corte" ? "active" : "")">
                                 <i class="fas fa-calendar-check"></i> Cortes
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Usuarios" asp-action="Index" class="drawer-link @(currentCtrl == "Usuarios" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                            <a asp-controller="Usuario" asp-action="Index" class="drawer-link @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
                                 <i class="fas fa-users-cog"></i> Usuarios
                             </a>
                         </li>
@@ -95,7 +95,7 @@
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="ApiKeys" asp-action="Index" class="drawer-link @(currentCtrl == "ApiKeys" ? "active" : "")">
+                            <a asp-controller="ApiKey" asp-action="Index" class="drawer-link @(currentCtrl == "ApiKey" ? "active" : "")">
                                 <i class="fas fa-key"></i> API Keys
                             </a>
                         </li>
@@ -103,7 +103,7 @@
                     
                     <li class="drawer-section">Cuenta</li>
                     <li>
-                        <a asp-controller="Usuarios" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="drawer-link @(currentCtrl == "Usuarios" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
+                        <a asp-controller="Usuario" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="drawer-link @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
                             <i class="fas fa-user-circle"></i> Mi Perfil
                         </a>
                     </li>
@@ -127,22 +127,22 @@
             </div>
             <ul class="navbar-side__menu">
                 
-                <li class="navbar-side__item @(currentCtrl == "Permisos" ? "active" : "")">
-                    <a asp-controller="Permisos" asp-action="Index" class="navbar-side__link">
+                <li class="navbar-side__item @(currentCtrl == "Permiso" ? "active" : "")">
+                    <a asp-controller="Permiso" asp-action="Index" class="navbar-side__link">
                         <i class="fas fa-file-contract"></i>
                         <span>Permisos</span>
                     </a>
                 </li>
 
                 <authorize-section policy="RHOrAdmin">
-                    <li class="navbar-side__item @(currentCtrl == "Cortes" ? "active" : "")">
-                        <a asp-controller="Cortes" asp-action="Index" class="navbar-side__link">
+                    <li class="navbar-side__item @(currentCtrl == "Corte" ? "active" : "")">
+                        <a asp-controller="Corte" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-calendar-check"></i>
                             <span>Cortes</span>
                         </a>
                     </li>
-                    <li class="navbar-side__item @(currentCtrl == "Usuarios" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
-                        <a asp-controller="Usuarios" asp-action="Index" class="navbar-side__link">
+                    <li class="navbar-side__item @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                        <a asp-controller="Usuario" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-users-cog"></i>
                             <span>Usuarios</span>
                         </a>
@@ -156,8 +156,8 @@
                             <span>Auditoría</span>
                         </a>
                     </li>
-                    <li class="navbar-side__item d-none d-lg-block @(currentCtrl == "ApiKeys" ? "active" : "")">
-                        <a asp-controller="ApiKeys" asp-action="Index" class="navbar-side__link">
+                    <li class="navbar-side__item d-none d-lg-block @(currentCtrl == "ApiKey" ? "active" : "")">
+                        <a asp-controller="ApiKey" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-key"></i>
                             <span>API Keys</span>
                         </a>
@@ -176,8 +176,8 @@
             <div class="navbar-side__footer d-none d-lg-block">
                 <div class="navbar-side__menu">
                     <!-- Avatar/Profile Link -->
-                    <li class="navbar-side__item @(currentCtrl == "Usuarios" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
-                        <a asp-controller="Usuarios" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="navbar-side__link">
+                    <li class="navbar-side__item @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
+                        <a asp-controller="Usuario" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="navbar-side__link">
                             <div class="user-avatar-circle" style="width: 28px; height: 28px; font-size: 0.8rem;">
                                 @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
                             </div>
@@ -247,7 +247,7 @@
                         Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                         try {
                             const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                            const response = await fetch('/Permisos/GenerateTestData', {
+                            const response = await fetch('/Permiso/GenerateTestData', {
                                 method: 'POST',
                                 headers: { 'RequestVerificationToken': token }
                             });

@@ -81,7 +81,7 @@ namespace RecursosHumanosWeb.Controllers
                     };
                     _context.Permisos.Add(permiso);
                     await _context.SaveChangesAsync();
-                    return Ok(new AlertResponseDTO("Permisos", $"Permiso creado (ID: {permiso.Id})") );
+                    return Ok(new AlertResponseDTO("Permiso", $"Permiso creado (ID: {permiso.Id})") );
                 }
             }
 
@@ -109,7 +109,7 @@ namespace RecursosHumanosWeb.Controllers
                 };
                 _context.Permisos.Add(permiso);
                 await _context.SaveChangesAsync();
-                return Ok(new AlertResponseDTO("Permisos", $"Permiso creado (ID: {permiso.Id})"));
+                return Ok(new AlertResponseDTO("Permiso", $"Permiso creado (ID: {permiso.Id})"));
             }
 
             return Ok(new AlertResponseDTO { Success = false, Title = "No Test", Message = "Caso no reconocido." });

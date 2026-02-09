@@ -4612,12 +4612,10 @@ textarea::placeholder {
 
 /* Contenedor principal para vistas de detalles */
 .details-container {
-    max-width: 1140px;
+    width: 100%;
     margin: 0 auto;
     padding: 1.5rem 1rem 0;
-    /* Reduced top, kept horizontal, removed bottom */
     margin-bottom: 0;
-    /* Removed margin-bottom */
 }
 
 /* Card principal con hover */
@@ -4687,6 +4685,90 @@ textarea::placeholder {
 .info-card:hover {
     background-color: #fff;
     transform: translateX(5px);
+}
+
+/* =================================
+   PERMISSION TYPES - SHARED COMPONENT
+   ================================= */
+.permission-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: var(--spacing-md);
+    width: 100%;
+    box-sizing: border-box;
+    margin: var(--spacing-md) 0;
+}
+
+.permission-type-card {
+    position: relative;
+    transition: all var(--transition-smooth);
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.permission-types.readonly-mode .permission-type-card {
+    cursor: default;
+    pointer-events: none;
+}
+
+.type-label {
+    display: block;
+    padding: var(--spacing-lg);
+    background: var(--surface);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    text-align: center;
+    transition: all var(--transition-smooth);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.type-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto var(--spacing-md);
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    transition: all var(--transition-smooth);
+}
+
+.type-label h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-dark);
+}
+
+.type-label p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.permission-type-card.selected .type-label,
+.permission-type-card.active .type-label {
+    border-color: var(--primary-strong) !important;
+    background: var(--primary-lightest) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px var(--shadow-strong);
+}
+
+.permission-type-card.selected .type-icon,
+.permission-type-card.active .type-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.info-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -5350,7 +5432,8 @@ textarea::placeholder {
 
 .filter-input-pill {
     border-radius: 50px;
-    border: 1px solid #E2E8F0;
+    border: 2px solid #ced4da;
+    height: 52px;
     padding: 0.6rem 1.25rem;
     transition: all 0.2s ease;
     background-color: #F8FAFC;
@@ -5367,8 +5450,8 @@ textarea::placeholder {
 /* Select2 Pill overrides - Container */
 .select2-container--default .select2-selection--single {
     border-radius: 50px !important;
-    border: 1px solid #E2E8F0 !important;
-    height: 45px !important;
+    border: 2px solid #ced4da !important;
+    height: 52px !important;
     /* Match input height */
     padding: 8px 16px !important;
     background-color: #F8FAFC !important;
@@ -5377,7 +5460,7 @@ textarea::placeholder {
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 43px !important;
+    height: 50px !important;
     right: 12px !important;
 }
 
@@ -5393,8 +5476,15 @@ textarea::placeholder {
     border-radius: 12px !important;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
     padding: 8px !important;
-    margin-top: 8px !important;
     background-color: white !important;
+}
+
+.select2-dropdown.select2-dropdown--below {
+    margin-top: 8px !important;
+}
+
+.select2-dropdown.select2-dropdown--above {
+    margin-top: -8px !important;
 }
 
 /* Search Field inside Dropdown - Rounded Pill */

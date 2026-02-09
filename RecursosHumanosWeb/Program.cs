@@ -5,6 +5,7 @@ using RecursosHumanosWeb.Controllers;
 using RecursosHumanosWeb.Models;
 using Microsoft.Extensions.Options;
 using RecursosHumanosWeb.Filters;
+using RecursosHumanosWeb.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,12 @@ builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpS
 
 // IEmailSender implementation
 builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
+
+// Business Services
+builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<ICorteService, CorteService>();
+builder.Services.AddScoped<IPermisoService, PermisoService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
 // Authorization Policies
 builder.Services.AddAuthorization(options =>

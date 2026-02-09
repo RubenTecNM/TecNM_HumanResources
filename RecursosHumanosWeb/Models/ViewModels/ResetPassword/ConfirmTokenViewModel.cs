@@ -4,12 +4,14 @@ namespace RecursosHumanosWeb.Models.ViewModels.ResetPassword
 {
     public class ConfirmTokenViewModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "El correo electr&oacute;nico es obligatorio.")]
+        [EmailAddress(ErrorMessage = "El formato del correo no es v&aacute;lido.")]
+        [Display(Name = "Correo Electr&oacute;nico")]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        [StringLength(20, MinimumLength = 6)]
+        [Required(ErrorMessage = "El token de seguridad es obligatorio.")]
+        [StringLength(20, MinimumLength = 6, ErrorMessage = "El token debe tener entre 6 y 20 caracteres.")]
+        [Display(Name = "Token de Seguridad")]
         public string Token { get; set; } = string.Empty;
     }
 }

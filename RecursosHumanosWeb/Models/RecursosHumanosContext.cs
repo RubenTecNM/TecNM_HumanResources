@@ -8,6 +8,7 @@ namespace RecursosHumanosWeb.Models;
 public partial class RecursosHumanosContext : DbContext
 {
     private readonly IHttpContextAccessor? _httpContextAccessor;
+    public int? _auditOrigenOverride; // Permitir override manual para procesos de sistema
 
     public RecursosHumanosContext()
     {
@@ -44,6 +45,7 @@ public partial class RecursosHumanosContext : DbContext
     public virtual DbSet<TipoUsuario> TipoUsuarios { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<TipoOrigen> TipoOrigenes { get; set; }
     public virtual DbSet<ResetPasswordToken> ResetPasswordTokens { get; set; }
     public virtual DbSet<Auditoria> Auditorias { get; set; }
     public virtual DbSet<VwPermisosUsuario> VwPermisosUsuarios { get; set; }
@@ -441,6 +443,35 @@ public partial class RecursosHumanosContext : DbContext
                 .HasConstraintName("FK__TipoUsuar__IdUsu__373B3228");
         });
 
+        modelBuilder.Entity<TipoOrigen>(entity =>
+        {
+            entity.ToTable("TipoOrigen");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(64)
+                .IsUnicode(false);
+
+            entity.Property(e => e.Estatus).HasDefaultValue(true);
+
+            entity.Property(e => e.FechaCreacion)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.Property(e => e.FechaModificacion)
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.IdUsuarioCreaNavigation).WithMany()
+                .HasForeignKey(d => d.IdUsuarioCrea)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_TipoOrigen_Usuario_Crea");
+
+            entity.HasOne(d => d.IdUsuarioModificaNavigation).WithMany()
+                .HasForeignKey(d => d.IdUsuarioModifica)
+                .HasConstraintName("FK_TipoOrigen_Usuario_Modifica");
+        });
+
         modelBuilder.Entity<Usuario>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Usuario__3214EC07981AC028");
@@ -549,6 +580,11 @@ public partial class RecursosHumanosContext : DbContext
             entity.HasOne(d => d.IdUsuarioModificaNavigation).WithMany()
                 .HasForeignKey(d => d.IdUsuarioModifica)
                 .HasConstraintName("FK_Auditoria_UsuarioModifica");
+
+            entity.HasOne(d => d.IdTipoOrigenNavigation).WithMany(p => p.Auditoria)
+                .HasForeignKey(d => d.IdTipoOrigen)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Auditoria_TipoOrigen");
         });
 
         modelBuilder.Entity<LoginDTO>(entity =>
@@ -604,6 +640,27 @@ public partial class RecursosHumanosContext : DbContext
         {
             await Database.ExecuteSqlRawAsync("EXEC sp_set_session_context @key=N'IdApiKey', @value=@val", 
                 new Microsoft.Data.SqlClient.SqlParameter("@val", apiKeyId.Value));
+        }
+
+        // 4. Establecer IdTipoOrigen
+        int idTipoOrigen;
+        if (_auditOrigenOverride.HasValue)
+        {
+            idTipoOrigen = _auditOrigenOverride.Value; // Manual override (ej. Sistema Automático)
+        }
+        else if (apiKeyId.HasValue)
+        {
+            idTipoOrigen = 2; // API Externa
+        }
+        else
+        {
+            idTipoOrigen = 1; // Interfaz Web (Default)
+        }
+
+        if (idTipoOrigen != 1) // Solo enviar si es diferente al default del trigger (para optimizar)
+        {
+             await Database.ExecuteSqlRawAsync("EXEC sp_set_session_context @key=N'IdTipoOrigen', @value=@val", 
+                new Microsoft.Data.SqlClient.SqlParameter("@val", idTipoOrigen));
         }
     }
 
