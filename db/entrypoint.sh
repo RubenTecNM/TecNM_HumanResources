@@ -1,37 +1,37 @@
 #!/bin/bash
-# Iniciar SQL Server en segundo plano
+# Start SQL Server in background
 /opt/mssql/bin/sqlservr &
 
-# Esperar a que SQL Server esté listo de forma inteligente
-echo "Esperando a que SQL Server arranque..."
+# Intelligent wait (health check loop)
+echo "Waiting for SQL Server to start..."
 SUCCESS=0
 for i in {1..50};
 do
     /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -Q "SELECT 1" > /dev/null 2>&1
     if [ $? -eq 0 ]
     then
-        echo "SQL Server est&aacute; listo despues de $i intentos."
+        echo "SQL Server is ready after $i attempts."
         SUCCESS=1
         break
     else
-        echo "Re-intentando conexi&oacute;n..."
+        echo "Retrying connection..."
         sleep 2s
     fi
 done
 
 if [ $SUCCESS -eq 0 ]
 then
-    echo "ERROR: SQL Server no arranco a tiempo."
+    echo "ERROR: SQL Server failed to start in time."
     exit 1
 fi
 
-# Ejecutar los scripts de inicializaci&oacute;n
-echo "Ejecutando schemaDB.sql..."
+# Execute initialization scripts
+echo "Executing schemaDB.sql..."
 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -d master -i /usr/config/schemaDB.sql
 
-echo "Ejecutando InsertsDB.sql..."
+echo "Executing InsertsDB.sql..."
 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P $MSSQL_SA_PASSWORD -d RecursosHumanos -i /usr/config/InsertsDB.sql
 
-echo "Base de datos configurada exitosamente con esquema e inserts."
-# Mantener el contenedor vivo
+echo "Database successfully configured with schema and inserts."
+# Keep the container alive
 wait

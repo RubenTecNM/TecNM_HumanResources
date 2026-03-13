@@ -46,6 +46,20 @@ The easiest way to get the system running with its complete database is using Do
     1.  `db/schemaDB.sql`: Creates the complete database schema.
     2.  `db/InsertsDB.sql`: Populates the database with essential and operational data.
 
+### Manual Database Initialization (Alternative)
+If you need to run the scripts manually after the service is up:
+```bash
+# Copy scripts to the container (if not already there)
+docker cp db/schemaDB.sql <container_id>:/usr/config/
+docker cp db/InsertsDB.sql <container_id>:/usr/config/
+
+# Execute Schema
+docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourPassword -i /usr/config/schemaDB.sql
+
+# Execute Inserts
+docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourPassword -d RecursosHumanos -i /usr/config/InsertsDB.sql
+```
+
 This ensures a fully functional system from the start.
 
 ---
