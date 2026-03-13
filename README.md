@@ -42,7 +42,11 @@ The easiest way to get the system running with its complete database is using Do
 
 ### Services Included
 - **web**: ASP.NET Core application accessible at `http://localhost:8080`
-- **db**: SQL Server instance. The database is automatically initialized with the schema and seed data (Areas, Users, and Roles) using the `db/setup.sql` script.
+- **db**: SQL Server instance. The database is automatically initialized during the first run using:
+    1.  `db/schemaDB.sql`: Creates the complete database schema.
+    2.  `db/InsertsDB.sql`: Populates the database with essential and operational data.
+
+This ensures a fully functional system from the start.
 
 ---
 
