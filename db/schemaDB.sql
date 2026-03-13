@@ -1,5 +1,13 @@
--- Esquema completo de la base de datos RecursosHumanos
--- Generado desde dockerRH (MSSQL Server en Docker)
+-- Complete database schema for RecursosHumanos
+-- Generated for Docker initialization
+
+USE master;
+GO
+IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'RecursosHumanos')
+BEGIN
+    CREATE DATABASE [RecursosHumanos]
+END
+GO
 
 USE RecursosHumanos;
 GO
