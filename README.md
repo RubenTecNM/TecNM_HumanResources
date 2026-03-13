@@ -25,20 +25,22 @@ The easiest way to get the system running with its complete database is using Do
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
-   cd itsmRH_GestionPermisos
-   ```
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
+    cd itsmRH_GestionPermisos
+    ```
 
-2. **Configure Environment Variables**:
-   Create a `.env` file in the root directory:
-   ```env
-   MSSQL_SA_PASSWORD=YourStrongPassword!2026
-   ```
+2.  **Configure Environment Variables**:
+    Create a `.env` file in the root directory:
+    ```env
+    MSSQL_SA_PASSWORD=buss1ness!2026
+    ```
 
-3. **Launch the services**:
-   ```bash
-   docker-compose up -d --build
-   ```
+3.  **Launch the services**:
+    ```bash
+    docker-compose up -d --build
+    ```
 
 ### Services Included
 - **web**: ASP.NET Core application accessible at `http://localhost:8080`
@@ -54,10 +56,10 @@ docker cp db/schemaDB.sql <container_id>:/usr/config/
 docker cp db/InsertsDB.sql <container_id>:/usr/config/
 
 # Execute Schema
-docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourPassword -i /usr/config/schemaDB.sql
+docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P buss1ness!2026 -i /usr/config/schemaDB.sql
 
 # Execute Inserts
-docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourPassword -d RecursosHumanos -i /usr/config/InsertsDB.sql
+docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P buss1ness!2026 -d RecursosHumanos -i /usr/config/InsertsDB.sql
 ```
 
 This ensures a fully functional system from the start.
@@ -69,7 +71,7 @@ This ensures a fully functional system from the start.
 ### User Secrets
 For local development, you can manage sensitive data using .NET User Secrets:
 ```bash
-dotnet user-secrets set "ConnectionStrings:RecursosHumanosContext" "Server=db;Database=RecursosHumanos;User Id=sa;Password=YourStrongPassword!2026;TrustServerCertificate=True;"
+dotnet user-secrets set "ConnectionStrings:RecursosHumanosContext" "Server=db;Database=RecursosHumanos;User Id=sa;Password=buss1ness!2026;TrustServerCertificate=True;"
 dotnet user-secrets set "SmtpSettings:SmtpServer" "smtp.office365.com"
 dotnet user-secrets set "SmtpSettings:PasswordApp" "gsgvdlywyzzjxzsn"
 ```
