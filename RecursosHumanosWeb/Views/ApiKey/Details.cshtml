@@ -34,198 +34,200 @@
         </div>
     </div>
 
-    <div class="permission-form">
-        <div class="form-sections">
-            <!-- Sección 1: Información de la Clave -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-info-circle"></i>
-                        Información de la Clave
-                    </h3>
-                    <span class="section-indicator">1</span>
-                </div>
-
-                <div class="datetime-grid">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label class="form-label">
-                            <i class="fas fa-key"></i>
-                            Clave API
-                        </label>
-                        <div class="input-wrapper" style="display: flex; gap: 10px; align-items: center;">
-                            <input type="text" id="apiKeyValue" class="form-control" value="@Model.Clave" readonly 
-                                   style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%); 
-                                          font-family: 'Courier New', monospace; font-weight: 600; color: var(--primary-strong); 
-                                          border: 2px solid rgba(59, 130, 246, 0.3);" />
-                            <button type="button" class="btn btn-primary" onclick="copyApiKey()" title="Copiar clave">
-                                <i class="fas fa-copy"></i> Copiar
-                            </button>
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden mb-5">
+        <div class="card-body p-4 p-md-5 bg-white">
+            <div class="permission-form">
+                <div class="form-sections">
+                    <!-- Sección 1: Información de la Clave -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Información de la Clave
+                            </h3>
+                            <span class="section-indicator">1</span>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-check-circle"></i>
-                            Estado
-                        </label>
-                        <div class="input-wrapper">
-                            @if (Model.Estatus)
-                            {
-                                <input type="text" class="form-control" value="✓ Activa" readonly 
-                                       style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); 
-                                              font-weight: 600; color: #059669; border-color: rgba(16, 185, 129, 0.3);" />
-                            }
-                            else
-                            {
-                                <input type="text" class="form-control" value="✗ Inactiva" readonly 
-                                       style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%); 
-                                              font-weight: 600; color: #dc2626; border-color: rgba(239, 68, 68, 0.3);" />
-                            }
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-calendar-plus"></i>
-                            Fecha de Creación
-                        </label>
-                        <div class="input-wrapper">
-                            <i class="input-icon fas fa-calendar"></i>
-                            <input type="text" class="form-control" value="@FormatFechaCompleta(Model.FechaCreacion)" readonly 
-                                   style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sección 2: Información de Usuarios -->
-            <div class="form-section">
-                <div class="section-header">
-                    <h3>
-                        <i class="fas fa-users"></i>
-                        Información de Usuarios
-                    </h3>
-                    <span class="section-indicator">2</span>
-                </div>
-
-                <div class="datetime-grid">
-                    @if (Model.IdUsuarioCreaNavigation != null)
-                    {
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-user-plus"></i>
-                                Creado por
-                            </label>
-                            <div class="input-wrapper">
-                                <i class="input-icon fas fa-user"></i>
-                                <input type="text" class="form-control" value="@Model.IdUsuarioCreaNavigation.Nombre" readonly 
-                                       style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
+                        <div class="datetime-grid">
+                            <div class="form-group" style="grid-column: 1 / -1;">
+                                <label class="form-label">
+                                    <i class="fas fa-key"></i>
+                                    Clave API
+                                </label>
+                                <div class="input-wrapper" style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="text" id="apiKeyValue" class="form-control" value="@Model.Clave" readonly 
+                                           style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%); 
+                                                  font-family: 'Courier New', monospace; font-weight: 600; color: var(--primary-strong); 
+                                                  border: 2px solid rgba(59, 130, 246, 0.3);" />
+                                    <button type="button" class="btn btn-primary" onclick="copyApiKey()" title="Copiar clave">
+                                        <i class="fas fa-copy"></i> Copiar
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    }
 
-                    @if (Model.IdUsuarioModificaNavigation != null)
-                    {
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-user-edit"></i>
-                                Modificado por
-                            </label>
-                            <div class="input-wrapper">
-                                <i class="input-icon fas fa-user"></i>
-                                <input type="text" class="form-control" value="@Model.IdUsuarioModificaNavigation.Nombre" readonly 
-                                       style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
-                            </div>
-                        </div>
-                    }
-
-                    @if (Model.FechaModificacion != null)
-                    {
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-edit"></i>
-                                Última Modificación
-                            </label>
-                            <div class="input-wrapper">
-                                <i class="input-icon fas fa-calendar"></i>
-                                <input type="text" class="form-control" value="@FormatFechaCompleta(Model.FechaModificacion.Value)" readonly 
-                                       style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
-                            </div>
-                        </div>
-                    }
-                </div>
-            </div>
-
-            <!-- Sección 3: Permisos Asignados -->
-            @if (permisosAsignados.Any())
-            {
-                <div class="form-section">
-                    <div class="section-header">
-                        <h3>
-                            <i class="fas fa-shield-alt"></i>
-                            Permisos Asignados
-                        </h3>
-                        <span class="section-indicator">3</span>
-                    </div>
-
-                    <div class="permissions-list">
-                        @foreach (var grupo in permisosAsignados)
-                        {
-                            <div class="permission-card mb-3 p-3 border rounded" 
-                                 style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid #e2e8f0 !important;">
-                                <h5 class="mb-3" style="color: var(--primary-strong); font-weight: 700;">
-                                    <i class="fas fa-table me-2"></i> @grupo.Tabla
-                                </h5>
-                                <div class="d-flex flex-wrap gap-2">
-                                    @foreach (var permiso in grupo.Permisos)
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-check-circle"></i>
+                                    Estado
+                                </label>
+                                <div class="input-wrapper">
+                                    @if (Model.Estatus)
                                     {
-                                        var badgeClass = permiso switch
-                                        {
-                                            "Leer" => "bg-info",
-                                            "Escribir" => "bg-success",
-                                            "Actualizar" => "bg-warning",
-                                            "Eliminar" => "bg-danger",
-                                            _ => "bg-primary"
-                                        };
-
-                                        var iconClass = permiso switch
-                                        {
-                                            "Leer" => "fa-eye",
-                                            "Escribir" => "fa-pen",
-                                            "Actualizar" => "fa-sync",
-                                            "Eliminar" => "fa-trash",
-                                            _ => "fa-wrench"
-                                        };
-
-                                        <span class="badge @badgeClass" style="padding: 8px 12px; font-size: 0.9rem; font-weight: 600;">
-                                            <i class="fas @iconClass me-1"></i> @permiso
-                                        </span>
+                                        <input type="text" class="form-control" value="✓ Activa" readonly 
+                                               style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); 
+                                                      font-weight: 600; color: #059669; border-color: rgba(16, 185, 129, 0.3);" />
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="form-control" value="✗ Inactiva" readonly 
+                                               style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%); 
+                                                      font-weight: 600; color: #dc2626; border-color: rgba(239, 68, 68, 0.3);" />
                                     }
                                 </div>
                             </div>
-                        }
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    Fecha de Creación
+                                </label>
+                                <div class="input-wrapper">
+                                    <i class="input-icon fas fa-calendar"></i>
+                                    <input type="text" class="form-control" value="@FormatFechaCompleta(Model.FechaCreacion)" readonly 
+                                           style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Sección 2: Información de Usuarios -->
+                    <div class="form-section">
+                        <div class="section-header">
+                            <h3 class="mb-0">
+                                <i class="fas fa-users me-2"></i>
+                                Información de Usuarios
+                            </h3>
+                            <span class="section-indicator">2</span>
+                        </div>
+
+                        <div class="datetime-grid">
+                            @if (Model.IdUsuarioCreaNavigation != null)
+                            {
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-user-plus"></i>
+                                        Creado por
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <i class="input-icon fas fa-user"></i>
+                                        <input type="text" class="form-control" value="@Model.IdUsuarioCreaNavigation.Nombre" readonly 
+                                               style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.IdUsuarioModificaNavigation != null)
+                            {
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-user-edit"></i>
+                                        Modificado por
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <i class="input-icon fas fa-user"></i>
+                                        <input type="text" class="form-control" value="@Model.IdUsuarioModificaNavigation.Nombre" readonly 
+                                               style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.FechaModificacion != null)
+                            {
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-edit"></i>
+                                        Última Modificación
+                                    </label>
+                                    <div class="input-wrapper">
+                                        <i class="input-icon fas fa-calendar"></i>
+                                        <input type="text" class="form-control" value="@FormatFechaCompleta(Model.FechaModificacion.Value)" readonly 
+                                               style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Sección 3: Permisos Asignados -->
+                    @if (permisosAsignados.Any())
+                    {
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h3 class="mb-0">
+                                    <i class="fas fa-shield-alt me-2"></i>
+                                    Permisos Asignados
+                                </h3>
+                                <span class="section-indicator">3</span>
+                            </div>
+
+                            <div class="permissions-list">
+                                @foreach (var grupo in permisosAsignados)
+                                {
+                                    <div class="permission-card mb-3 p-3 border rounded" 
+                                         style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid #e2e8f0 !important;">
+                                        <h5 class="mb-3" style="color: var(--primary-strong); font-weight: 700;">
+                                            <i class="fas fa-table me-2"></i> @grupo.Tabla
+                                        </h5>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach (var permiso in grupo.Permisos)
+                                            {
+                                                var badgeClass = permiso switch
+                                                {
+                                                    "Leer" => "bg-info",
+                                                    "Escribir" => "bg-success",
+                                                    "Actualizar" => "bg-warning",
+                                                    "Eliminar" => "bg-danger",
+                                                    _ => "bg-primary"
+                                                };
+
+                                                var iconClass = permiso switch
+                                                {
+                                                    "Leer" => "fa-eye",
+                                                    "Escribir" => "fa-pen",
+                                                    "Actualizar" => "fa-sync",
+                                                    "Eliminar" => "fa-trash",
+                                                    _ => "fa-wrench"
+                                                };
+
+                                                <span class="badge @badgeClass" style="padding: 8px 12px; font-size: 0.9rem; font-weight: 600;">
+                                                    <i class="fas @iconClass me-1"></i> @permiso
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h3>
+                                    <i class="fas fa-shield-alt"></i>
+                                    Permisos Asignados
+                                </h3>
+                                <span class="section-indicator">3</span>
+                            </div>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                No hay permisos asignados a esta API Key
+                            </div>
+                        </div>
+                    }
                 </div>
-            }
-            else
-            {
-                <div class="form-section">
-                    <div class="section-header">
-                        <h3>
-                            <i class="fas fa-shield-alt"></i>
-                            Permisos Asignados
-                        </h3>
-                        <span class="section-indicator">3</span>
-                    </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        No hay permisos asignados a esta API Key
-                    </div>
-                </div>
-            }
+            </div>
         </div>
-
-
     </div>
 </div>
 

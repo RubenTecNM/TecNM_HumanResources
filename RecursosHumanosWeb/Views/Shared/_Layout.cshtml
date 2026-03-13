@@ -77,7 +77,7 @@
                     <authorize-section policy="RHOrAdmin">
                         <li>
                             <a asp-controller="Corte" asp-action="Index" class="drawer-link @(currentCtrl == "Corte" ? "active" : "")">
-                                <i class="fas fa-calendar-check"></i> Cortes
+                                <i class="fas fa-calendar-check"></i> Periodos
                             </a>
                         </li>
                         <li>
@@ -138,7 +138,7 @@
                     <li class="navbar-side__item @(currentCtrl == "Corte" ? "active" : "")">
                         <a asp-controller="Corte" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-calendar-check"></i>
-                            <span>Cortes</span>
+                            <span>Periodos</span>
                         </a>
                     </li>
                     <li class="navbar-side__item @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">

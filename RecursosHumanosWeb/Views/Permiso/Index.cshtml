@@ -57,12 +57,14 @@
             <p class="page-subtitle">Administra los permisos solicitados</p>
         </div>
         <div class="header-decoration">
-            <div class="header-actions">
-                <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo permiso">
-                    <i class="fas fa-plus"></i>
-                    Crear Permiso
-                </a>
-            </div>
+            <authorize-section policy="!AutorizadorOnly">
+                <div class="header-actions">
+                    <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo permiso">
+                        <i class="fas fa-plus"></i>
+                        Crear Permiso
+                    </a>
+                </div>
+            </authorize-section>
         </div>
     </div>
     

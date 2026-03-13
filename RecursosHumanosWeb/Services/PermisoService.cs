@@ -70,8 +70,11 @@ namespace RecursosHumanosWeb.Services
 
             if (alDia.HasValue)
             {
-                var startDate = delDia ?? new DateTime(1900, 1, 1); 
-                query = query.Where(p => p.Fecha1 <= alDia.Value || (p.Fecha2 != null && p.Fecha2 >= startDate && p.Fecha2 <= alDia.Value));
+                // Un permiso debe aparecer si su periodo (Fecha1 a Fecha2) se solapa con el rango buscado.
+                // Si solo se da 'alDia', buscamos permisos que hayan iniciado antes o en esa fecha 
+                // Y que no hayan terminado antes de la fecha de inicio del filtro (si existe).
+                var startDate = delDia ?? new DateTime(1900, 1, 1);
+                query = query.Where(p => p.Fecha1 <= alDia.Value && (p.Fecha2 == null || p.Fecha2 >= startDate));
             }
 
             return query
@@ -139,7 +142,17 @@ namespace RecursosHumanosWeb.Services
             if (existing.Revisado || (existing.IdCorteNavigation != null && !existing.IdCorteNavigation.Estatus))
                 return false;
 
-            _mapper.Map(permiso, existing);
+            int originalCorteId = existing.IdCorte;
+            
+            // Actualización explícita de campos editables
+            existing.Motivo = permiso.Motivo;
+            existing.Fecha1 = permiso.Fecha1;
+            existing.Fecha2 = permiso.Fecha2;
+            existing.IdTipoPermiso = permiso.IdTipoPermiso;
+            existing.Evidencia = permiso.Evidencia;
+            existing.Goce = permiso.Goce;
+            
+            existing.IdCorte = originalCorteId; // Preservar el periodo original
             existing.IdUsuarioModifica = idUsuarioModifica;
             existing.FechaModificacion = DateTime.Now;
             existing.Revisado = false; // Reset revision on update

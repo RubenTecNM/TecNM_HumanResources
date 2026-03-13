@@ -5437,8 +5437,26 @@ textarea::placeholder {
     padding: 0.6rem 1.25rem;
     transition: all 0.2s ease;
     background-color: #F8FAFC;
-    /* var(--surface) */
     font-size: 0.9rem;
+    width: 100%;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 1.25rem;
+    color: #64748b;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.input-with-icon .filter-input-pill {
+    padding-left: 2.8rem !important;
 }
 
 .filter-input-pill:focus {
@@ -5693,4 +5711,47 @@ textarea::placeholder {
 .btn-flatpickr-secondary:hover {
     background: var(--surface);
     color: var(--text-dark);
+}
+
+/* =================================
+   REFINAMIENTOS API KEY (NUEVO)
+   ================================= */
+.section-indicator {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--gradient-primary);
+    color: white !important;
+    border-radius: 50%;
+    font-size: 0.9rem;
+    font-weight: 800;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    border: 2px solid white;
+    flex-shrink: 0;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem !important;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.form-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem !important;
+    /* Espaciado mayor entre secciones */
+}
+
+.form-section {
+    position: relative;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
 }

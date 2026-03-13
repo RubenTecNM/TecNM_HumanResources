@@ -591,6 +591,11 @@ public partial class RecursosHumanosContext : DbContext
         {
             entity.HasNoKey(); // IMPORTANTE: Al ser un DTO de un SP, no tiene llave
         });
+
+        modelBuilder.Entity<PermisosDTO>(entity =>
+        {
+            entity.HasNoKey();
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

@@ -123,14 +123,92 @@ namespace RecursosHumanosWeb.Services
             var corte = await _context.Cortes.FindAsync(id);
             if (corte == null) return false;
 
-            if (await HasPendingPermissionsAsync(id)) return false;
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    // 1. Inactivar Periodo
+                    corte.Estatus = false;
+                    corte.FechaModificacion = DateTime.Now;
+                    corte.IdUsuarioModifica = userId;
+                    _context.Update(corte);
 
-            corte.Estatus = false;
-            corte.FechaModificacion = DateTime.Now;
-            corte.IdUsuarioModifica = userId;
-            
-            _context.Update(corte);
-            return await _context.SaveChangesAsync() > 0;
+                    // 2. Inactivar Permisos relacionados (Borrado lógico en cascada)
+                    var permisos = await _context.Permisos
+                        .Where(p => p.IdCorte == id && p.Estatus)
+                        .ToListAsync();
+
+                    if (permisos.Any())
+                    {
+                        foreach (var p in permisos)
+                        {
+                            p.Estatus = false; // Desactivar permiso
+                            p.FechaModificacion = DateTime.Now;
+                            p.IdUsuarioModifica = userId;
+                        }
+                        _context.UpdateRange(permisos);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error en la inactivación en cascada del periodo {Id}.", id);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+            }
+        }
+
+        public async Task<bool> CloseCorteAsync(int id, int userId)
+        {
+            var corte = await _context.Cortes.FindAsync(id);
+            if (corte == null || !corte.Estatus) return false;
+
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    // 1. Cerrar Periodo
+                    corte.Estatus = false;
+                    corte.FechaModificacion = DateTime.Now;
+                    corte.IdUsuarioModifica = userId;
+                    _context.Update(corte);
+
+                    // 2. Rechazar automáticamente permisos pendientes
+                    var pendientes = await _context.Permisos
+                        .Where(p => p.IdCorte == id && !p.Revisado && p.Estatus)
+                        .ToListAsync();
+
+                    if (pendientes.Any())
+                    {
+                        foreach (var p in pendientes)
+                        {
+                            p.Revisado = true;
+                            p.Goce = false; // Sin goce por cierre manual
+                            p.FechaAutorizacion = DateTime.Now;
+                            p.IdUsuarioAutoriza = userId;
+                            p.IdUsuarioModifica = userId;
+                            p.FechaModificacion = DateTime.Now;
+                        }
+                        _context.UpdateRange(pendientes);
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    
+                    _logger.LogInformation("Corte {Id} cerrado manualmente por usuario {UserId}.", id, userId);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error en el cierre manual del periodo {Id}.", id);
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+            }
         }
     }
 }

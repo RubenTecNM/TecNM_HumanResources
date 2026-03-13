@@ -51,15 +51,14 @@
             </h1>
             <p class="page-subtitle">Administra y visualiza todos los usuarios del sistema</p>
         </div>
-        @if (User.HasClaim("TipoUsuario", "1"))
-        {
+        <authorize-section policy="RHOrAdmin">
             <div class="header-actions">
                 <a asp-controller="Usuario" asp-action="Create" class="btn btn-create" aria-label="Crear nuevo usuario">
                     <i class="fas fa-plus"></i>
                     Crear Usuario
                 </a>
             </div>
-        }
+        </authorize-section>
     </div>
 
     <div class="filters-section slide-in-left">
@@ -255,13 +254,12 @@
 
                             <!-- Action Buttons -->
                             <div class="row g-2">
-                                <div class="col-12">
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
-                                        <i class="fas fa-eye"></i> Ver Detalle
-                                    </a>
-                                </div>
-                                @if (User.HasClaim("TipoUsuario", "1"))
-                                {
+                                <authorize-section policy="RHOrAdmin">
+                                    <div class="col-12">
+                                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </a>
+                                    </div>
                                     <div class="col-6">
                                         <a asp-controller="Usuario" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white">
                                             <i class="fas fa-pen"></i> Editar
@@ -275,7 +273,7 @@
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </div>
-                                }
+                                </authorize-section>
                             </div>
                         </div>
                     </div>
@@ -319,18 +317,17 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="flex justify-center gap-2">
-                                            @if (User.HasClaim("TipoUsuario", "1"))
-                                            {
+                                            <authorize-section policy="RHOrAdmin">
                                                 <a asp-controller="Usuario" asp-action="Edit" asp-route-id="@item.Id" class="action-btn btn-edit" title="Editar" aria-label="Editar usuario">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 <a href="#" class="action-btn btn-delete" title="Eliminar" aria-label="Eliminar usuario" data-action="DeleteAjax" data-controller="Usuario" data-id="@item.Id">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
-                                            }
-                                            <a asp-action="Details" asp-route-id="@item.Id" class="action-btn btn-view" title="Ver detalles" aria-label="Ver detalles del usuario">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
+                                                <a asp-action="Details" asp-route-id="@item.Id" class="action-btn btn-view" title="Ver detalles" aria-label="Ver detalles del usuario">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </authorize-section>
                                         </div>
                                     </td>
                                 </tr>

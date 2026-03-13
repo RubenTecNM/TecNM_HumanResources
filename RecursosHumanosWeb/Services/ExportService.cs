@@ -268,7 +268,7 @@ namespace RecursosHumanosWeb.Services
                     $"{p.FechaCreacion.ToString("yyyy-MM-dd HH:mm")}");
             }
 
-            string fileName = $"Corte_{corte.Inicia.ToString("yyyyMMdd") ?? "SinFecha"}.csv";
+            string fileName = $"CorteTEC - ID {corteId}.csv";
             return (Encoding.UTF8.GetBytes(csv.ToString()), fileName);
         }
 
@@ -323,7 +323,7 @@ namespace RecursosHumanosWeb.Services
             };
 
             var json = JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
-            string fileName = $"Corte_{corte.Inicia.ToString("yyyyMMdd") ?? "SinFecha"}.json";
+            string fileName = $"CorteTEC - ID {corteId}.json";
             return (Encoding.UTF8.GetBytes(json), fileName);
         }
 
@@ -384,7 +384,7 @@ namespace RecursosHumanosWeb.Services
                 xmlWriter.WriteEndElement(); 
                 xmlWriter.WriteEndDocument();
 
-                string fileName = $"Corte_{corte.Inicia.ToString("yyyyMMdd") ?? "SinFecha"}.xml";
+                string fileName = $"CorteTEC - ID {corteId}.xml";
                 return (Encoding.UTF8.GetBytes(stringWriter.ToString()), fileName);
             }
         }

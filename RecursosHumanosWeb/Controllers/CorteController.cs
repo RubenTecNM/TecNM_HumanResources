@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -15,9 +16,11 @@ using X.PagedList.Extensions;
 using AutoMapper.QueryableExtensions;
 using RecursosHumanosWeb.Models.Enums;
 using RecursosHumanosWeb.Services;
+using System.Security.Claims;
 
 namespace RecursosHumanosWeb.Controllers
 {
+    [Authorize(Policy = "RHOrAdmin")]
     public class CorteController : Controller
     {
         private readonly RecursosHumanosContext _context;
@@ -41,7 +44,7 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 5, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, bool? statusFilter = null)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 5, int? idFilter = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, bool? statusFilter = null)
         {
             // Validar parámetros de paginación
             if (page < 1) page = 1;
@@ -57,6 +60,11 @@ namespace RecursosHumanosWeb.Controllers
                 .Include(c => c.IdUsuarioModificaNavigation)
                 .AsQueryable();
 
+            if (idFilter.HasValue)
+            {
+                cortesQuery = cortesQuery.Where(c => c.Id == idFilter.Value);
+            }
+
             // Cierre automático lazy
             await _corteService.AutoCloseCorteIfNeededAsync();
 
@@ -67,7 +75,8 @@ namespace RecursosHumanosWeb.Controllers
             }
             if (fechaHasta.HasValue)
             {
-                cortesQuery = cortesQuery.Where(c => c.Termina <= fechaHasta.Value || c.Termina == null);
+                var hasta = fechaHasta.Value.Date.AddDays(1).AddTicks(-1);
+                cortesQuery = cortesQuery.Where(c => c.Termina <= hasta || c.Termina == null);
             }
             if (usuarioCreadorFilter.HasValue)
             {
@@ -130,13 +139,32 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Close(int id)
+        {
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (userId == 0) return Unauthorized();
+
+            bool result = await _corteService.CloseCorteAsync(id, userId);
+            if (result)
+            {
+                TempData["SuccessAlert"] = "Periodo cerrado exitosamente. Los permisos pendientes han sido rechazados automáticamente.";
+            }
+            else
+            {
+                TempData["ErrorAlert"] = "No se pudo cerrar el periodo. Verifique si ya está inactivo.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
         public async Task<IActionResult> ExportToExcel(int id)
         {
             var content = await _exportService.GenerateCorteExcelAsync(id);
             if (content == null) return NotFound("Corte no encontrado");
 
             var corte = await _context.Cortes.FindAsync(id);
-            string fileName = $"CorteTECNM - {corte?.Inicia.ToString("dddd, dd 'de' MMMM 'del' yyyy") ?? "Export"}.xlsx";
+            string fileName = $"CorteTEC - ID {id}.xlsx";
 
             return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
         }
@@ -344,11 +372,6 @@ namespace RecursosHumanosWeb.Controllers
             var corte = await _context.Cortes.FindAsync(request.Id);
             if (corte == null)
                 return Json(new AlertResponseDTO { Success = false, Title = "No encontrado", Message = "Corte no encontrado.", Icon = "error" });
-
-            if (await _corteService.HasPendingPermissionsAsync(corte.Id))
-            {
-                return Json(new AlertResponseDTO { Success = false, Title = "Permisos Pendientes", Message = "No se puede cerrar este corte porque tiene permisos que aún no han sido revisados.", Icon = "warning" });
-            }
 
             if (!request.Confirmed)
             {

@@ -10,5 +10,6 @@ namespace RecursosHumanosWeb.Services
         Task AutoCloseCorteIfNeededAsync();
         Task<bool> CreateCorteAsync(Corte corte, int userId);
         Task<bool> InactivateCorteAsync(int id, int userId);
+        Task<bool> CloseCorteAsync(int id, int userId);
     }
 }

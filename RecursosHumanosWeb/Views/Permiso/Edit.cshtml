@@ -32,6 +32,7 @@
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
         <input type="hidden" asp-for="IdUsuarioSolicita" />
+        <input type="hidden" asp-for="IdTipoPermiso" />
         <input type="hidden" asp-for="Fecha1" />
         <input type="hidden" asp-for="Fecha2" />
 
@@ -43,29 +44,42 @@
                     <span class="section-indicator">1</span>
                 </div>
                 <div class="permission-types readonly-mode">
-                    @if (Model.IdTipoPermiso == 2)
+                    @if (Model.IdTipoPermiso == 1)
                     {
-                        <div class="permission-type-card selected" data-type="2">
-                            <input type="radio" id="falta" name="IdTipoPermiso" value="2" asp-for="IdTipoPermiso" disabled checked>
-                            <label for="falta" class="type-label">
-                                <div class="type-icon">
-                                    <i class="fas fa-calendar-times"></i>
-                                </div>
-                                <h4>Falta</h4>
-                                <p>Ausencia por uno o varios días</p>
-                            </label>
-                        </div>
-                    }
-                    @if (Model.IdTipoPermiso == 3)
-                    {
-                        <div class="permission-type-card selected" data-type="3">
-                            <input type="radio" id="retardo" name="IdTipoPermiso" value="3" asp-for="IdTipoPermiso" disabled checked>
+                        <div class="permission-type-card selected" data-type="1">
+                            <input type="radio" id="retardo" name="IdTipoPermiso" value="1" asp-for="IdTipoPermiso" disabled checked>
                             <label for="retardo" class="type-label">
                                 <div class="type-icon">
                                     <i class="fas fa-clock"></i>
                                 </div>
                                 <h4>Retardo</h4>
                                 <p>Llegada tarde en un día específico</p>
+                            </label>
+                        </div>
+                    }
+                    @if (Model.IdTipoPermiso == 2)
+                    {
+                        <div class="permission-type-card selected" data-type="2">
+                            <input type="radio" id="turnoPorTurno" name="IdTipoPermiso" value="2" asp-for="IdTipoPermiso" disabled checked>
+                            <label for="turnoPorTurno" class="type-label">
+                                <div class="type-icon">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <h4>Turno por Turno</h4>
+                                <p>Intercambio de turnos con compañero</p>
+                            </label>
+                        </div>
+                    }
+                    @if (Model.IdTipoPermiso == 3)
+                    {
+                        <div class="permission-type-card selected" data-type="3">
+                            <input type="radio" id="falta" name="IdTipoPermiso" value="3" asp-for="IdTipoPermiso" disabled checked>
+                            <label for="falta" class="type-label">
+                                <div class="type-icon">
+                                    <i class="fas fa-calendar-times"></i>
+                                </div>
+                                <h4>Falta</h4>
+                                <p>Ausencia por uno o varios días</p>
                             </label>
                         </div>
                     }
@@ -79,19 +93,6 @@
                                 </div>
                                 <h4>Cambio de Horario</h4>
                                 <p>Modificar horario de trabajo</p>
-                            </label>
-                        </div>
-                    }
-                    @if (Model.IdTipoPermiso == 5)
-                    {
-                        <div class="permission-type-card selected" data-type="5">
-                            <input type="radio" id="turnoPorTurno" name="IdTipoPermiso" value="5" asp-for="IdTipoPermiso" disabled checked>
-                            <label for="turnoPorTurno" class="type-label">
-                                <div class="type-icon">
-                                    <i class="fas fa-sync-alt"></i>
-                                </div>
-                                <h4>Turno por Turno</h4>
-                                <p>Intercambio de turnos con compañero</p>
                             </label>
                         </div>
                     }

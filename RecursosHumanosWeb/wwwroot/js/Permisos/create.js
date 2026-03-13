@@ -14,13 +14,13 @@
 
     // --- 3. CONFIGURACIÓN DE TIPOS DE PERMISO (LÓGICA EXISTENTE) ---
     const typeConfigurations = {
-        2: { // Falta
+        3: { // Falta
             fecha1: { show: true, label: "Del día", required: true },
             fecha2: { show: true, label: "Al día", required: true },
             hora1: { show: false, label: "Hora entrada", required: false },
             hora2: { show: false, label: "Hora salida", required: false }
         },
-        3: { // Retardo
+        1: { // Retardo
             fecha1: { show: true, label: "En el día", required: true },
             fecha2: { show: false, label: "Al día", required: false },
             hora1: { show: true, label: "Hora de llegada", required: true },
@@ -32,7 +32,7 @@
             hora1: { show: true, label: "Hora entrada", required: true },
             hora2: { show: true, label: "Hora salida", required: true }
         },
-        5: { // Turno por Turno
+        2: { // Turno por Turno
             fecha1: { show: true, label: "Del día", required: true },
             fecha2: { show: true, label: "Por el día", required: true },
             hora1: { show: true, label: "Hora entrada", required: true },

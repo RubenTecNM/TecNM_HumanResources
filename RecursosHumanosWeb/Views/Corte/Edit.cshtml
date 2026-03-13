@@ -1,62 +1,94 @@
 ﻿@model RecursosHumanosWeb.Models.Corte
-
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Periodo";
 }
 
-<h1>Edit</h1>
+<div class="details-container fade-in">
+    <!-- Header separado -->
+    <div class="permission-header">
+        <div class="header-content">
+            <h1 class="page-title text-gradient">
+                <i class="fas fa-edit"></i>
+                Editar Periodo #@Model.Id
+            </h1>
+            <p class="page-subtitle">Actualice los límites temporales del periodo laboral</p>
+        </div>
+        <div class="header-decoration">
+            <div class="floating-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+        </div>
+    </div>
 
-<h4>Corte</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Inicia" class="control-label"></label>
-                <input asp-for="Inicia" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
-                <span asp-validation-for="Inicia" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Termina" class="control-label"></label>
-                <input asp-for="Termina" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
-                <span asp-validation-for="Termina" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="FechaCreacion" class="control-label"></label>
-                <input asp-for="FechaCreacion" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
-                <span asp-validation-for="FechaCreacion" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="FechaModificacion" class="control-label"></label>
-                <input asp-for="FechaModificacion" class="form-control" placeholder="DD/MM/YYYY HH:MM AM/PM" />
-                <span asp-validation-for="FechaModificacion" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Estatus" class="control-label"></label>
-                <input asp-for="Estatus" class="form-control" />
-                <span asp-validation-for="Estatus" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IdUsuarioCrea" class="control-label"></label>
-                <select asp-for="IdUsuarioCrea" class="form-control" asp-items="ViewBag.IdUsuarioCrea"></select>
-                <span asp-validation-for="IdUsuarioCrea" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="IdUsuarioModifica" class="control-label"></label>
-                <select asp-for="IdUsuarioModifica" class="form-control" asp-items="ViewBag.IdUsuarioModifica"></select>
-                <span asp-validation-for="IdUsuarioModifica" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+    <!-- Card de Edición Premium -->
+    <div class="card details-card animate__animated animate__fadeInUp rounded-3">
+        <div class="card-body p-4 p-md-5">
+            <form asp-action="Edit" id="editPeriodoForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                
+                <div class="row justify-content-center">
+                    <div class="col-12 col-lg-10">
+                        <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                            <i class="fas fa-clock text-primary"></i>
+                            Configuración del Periodo
+                        </h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Inicia" class="form-label fw-bold text-secondary">Fecha de Inicio</label>
+                                    <div class="input-group input-group-lg shadow-sm">
+                                        <span class="input-group-text bg-white border-end-0 text-primary">
+                                            <i class="fas fa-calendar-day"></i>
+                                        </span>
+                                        <input asp-for="Inicia" class="form-control border-start-0 ps-0" placeholder="Seleccione fecha/hora..." />
+                                    </div>
+                                    <span asp-validation-for="Inicia" class="text-danger small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Termina" class="form-label fw-bold text-secondary">Fecha de Corte (Fin)</label>
+                                    <div class="input-group input-group-lg shadow-sm">
+                                        <span class="input-group-text bg-white border-end-0 text-info">
+                                            <i class="fas fa-hourglass-end"></i>
+                                        </span>
+                                        <input asp-for="Termina" class="form-control border-start-0 ps-0" placeholder="Seleccione fecha/hora..." />
+                                    </div>
+                                    <span asp-validation-for="Termina" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campos ocultos técnicos si es necesario mantenerlos -->
+                        <input type="hidden" asp-for="FechaCreacion" />
+                        <input type="hidden" asp-for="IdUsuarioCrea" />
+                        <input type="hidden" asp-for="Estatus" />
+
+                        <div class="mt-4 p-3 border-start border-info border-3 bg-light rounded-end">
+                            <p class="small text-secondary mb-0">
+                                <i class="fas fa-info-circle text-info me-1"></i> 
+                                Al modificar las fechas, asegúrese de que el nuevo rango no afecte periodos adyacentes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer de Acción -->
+                <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                        <i class="fas fa-arrow-left me-2"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 py-3 fw-bold shadow-lg hover-scale">
+                        <i class="fas fa-check-circle me-2"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

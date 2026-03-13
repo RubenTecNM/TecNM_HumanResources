@@ -46,7 +46,8 @@ namespace RecursosHumanosWeb.Mapping
                 .ForMember(dest => dest.Hora1Time, opt => opt.MapFrom(src => src.Fecha1.HasValue ? src.Fecha1.Value.ToString("HH:mm") : null))
                 .ForMember(dest => dest.Fecha2Date, opt => opt.MapFrom(src => src.Fecha2))
                 .ForMember(dest => dest.Hora2Time, opt => opt.MapFrom(src => src.Fecha2.HasValue ? src.Fecha2.Value.ToString("HH:mm") : null))
-                .ReverseMap();
+                .ReverseMap()
+                .ForMember(dest => dest.Evidencia, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Evidencia)));
 
             // 4. Listados
             CreateMap<Corte, CortesDTO>();

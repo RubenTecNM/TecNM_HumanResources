@@ -36,6 +36,7 @@ namespace RecursosHumanosWeb.Controllers
         #region INDEX Y BÚSQUEDA
 
         [HttpGet]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> Index(
             string nombreFilter,
             string correoFilter,
@@ -98,6 +99,7 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         [HttpGet]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> SearchUsers(string term)
         {
             var results = await _usuarioService.SearchUsuariosAsync(term ?? "");
@@ -120,6 +122,15 @@ namespace RecursosHumanosWeb.Controllers
         {
             if (id == null) return NotFound();
 
+            int currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            bool isRHOrAdmin = User.HasClaim(c => c.Type == "TipoUsuario" && (c.Value == "1" || c.Value == "3"));
+
+            // Si no es RH/Admin y el ID no coincide con su propia cuenta, denegar
+            if (!isRHOrAdmin && id != currentUserId)
+            {
+                return Forbid();
+            }
+
             var vm = await _usuarioService.GetUsuarioDetailsWithStatsAsync(id.Value);
             if (vm == null) return NotFound();
 
@@ -131,7 +142,7 @@ namespace RecursosHumanosWeb.Controllers
         #region CREATE
 
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> Create()
         {
             await PrepareUserSelectListsAsync();
@@ -140,7 +151,7 @@ namespace RecursosHumanosWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> Create(UsuarioCreateViewModel model)
         {
             if (!ModelState.IsValid)
@@ -173,7 +184,7 @@ namespace RecursosHumanosWeb.Controllers
         #region EDIT
 
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -190,7 +201,7 @@ namespace RecursosHumanosWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> Edit(int id, UsuarioUpdateViewModel model)
         {
             if (id != model.Id) return NotFound();
@@ -233,7 +244,7 @@ namespace RecursosHumanosWeb.Controllers
         #region DELETE
 
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
@@ -246,7 +257,7 @@ namespace RecursosHumanosWeb.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             int currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
@@ -264,7 +275,7 @@ namespace RecursosHumanosWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> DeleteAjax([FromBody] ActionRequestDTO request)
         {
             if (request == null || request.Id <= 0)

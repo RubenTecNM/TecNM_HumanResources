@@ -41,32 +41,32 @@
     // --- CONFIGURACIÓN DE CAMPOS SEGÚN TIPO DE PERMISO ---
     function configurarCamposSegunTipo(tipoPermiso) {
         const config = {
-            2: { // Falta
-                fecha1Label: 'Fecha de inicio',
-                fecha2Label: 'Fecha de fin',
-                hora1Visible: false,
-                hora2Visible: false,
-                fecha2Required: true
-            },
-            3: { // Retardo
+            1: { // Retardo
                 fecha1Label: 'Fecha del retardo',
                 fecha2Label: 'Fecha de fin',
                 hora1Visible: true,
                 hora2Visible: false,
                 fecha2Required: false
             },
+            2: { // Turno por turno
+                fecha1Label: 'Fecha de inicio',
+                fecha2Label: 'Fecha de fin',
+                hora1Visible: false,
+                hora2Visible: false,
+                fecha2Required: true
+            },
+            3: { // Falta
+                fecha1Label: 'Fecha de inicio',
+                fecha2Label: 'Fecha de fin',
+                hora1Visible: false,
+                hora2Visible: false,
+                fecha2Required: true
+            },
             4: { // Cambio de horario
                 fecha1Label: 'Fecha de inicio',
                 fecha2Label: 'Fecha de fin',
                 hora1Visible: true,
                 hora2Visible: true,
-                fecha2Required: true
-            },
-            5: { // Turno por turno
-                fecha1Label: 'Fecha de inicio',
-                fecha2Label: 'Fecha de fin',
-                hora1Visible: false,
-                hora2Visible: false,
                 fecha2Required: true
             }
         };
@@ -95,7 +95,7 @@
 
         // Configurar required en Fecha2
         const fecha2Group = document.getElementById('fecha2Date-group');
-        fecha2Group.style.display = tipoPermiso === 3 ? 'none' : 'block';
+        fecha2Group.style.display = (tipoPermiso === 1) ? 'none' : 'block'; // Ocultar Fecha2 solo para Retardo (ID 1)
 
         if (elements.fecha2Date) {
             elements.fecha2Date.required = currentConfig.fecha2Required;
@@ -136,7 +136,7 @@
             elements.fecha1Hidden.value = fecha1.toISOString();
         }
 
-        if (tipoPermisoActual !== 3 && elements.fecha2Date && elements.fecha2Date.value) {
+        if (tipoPermisoActual !== 1 && elements.fecha2Date && elements.fecha2Date.value) { // Cambiado 3 por 1 (Retardo)
             const fecha2 = new Date(elements.fecha2Date.value + 'T00:00:00');
             if (elements.hora2Time && elements.hora2Time.value && elements.hora2Time.offsetParent !== null) {
                 const [hours, minutes] = elements.hora2Time.value.split(':');
@@ -263,7 +263,8 @@
         fetch(elements.form.action, {
             method: 'POST',
             headers: {
-                'RequestVerificationToken': token
+                'RequestVerificationToken': token,
+                'Accept': 'application/json'
             },
             body: formData
         })
@@ -272,51 +273,15 @@
                 return response.json();
             })
             .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: data.title || '¡Éxito!',
-                        text: data.message || 'Permiso actualizado exitosamente',
-                        showConfirmButton: false,
-                        timer: 2000
-                    }).then(() => {
-                        if (data.redirectUrl) {
-                            window.location.href = data.redirectUrl;
-                        } else {
-                            window.location.href = '/Permisos/Index';
-                        }
-                    });
-                } else {
-                    // Manejar errores de validación
-                    if (data.errors) {
-                        let errorHtml = '<ul style="text-align: left;">';
-                        for (const field in data.errors) {
-                            data.errors[field].forEach(error => {
-                                errorHtml += `<li>${error}</li>`;
-                            });
-                        }
-                        errorHtml += '</ul>';
-
-                        Swal.fire({
-                            icon: 'error',
-                            title: data.title || 'Error de Validación',
-                            html: errorHtml
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: data.title || 'Error',
-                            text: data.message || 'No se pudo actualizar el permiso'
-                        });
-                    }
-                }
+                // Usar el manejador global definido en site.js
+                return handleAlertResponse(data);
             })
             .catch(error => {
                 console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error del servidor',
-                    text: error.message || 'No se pudo conectar con el servidor'
+                handleAlertResponse({
+                    Success: false,
+                    Title: 'Error del servidor',
+                    Message: error.message || 'No se pudo conectar con el servidor'
                 });
             })
             .finally(() => {

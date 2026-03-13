@@ -97,6 +97,12 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
+            if (User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.Autorizador).ToString()))
+            {
+                TempData["ErrorAlert"] = GetAlertJson("Acceso Denegado", "Lo sentimos, los Jefes de Área no pueden solicitar permisos a través de este portal para asegurar la imparcialidad del proceso.");
+                return RedirectToAction("Index");
+            }
+
             await PrepareCreateEditViewBag();
             int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             return View(new PermissionsCreateViewModel { IdUsuarioSolicita = idUsuario });
@@ -147,6 +153,12 @@ namespace RecursosHumanosWeb.Controllers
 
             try
             {
+                if (tipoUsuario == (int)TipoUsuarioEnum.Autorizador)
+                {
+                    TempData["ErrorAlert"] = GetAlertJson("Acceso Denegado", "Los jefes de área no pueden crear solicitudes de permiso.");
+                    return RedirectToAction("Index");
+                }
+
                 if (tipoUsuario != (int)TipoUsuarioEnum.RecursosHumanos && tipoUsuario != (int)TipoUsuarioEnum.Administrador)
                     model.IdUsuarioSolicita = idUsuario;
 
@@ -197,25 +209,42 @@ namespace RecursosHumanosWeb.Controllers
                 if (original == null) return NotFound();
 
                 if (!_permisoService.CanUserAccessPermiso(userId, userType, original))
-                    return Json(new AlertResponseDTO { Success = false, Message = "Deniado" });
+                    return Json(new AlertResponseDTO { Success = false, Message = "Acceso Denegado" });
 
                 if (!ModelState.IsValid)
                     return Json(new AlertResponseDTO { Success = false, Errors = GetModelStateErrors() });
 
-                string? newPath = original.Evidencia;
+                string? oldPath = original.Evidencia;
+                string? newPath = oldPath;
+
                 if (model.EvidenceFile != null)
                 {
                     newPath = await SaveEvidenceFile(model.EvidenceFile, original.IdUsuarioSolicita);
-                    if (original.Evidencia != null) DeleteFile(original.Evidencia);
                 }
 
+                // Transferir datos del ViewModel al objeto que irá al servicio
+                // Usamos el objeto original como base para preservar campos no editables (como IdCorte)
                 var edited = _mapper.Map<Permiso>(model);
-                edited.Evidencia = newPath;
+                if (model.EvidenceFile == null) 
+                {
+                    edited.Evidencia = oldPath; // Asegurar que conserve la ruta si no hay archivo nuevo
+                }
+                else
+                {
+                    edited.Evidencia = newPath;
+                }
 
                 bool success = await _permisoService.UpdatePermisoAsync(edited, userId);
-                if (!success) return Json(new AlertResponseDTO { Success = false, Message = "No se pudo actualizar." });
+                if (!success) 
+                {
+                    if (newPath != oldPath) DeleteFile(newPath!); // Borrar el nuevo si falló el guardado
+                    return Json(new AlertResponseDTO { Success = false, Message = "No se pudo actualizar el registro en la base de datos." });
+                }
 
-                return Json(new AlertResponseDTO(controllerName: "Permiso", message: "Modificado."));
+                // Solo si el guardado fue exitoso y subimos uno nuevo, borramos el viejo
+                if (newPath != oldPath && oldPath != null) DeleteFile(oldPath);
+
+                return Json(new AlertResponseDTO(controllerName: "Permiso", message: "Permiso actualizado correctamente."));
             }
             catch (Exception ex)
             {
@@ -406,7 +435,6 @@ namespace RecursosHumanosWeb.Controllers
                     IdCorte = corte.Id,
                     IdTipoPermiso = random.Next(2, 6),
                     IdUsuarioSolicita = user.Id,
-                    IdUsuarioCrea = adminId,
                     IdUsuarioModifica = autorizadores.ContainsKey(user.IdArea) ? autorizadores[user.IdArea] : adminId,
                     FechaCreacion = DateTime.Now,
                     FechaModificacion = DateTime.Now,
