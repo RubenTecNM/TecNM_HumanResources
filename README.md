@@ -107,6 +107,18 @@ dotnet user-secrets set "SmtpSettings:PasswordApp" "gsgvdlywyzzjxzsn"
 - **Evidence Storage**: Ensure `wwwroot/Evidences/` has write permissions for PDF uploads.
 - **Troubleshooting**: If the web service fails to connect to the DB on startup, it's because SQL Server needs ~20–30 seconds. The `entrypoint.sh` handles this automatically with a health-check loop.
 
+### Default Credentials (Seed Data)
+
+> [!NOTE]
+> Default password for all users: **`Admin1234!`**
+
+| Email | Role |
+|---|---|
+| `controlpermisos@monclova.tecnm.mx` | Administrator |
+| `alfredo.salinas@monclova.tecnm.mx` | Authorizer (Area Head) |
+| `izamar.mh@monclova.tecnm.mx` | Human Resources |
+| `empleado@monclova.tecnm.mx` | Employee (sample) |
+
 ---
 
 ## 📋 Key Modules
