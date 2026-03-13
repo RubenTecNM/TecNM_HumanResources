@@ -21,7 +21,25 @@ Professional human resources management system designed to optimize labor permit
 
 ## 🐳 Docker Deployment
 
-All Docker files are located in the `db/` folder.
+All Docker configuration files are located in the `db/` folder.
+
+### Project Structure (Docker Files)
+
+```
+├── db/
+│   ├── docker-compose.yml      # Orchestrates both services (run from here)
+│   ├── Dockerfile              # SQL Server 2022 image
+│   ├── entrypoint.sh           # DB health check + SQL initialization
+│   ├── schemaDB.sql            # Full database schema
+│   ├── InsertsDB.sql           # Seed data (users, catalogues, period)
+│   └── .env.example            # Environment variable template
+│
+└── RecursosHumanosWeb/
+    └── Dockerfile              # ASP.NET Core 10.0 web application image
+```
+
+> [!NOTE]
+> There are **two Dockerfiles** — one for the database and one for the web app. Both are referenced by `db/docker-compose.yml`.
 
 ### Prerequisites
 - Docker Desktop (Windows/Mac) or Docker Engine (Linux)
