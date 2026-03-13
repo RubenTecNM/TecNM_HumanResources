@@ -1,97 +1,123 @@
 # HR Management System - TecRHPermisos 🚀
 
-Professional human resources management system designed to optimize labor permits, user management, and payroll period control. Built with a modern tech stack and focusing on performance and security.
+Professional human resources management system designed to optimize labor permits, user management, and payroll period control. Built with .NET 10.0 and fully containerized for deployment.
 
 > [!IMPORTANT]
-> **Docker Ready Injection**: This project is now fully containerized. You can deploy the complete environment (Web + SQL Server) using a single command.
+> This project is Docker-ready. Run the full environment (Web + SQL Server 2022) with a single command.
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Framework**: [.NET 10.0](https://dotnet.microsoft.com/) (ASP.NET Core MVC)
-- **Database**: [Microsoft SQL Server 2022](https://www.microsoft.com/sql-server)
-- **ORM**: Entity Framework Core
-- **Frontend**: Bootstrap 5, Vanilla CSS (Premium Design), SweetAlert2, Select2
-- **Reporting**: ClosedXML (Excel Generation)
+| Layer | Technology |
+|---|---|
+| Framework | ASP.NET Core 10.0 (MVC) |
+| Database | Microsoft SQL Server 2022 |
+| ORM | Entity Framework Core |
+| Frontend | Bootstrap 5, SweetAlert2, Select2 |
+| Reporting | ClosedXML (Excel) |
 
 ---
 
-## 🐳 Docker Deployment (Pre-configured)
+## 🐳 Docker Deployment
 
-The easiest way to get the system running with its complete database is using Docker Compose.
+All Docker files are located in the `db/` folder.
+
+### Prerequisites
+- Docker Desktop (Windows/Mac) or Docker Engine (Linux)
+- Docker Compose v2+
 
 ### Quick Start
 
 1. **Clone the repository**:
    ```bash
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
-    cd itsmRH_GestionPermisos
-    ```
+   git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
+   cd itsmRH_GestionPermisos
+   ```
 
-2.  **Configure Environment Variables**:
-    Create a `.env` file in the root directory:
-    ```env
-    MSSQL_SA_PASSWORD=buss1ness!2026
-    ```
+2. **Create a `.env` file** inside the `db/` folder:
+   ```env
+   MSSQL_SA_PASSWORD=buss1ness!2026
+   ```
 
-3.  **Launch the services**:
-    ```bash
-    docker-compose up -d --build
-    ```
+3. **Launch all services** from the `db/` folder:
+   ```bash
+   cd db
+   docker-compose up -d --build
+   ```
 
-### Services Included
-- **web**: ASP.NET Core application accessible at `http://localhost:8080`
-- **db**: SQL Server instance. The database is automatically initialized during the first run using:
-    1.  `db/schemaDB.sql`: Creates the complete database schema.
-    2.  `db/InsertsDB.sql`: Populates the database with essential and operational data.
+4. **Access the application** at `http://localhost:8080`
+
+### Services
+
+| Service | Description | Port |
+|---|---|---|
+| `web` | ASP.NET Core application | `8080` |
+| `db` | SQL Server 2022 | `1433` |
+
+### Database Initialization
+
+On the **first run**, the `db` container automatically executes:
+1. `db/schemaDB.sql` — Creates all tables and relationships.
+2. `db/InsertsDB.sql` — Populates catalogues, users, and operational data.
 
 ### Manual Database Initialization (Alternative)
-If you need to run the scripts manually after the service is up:
-```bash
-# Copy scripts to the container (if not already there)
-docker cp db/schemaDB.sql <container_id>:/usr/config/
-docker cp db/InsertsDB.sql <container_id>:/usr/config/
 
-# Execute Schema
+If you need to run the SQL scripts manually after starting the service:
+```bash
+# Get the db container ID
+docker ps
+
+# Execute the schema
 docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P buss1ness!2026 -i /usr/config/schemaDB.sql
 
-# Execute Inserts
+# Execute the inserts
 docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P buss1ness!2026 -d RecursosHumanos -i /usr/config/InsertsDB.sql
 ```
 
-This ensures a fully functional system from the start.
+### Useful Commands
+
+```bash
+# View live logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+
+# Stop and delete database volume (full reset)
+docker-compose down -v
+
+# Rebuild only the web image
+docker-compose build web
+```
 
 ---
 
 ## 🔐 Security & Configuration
 
-### User Secrets
-For local development, you can manage sensitive data using .NET User Secrets:
+### Local Development (User Secrets)
 ```bash
-dotnet user-secrets set "ConnectionStrings:RecursosHumanosContext" "Server=db;Database=RecursosHumanos;User Id=sa;Password=buss1ness!2026;TrustServerCertificate=True;"
+dotnet user-secrets set "ConnectionStrings:RecursosHumanosContext" "Server=localhost;Database=RecursosHumanos;User Id=sa;Password=buss1ness!2026;TrustServerCertificate=True;"
 dotnet user-secrets set "SmtpSettings:SmtpServer" "smtp.office365.com"
 dotnet user-secrets set "SmtpSettings:PasswordApp" "gsgvdlywyzzjxzsn"
 ```
 
-### Production Deployment
-- **SMTP**: Configure your Office 365 / SMTP settings in `appsettings.json` or environment variables for email notifications.
-- **Evidence Storage**: Ensure the `wwwroot/Evidences` folder has write permissions for PDF uploads.
+### Production Notes
+- **SMTP**: Email service for password reset uses Office 365 (`smtp.office365.com`).
+- **Evidence Storage**: Ensure `wwwroot/Evidences/` has write permissions for PDF uploads.
+- **Troubleshooting**: If the web service fails to connect to the DB on startup, it's because SQL Server needs ~20–30 seconds. The `entrypoint.sh` handles this automatically with a health-check loop.
 
 ---
 
 ## 📋 Key Modules
 
-- **Permit Management**: Request, review, and authorize labor permits with evidence attachment.
-- **Organizational Structure**: Multi-level hierarchy (Areas and Departments).
-- **Audit System**: Automatic tracking of changes and security logs.
-- **Reporting**: Export detailed summaries to Excel for payroll processing.
+- **Permit Management** — Request, review, and authorize labor permits with PDF evidence.
+- **Organizational Hierarchy** — Multi-level structure: Areas → Departments → Users.
+- **Audit Logging** — Full change tracking for compliance.
+- **Period Management** — Payroll cut periods tied to permit requests.
+- **Reporting** — Export summaries to Excel for HR processing.
 
 ---
 
 ## 📄 License
-This project is for internal institutional use. 
-
-© 2026 TecNM Monclova.
+Internal use only. © 2026 TecNM Campus Monclova.

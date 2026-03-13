@@ -1,8 +1,8 @@
 services:
   db:
     build:
-      context: .
-      dockerfile: ./db/Dockerfile
+      context: ..
+      dockerfile: db/Dockerfile
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:-buss1ness!2026}
@@ -14,7 +14,7 @@ services:
 
   web:
     build:
-      context: .
+      context: ..
       dockerfile: RecursosHumanosWeb/Dockerfile
     ports:
       - "8080:80"
