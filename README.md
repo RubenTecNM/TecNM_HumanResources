@@ -52,6 +52,8 @@ The easiest way to get the system running with its complete database is using Do
 For local development, you can manage sensitive data using .NET User Secrets:
 ```bash
 dotnet user-secrets set "ConnectionStrings:RecursosHumanosContext" "Server=db;Database=RecursosHumanos;User Id=sa;Password=YourStrongPassword!2026;TrustServerCertificate=True;"
+dotnet user-secrets set "SmtpSettings:SmtpServer" "smtp.office365.com"
+dotnet user-secrets set "SmtpSettings:PasswordApp" "gsgvdlywyzzjxzsn"
 ```
 
 ### Production Deployment
