@@ -1,6 +1,7 @@
 ﻿@model RecursosHumanosWeb.Models.Permiso
 @using System.IO
 @using System.Globalization
+@using RecursosHumanosWeb.Models.Enums
 @{
     ViewData["Title"] = "Detalles del Permiso";
 
@@ -16,33 +17,34 @@
         return fecha.ToString("dd 'de' MMMM 'del' yyyy", culture);
     }
 
+    // Mapeo corregido segun base de datos: 1: Retardo, 2: Turno, 3: Falta, 4: Horario
     var typeConfigurations = new Dictionary<int, Dictionary<string, (bool show, string label)>>
     {
-        [2] = new Dictionary<string, (bool, string)>
+        [1] = new Dictionary<string, (bool, string)> // Retardo
         {
-            ["Fecha1"] = (true, "Del día"),
-            ["Fecha2"] = (true, "Al día"),
-            ["Hora1"] = (false, "Hora entrada"),
-            ["Hora2"] = (false, "Hora salida")
-        },
-        [3] = new Dictionary<string, (bool, string)>
-        {
-            ["Fecha1"] = (true, "En el día"),
-            ["Fecha2"] = (false, "Al día"),
+            ["Fecha1"] = (true, "En el d&iacute;a"),
+            ["Fecha2"] = (false, "Al d&iacute;a"),
             ["Hora1"] = (true, "Hora de llegada"),
             ["Hora2"] = (false, "Hora salida")
         },
-        [4] = new Dictionary<string, (bool, string)>
+        [2] = new Dictionary<string, (bool, string)> // Turno por Turno
         {
-            ["Fecha1"] = (true, "Del día"),
-            ["Fecha2"] = (true, "Al día"),
+            ["Fecha1"] = (true, "Del d&iacute;a"),
+            ["Fecha2"] = (true, "Por el d&iacute;a"),
             ["Hora1"] = (true, "Hora entrada"),
             ["Hora2"] = (true, "Hora salida")
         },
-        [5] = new Dictionary<string, (bool, string)>
+        [3] = new Dictionary<string, (bool, string)> // Falta
         {
-            ["Fecha1"] = (true, "Del día"),
-            ["Fecha2"] = (true, "Por el día"),
+            ["Fecha1"] = (true, "Del d&iacute;a"),
+            ["Fecha2"] = (true, "Al d&iacute;a"),
+            ["Hora1"] = (false, "Hora entrada"),
+            ["Hora2"] = (false, "Hora salida")
+        },
+        [4] = new Dictionary<string, (bool, string)> // Cambio de Horario
+        {
+            ["Fecha1"] = (true, "Del d&iacute;a"),
+            ["Fecha2"] = (true, "Al d&iacute;a"),
             ["Hora1"] = (true, "Hora entrada"),
             ["Hora2"] = (true, "Hora salida")
         }
@@ -54,58 +56,88 @@
     string hora1 = config != null && config["Hora1"].show && Model.Fecha1 != null ? FormatHora12(Model.Fecha1.Value) : null!;
     string hora2 = config != null && config["Hora2"].show && Model.Fecha2.HasValue ? FormatHora12(Model.Fecha2.Value) : null!;
 
-    // Normalize evidence path: support filenames stored alone or web-relative paths like '/Evidences/xxx.pdf'
+    // Normalize evidence path
     string? evidenceUrl = null;
     string? evidencePath = null;
     bool evidenceExists = false;
     if (!string.IsNullOrEmpty(Model.Evidencia))
     {
         var raw = Model.Evidencia.Replace('\\', '/').Trim();
-        // If stored as bare filename, assume it's under /Evidences/
         if (!raw.StartsWith("/") && !raw.Contains("/"))
         {
             raw = "/Evidences/" + raw;
         }
         evidenceUrl = raw;
-        // Build physical path carefully
         var relativePath = raw.TrimStart('/');
         evidencePath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
         evidenceExists = System.IO.File.Exists(evidencePath);
     }
+
+    // Authorization logic for review
+    bool isApprover = ViewBag.IsApprover ?? false;
+    bool canReview = isApprover && !Model.Revisado && (Model.IdCorte == (int?)ViewBag.CurrentCourtId);
+    
+    string solicitanteNombre = Model.IdUsuarioSolicitaNavigation?.Nombre ?? "Usuario";
+    string inicial = !string.IsNullOrEmpty(solicitanteNombre) ? solicitanteNombre.Substring(0, 1).ToUpper() : "U";
 }
 
 @section Styles {
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Permisos/review.css" asp-append-version="true" />
     <style>
         .details-container { max-width: 100% !important; width: 100% !important; padding: 2rem !important; }
         .card-body { background-color: #ffffff !important; color: #1e293b !important; }
-        .info-card { background-color: #f8fafc !important; }
-        .section-title { color: #1e293b !important; border-bottom-color: #e2e8f0 !important; }
+        .info-card { background-color: #f8fafc !important; border: 1px solid #e2e8f0; }
+        .section-title { color: #1e293b !important; border-bottom: 2px solid #e2e8f0 !important; padding-bottom: 1rem; margin-bottom: 2rem !important; }
         .text-dark { color: #1e293b !important; }
         .text-secondary { color: #64748b !important; }
+        
+        /* Estilos inspirados en Usuario/Details */
+        .info-card-purple .icon-circle { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+        .info-card-orange .icon-circle { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+        .info-card-indigo .icon-circle { background: rgba(79, 70, 229, 0.1); color: #4F46E5; }
+        .icon-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; position: relative; }
+        .dot-active { background-color: #10b981; box-shadow: 0 0 10px #10b981; }
+        .dot-closed { background-color: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
+        
+        .goce-decision-integrated {
+            margin-top: 3rem;
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .permission-type-card { border: 2px solid #e2e8f0; border-radius: 12px; transition: all 0.3s ease; }
+        .permission-type-card.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+        .type-icon { font-size: 1.25rem; margin-bottom: 0.5rem; }
     </style>
 }
 
-
 <div class="details-container">
-    <div class="card details-card shadow-lg rounded-3 overflow-hidden">
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden border-0">
         
-        <div class="details-header-gradient text-white px-4 px-md-5 py-4">
+        <div class="details-header-gradient text-white px-4 px-md-5 py-4" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
             <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold">
-                        <i class="fas fa-file-contract"></i>
+                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold" style="width: 60px; height: 60px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);">
+                        @inicial
                     </div>
                     <div>
                         <h2 class="h4 fw-semibold mb-1">Permiso #@Model.Id</h2>
                         <p class="mb-0 d-flex align-items-center gap-2" style="color: #dbeafe; opacity: 0.9;">
-                             @(Model.IdUsuarioSolicitaNavigation?.Nombre ?? "Solicitante")
+                             <i class="fas fa-user-circle"></i> @solicitanteNombre
                         </p>
                     </div>
                 </div>
-                <div class="status-glass rounded-pill shadow-sm">
+                <div class="status-glass rounded-pill px-3 py-2 d-flex align-items-center shadow-sm" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
                     <span class="status-dot @(Model.Revisado ? "dot-active" : "dot-closed")"></span>
-                    <span class="small text-uppercase">
+                    <span class="small text-uppercase fw-bold">
                          @(Model.Revisado ? "REVISADO" : "PENDIENTE")
                     </span>
                 </div>
@@ -113,245 +145,265 @@
         </div>
 
         <div class="card-body p-4 p-md-5 bg-white">
-            <div class="row g-4">
+            <div class="row g-5">
                 
-                <div class="col-12">
-                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                <!-- COLUMNA IZQUIERDA: INFORMACION DEL PERMISO -->
+                <div class="col-12 col-lg-6">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2">
                         <i class="fas fa-info-circle text-primary"></i>
-                        Información del Permiso
+                        Informaci&oacute;n del Permiso
                     </h3>
 
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <div class="info-card p-3 rounded-3">
-                                <div class="d-flex align-items-center gap-3 mb-2">
-                                    <div class="icon-circle purple-circle" style="background: rgba(139, 92, 246, 0.1); color: #8B5CF6; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-tag small"></i>
-                                    </div>
-                                    <span class="small fw-bold text-dark text-uppercase">Tipo de Permiso</span>
+                    <div class="mb-4">
+                        <div class="info-card info-card-purple p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle">
+                                    <i class="fas fa-tag small"></i>
                                 </div>
-                                <div class="ms-md-5">
-                                    <div class="permission-types readonly-mode">
-                                        <div class="permission-type-card @(Model.IdTipoPermiso == 2 ? "selected active" : "")">
-                                            <div class="type-label">
-                                                <div class="type-icon"><i class="fas fa-calendar-times"></i></div>
-                                                <h4>Falta</h4>
-                                                <p>Ausencia</p>
-                                            </div>
+                                <span class="small fw-bold text-dark text-uppercase">Tipo de Permiso</span>
+                            </div>
+                            <div class="ms-5">
+                                <div class="permission-types d-flex gap-2">
+                                    @foreach(var item in new[] { (ID:3, Icon:"fa-calendar-times", Label:"Falta"), (ID:1, Icon:"fa-clock", Label:"Retardo"), (ID:4, Icon:"fa-exchange-alt", Label:"Horario"), (ID:2, Icon:"fa-sync-alt", Label:"Turno") })
+                                    {
+                                        <div class="permission-type-card p-2 text-center flex-grow-1 @(Model.IdTipoPermiso == item.ID ? "active border-primary shadow-sm" : "opacity-50 grayscale")" style="max-width: 80px;">
+                                            <i class="fas @item.Icon type-icon @(Model.IdTipoPermiso == item.ID ? "text-primary" : "")"></i>
+                                            <p class="mb-0" style="font-size: 0.7rem; font-weight: 700;">@item.Label</p>
                                         </div>
-                                        <div class="permission-type-card @(Model.IdTipoPermiso == 3 ? "selected active" : "")">
-                                            <div class="type-label">
-                                                <div class="type-icon"><i class="fas fa-clock"></i></div>
-                                                <h4>Retardo</h4>
-                                                <p>Llegada tarde</p>
-                                            </div>
-                                        </div>
-                                        <div class="permission-type-card @(Model.IdTipoPermiso == 4 ? "selected active" : "")">
-                                            <div class="type-label">
-                                                <div class="type-icon"><i class="fas fa-exchange-alt"></i></div>
-                                                <h4>Horario</h4>
-                                                <p>Cambio horario</p>
-                                            </div>
-                                        </div>
-                                        <div class="permission-type-card @(Model.IdTipoPermiso == 5 ? "selected active" : "")">
-                                            <div class="type-label">
-                                                <div class="type-icon"><i class="fas fa-sync-alt"></i></div>
-                                                <h4>Turno</h4>
-                                                <p>Cambio turno</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    }
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="col-md-4">
-                            <div class="info-card p-3 rounded-3 h-100">
-                                <div class="d-flex align-items-center gap-3 mb-2">
-                                    <div class="icon-circle orange-circle" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-check-circle small"></i>
-                                    </div>
-                                    <span class="small fw-medium text-secondary text-uppercase">Estado</span>
+                    <div class="mb-4">
+                        <div class="info-card info-card-orange p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle">
+                                    <i class="fas fa-money-bill-wave small"></i>
                                 </div>
-                                <p class="h6 fw-semibold mb-0 ms-5 @(Model.Revisado ? "text-success" : "text-warning")">
-                                    @(Model.Revisado ? "✓ Revisado y Aprobado" : "⏳ Pendiente de Aprobación")
-                                </p>
+                                <span class="small fw-medium text-secondary text-uppercase">Estatus de Pago</span>
                             </div>
+                            <p class="h6 fw-semibold mb-0 ms-5 @(Model.Goce ? "text-success" : "text-danger")">
+                                @(Model.Goce ? "✓ Con Goce de Sueldo" : "✗ Sin Goce de Sueldo")
+                            </p>
                         </div>
+                    </div>
 
-                        <div class="col-md-4">
-                            <div class="info-card p-3 rounded-3 h-100">
-                                <div class="d-flex align-items-center gap-3 mb-2">
-                                    <div class="icon-circle text-info" style="background: rgba(6, 182, 212, 0.1); color: #06B6D4; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-hashtag small"></i>
-                                    </div>
-                                    <span class="small fw-medium text-secondary text-uppercase">ID Periodo</span>
+                    <div class="mb-4">
+                        <div class="info-card p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle text-primary" style="background: rgba(37, 99, 235, 0.1);">
+                                    <i class="fas fa-comment-dots small"></i>
                                 </div>
-                                <p class="h6 fw-semibold mb-0 ms-5 text-dark">
-                                    #@Model.IdCorte
-                                </p>
+                                <span class="small fw-medium text-secondary text-uppercase">Motivo de Ausencia</span>
                             </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="info-card p-3 rounded-3 h-100">
-                                <div class="d-flex align-items-center gap-3 mb-2">
-                                    <div class="icon-circle indigo-circle" style="background: rgba(79, 70, 229, 0.1); color: #4F46E5; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-money-bill-wave small"></i>
-                                    </div>
-                                    <span class="small fw-medium text-secondary text-uppercase">Goce de Sueldo</span>
-                                </div>
-                                <p class="h6 fw-semibold mb-0 ms-5 @(Model.Goce ? "text-success" : "text-danger")">
-                                    @(Model.Goce ? "✓ Con Goce de Sueldo" : "✗ Sin Goce de Sueldo")
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="info-card p-3 rounded-3">
-                                <div class="d-flex align-items-center gap-3 mb-2">
-                                    <div class="icon-circle text-primary" style="background: rgba(37, 99, 235, 0.1); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-comment-dots small"></i>
-                                    </div>
-                                    <span class="small fw-medium text-secondary text-uppercase">Motivo</span>
-                                </div>
-                                <p class="h6 fw-normal text-dark mb-0 ms-5" style="white-space: pre-wrap;">@Model.Motivo</p>
-                            </div>
+                            <p class="h6 fw-normal text-dark mb-0 ms-5" style="white-space: pre-wrap; line-height: 1.6;">@Model.Motivo</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-12">
-                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                <!-- COLUMNA DERECHA: FECHAS Y AUDITORIA -->
+                <div class="col-12 col-lg-6">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2">
                         <i class="fas fa-calendar-alt text-primary"></i>
                         Fechas y Horarios
                     </h3>
-                    <div class="row g-3">
-                        @if (config != null && config["Fecha1"].show && Model.Fecha1 != null)
-                        {
-                            <div class="col-md-6">
-                                <div class="p-3 border-start border-primary border-3 bg-light rounded-end h-100">
-                                    <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@config["Fecha1"].label</p>
-                                    <p class="small fw-bold text-dark mb-0">
-                                        <i class="fas fa-calendar-day text-primary me-1"></i> @FormatFechaCompleta(Model.Fecha1.Value)
-                                    </p>
+                    
+                    <div class="detail-grid d-flex flex-column gap-3 mb-5">
+                        <div class="row g-3">
+                            @if (config != null && config["Fecha1"].show && Model.Fecha1 != null)
+                            {
+                                <div class="col-md-6">
+                                    <div class="p-3 border-start border-primary border-3 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Fecha1"].label)</p>
+                                        <p class="small fw-bold text-dark mb-0">
+                                            <i class="fas fa-calendar-alt text-primary me-2"></i> @FormatFechaCompleta(Model.Fecha1.Value)
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                        @if (config != null && config["Hora1"].show && !string.IsNullOrEmpty(hora1))
-                        {
-                            <div class="col-md-6">
-                                <div class="p-3 border-start border-info border-3 bg-light rounded-end h-100">
-                                    <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@config["Hora1"].label</p>
-                                    <p class="small fw-bold text-dark mb-0">
-                                        <i class="fas fa-clock text-info me-1"></i> @hora1
-                                    </p>
+                            }
+                            @if (config != null && config["Hora1"].show && !string.IsNullOrEmpty(hora1))
+                            {
+                                <div class="col-md-6">
+                                    <div class="p-3 border-start border-info border-3 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Hora1"].label)</p>
+                                        <p class="small fw-bold text-dark mb-0">
+                                            <i class="fas fa-clock text-info me-2"></i> @hora1
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                        @if (config != null && config["Fecha2"].show && Model.Fecha2.HasValue)
-                        {
-                            <div class="col-md-6">
-                                <div class="p-3 border-start border-primary border-3 bg-light rounded-end h-100">
-                                    <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@config["Fecha2"].label</p>
-                                    <p class="small fw-bold text-dark mb-0">
-                                        <i class="fas fa-calendar-day text-primary me-1"></i> @FormatFechaCompleta(Model.Fecha2.Value)
-                                    </p>
+                            }
+                            @if (config != null && config["Fecha2"].show && Model.Fecha2.HasValue)
+                            {
+                                <div class="col-md-6">
+                                    <div class="p-3 border-start border-primary border-3 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Fecha2"].label)</p>
+                                        <p class="small fw-bold text-dark mb-0">
+                                            <i class="fas fa-calendar-alt text-primary me-2"></i> @FormatFechaCompleta(Model.Fecha2.Value)
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        }
-                        @if (config != null && config["Hora2"].show && !string.IsNullOrEmpty(hora2))
-                        {
-                            <div class="col-md-6">
-                                <div class="p-3 border-start border-info border-3 bg-light rounded-end h-100">
-                                    <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@config["Hora2"].label</p>
-                                    <p class="small fw-bold text-dark mb-0">
-                                        <i class="fas fa-clock text-info me-1"></i> @hora2
-                                    </p>
+                            }
+                            @if (config != null && config["Hora2"].show && !string.IsNullOrEmpty(hora2))
+                            {
+                                <div class="col-md-6">
+                                    <div class="p-3 border-start border-info border-3 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Hora2"].label)</p>
+                                        <p class="small fw-bold text-dark mb-0">
+                                            <i class="fas fa-clock text-info me-2"></i> @hora2
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        }
+                            }
+                        </div>
                         @if (showDias)
                         {
-                            <div class="col-12">
-                                <div class="p-3 border-start border-success border-3 bg-light rounded-end">
-                                    <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">Días Solicitados</p>
-                                    <p class="small fw-bold text-dark mb-0">
-                                        <i class="fas fa-calendar-check text-success me-1"></i> @Model.Dias @(Model.Dias == 1 ? "día" : "días")
-                                    </p>
-                                </div>
+                            <div class="p-3 border-start border-success border-3 bg-light rounded-end shadow-sm">
+                                <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">D&iacute;as Totales</p>
+                                <p class="small fw-bold text-dark mb-0">
+                                    <i class="fas fa-calendar-check text-success me-2"></i> @Model.Dias @(Model.Dias == 1 ? "d&iacute;a" : "d&iacute;as") solicitados
+                                </p>
                             </div>
                         }
                     </div>
+
+                    <h3 class="h6 fw-bold text-dark text-uppercase mb-4 d-flex align-items-center gap-2">
+                        <i class="fas fa-shield-alt text-primary"></i> Seguimiento Administrativo
+                    </h3>
+                    
+                    <div class="mb-3">
+                        <div class="info-card info-card-indigo p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle">
+                                    <i class="fas fa-hashtag small"></i>
+                                </div>
+                                <span class="small fw-medium text-secondary text-uppercase">Periodo de Corte</span>
+                            </div>
+                            <p class="h6 fw-semibold text-dark mb-0 ms-5">
+                                Periodo #@Model.IdCorte - @(Model.IdCorteNavigation?.IdUsuarioCreaNavigation?.Nombre ?? "Corte Activo")
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
+                <!-- SECCIÓN DE EVIDENCIA (ANCHO COMPLETO) -->
                 @if (!string.IsNullOrEmpty(Model.Evidencia))
                 {
-                    <div class="col-12 mt-5">
-                        <h3 class="h5 fw-semibold text-dark mb-4">Evidencia Adjunta</h3>
-                        <div class="audit-card bg-light rounded-3 p-0 overflow-hidden shadow-sm" style="border: 1px solid var(--border-color);">
+                    <div class="col-12 mt-4 pt-4 border-top">
+                        <h3 class="h5 fw-semibold text-dark mb-4 d-flex align-items-center gap-2">
+                            <i class="fas fa-paperclip text-primary"></i> Evidencia Documental
+                        </h3>
+                        <div class="audit-card bg-light rounded-3 p-0 overflow-hidden shadow-sm" style="border: 1px solid #e2e8f0; border-radius: 12px;">
                             @if (evidenceExists)
                             {
                                 <div class="p-3 bg-primary text-white d-flex justify-content-between align-items-center">
                                     <span class="small fw-bold"><i class="fas fa-file-pdf me-2"></i> @System.IO.Path.GetFileName(evidenceUrl)</span>
-                                    <a href="@evidenceUrl" target="_blank" class="btn btn-sm btn-light py-0"><i class="fas fa-external-link-alt"></i></a>
+                                    <a href="@evidenceUrl" target="_blank" class="btn btn-sm btn-light py-0 fw-bold shadow-sm" style="color: #1e40af;">
+                                        <i class="fas fa-external-link-alt me-1"></i> Ver en Pantalla Completa
+                                    </a>
                                 </div>
                                 <iframe src="@evidenceUrl" style="width: 100%; height: 500px; border: none;"></iframe>
                             }
                             else
                             {
-                                <div class="p-4 text-center text-danger">
-                                    <i class="fas fa-exclamation-triangle fs-2 mb-2"></i>
-                                    <p class="mb-0 fw-bold">Archivo no encontrado: @System.IO.Path.GetFileName(Model.Evidencia)</p>
+                                <div class="p-5 text-center text-danger bg-white">
+                                    <i class="fas fa-exclamation-triangle fs-1 mb-3"></i>
+                                    <p class="mb-0 fw-bold underline">Archivo no disponible en el servidor: @System.IO.Path.GetFileName(Model.Evidencia)</p>
                                 </div>
                             }
                         </div>
                     </div>
                 }
 
+                <!-- MÓDULO DE AUTORIZACIÓN INTEGRADO -->
+                @if (canReview)
+                {
+                    <div class="col-12 goce-decision-integrated shadow-sm">
+                        <div class="text-center mb-5">
+                            <h3 class="fw-bold h4 text-gradient"><i class="fas fa-user-shield me-2 text-primary"></i> M&oacute;dulo de Autorizaci&oacute;n</h3>
+                            <p class="text-muted small">Determine el goce de sueldo para autorizar formalmente esta solicitud.</p>
+                            <div class="mx-auto bg-primary rounded-pill mt-2" style="width: 50px; height: 3px;"></div>
+                        </div>
+                        
+                        <form asp-action="Review" method="post" id="reviewFormInline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="Id" value="@Model.Id" />
+                            
+                            <div class="goce-options d-flex gap-4 justify-content-center flex-wrap">
+                                <div class="goce-option" data-value="true" style="min-width: 250px;">
+                                    <input type="radio" name="Goce" id="goceTrue" value="true" @(Model.Goce == true ? "checked" : "") style="display:none;">
+                                    <div class="option-content p-4 rounded-4 text-center border-2 bg-white shadow-sm transition-all h-100">
+                                        <div class="option-icon bg-success text-white mx-auto shadow-sm mb-3" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-check fa-lg"></i>
+                                        </div>
+                                        <h5 class="fw-bold mb-1">CON GOCE</h5>
+                                        <p class="small text-muted mb-0">El tiempo se pagar&aacute; normal</p>
+                                    </div>
+                                </div>
+
+                                <div class="goce-option" data-value="false" style="min-width: 250px;">
+                                    <input type="radio" name="Goce" id="goceFalse" value="false" @(Model.Goce == false ? "checked" : "") style="display:none;">
+                                    <div class="option-content p-4 rounded-4 text-center border-2 bg-white shadow-sm transition-all h-100">
+                                        <div class="option-icon bg-warning text-white mx-auto shadow-sm mb-3" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-times fa-lg"></i>
+                                        </div>
+                                        <h5 class="fw-bold mb-1">SIN GOCE</h5>
+                                        <p class="small text-muted mb-0">Se descontar&aacute; del salario</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-5">
+                                <button type="submit" id="submitReviewBtn" class="btn btn-success btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg transition-all" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">
+                                    <i class="fas fa-check-double me-2"></i> Finalizar y Autorizar Permiso
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                }
+
+                <!-- AUDITORÍA (PIE DE PÁGINA) -->
                 <div class="col-12 mt-5 pt-4 border-top">
-                    <h3 class="h5 fw-semibold text-dark mb-4">Auditoría de Solicitud</h3>
+                    <h3 class="h6 fw-bold text-secondary text-uppercase mb-4">Registro de Auditor&iacute;a</h3>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <div class="audit-card bg-light rounded-3 p-3 h-100">
+                            <div class="audit-card bg-light rounded-3 p-3 h-100 border shadow-sm">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="audit-icon bg-success text-white" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-plus small"></i>
+                                    <div class="audit-icon bg-success text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                        <i class="fas fa-calendar-plus"></i>
                                     </div>
                                     <div>
-                                        <p class="small text-secondary mb-0">Fecha Creación</p>
-                                        <p class="fw-bold text-dark mb-0">@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</p>
+                                        <p class="small text-secondary mb-0 fw-bold">Fecha de Solicitud</p>
+                                        <p class="small fw-bold text-dark mb-0">@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        @if (Model.IdUsuarioSolicitaNavigation != null)
-                        {
-                            <div class="col-md-4">
-                                <div class="audit-card bg-light rounded-3 p-3 h-100">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="audit-icon bg-primary text-white" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-user small"></i>
-                                        </div>
-                                        <div>
-                                            <p class="small text-secondary mb-0">Solicitado por</p>
-                                            <p class="fw-bold text-dark mb-0">@Model.IdUsuarioSolicitaNavigation.Nombre</p>
-                                        </div>
+                        <div class="col-md-4">
+                            <div class="audit-card bg-light rounded-3 p-3 h-100 border shadow-sm">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="audit-icon bg-blue-600 text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background-color: #2563eb;">
+                                        <i class="fas fa-user-tag"></i>
+                                    </div>
+                                    <div>
+                                        <p class="small text-secondary mb-0 fw-bold">Creado por</p>
+                                        <p class="small fw-bold text-dark mb-0">@(Model.IdUsuarioCreaNavigation?.Nombre ?? "Sistema")</p>
                                     </div>
                                 </div>
                             </div>
-                        }
-                        @if (Model.IdUsuarioModificaNavigation != null)
+                        </div>
+                        @if (Model.Revisado)
                         {
                             <div class="col-md-4">
-                                <div class="audit-card bg-light rounded-3 p-3 h-100">
+                                <div class="audit-card bg-light rounded-3 p-3 h-100 border-success shadow-sm" style="border-width: 2px;">
                                     <div class="d-flex align-items-center gap-3">
-                                        <div class="audit-icon bg-warning text-white" style="width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-user-edit small"></i>
+                                        <div class="audit-icon bg-success text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                            <i class="fas fa-user-check"></i>
                                         </div>
                                         <div>
-                                            <p class="small text-secondary mb-0">Última Modificación por</p>
-                                            <p class="fw-bold text-dark mb-0">@Model.IdUsuarioModificaNavigation.Nombre</p>
+                                            <p class="small text-secondary mb-0 fw-bold">Autorizado por</p>
+                                            <p class="small fw-bold text-success mb-0">@(Model.IdUsuarioAutorizaNavigation?.Nombre ?? "N/A")</p>
                                         </div>
                                     </div>
                                 </div>
@@ -362,14 +414,15 @@
             </div>
         </div>
 
-        <div class="card-footer pt-4 pb-3 px-4 px-md-5 bg-light border-top d-flex justify-content-end align-items-center gap-2">
-            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
-                <i class="fas fa-arrow-left me-2"></i> Regresar
+        <div class="card-footer py-4 px-5 bg-light border-top d-flex justify-content-between align-items-center">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                <i class="fas fa-arrow-left me-2"></i> Volver al Portal
             </a>
-            @if (Model.IdCorte == (int?)ViewBag.CurrentCourtId && !Model.Revisado)
+            
+            @if (canReview == false && Model.IdCorte == (int?)ViewBag.CurrentCourtId && !Model.Revisado && (int?)ViewBag.CurrentUserId == Model.IdUsuarioSolicita)
             {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary rounded-pill px-4">
-                    <i class="fas fa-edit me-2"></i> Editar
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="fas fa-edit me-2"></i> Editar Solicitud
                 </a>
             }
         </div>
@@ -377,19 +430,108 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Animación de entrada para las secciones
-            const cards = document.querySelectorAll('.info-card, .p-3.border-start');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(10px)';
+            // Animacion de entrada para las secciones
+            const elements = document.querySelectorAll('.info-card, .border-start, .audit-card, .goce-decision-integrated, .section-title');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(15px)';
                 setTimeout(() => {
-                    card.style.transition = 'all 0.4s ease-out';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 50 * (index + 1));
+                    el.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, 40 * (index + 1));
             });
+
+            // Logica para autorizacion inline
+            const reviewForm = document.getElementById('reviewFormInline');
+            const goceOptions = document.querySelectorAll('.goce-option');
+            
+            if (reviewForm) {
+                function updateUi() {
+                    const selected = document.querySelector('input[name="Goce"]:checked');
+                    goceOptions.forEach(opt => {
+                        const content = opt.querySelector('.option-content');
+                        content.style.borderColor = '#e2e8f0';
+                        content.style.background = '#ffffff';
+                        content.style.transform = 'scale(1)';
+                    });
+                    if (selected) {
+                        const content = selected.closest('.goce-option').querySelector('.option-content');
+                        content.style.borderColor = '#3b82f6';
+                        content.style.background = 'rgba(59, 130, 246, 0.05)';
+                        content.style.transform = 'scale(1.02)';
+                    }
+                }
+                
+                goceOptions.forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const val = opt.dataset.value;
+                        const radio = document.getElementById(val === 'true' ? 'goceTrue' : 'goceFalse');
+                        if (radio) { radio.checked = true; updateUi(); }
+                    });
+                    opt.style.cursor = 'pointer';
+                });
+                
+                updateUi();
+
+                reviewForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const selected = document.querySelector('input[name="Goce"]:checked');
+                    if (!selected) { Swal.fire('Atenci&oacute;n', 'Determine el goce de sueldo antes de autorizar.', 'warning'); return; }
+                    
+                    const goceVal = selected.value === 'true';
+                    const confirm = await Swal.fire({
+                        title: '&iquest;Confirmar Autorizaci&oacute;n?',
+                        html: `La solicitud ser&aacute; marcada como autorizada <strong>${goceVal ? 'CON GOCE' : 'SIN GOCE'}</strong> de sueldo.`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'S&iacute;, Autorizar',
+                        cancelButtonText: 'Cancelar',
+                        confirmButtonColor: goceVal ? '#10b981' : '#f59e0b'
+                    });
+                    
+                    if (!confirm.isConfirmed) return;
+                    
+                    const btn = document.getElementById('submitReviewBtn');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Procesando...';
+                    
+                    try {
+                        const formData = new FormData(reviewForm);
+                        const response = await fetch(reviewForm.action, {
+                            method: 'POST',
+                            headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value },
+                            body: formData
+                        });
+                        if (!response.ok) throw new Error('Error al conectar con el servidor');
+                        const data = await response.json();
+                        // Deleger el manejo de alertas al sistema central de site.js
+                        if (typeof handleAlertResponse === 'function') { 
+                            await handleAlertResponse(data); 
+                        } else {
+                            // Fallback de emergencia si site.js no cargó
+                            const isSuccess = data.success ?? data.Success;
+                            const message = data.message ?? data.Message ?? (isSuccess ? 'Operaci&oacute;n exitosa' : 'Ocurri&oacute; un error');
+                            const redirectUrl = data.redirectUrl ?? data.RedirectUrl;
+
+                            await Swal.fire({
+                                icon: isSuccess ? 'success' : 'error',
+                                title: isSuccess ? '&iexcl;Autorizado!' : 'Error',
+                                text: message
+                            });
+                            if (isSuccess) window.location.href = redirectUrl || '/Permiso/Index';
+                        }
+                    } catch (err) {
+                        Swal.fire('Error', err.message, 'error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check-double me-2"></i> Finalizar y Autorizar Permiso';
+                    }
+                });
+            }
         });
     </script>
 }

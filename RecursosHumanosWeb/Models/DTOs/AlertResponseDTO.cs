@@ -4,10 +4,10 @@ namespace RecursosHumanosWeb.Models.DTOs
     public class AlertResponseDTO
     {
         // Propiedades de la Alerta (con valores por defecto limpios)
-        public bool Success { get; set; } = false;
-        public string Message { get; set; } = "Operación no completada.";
-        public string Title { get; set; } = "Error";
-        public string Icon { get; set; } = "error"; // success, error, warning, info, question
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public string Title { get; set; }
+        public string Icon { get; set; } // success, error, warning, info, question
 
         // Propiedades de Confirmación (Para el flujo de dos pasos)
         public bool ShowConfirmation { get; set; } = false;

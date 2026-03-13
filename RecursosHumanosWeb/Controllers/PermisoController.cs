@@ -333,30 +333,7 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Review(int id)
         {
-            if (!User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.Autorizador).ToString())) return Forbid();
-
-            var permiso = await _context.Permisos.Include(p => p.IdTipoPermisoNavigation).Include(p => p.IdUsuarioSolicitaNavigation).ThenInclude(u => u.IdAreaNavigation).Include(p => p.IdCorteNavigation).AsNoTracking().FirstOrDefaultAsync(m => m.Id == id);
-            if (permiso == null) return NotFound();
-
-            int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            if (permiso.IdUsuarioSolicitaNavigation.IdArea != await _context.Usuarios.Where(u => u.Id == idUsuario).Select(u => u.IdArea).FirstOrDefaultAsync()) return Forbid();
-
-            if (permiso.Revisado) return RedirectToAction("Details", new { id });
-            if (!(permiso.IdCorteNavigation?.Estatus ?? false)) return RedirectToAction("Index");
-
-            return View(new PermissionReviewViewModel
-            {
-                Id = permiso.Id,
-                NombreSolicitante = permiso.IdUsuarioSolicitaNavigation?.Nombre,
-                AreaSolicitante = permiso.IdUsuarioSolicitaNavigation?.IdAreaNavigation?.Descripcion,
-                TipoPermisoDescripcion = permiso.IdTipoPermisoNavigation?.Descripcion,
-                Fecha1 = permiso.Fecha1,
-                Fecha2 = permiso.Fecha2,
-                Dias = permiso.Dias ?? 0,
-                Motivo = permiso.Motivo,
-                Evidencia = permiso.Evidencia,
-                Goce = permiso.Goce
-            });
+            return RedirectToAction("Details", new { id });
         }
 
         [HttpPost]
@@ -380,13 +357,38 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
-            var permiso = await _context.Permisos.Include(p => p.IdTipoPermisoNavigation).Include(p => p.IdUsuarioSolicitaNavigation).Include(p => p.IdUsuarioAutorizaNavigation).Include(p => p.IdCorteNavigation).FirstOrDefaultAsync(p => p.Id == id);
+            var permiso = await _context.Permisos
+                .Include(p => p.IdTipoPermisoNavigation)
+                .Include(p => p.IdUsuarioSolicitaNavigation).ThenInclude(u => u.IdAreaNavigation)
+                .Include(p => p.IdUsuarioAutorizaNavigation)
+                .Include(p => p.IdCorteNavigation)
+                .FirstOrDefaultAsync(p => p.Id == id);
+            
             if (permiso == null) return NotFound();
 
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
 
             if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Forbid();
+            
+            // Pass user info for review authorization check in view
+            var currentCourt = await _corteService.GetActiveCorteAsync();
+            ViewBag.CurrentCourtId = currentCourt?.Id ?? 0;
+            
+            ViewBag.CurrentUserId = userId;
+            ViewBag.CurrentUserType = userType;
+            ViewBag.IsApprover = userType == (int)TipoUsuarioEnum.RecursosHumanos || userType == (int)TipoUsuarioEnum.Administrador;
+            
+            if (userType == (int)TipoUsuarioEnum.Autorizador)
+            {
+                var userArea = await _context.Usuarios.Where(u => u.Id == userId).Select(u => u.IdArea).FirstOrDefaultAsync();
+                ViewBag.UserAreaId = userArea;
+                if (permiso.IdUsuarioSolicitaNavigation.IdArea == userArea)
+                {
+                    ViewBag.IsApprover = true;
+                }
+            }
+
             return View(permiso);
         }
 
