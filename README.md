@@ -1,219 +1,113 @@
 # HR Management System - TecRHPermisos 🚀
 
-Professional human resources management system designed to optimize labor permits, user management, and payroll period control. Built with .NET 10.0 and fully containerized for deployment.
+Sistema profesional de gestión de recursos humanos diseñado para optimizar permisos laborales, gestión de usuarios y control de periodos de nómina.
 
-> [!IMPORTANT]
-> This project supports **two ways to run it**: with Docker (recommended, zero setup) or locally with the .NET SDK + SQL Server.
+## 🛠 Configuración del Entorno (Debian Server)
 
----
+Siga estos pasos para configurar el servidor y ejecutar el proyecto.
 
-## 🛠 Tech Stack
+### 1. Instalación de .NET SDK
 
-| Layer | Technology |
-|---|---|
-| Framework | ASP.NET Core 10.0 (MVC) |
-| Database | Microsoft SQL Server 2022 |
-| ORM | Entity Framework Core |
-| Frontend | Bootstrap 5, SweetAlert2, Select2 |
-| Reporting | ClosedXML (Excel) |
+Ejecute los siguientes comandos para instalar el SDK de .NET.
 
----
-
-## 🐳 Option A — Docker (Zero Setup, Recommended)
-
-All Docker configuration files are located in the `db/` folder.
-
-### Project Structure (Docker Files)
-
-```
-├── db/
-│   ├── docker-compose.yml      # Orchestrates both services (run from here)
-│   ├── Dockerfile              # SQL Server 2022 image
-│   ├── entrypoint.sh           # DB health check + SQL initialization
-│   ├── schemaDB.sql            # Full database schema
-│   ├── InsertsDB.sql           # Seed data (users, catalogues, period)
-│   └── .env.example            # Environment variable template
-│
-└── RecursosHumanosWeb/
-    └── Dockerfile              # ASP.NET Core 10.0 web application image
-```
-
-> [!NOTE]
-> There are **two Dockerfiles** — one for the database and one for the web app. Both are referenced by `db/docker-compose.yml`.
-
-### Prerequisites
-- Docker Desktop (Windows/Mac) or Docker Engine (Linux)
-- Docker Compose v2+
-
-### Quick Start
-
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
-   cd itsmRH_GestionPermisos
-   ```
-
-2. **Create a `.env` file** inside the `db/` folder:
-   ```env
-   MSSQL_SA_PASSWORD=buss1ness!2026
-   ```
-
-3. **Launch all services** from the `db/` folder:
-   ```bash
-   cd db
-   docker-compose up -d --build
-   ```
-
-4. **Access the application** at `http://localhost:8080`
-
-### Services
-
-| Service | Description | Port |
-|---|---|---|
-| `web` | ASP.NET Core application | `8080` |
-| `db` | SQL Server 2022 | `1433` |
-
-### Database Initialization
-
-On the **first run**, the `db` container automatically executes:
-1. `db/schemaDB.sql` — Creates all tables and relationships.
-2. `db/InsertsDB.sql` — Populates catalogues, users, and operational data.
-
-### Manual Database Initialization (Alternative)
-
-If you need to run the SQL scripts manually after starting the service:
 ```bash
-# Get the db container ID
+# Descargar el script oficial de instalación de Microsoft
+# Se usa porque el repositorio APT de Microsoft tiene problemas de firma SHA1 en Debian 13
+wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+
+# Dar permisos de ejecución al script para poder iniciarlo
+chmod +x dotnet-install.sh
+
+# Instalar .NET 9 LTS (versión estable actual) para compatibilidad
+./dotnet-install.sh --channel 9.0
+
+# Instalar .NET 10 preview (versión más reciente) para usar las últimas características
+./dotnet-install.sh --channel 10.0
+
+# Agregar .NET al PATH para que el comando 'dotnet' sea reconocido globalmente
+# DOTNET_ROOT indica la ubicación de la instalación
+echo 'export DOTNET_ROOT=$HOME/.dotnet' >> ~/.bashrc
+
+# Agrega el binario de dotnet y sus herramientas al PATH del sistema
+echo 'export PATH=$PATH:$HOME/.dotnet:$HOME/.dotnet/tools' >> ~/.bashrc
+
+# Recargar configuración del shell para aplicar los cambios en la sesión actual
+source ~/.bashrc
+
+# Instalar librerías ICU requeridas por .NET para el manejo de globalización
+# Sin esto, el runtime de .NET falla al ejecutarse en sistemas Debian
+sudo apt install -y libicu-dev
+
+# Verificar la versión instalada para confirmar el éxito
+dotnet --version
+
+# Ver todos los SDKs instalados en el sistema
+dotnet --list-sdks 
+```
+
+### 2. Configuración de SQL Server 2025 con Docker
+
+Pasos para instalar Docker y desplegar SQL Server 2025 Express.
+
+#### Instalar Docker
+```bash
+# Actualizar el índice de paquetes e instalar dependencias necesarias
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+
+# Configurar el llavero de seguridad para el repositorio de Docker
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Agregar el repositorio oficial de Docker a las fuentes de APT
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Instalar el motor de Docker y complementos de composición
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Agregar el usuario actual al grupo docker para ejecutar comandos sin sudo
+sudo usermod -aG docker $USER
+```
+
+#### Crear Contenedor SQL Server 2025 Express
+```bash
+# Iniciar el contenedor con la imagen oficial de Microsoft SQL Server 2025
+# Se aceptan términos, se define contraseña de SA y se mapea el puerto 1433
+docker run -e 'ACCEPT_EULA=Y' -e 'MSSQL_SA_PASSWORD=buss1ness!2026' -e 'MSSQL_PID=Express' -p 1433:1433 --name sql2025 -d mcr.microsoft.com/mssql/server:2025-latest
+```
+
+#### Verificar Estado
+```bash
+# Listar contenedores activos para verificar que 'sql2025' está corriendo
 docker ps
 
-# Execute the schema
-docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P buss1ness!2026 -i /usr/config/schemaDB.sql
-
-# Execute the inserts
-docker exec -it <container_id> /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P buss1ness!2026 -d RecursosHumanos -i /usr/config/InsertsDB.sql
+# Revisar los logs para confirmar que SQL Server está listo para conexiones
+docker logs sql2025
+# Debe aparecer: "SQL Server is now ready for client connections."
 ```
 
-### Useful Commands
+### 3. Conexión a la Base de Datos
 
+#### Desde la Terminal (sqlcmd)
 ```bash
-# View live logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-
-# Stop and delete database volume (full reset)
-docker-compose down -v
-
-# Rebuild only the web image
-docker-compose build web
+# Conectarse directamente al servidor dentro del contenedor
+docker exec -it sql2025 /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'buss1ness!2026' -C
 ```
+
+#### Desde VS Code (Extensión SQL Server)
+Use los siguientes parámetros para configurar su conexión:
+- **Servidor:** `localhost` (o la IP del servidor, ej. `192.168.1.70`)
+- **Usuario:** `sa`
+- **Contraseña:** `buss1ness!2026`
+- **Opción crítica:** Marcar **Trust Server Certificate**
+
+### 4. Inicialización de la Base de Datos
+Los scripts SQL se encuentran en la carpeta `db/`. Puede ejecutarlos usando `sqlcmd` o su herramienta preferida.
+
+1. `db/schemaDB.sql` — Estructura de tablas y relaciones.
+2. `db/InsertsDB.sql` — Datos iniciales de catálogos y usuarios.
 
 ---
-
-## 💻 Option B — Local Development (No Docker)
-
-Use this option if you prefer to run the app directly with the .NET SDK and a local SQL Server instance.
-
-### Prerequisites
-
-| Tool | Version | Download |
-|---|---|---|
-| .NET SDK | 10.0+ | [dotnet.microsoft.com](https://dotnet.microsoft.com/download) |
-| SQL Server | 2019 or 2022 | [microsoft.com/sql-server](https://www.microsoft.com/sql-server/sql-server-downloads) |
-| SQL Server Management Studio (optional) | latest | [SSMS](https://learn.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms) |
-| Git | any | [git-scm.com](https://git-scm.com) |
-
-### Step 1 — Clone the Repository
-
-```bash
-git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
-cd itsmRH_GestionPermisos
-```
-
-### Step 2 — Set Up the Database
-
-1. Open **SQL Server Management Studio** or use `sqlcmd` from your terminal.
-2. Connect to your local SQL Server instance (`localhost` or `.\SQLEXPRESS`).
-3. Run the schema script to create the database and all tables:
-   ```bash
-   sqlcmd -S localhost -U sa -P <your_password> -i db/schemaDB.sql
-   ```
-4. Run the seed data script to populate catalogues, users, and the initial period:
-   ```bash
-   sqlcmd -S localhost -U sa -P <your_password> -d RecursosHumanos -i db/InsertsDB.sql
-   ```
-
-> [!NOTE]
-> If you use Windows Authentication instead of a SQL login, replace `-U sa -P <password>` with `-E` in the commands above.
-
-### Step 3 — Configure the Connection String (User Secrets)
-
-Navigate to the web project folder and set up your secrets so the connection string is never committed to source control:
-
-```bash
-cd RecursosHumanosWeb
-
-dotnet user-secrets set "ConnectionStrings:RecursosHumanosContext" \
-  "Server=localhost;Database=RecursosHumanos;User Id=sa;Password=<your_password>;TrustServerCertificate=True;"
-```
-
-Optionally configure SMTP for email notifications:
-```bash
-dotnet user-secrets set "SmtpSettings:SmtpServer" "smtp.office365.com"
-dotnet user-secrets set "SmtpSettings:PasswordApp" "<your_smtp_app_password>"
-```
-
-### Step 4 — Restore Dependencies
-
-```bash
-# From the root of the repo
-dotnet restore
-```
-
-### Step 5 — Run the Application
-
-```bash
-cd RecursosHumanosWeb
-dotnet run
-```
-
-The application will be available at `http://localhost:5000` (or the URL shown in the terminal output).
-
-> [!TIP]
-> For hot-reload during development, use `dotnet watch run` instead of `dotnet run`.
-
-### Step 6 — Log In
-
-Use one of the default accounts created by the seed script:
-
-| Email | Role | Password |
-|---|---|---|
-| `controlpermisos@monclova.tecnm.mx` | Administrator | `Admin1234!` |
-| `alfredo.salinas@monclova.tecnm.mx` | Authorizer (Area Head) | `Admin1234!` |
-| `izamar.mh@monclova.tecnm.mx` | Human Resources | `Admin1234!` |
-| `empleado@monclova.tecnm.mx` | Employee (sample) | `Admin1234!` |
-
----
-
-## 🔐 Security & Configuration
-
-### Production Notes
-- **SMTP**: Email service for password reset uses Office 365 (`smtp.office365.com`).
-- **Evidence Storage**: Ensure `wwwroot/Evidences/` has write permissions for PDF uploads.
-- **Troubleshooting**: If the web service fails to connect to the DB on startup, it's because SQL Server needs ~20–30 seconds. The `entrypoint.sh` handles this automatically with a health-check loop.
-
----
-
-## 📋 Key Modules
-
-- **Permit Management** — Request, review, and authorize labor permits with PDF evidence.
-- **Organizational Hierarchy** — Multi-level structure: Areas → Departments → Users.
-- **Audit Logging** — Full change tracking for compliance.
-- **Period Management** — Payroll cut periods tied to permit requests.
-- **Reporting** — Export summaries to Excel for HR processing.
-
----
-
-## 📄 License
-Internal use only. © 2026 TecNM Campus Monclova.
+## 📄 Licencia
+Uso interno. © 2026 TecNM Campus Monclova.
