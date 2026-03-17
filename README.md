@@ -103,7 +103,7 @@ Use los siguientes parámetros para configurar su conexión:
 - **Opción crítica:** Marcar **Trust Server Certificate**
 
 ### 4. Inicialización de la Base de Datos
-Los scripts SQL se encuentran en la carpeta `db/`. Puede ejecutarlos usando `sqlcmd` o su herramienta preferida.
+Los scripts SQL se encuentran en la carpeta `db/`. Puede ejecutarlos desde la conexion al motor sql preferiblemente.
 
 1. `db/schemaDB.sql` — Estructura de tablas y relaciones.
 2. `db/InsertsDB.sql` — Datos iniciales de catálogos y usuarios.
