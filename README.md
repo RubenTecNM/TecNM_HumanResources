@@ -11,38 +11,35 @@ Siga estos pasos para configurar el servidor y ejecutar el proyecto.
 Ejecute los siguientes comandos para instalar el SDK de .NET.
 
 ```bash
-# Descargar el script oficial de instalación de Microsoft
-# Se usa porque el repositorio APT de Microsoft tiene problemas de firma SHA1 en Debian 13
+# 1. Descargar el script oficial de instalación de Microsoft
 wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
-
-# Dar permisos de ejecución al script para poder iniciarlo
 chmod +x dotnet-install.sh
 
-# Instalar .NET 9 LTS (versión estable actual) para compatibilidad
-./dotnet-install.sh --channel 9.0
+# 2. Definir el directorio de instalación global (requiere sudo)
+# Instalamos en /usr/share/dotnet para cumplimiento de estándares de Linux
+sudo mkdir -p /usr/share/dotnet
 
-# Instalar .NET 10 preview (versión más reciente) para usar las últimas características
-./dotnet-install.sh --channel 10.0
+# 3. Instalar .NET 10 LTS en la ruta global
+sudo ./dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
 
-# Agregar .NET al PATH para que el comando 'dotnet' sea reconocido globalmente
-# DOTNET_ROOT indica la ubicación de la instalación
-echo 'export DOTNET_ROOT=$HOME/.dotnet' >> ~/.bashrc
+# 4. Configurar variables de entorno GLOBALES para todos los usuarios
+# Creamos un script en profile.d que se carga automáticamente al iniciar sesión
+sudo bash -c 'cat << \EOF > /etc/profile.d/dotnet.sh
+export DOTNET_ROOT=/usr/share/dotnet
+export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
+EOF'
 
-# Agrega el binario de dotnet y sus herramientas al PATH del sistema
-echo 'export PATH=$PATH:$HOME/.dotnet:$HOME/.dotnet/tools' >> ~/.bashrc
+# 5. Aplicar cambios en la sesión actual
+source /etc/profile.d/dotnet.sh
 
-# Recargar configuración del shell para aplicar los cambios en la sesión actual
-source ~/.bashrc
+# 6. Instalar librerías de dependencia (ICU y SSL)
+# Necesarias para el funcionamiento del runtime en Debian
+sudo apt update
+sudo apt install -y libicu-dev libssl-dev
 
-# Instalar librerías ICU requeridas por .NET para el manejo de globalización
-# Sin esto, el runtime de .NET falla al ejecutarse en sistemas Debian
-sudo apt install -y libicu-dev
-
-# Verificar la versión instalada para confirmar el éxito
+# 7. Verificar la instalación global
 dotnet --version
-
-# Ver todos los SDKs instalados en el sistema
-dotnet --list-sdks 
+dotnet --list-sdks
 ```
 
 ### 2. Configuración de SQL Server 2025 con Docker
