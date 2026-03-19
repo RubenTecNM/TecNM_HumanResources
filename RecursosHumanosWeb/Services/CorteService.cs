@@ -22,6 +22,13 @@ namespace RecursosHumanosWeb.Services
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<Corte> GetLastCorteAsync()
+        {
+            return await _context.Cortes
+                .OrderByDescending(c => c.Termina)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<bool> HasPendingPermissionsAsync(int corteId)
         {
             return await _context.Permisos.AnyAsync(p => p.IdCorte == corteId && !p.Revisado && p.Estatus);
@@ -31,9 +38,11 @@ namespace RecursosHumanosWeb.Services
         {
             try
             {
-                var corteActivo = await GetActiveCorteAsync();
+                var cortesExpirados = await _context.Cortes
+                    .Where(c => c.Estatus && c.Termina.Date < DateTime.Now.Date)
+                    .ToListAsync();
 
-                if (corteActivo != null && corteActivo.Termina < DateTime.Now)
+                foreach (var corteActivo in cortesExpirados)
                 {
                     // Usar contexto para activar auditoría de sistema
                     _context._auditOrigenOverride = (int)TipoOrigenEnum.SistemaAutomatico;
@@ -54,7 +63,6 @@ namespace RecursosHumanosWeb.Services
                             p.FechaAutorizacion = DateTime.Now;
                             p.IdUsuarioModifica = rootId;
                             p.FechaModificacion = DateTime.Now;
-                            // Nota: No sobrescribimos el motivo original del usuario.
                         }
                         _context.UpdateRange(pendientes);
                     }
@@ -98,6 +106,8 @@ namespace RecursosHumanosWeb.Services
                         _context.Update(corteActivo);
                     }
 
+                    nuevoCorte.Inicia = nuevoCorte.Inicia.Date;
+                    nuevoCorte.Termina = nuevoCorte.Termina.Date.AddDays(1).AddTicks(-1);
                     nuevoCorte.IdUsuarioCrea = userId;
                     nuevoCorte.IdUsuarioModifica = userId;
                     nuevoCorte.FechaCreacion = ahora;

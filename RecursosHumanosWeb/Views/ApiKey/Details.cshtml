@@ -7,7 +7,7 @@
     
     string FormatFechaCompleta(DateTime fecha)
     {
-        return fecha.ToString("dd 'de' MMMM 'del' yyyy", culture);
+        return fecha.ToString("dd 'de' MMMM 'del' yyyy, hh:mm tt", culture).ToUpper();
     }
 
     // Cargar permisos asignados

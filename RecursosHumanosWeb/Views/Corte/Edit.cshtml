@@ -42,19 +42,19 @@
                                         <span class="input-group-text bg-white border-end-0 text-primary">
                                             <i class="fas fa-calendar-day"></i>
                                         </span>
-                                        <input asp-for="Inicia" class="form-control border-start-0 ps-0" placeholder="Seleccione fecha/hora..." />
+                                        <input asp-for="Inicia" class="form-control border-start-0 ps-0" type="date" />
                                     </div>
                                     <span asp-validation-for="Inicia" class="text-danger small"></span>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
-                                    <label asp-for="Termina" class="form-label fw-bold text-secondary">Fecha de Corte (Fin)</label>
+                                    <label asp-for="Termina" class="form-label fw-bold text-secondary">Fecha de Término</label>
                                     <div class="input-group input-group-lg shadow-sm">
                                         <span class="input-group-text bg-white border-end-0 text-info">
                                             <i class="fas fa-hourglass-end"></i>
                                         </span>
-                                        <input asp-for="Termina" class="form-control border-start-0 ps-0" placeholder="Seleccione fecha/hora..." />
+                                        <input asp-for="Termina" class="form-control border-start-0 ps-0" type="date" />
                                     </div>
                                     <span asp-validation-for="Termina" class="text-danger small"></span>
                                 </div>

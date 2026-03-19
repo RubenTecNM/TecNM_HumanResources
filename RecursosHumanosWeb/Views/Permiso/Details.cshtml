@@ -74,8 +74,12 @@
     }
 
     // Authorization logic for review
+    int currentUserType = ViewBag.CurrentUserType ?? 0;
+    bool isRHOrAdmin = currentUserType == (int)TipoUsuarioEnum.RecursosHumanos || currentUserType == (int)TipoUsuarioEnum.Administrador;
     bool isApprover = ViewBag.IsApprover ?? false;
-    bool canReview = isApprover && !Model.Revisado && (Model.IdCorte == (int?)ViewBag.CurrentCourtId);
+    
+    // RH/Admin can review any pending, Approvers only current court
+    bool canReview = !Model.Revisado && (isRHOrAdmin || (isApprover && Model.IdCorte == (int?)ViewBag.CurrentCourtId));
     
     string solicitanteNombre = Model.IdUsuarioSolicitaNavigation?.Nombre ?? "Usuario";
     string inicial = !string.IsNullOrEmpty(solicitanteNombre) ? solicitanteNombre.Substring(0, 1).ToUpper() : "U";
@@ -375,7 +379,7 @@
                                     </div>
                                     <div>
                                         <p class="small text-secondary mb-0 fw-bold">Fecha de Solicitud</p>
-                                        <p class="small fw-bold text-dark mb-0">@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</p>
+                                        <p class="small fw-bold text-dark mb-0">@Model.FechaCreacion.ToString("dd/MM/yyyy hh:mm tt", new System.Globalization.CultureInfo("es-MX")).ToUpper()</p>
                                     </div>
                                 </div>
                             </div>

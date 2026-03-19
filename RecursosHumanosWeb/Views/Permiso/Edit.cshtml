@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <form asp-action="Edit" method="post" enctype="multipart/form-data" class="permission-form" id="editPermissionForm"
+    <form asp-action="Edit" method="post" enctype="multipart/form-data" class="permission-form ajax-form" id="editPermissionForm"
           data-tipo-permiso="@Model.IdTipoPermiso">
 
         @Html.AntiForgeryToken()
@@ -118,16 +118,6 @@
                         </div>
                         <span asp-validation-for="Fecha1Date" class="text-danger validation-message"></span>
                     </div>
-                    <div class="form-group" id="hora1Time-group">
-                        <label asp-for="Hora1Time" class="form-label">
-                            <span id="hora1Time-label">Hora de entrada</span>
-                        </label>
-                        <div class="input-wrapper">
-                            <i class="fas fa-clock input-icon"></i>
-                            <input asp-for="Hora1Time" type="time" class="form-control" placeholder="HH:MM AM/PM" />
-                        </div>
-                        <span asp-validation-for="Hora1Time" class="text-danger validation-message"></span>
-                    </div>
                     <div class="form-group" id="fecha2Date-group">
                         <label asp-for="Fecha2Date" class="form-label">
                             <span id="fecha2Date-label">Fecha de fin</span>
@@ -137,6 +127,16 @@
                             <input asp-for="Fecha2Date" type="date" class="form-control" placeholder="DD/MM/YYYY" asp-format="{0:yyyy-MM-dd}" />
                         </div>
                         <span asp-validation-for="Fecha2Date" class="text-danger validation-message"></span>
+                    </div>
+                    <div class="form-group" id="hora1Time-group">
+                        <label asp-for="Hora1Time" class="form-label">
+                            <span id="hora1Time-label">Hora de entrada</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-clock input-icon"></i>
+                            <input asp-for="Hora1Time" type="time" class="form-control" placeholder="HH:MM AM/PM" />
+                        </div>
+                        <span asp-validation-for="Hora1Time" class="text-danger validation-message"></span>
                     </div>
                     <div class="form-group" id="hora2Time-group">
                         <label asp-for="Hora2Time" class="form-label">
@@ -194,7 +194,7 @@
                                 <i class="fas fa-file-pdf file-icon"></i>
                                 <span class="file-name" id="fileName">@(string.IsNullOrEmpty(Model.Evidencia) ? "" : System.IO.Path.GetFileName(Model.Evidencia))</span>
                             </div>
-                            <button type="button" class="remove-file" id="removeFileBtn" title="Eliminar archivo">
+                            <button type="button" class="remove-file" id="removeFile" title="Eliminar archivo">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>

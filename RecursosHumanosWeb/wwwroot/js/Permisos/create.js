@@ -248,7 +248,7 @@
             if (config.hora2.show && $('input[name="Hora2Time"]').val()) {
                 combined2 = `${date2}T${time2}:00`;
             } else if (date2) {
-                combined2 = `${date2}T00:00:00`;
+                combined2 = `${date2}T23:59:59`;
             }
             $('input[name="Fecha2"]').val(combined2);
         } else {
@@ -267,44 +267,23 @@
 
     // Submit del formulario
     $('#permissionForm').on('submit', function (e) {
-        e.preventDefault();
+        // 1. Asegurar que las fechas estén combinadas
+        combineDateTime();
 
-        // 1. Validar final
+        // 2. Validar final
         if (!validateForm()) {
-            alert('Por favor complete todos los campos obligatorios y revise las fechas/motivo.');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos incompletos',
+                text: 'Por favor complete todos los campos obligatorios y revise las fechas/motivo.'
+            });
             return;
         }
 
-        // 2. Preparar el envío
-        const submitBtn = $('#submitBtn');
-        const originalText = submitBtn.html();
-
-        submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
-
-        const formData = new FormData(this);
-
-        // 3. Enviar por AJAX
-        $.ajax({
-            url: $(this).attr('action'), // Usar la URL de la acción del formulario
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function (response) {
-                // Delegar el manejo de UI y redirección al manejador central
-                Promise.resolve(handleAlertResponse(response)).then(() => {
-                    // Si no hubo redirección y la respuesta indica fallo, reactivar el botón
-                    if (!response.success) {
-                        submitBtn.prop('disabled', false).html(originalText);
-                    }
-                });
-            },
-            error: function (xhr, status, error) {
-                console.error('Error:', error);
-                handleAlertResponse({ success: false, title: 'Error de Conexión', message: 'Error de conexión o servidor. Intente nuevamente.', icon: 'error' });
-                submitBtn.prop('disabled', false).html(originalText);
-            }
-        });
+        // Dejar que site.js (ajax-form) maneje el envío real
+        console.log('✅ Validación exitosa, delegando envío a site.js');
     });
 
     // Validación inicial al cargar la página (para el modo Edit)

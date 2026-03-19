@@ -1,35 +1,199 @@
 @model RecursosHumanosWeb.Models.Auditoria
 
-<div class="audit-details-header mb-4">
-    <div class="row">
+<div class="audit-details-content animate-fade-in">
+    <!-- Header Info Grid -->
+    <div class="row g-4 mb-4">
         <div class="col-md-6">
-            <p><strong>Tabla:</strong> @Model.IdTablaNavigation.Descripcion</p>
-            <p><strong>Registro ID:</strong> @Model.IdRegistro</p>
-            <p><strong>Operación:</strong> @Model.IdApiFunctionNavigation.Descripcion</p>
+            <div class="d-flex flex-column gap-3">
+                <div class="info-item-premium">
+                    <div class="icon-box-small bg-primary-soft">
+                        <i class="fas fa-table"></i>
+                    </div>
+                    <div class="info-content">
+                        <small class="text-muted d-block uppercase-tracking">Tabla / Entidad</small>
+                        <span class="fw-bold text-dark">@Model.IdTablaNavigation.Descripcion</span>
+                    </div>
+                </div>
+                
+                <div class="info-item-premium">
+                    <div class="icon-box-small bg-success-soft">
+                        <i class="fas fa-hashtag"></i>
+                    </div>
+                    <div class="info-content">
+                        <small class="text-muted d-block uppercase-tracking">ID del Registro</small>
+                        <span class="fw-bold text-dark">#@Model.IdRegistro</span>
+                    </div>
+                </div>
+
+                <div class="info-item-premium">
+                    <div class="icon-box-small bg-info-soft">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <div class="info-content">
+                        <small class="text-muted d-block uppercase-tracking">Operación Realizada</small>
+                        <span class="badge rounded-pill @(Model.IdApiFunctionNavigation.Descripcion.Contains("DELETE") ? "bg-danger" : "bg-primary") px-3">
+                            @Model.IdApiFunctionNavigation.Descripcion
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-6 text-md-right">
-            <p><strong>Fecha:</strong> @Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm:ss")</p>
-            <p><strong>Usuario:</strong> @Model.IdUsuarioCreaNavigation.Nombre</p>
-            <p><strong>Origen:</strong> @(Model.IdApiKey != null ? Model.IdApiKeyNavigation.Clave : "Interno/Directo")</p>
+        
+        <div class="col-md-6 border-start-md">
+            <div class="d-flex flex-column gap-3">
+                <div class="info-item-premium">
+                    <div class="icon-box-small bg-warning-soft">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div class="info-content">
+                        <small class="text-muted d-block uppercase-tracking">Fecha y Hora</small>
+                        <span class="fw-bold text-dark">@Model.FechaCreacion.ToString("dd MMMM yyyy, hh:mm:ss tt", new System.Globalization.CultureInfo("es-MX")).ToUpper()</span>
+                    </div>
+                </div>
+
+                <div class="info-item-premium">
+                    <div class="icon-box-small bg-purple-soft">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="info-content">
+                        <small class="text-muted d-block uppercase-tracking">Usuario Responsable</small>
+                        <span class="fw-bold text-dark">@Model.IdUsuarioCreaNavigation.Nombre</span>
+                    </div>
+                </div>
+
+                <div class="info-item-premium">
+                    <div class="icon-box-small bg-secondary-soft">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div class="info-content">
+                        <small class="text-muted d-block uppercase-tracking">Origen de la Operación</small>
+                        <span class="text-dark">
+                            <i class="fas @(Model.IdApiKey != null ? "fa-key text-warning" : "fa-laptop text-primary") me-1"></i>
+                            @(Model.IdApiKey != null ? "API Key: " + Model.IdApiKeyNavigation.Clave : "Acceso Interno / Web")
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- Data State Section -->
+    <div class="audit-data-section mt-4 pt-4 border-top">
+        <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+            <i class="fas fa-database text-primary"></i> 
+            Instantánea de Datos Anteriores
+        </h6>
+        
+        @if (string.IsNullOrEmpty(Model.DatosAnteriores))
+        {
+            <div class="alert bg-light border-0 rounded-4 p-4 text-center">
+                <i class="fas fa-info-circle fa-2x text-info mb-2"></i>
+                <h6 class="fw-bold">No hay datos históricos</h6>
+                <p class="text-muted m-0 small">Esta operación fue una **Inserción (POST)**, por lo que no existía un estado previo del registro.</p>
+            </div>
+        }
+        else
+        {
+            <div class="json-container position-relative">
+                <div class="json-header-bar d-flex justify-content-between align-items-center px-3 py-2">
+                    <span class="small text-white-50"><i class="fas fa-code me-1"></i> RAW DATA (PREVIOUS_STATE.JSON)</span>
+                    <button class="btn btn-sm btn-link text-white-50 p-0 text-decoration-none" onclick="copyJsonToClipboard()">
+                        <i class="far fa-copy me-1"></i> Copiar
+                    </button>
+                </div>
+                <pre id="jsonContent" class="json-viewer">@Model.DatosAnteriores</pre>
+            </div>
+            
+            <div class="mt-3 p-3 bg-primary-soft rounded-3 d-flex align-items-start gap-3 border-start border-primary border-4">
+                <i class="fas fa-lightbulb text-primary mt-1"></i>
+                <p class="small text-dark m-0">
+                    <strong>Nota:</strong> Estos datos representan los valores exactos que tenía el registro en la base de datos justo **antes** de procesar el cambio @Model.IdApiFunctionNavigation.Descripcion.
+                </p>
+            </div>
+        }
     </div>
 </div>
 
-<div class="audit-payload">
-    <h6 class="text-primary font-weight-bold mb-2">
-        <i class="fas fa-database mr-1"></i> Estado Anterior (Datos Históricos)
-    </h6>
-    @if (string.IsNullOrEmpty(Model.DatosAnteriores))
-    {
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle mr-1"></i> No hay datos anteriores para mostrar (Operación de Inserción).
-        </div>
+<style>
+    .bg-primary-soft { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .bg-success-soft { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .bg-info-soft { background: rgba(6, 182, 212, 0.1); color: #06b6d4; }
+    .bg-warning-soft { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .bg-purple-soft { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+    .bg-secondary-soft { background: rgba(100, 116, 139, 0.1); color: #64748b; }
+
+    .icon-box-small {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
     }
-    else
-    {
-        <div class="json-viewer">@Model.DatosAnteriores</div>
-        <p class="small text-muted mt-2">
-            <i class="fas fa-exclamation-triangle mr-1"></i> Estos datos representan los valores exactamente antes de que se ejecutara la operación @Model.IdApiFunctionNavigation.Descripcion.
-        </p>
+
+    .info-item-premium {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s ease;
     }
-</div>
+
+    .info-item-premium:hover {
+        transform: translateX(5px);
+    }
+
+    .uppercase-tracking {
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        font-size: 0.65rem;
+    }
+
+    .border-start-md {
+        border-left: 1px solid var(--border-color);
+    }
+
+    .json-container {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #2d2d3a;
+    }
+
+    .json-header-bar {
+        background: #2d2d3a;
+        font-family: inherit;
+    }
+
+    .animate-fade-in {
+        animation: fadeInDetail 0.5s ease-out;
+    }
+
+    @@keyframes fadeInDetail {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @@media (max-width: 768px) {
+        .border-start-md {
+            border-left: none;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+
+<script>
+    function copyJsonToClipboard() {
+        const jsonText = document.getElementById('jsonContent').innerText;
+        navigator.clipboard.writeText(jsonText).then(() => {
+            // Optional: Show a quick toast or change button icon
+            const btn = event.currentTarget;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check me-1"></i> Copiado';
+            setTimeout(() => btn.innerHTML = originalContent, 2000);
+        });
+    }
+</script>

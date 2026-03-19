@@ -17,7 +17,7 @@
                 <i class="fas fa-calendar-plus"></i>
                 Configurar Nuevo Periodo
             </h1>
-            <p class="page-subtitle">Defina los límites temporales para el ciclo de permisos</p>
+            <p class="page-subtitle">Defina el límite de cierre para el ciclo de permisos</p>
         </div>
         <div class="header-decoration">
             
@@ -45,9 +45,9 @@
                                         <div class="icon-circle indigo-circle">
                                             <i class="fas fa-play small"></i>
                                         </div>
-                                        <label asp-for="Inicia" class="small fw-medium text-secondary text-uppercase mb-0">Fecha y Hora de Inicio</label>
+                                        <label asp-for="Inicia" class="small fw-medium text-secondary text-uppercase mb-0">Fecha de Inicio (Automático)</label>
                                     </div>
-                                    <input asp-for="Inicia" class="form-control border-0 bg-white shadow-sm mt-2" type="datetime-local" placeholder="DD/MM/YYYY HH:MM AM/PM" required />
+                                    <input asp-for="Inicia" class="form-control border-0 bg-light shadow-sm mt-2" type="date" readonly />
                                     <span asp-validation-for="Inicia" class="text-danger small"></span>
                                 </div>
                             </div>
@@ -58,9 +58,9 @@
                                         <div class="icon-circle purple-circle">
                                             <i class="fas fa-stop small"></i>
                                         </div>
-                                        <label asp-for="Termina" class="small fw-medium text-secondary text-uppercase mb-0">Fecha y Hora de Término</label>
+                                        <label asp-for="Termina" class="small fw-medium text-secondary text-uppercase mb-0">Fecha de Término</label>
                                     </div>
-                                    <input asp-for="Termina" class="form-control border-0 bg-white shadow-sm mt-2" type="datetime-local" placeholder="DD/MM/YYYY HH:MM AM/PM" required />
+                                    <input asp-for="Termina" class="form-control border-0 bg-white shadow-sm mt-2" type="date" required />
                                     <span asp-validation-for="Termina" class="text-danger small"></span>
                                 </div>
                             </div>

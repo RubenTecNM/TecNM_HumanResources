@@ -10,62 +10,94 @@
 @section Styles {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     <style>
-        .json-viewer {
-            background-color: #f8f9fa;
-            border-radius: 4px;
-            padding: 10px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.85rem;
-            max-height: 300px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        /* Origen Badges */
-        .badge-origin {
-            font-weight: 500;
-            padding: 0.35em 0.65em;
-            border-radius: 50rem;
-            display: inline-flex;
+        /* Audit Detail Overlay & Floating Card */
+        .audit-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none;
             align-items: center;
-            gap: 0.4rem;
-            font-size: 0.75rem;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-        .badge-origin i { font-size: 0.8rem; }
-        
-        .origin-web { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .origin-api { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-        .origin-system { background-color: #f3e8ff; color: #7e22ce; border: 1px solid #e9d5ff; }
-        .origin-job { background-color: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
-        .origin-ldap { background-color: #cffafe; color: #0e7490; border: 1px solid #a5f3fc; }
-        .origin-migration { background-color: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
-        .origin-default { background-color: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
 
-        /* Mobile-specific adjustments utilizing Site.css variables without external file */
-        @@media (max-width: 992px) {
-            .table-container { display: none !important; }
-            .mobile-view-container { display: flex; flex-direction: column; gap: 1rem; }
-            
-            .mobile-card-header {
-                cursor: pointer;
-                transition: background-color 0.2s ease;
-            }
-            .mobile-card-header:hover { background-color: var(--surface-alt); }
-            
-            .rotate-icon { transition: transform 0.3s ease; }
-            .expanded .rotate-icon { transform: rotate(180deg); }
-            
-            .expandable-content {
-                max-height: 0;
-                overflow: hidden;
-                transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            }
-            .expanded .expandable-content {
-                max-height: 500px; /* limit for transition */
-                border-top: 1px solid var(--border-light);
-            }
+        .audit-overlay.show {
+            display: flex;
+            opacity: 1;
         }
-        @@media (min-width: 993px) {
-            .mobile-view-container { display: none !important; }
+
+        .audit-floating-card {
+            background: rgba(255, 255, 255, 0.95);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .audit-overlay.show .audit-floating-card {
+            transform: scale(1);
+        }
+
+        .audit-card-header {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-darkest) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .audit-card-body {
+            padding: 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .close-audit-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .close-audit-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
+        .json-viewer {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            border-left: 4px solid var(--primary-medium);
+            margin-top: 1rem;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
         }
     </style>
     <link href="~/css/site.css" rel="stylesheet" />
@@ -144,15 +176,15 @@
         <div class="mobile-view-container fade-in">
             @foreach (var item in Model)
             {
-                var uniqueId = "mob-" + item.IdRegistro; 
-                var badgeClass = item.Accion.Contains("POST") ? "background-color: #ecfdf5; color: #059669; border-color: #a7f3d0 !important;" : 
-                                item.Accion.Contains("PUT") ? "background-color: #fffbeb; color: #d97706; border-color: #fde68a !important;" :
-                                item.Accion.Contains("DELETE") ? "background-color: #fef2f2; color: #ef4444; border-color: #fecaca !important;" : 
-                                "background-color: #eff6ff; color: #3b82f6; border-color: #bfdbfe !important;";
+                var uniqueId = "mob-" + item.Id; 
+                var badgeClass = item.Accion.Contains("POST") ? "background: rgba(16, 185, 129, 0.1); color: #059669;" : 
+                                item.Accion.Contains("PUT") ? "background: rgba(245, 158, 11, 0.1); color: #d97706;" :
+                                item.Accion.Contains("DELETE") ? "background: rgba(239, 68, 68, 0.1); color: #ef4444;" : 
+                                "background: rgba(59, 130, 246, 0.1); color: #3b82f6;";
                 
-                var iconClass = item.Accion.Contains("POST") ? "fa-plus" : 
-                                item.Accion.Contains("PUT") ? "fa-pen" :
-                                item.Accion.Contains("DELETE") ? "fa-trash" : "fa-info";
+                var actionIcon = item.Accion.Contains("POST") ? "fa-plus-circle" : 
+                                item.Accion.Contains("PUT") ? "fa-edit" :
+                                item.Accion.Contains("DELETE") ? "fa-trash-alt" : "fa-info-circle";
 
                 // Origin Logic
                 var originClass = "origin-default";
@@ -166,118 +198,89 @@
                 else if (originText.Contains("LDAP")) { originClass = "origin-ldap"; originIcon = "fa-sync"; }
 
                 // Cloudflare-inspired varied palette
-                var colorIndex = (item.IdRegistro % 5);
+                var colorIndex = (item.Id % 5);
                 var boxGradient = "";
                 var accentColor = "";
                 
                 switch (colorIndex) {
-                    case 0: // Indigo
-                        boxGradient = "linear-gradient(135deg, #6366f1, #4338ca)";
-                        accentColor = "#4338ca";
-                        break;
-                    case 1: // Emerald
-                        boxGradient = "linear-gradient(135deg, #10b981, #059669)";
-                        accentColor = "#059669";
-                        break;
-                    case 2: // Amber
-                        boxGradient = "linear-gradient(135deg, #f59e0b, #d97706)";
-                        accentColor = "#d97706";
-                        break;
-                    case 3: // Rose
-                        boxGradient = "linear-gradient(135deg, #f43f5e, #e11d48)";
-                        accentColor = "#e11d48";
-                        break;
-                    case 4: // Sky
-                        boxGradient = "linear-gradient(135deg, #0ea5e9, #0284c7)";
-                        accentColor = "#0284c7";
-                        break;
+                    case 0: boxGradient = "linear-gradient(135deg, #6366f1, #4338ca)"; accentColor = "#4338ca"; break;
+                    case 1: boxGradient = "linear-gradient(135deg, #10b981, #059669)"; accentColor = "#059669"; break;
+                    case 2: boxGradient = "linear-gradient(135deg, #f59e0b, #d97706)"; accentColor = "#d97706"; break;
+                    case 3: boxGradient = "linear-gradient(135deg, #f43f5e, #e11d48)"; accentColor = "#e11d48"; break;
+                    case 4: boxGradient = "linear-gradient(135deg, #0ea5e9, #0284c7)"; accentColor = "#0284c7"; break;
                 }
 
-                <div class="card shadow-sm border-0 mb-3 mobile-card" id="card-@uniqueId" style="border-radius: 12px; overflow: hidden; transition: all 0.2s ease;">
-                    <!-- Clickable Header -->
-                    <div class="mobile-card-header p-3 d-flex align-items-center justify-content-between bg-white position-relative" 
-                        onclick="toggleMobileCard('@uniqueId')"
-                        style="border-left: 4px solid @accentColor;">
+                <div class="card premium-mobile-card mb-3" id="card-@uniqueId">
+                    <div class="mobile-card-header-premium d-flex align-items-center justify-content-between" 
+                         onclick="toggleMobileCard('@uniqueId')"
+                         style="border-left: 5px solid @accentColor; border-top-left-radius: 20px; border-bottom-left-radius: 20px;">
                         
-                        <div class="d-flex align-items-center gap-3 flex-grow-1">
-                            <!-- ID Box (Initial of Table) -->
-                            <div class="rounded-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
-                                style="width: 48px; height: 48px; background: @boxGradient; font-size: 1.25rem; flex-shrink: 0;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="id-box-premium" style="background: @boxGradient;">
                                 @(item.Tabla.Length > 0 ? item.Tabla.Substring(0, 1).ToUpper() : "A")
                             </div>
                             
-                            <!-- Info -->
-                            <div class="flex-grow-1" style="min-width: 0;">
-                                <h6 class="mb-0 fw-bold text-dark text-truncate" style="font-size: 1rem;">
-                                    @item.Tabla
-                                </h6>
-                                <div class="d-flex align-items-center mt-1 flex-wrap gap-2">
-                                    <span class="badge-origin @originClass py-0" style="height: 22px;">
-                                        <i class="fas @originIcon" style="font-size: 0.7rem;"></i> @originText
+                            <div>
+                                <h6 class="mb-1 fw-bold text-dark">@item.Tabla</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="info-pill-sm @originClass">
+                                        <i class="fas @originIcon me-1"></i> @originText
                                     </span>
-                                    
-                                    <!-- Status Badge (Action) -->
-                                    <span class="badge rounded-pill border d-none d-sm-inline-flex align-items-center px-2 py-0" 
-                                        style="@badgeClass font-weight: 600; height: 22px;">
-                                        @item.Accion
+                                    <span class="info-pill-sm" style="@badgeClass">
+                                        <i class="fas @actionIcon me-1"></i> @item.Accion
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Chevron -->
-                        <div class="ms-3 text-muted">
-                            <i class="fas fa-chevron-down rotate-icon" style="transition: transform 0.3s ease;"></i>
-                        </div>
+                        <i class="fas fa-chevron-down rotate-icon text-muted opacity-50"></i>
                     </div>
 
-                    <!-- Expandable Content -->
-                    <div class="expandable-content bg-light" id="body-@uniqueId" style="border-top: 1px solid var(--border-light);">
-                        <div class="p-3">
+                    <div class="expandable-content" id="body-@uniqueId">
+                        <div class="p-4">
                             <!-- Details Grid -->
-                            <div class="row g-2 mb-3">
+                            <div class="row g-3 mb-4">
                                 <div class="col-6">
-                                    <div class="p-2 bg-white border border-light rounded-3 shadow-sm h-100">
-                                        <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
+                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm h-100">
+                                        <small class="text-muted d-block uppercase-tracking mb-1">
                                             <i class="fas fa-calendar-alt me-1"></i> Fecha
                                         </small>
-                                        <span class="fw-semibold text-dark small">
-                                            @item.FechaCreacion.ToString("dd MMM yyyy")
-                                        </span>
+                                        <span class="fw-bold text-dark small">@item.FechaCreacion.ToString("dd MMM, HH:mm")</span>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="p-2 bg-white border border-light rounded-3 shadow-sm h-100">
-                                        <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
-                                            <i class="fas fa-user me-1"></i> Usuario
+                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm h-100">
+                                        <small class="text-muted d-block uppercase-tracking mb-1">
+                                            <i class="fas fa-user-circle me-1"></i> Usuario
                                         </small>
-                                        <span class="fw-semibold text-dark small">
-                                            @item.Usuario
-                                        </span>
+                                        <span class="fw-bold text-dark small text-truncate d-block">@item.Usuario</span>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm">
+                                        <small class="text-muted d-block uppercase-tracking mb-1">
+                                            <i class="fas fa-fingerprint me-1"></i> ID Registro
+                                        </small>
+                                        <span class="fw-bold text-dark">#@item.IdRegistro</span>
                                     </div>
                                 </div>
                                 @if(!string.IsNullOrEmpty(item.ApiKeyDesc) && item.ApiKeyDesc != "N/A") {
-                                <div class="col-12">
-                                    <div class="p-2 bg-white border border-light rounded-3 shadow-sm">
-                                        <small class="d-block text-muted mb-1" style="font-size: 0.7rem;">
-                                            <i class="fas fa-key me-1"></i> Detalle Origen
-                                        </small>
-                                        <span class="fw-semibold text-dark small">
-                                            @item.ApiKeyDesc
-                                        </span>
+                                    <div class="col-12">
+                                        <div class="p-3 bg-white border border-light rounded-4 shadow-sm">
+                                            <small class="text-muted d-block uppercase-tracking mb-1">
+                                                <i class="fas fa-link me-1"></i> Detalle Origen
+                                            </small>
+                                            <span class="fw-bold text-dark small">@item.ApiKeyDesc</span>
+                                        </div>
                                     </div>
-                                </div>
                                 }
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="row g-2">
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-sm btn-success w-100 d-flex align-items-center justify-content-center gap-1 shadow-sm text-white"
-                                            onclick="showAuditDetails(@item.Id)">
-                                        <i class="fas fa-eye"></i> Ver Datos Anteriores
-                                    </button>
-                                </div>
+                            <div class="action-grid d-grid">
+                                <button type="button" onclick="showAuditDetails('@item.Id')" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm py-2">
+                                    <i class="fas fa-search-plus me-2"></i> Ver Detalle de Auditoría
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -391,21 +394,24 @@
     }
 </div>
 
-<!-- Modal para Detalles -->
-<div class="modal fade" id="auditModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title"><i class="fas fa-search-plus mr-2"></i> Detalle del Cambio Histórico</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div id="auditDetailsContent" class="modal-body">
-                <div class="text-center p-4">
-                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
-                    <p class="mt-2">Cargando datos históricos...</p>
+<!-- Custom Modal para Detalles -->
+<div class="audit-overlay" id="auditOverlay" onclick="closeOnBackdrop(event)">
+    <div class="audit-floating-card">
+        <div class="audit-card-header">
+            <h5 class="m-0 fw-bold d-flex align-items-center gap-2">
+                <i class="fas fa-history"></i> Detalle de Auditoría
+            </h5>
+            <button type="button" class="close-audit-btn" onclick="closeAuditDetails()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="auditDetailsContent" class="audit-card-body">
+            <!-- Content loaded via Ajax -->
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
+                <p class="mt-3 fw-medium text-muted">Cargando datos históricos...</p>
             </div>
         </div>
     </div>
@@ -414,8 +420,32 @@
 @section Scripts {
     <script>
         function showAuditDetails(id) {
-            $('#auditModal').modal('show');
+            const overlay = document.getElementById('auditOverlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
+            
+            $('#auditDetailsContent').html(`
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 fw-medium text-muted">Cargando datos históricos...</p>
+                </div>
+            `);
+            
             $('#auditDetailsContent').load('/Auditoria/Details/' + id);
+        }
+
+        function closeAuditDetails() {
+            const overlay = document.getElementById('auditOverlay');
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function closeOnBackdrop(event) {
+            if (event.target.id === 'auditOverlay') {
+                closeAuditDetails();
+            }
         }
 
         window.clearAllFilters = function () {

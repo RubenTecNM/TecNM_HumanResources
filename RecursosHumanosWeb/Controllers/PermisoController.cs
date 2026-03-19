@@ -47,14 +47,14 @@ namespace RecursosHumanosWeb.Controllers
         #region VISTAS Y FILTROS
 
         [HttpGet]
-        public async Task<IActionResult> Index(string nombreUsuario = null, int? idArea = null, DateTime? delDia = null, DateTime? alDia = null, int? page = 1)
+        public async Task<IActionResult> Index(string? nombreUsuario = null, int? idArea = null, DateTime? delDia = null, DateTime? alDia = null, bool? revisado = null, int? page = 1)
         {
             await _corteService.AutoCloseCorteIfNeededAsync();
             
             int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int tipoUsuario = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
 
-            var permisos = await _permisoService.GetPermisosPagedAsync(idUsuario, idArea, nombreUsuario, delDia, alDia, page ?? 1, 10);
+            var permisos = await _permisoService.GetPermisosPagedAsync(idUsuario, idArea, nombreUsuario, delDia, alDia, revisado, page ?? 1, 10);
 
             var areas = (tipoUsuario == (int)TipoUsuarioEnum.RecursosHumanos || tipoUsuario == (int)TipoUsuarioEnum.Administrador)
                 ? await _context.Areas.Where(a => a.Estatus).Select(a => new AreasDTO { Id = a.Id, Descripcion = a.Descripcion }).OrderBy(a => a.Descripcion).ToListAsync()
@@ -65,11 +65,13 @@ namespace RecursosHumanosWeb.Controllers
                 Permisos = permisos,
                 Areas = areas,
                 SelectedUser = nombreUsuario,
-                SelectedArea = idArea
+                SelectedArea = idArea,
+                Revisado = revisado
             };
 
             ViewBag.DelDia = delDia?.ToString("yyyy-MM-dd");
             ViewBag.AlDia = alDia?.ToString("yyyy-MM-dd");
+            ViewBag.Revisado = revisado;
             ViewBag.IsAutorizador = tipoUsuario == (int)TipoUsuarioEnum.Autorizador;
             ViewBag.IsRH = tipoUsuario == (int)TipoUsuarioEnum.RecursosHumanos;
             ViewBag.IsAdministrador = tipoUsuario == (int)TipoUsuarioEnum.Administrador;
@@ -173,7 +175,16 @@ namespace RecursosHumanosWeb.Controllers
 
                 if (model.Fecha2 != null && model.Fecha2.Value.Date > corte.Termina.Date && !(confirmed ?? false))
                 {
-                    return Json(new AlertResponseDTO { Success = false, ShowConfirmation = true, Title = "Fuera de corte", Message = "¿Desea crear el permiso aun si excede el corte?", Icon = "warning", ConfirmButtonText = "Sí, crear" });
+                    string fechaTerminaStr = corte.Termina.ToString("dd/MM/yyyy");
+                    return Json(new AlertResponseDTO 
+                    { 
+                        Success = false, 
+                        ShowConfirmation = true, 
+                        Title = "Excede el periodo", 
+                        Message = $"El periodo actual termina el: **{fechaTerminaStr}**. ¿Desea crear el permiso aun si excede esta fecha?\n\n*Tenga en cuenta que solo tiene posibilidad entre la fecha de inicio y cierre del periodo, no más ni menos.*", 
+                        Icon = "warning", 
+                        ConfirmButtonText = "Sí, crear" 
+                    });
                 }
 
                 if (model.EvidenceFile != null)
@@ -213,6 +224,21 @@ namespace RecursosHumanosWeb.Controllers
 
                 if (!ModelState.IsValid)
                     return Json(new AlertResponseDTO { Success = false, Errors = GetModelStateErrors() });
+
+                var corte = await _corteService.GetActiveCorteAsync();
+                if (corte != null && model.Fecha2 != null && model.Fecha2.Value.Date > corte.Termina.Date && !(Request.Form["confirmed"] == "true"))
+                {
+                    string fechaTerminaStr = corte.Termina.ToString("dd/MM/yyyy");
+                    return Json(new AlertResponseDTO 
+                    { 
+                        Success = false, 
+                        ShowConfirmation = true, 
+                        Title = "Excede el periodo", 
+                        Message = $"El periodo actual termina el: **{fechaTerminaStr}**. ¿Desea modificar el permiso aun si excede esta fecha?\n\n*Tenga en cuenta que solo tiene posibilidad entre la fecha de inicio y cierre del periodo, no más ni menos.*", 
+                        Icon = "warning", 
+                        ConfirmButtonText = "Sí, guardar" 
+                    });
+                }
 
                 string? oldPath = original.Evidencia;
                 string? newPath = oldPath;

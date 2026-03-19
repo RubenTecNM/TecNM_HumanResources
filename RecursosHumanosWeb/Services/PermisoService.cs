@@ -26,7 +26,7 @@ namespace RecursosHumanosWeb.Services
             _logger = logger;
         }
 
-        public async Task<IPagedList<PermisosDTO>> GetPermisosPagedAsync(int userId, int? areaId, string nombreUsuario, DateTime? delDia, DateTime? alDia, int page, int pageSize)
+        public async Task<IPagedList<PermisosDTO>> GetPermisosPagedAsync(int userId, int? areaId, string nombreUsuario, DateTime? delDia, DateTime? alDia, bool? revisado, int page, int pageSize)
         {
             var user = await _context.Usuarios.FindAsync(userId);
             if (user == null) return new List<PermisosDTO>().ToPagedList(1, pageSize);
@@ -37,10 +37,10 @@ namespace RecursosHumanosWeb.Services
                 .Where(p => p.Estatus)
                 .AsQueryable();
 
-            // Restricciones por tipo de usuario
+            // Restricciones por tipo de usuario (Seguridad y Reglas de Negocio)
             if (user.IdTipoUsuario == (int)TipoUsuarioEnum.Administrador || user.IdTipoUsuario == (int)TipoUsuarioEnum.RecursosHumanos)
             {
-                // Full visibility
+                // Full visibility: ven todo lo de todos los cortes
             }
             else if (user.IdTipoUsuario == (int)TipoUsuarioEnum.Autorizador)
             {
@@ -50,31 +50,33 @@ namespace RecursosHumanosWeb.Services
                     .Select(c => c.Id)
                     .FirstOrDefaultAsync();
 
+                // Regla: Propios de cualquier corte O (De su área EN corte activo Y que aún no estén revisados)
                 query = query.Where(p => p.IdUsuarioSolicita == userId || 
-                                       (p.IdUsuarioSolicitaNavigation.IdArea == user.IdArea && p.IdCorte == currentCourtId));
+                                       (p.IdUsuarioSolicitaNavigation.IdArea == user.IdArea && p.IdCorte == currentCourtId && !p.Revisado));
             }
             else
             {
+                // Solicitantes normales solo ven sus propios permisos (historial completo)
                 query = query.Where(p => p.IdUsuarioSolicita == userId);
             }
 
-            // Filtros
+            // Filtros manuales del panel de búsqueda
+            if (revisado.HasValue)
+                query = query.Where(p => p.Revisado == revisado.Value);
             if (!string.IsNullOrEmpty(nombreUsuario))
                 query = query.Where(p => p.IdUsuarioSolicitaNavigation.Nombre.Contains(nombreUsuario));
 
             if (areaId.HasValue)
                 query = query.Where(p => p.IdUsuarioSolicitaNavigation.IdArea == areaId.Value);
 
-            if (delDia.HasValue)
-                query = query.Where(p => p.Fecha1 >= delDia.Value);
-
-            if (alDia.HasValue)
+            if (delDia.HasValue || alDia.HasValue)
             {
                 // Un permiso debe aparecer si su periodo (Fecha1 a Fecha2) se solapa con el rango buscado.
-                // Si solo se da 'alDia', buscamos permisos que hayan iniciado antes o en esa fecha 
-                // Y que no hayan terminado antes de la fecha de inicio del filtro (si existe).
+                // Usamos lógica de "Touch/Overlap" para capturar permisos que iniciaron antes pero terminan dentro o después del rango.
                 var startDate = delDia ?? new DateTime(1900, 1, 1);
-                query = query.Where(p => p.Fecha1 <= alDia.Value && (p.Fecha2 == null || p.Fecha2 >= startDate));
+                var endDate = alDia?.Date.AddDays(1).AddTicks(-1) ?? new DateTime(2100, 12, 31);
+                
+                query = query.Where(p => p.Fecha1 <= endDate && (p.Fecha2 == null || p.Fecha2 >= startDate));
             }
 
             return query
@@ -110,6 +112,10 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<int> CreatePermisoAsync(Permiso permiso, int idUsuarioCrea)
         {
+            var userCrea = await _context.Usuarios.FindAsync(idUsuarioCrea);
+            if (userCrea?.IdTipoUsuario == (int)TipoUsuarioEnum.Autorizador)
+                throw new InvalidOperationException("Los jefes de área no pueden crear solicitudes de permiso para asegurar la imparcialidad del proceso.");
+
             var corteActivo = await _context.Cortes
                 .Where(c => c.Estatus)
                 .OrderByDescending(c => c.Id)
@@ -132,6 +138,10 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<bool> UpdatePermisoAsync(Permiso permiso, int idUsuarioModifica)
         {
+            var userModifica = await _context.Usuarios.FindAsync(idUsuarioModifica);
+            if (userModifica?.IdTipoUsuario == (int)TipoUsuarioEnum.Autorizador)
+                return false; // Jefes de área no pueden editar según reglas de negocio
+
             var existing = await _context.Permisos
                 .Include(p => p.IdCorteNavigation)
                 .FirstOrDefaultAsync(p => p.Id == permiso.Id);

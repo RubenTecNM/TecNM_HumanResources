@@ -69,14 +69,13 @@ namespace RecursosHumanosWeb.Controllers
             await _corteService.AutoCloseCorteIfNeededAsync();
 
             // Aplicar filtros
-            if (fechaDesde.HasValue)
+            if (fechaDesde.HasValue || fechaHasta.HasValue)
             {
-                cortesQuery = cortesQuery.Where(c => c.Inicia >= fechaDesde.Value || c.Inicia == null);
-            }
-            if (fechaHasta.HasValue)
-            {
-                var hasta = fechaHasta.Value.Date.AddDays(1).AddTicks(-1);
-                cortesQuery = cortesQuery.Where(c => c.Termina <= hasta || c.Termina == null);
+                // Un corte toca el rango si su periodo (Inicia a Termina) se solapa con el rango buscado.
+                var d = fechaDesde ?? new DateTime(1900, 1, 1);
+                var a = fechaHasta?.Date.AddDays(1).AddTicks(-1) ?? new DateTime(2100, 12, 31);
+                
+                cortesQuery = cortesQuery.Where(c => c.Inicia <= a && c.Termina >= d);
             }
             if (usuarioCreadorFilter.HasValue)
             {
@@ -210,11 +209,24 @@ namespace RecursosHumanosWeb.Controllers
 
             var viewModel = new CorteCreateViewModel();
 
-            // Buscar el último corte con fechas
-            var corteActivo = await _corteService.GetActiveCorteAsync();
+            // Buscar el último corte (activo o no) para basar la fecha de inicio
+            var ultimoCorte = await _corteService.GetLastCorteAsync();
+            
+            if (ultimoCorte != null)
+            {
+                // El nuevo corte inicia el día siguiente al fin del anterior
+                viewModel.Inicia = ultimoCorte.Termina.Date.AddDays(1);
+            }
+            else
+            {
+                // Si es el primer corte del sistema, usamos hoy
+                viewModel.Inicia = DateTime.Now.Date;
+            }
 
-            // Establecer Inicia sugerido como un segundo después de Termina del último corte real
-            viewModel.Inicia = corteActivo?.Termina.AddSeconds(1) ?? DateTime.Now;
+            // Fecha de término por defecto es el día actual, 
+            // pero asegurando que sea al menos igual o posterior al inicio para evitar conflictos inmediatos
+            viewModel.Termina = DateTime.Now.Date > viewModel.Inicia ? DateTime.Now.Date : viewModel.Inicia.AddDays(2);
+            
             return View(viewModel);
         }
 

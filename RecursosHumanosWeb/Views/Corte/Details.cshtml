@@ -50,11 +50,11 @@
                                 <span class="small fw-medium text-secondary text-uppercase">Inicio del Periodo</span>
                             </div>
                             <p class="h6 fw-semibold text-dark mb-0 ms-5">
-                                @Model.Inicia?.ToString("dd/MM/yyyy") <small class="text-muted ms-2">@Model.Inicia?.ToString("hh:mm tt")</small>
+                                @Model.Inicia?.ToString("dd/MM/yyyy")
                             </p>
                         </div>
                     </div>
-
+ 
                     <div class="mb-3">
                         <div class="info-card info-card-orange p-3 rounded-3">
                             <div class="d-flex align-items-center gap-3 mb-2">
@@ -64,7 +64,7 @@
                                 <span class="small fw-medium text-secondary text-uppercase">Fin del Periodo</span>
                             </div>
                             <p class="h6 fw-semibold text-dark mb-0 ms-5">
-                                @(Model.Termina?.ToString("dd/MM/yyyy") ?? "En Proceso") <small class="text-muted ms-2">@Model.Termina?.ToString("hh:mm tt")</small>
+                                @(Model.Termina?.ToString("dd/MM/yyyy") ?? "En Proceso")
                             </p>
                         </div>
                     </div>

@@ -6,6 +6,7 @@ namespace RecursosHumanosWeb.Services
     public interface ICorteService
     {
         Task<Corte> GetActiveCorteAsync();
+        Task<Corte> GetLastCorteAsync();
         Task<bool> HasPendingPermissionsAsync(int corteId);
         Task AutoCloseCorteIfNeededAsync();
         Task<bool> CreateCorteAsync(Corte corte, int userId);

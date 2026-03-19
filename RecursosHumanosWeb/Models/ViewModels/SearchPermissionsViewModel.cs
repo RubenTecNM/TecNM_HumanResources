@@ -12,7 +12,7 @@ namespace RecursosHumanosWeb.Models.ViewModels
         public List<AreasDTO> Areas { get; set; } = new List<AreasDTO>();
         public string SelectedUser { get; set; }
         public int? SelectedArea { get; set; }
-        public bool Revisado { get; set; } = false;
+        public bool? Revisado { get; set; }
         public DateTime? Fecha1 { get; set; }
         public DateTime? Fecha2 { get; set; }
         public string? NombreUsuario { get; set; }

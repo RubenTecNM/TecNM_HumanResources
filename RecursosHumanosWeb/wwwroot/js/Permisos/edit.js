@@ -206,10 +206,13 @@
 
     // --- ENVÍO DEL FORMULARIO ---
     function handleFormSubmit(e) {
-        e.preventDefault();
+        // Combinar fechas y horas antes de validar/enviar
+        combinarFechaHora();
 
         // Validar que haya un tipo seleccionado
         if (!tipoPermisoActual) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
             Swal.fire({
                 icon: 'warning',
                 title: 'Tipo requerido',
@@ -220,6 +223,8 @@
 
         // Validar campos requeridos
         if (!elements.fecha1Date.value) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
             Swal.fire({
                 icon: 'warning',
                 title: 'Campo requerido',
@@ -228,7 +233,9 @@
             return;
         }
 
-        if (tipoPermisoActual !== 3 && !elements.fecha2Date.value) {
+        if (tipoPermisoActual !== 1 && !elements.fecha2Date.value) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
             Swal.fire({
                 icon: 'warning',
                 title: 'Campo requerido',
@@ -238,6 +245,8 @@
         }
 
         if (!elements.motivo.value.trim()) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
             Swal.fire({
                 icon: 'warning',
                 title: 'Campo requerido',
@@ -246,48 +255,9 @@
             return;
         }
 
-        // Combinar fechas y horas
-        combinarFechaHora();
-
-        // Deshabilitar botón
-        elements.submitBtn.disabled = true;
-        elements.submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-
-        // Crear FormData
-        const formData = new FormData(elements.form);
-
-        // Obtener token
-        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-        // Enviar petición
-        fetch(elements.form.action, {
-            method: 'POST',
-            headers: {
-                'RequestVerificationToken': token,
-                'Accept': 'application/json'
-            },
-            body: formData
-        })
-            .then(response => {
-                if (!response.ok) throw new Error('Error HTTP: ' + response.status);
-                return response.json();
-            })
-            .then(data => {
-                // Usar el manejador global definido en site.js
-                return handleAlertResponse(data);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                handleAlertResponse({
-                    Success: false,
-                    Title: 'Error del servidor',
-                    Message: error.message || 'No se pudo conectar con el servidor'
-                });
-            })
-            .finally(() => {
-                elements.submitBtn.disabled = false;
-                elements.submitBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
-            });
+        // Si llegó aquí, es válido. No llamamos e.preventDefault()
+        // para permitir que site.js (ajax-form) maneje el envío por AJAX.
+        console.log('✅ Validación exitosa, delegando envío a site.js');
     }
 
     // --- INICIALIZACIÓN ---

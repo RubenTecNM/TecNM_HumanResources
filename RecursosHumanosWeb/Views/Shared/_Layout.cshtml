@@ -52,16 +52,28 @@
 
     @if (isAuthenticated)
     {
+        <!-- Mobile Top Header (Fixed) -->
+        <header class="mobile-header bg-white border-bottom shadow-sm">
+            <div class="mobile-header__container d-flex align-items-center px-3 h-100 gap-3">
+                <button type="button" class="mobile-header__menu-btn btn shadow-none p-0" data-bs-toggle="offcanvas" data-bs-target="#mobileDrawer">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <div class="mobile-header__title flex-grow-1 overflow-hidden">
+                    <span class="fw-bold">@ViewData["Title"]</span>
+                </div>
+            </div>
+        </header>
+
         <!-- Mobile Side Drawer (Offcanvas) -->
         <div class="offcanvas offcanvas-start mobile-drawer" tabindex="-1" id="mobileDrawer" aria-labelledby="mobileDrawerLabel">
             <div class="offcanvas-header">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="user-avatar-circle shadow-sm" style="width: 48px; height: 48px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.2);">
+                    <div class="user-avatar-circle shadow-sm" style="width: 48px; height: 48px; border: 2px solid rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.1); color: var(--primary-dark);">
                         @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
                     </div>
                     <div>
-                        <h5 class="offcanvas-title fw-bold" id="mobileDrawerLabel" style="color: white !important;">@User.Identity?.Name</h5>
-                        <span class="small" style="color: rgba(255,255,255,0.8) !important;">Gestión de RRHH</span>
+                        <h5 class="offcanvas-title fw-bold" id="mobileDrawerLabel">@User.Identity?.Name</h5>
+                        <span class="small text-muted">Gestión de RRHH</span>
                     </div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>

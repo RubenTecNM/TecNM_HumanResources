@@ -169,7 +169,7 @@ namespace RecursosHumanosWeb.Services
             return usuario.Id;
         }
 
-        public async Task<bool> UpdateUsuarioAsync(Usuario usuario, int idUsuarioModifica, string claveTextoPlano = null)
+        public async Task<bool> UpdateUsuarioAsync(Usuario usuario, int idUsuarioModifica, string? claveTextoPlano = null)
         {
             var existing = await _context.Usuarios.FindAsync(usuario.Id);
             if (existing == null) return false;

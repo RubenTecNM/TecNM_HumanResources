@@ -14,7 +14,11 @@ function isDateInRange(dateStr, fromDate, toDate) {
     if (!date) return !fromDate && !toDate;
 
     const from = fromDate ? new Date(fromDate) : null;
-    const to = toDate ? new Date(toDate) : null;
+    let to = toDate ? new Date(toDate) : null;
+
+    if (to) {
+        to.setHours(23, 59, 59, 999);
+    }
 
     if (from && to) {
         return date >= from && date <= to;

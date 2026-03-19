@@ -320,6 +320,13 @@ $(document).ready(function () {
             if (token) headers['RequestVerificationToken'] = token;
             headers['Accept'] = 'application/json';
 
+            var submitBtn = form.querySelector('[type="submit"]');
+            var originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+            }
+
             fetch(form.action, {
                 method: (form.method || 'POST').toUpperCase(),
                 headers: headers,
@@ -358,6 +365,10 @@ $(document).ready(function () {
                             }
                             // If cancelled, show an info toast and keep the form intact for editing
                             showToast('Acción cancelada', 'info');
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalBtnHtml;
+                            }
                             return Promise.resolve();
                         });
                     }
@@ -368,6 +379,10 @@ $(document).ready(function () {
                 .catch(function (err) {
                     console.error('Error submitting ajax form:', err);
                     handleAlertResponse({ success: false, title: 'Error', message: err.message || 'Error en la petición' });
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalBtnHtml;
+                    }
                 });
         });
     })();
@@ -461,8 +476,8 @@ window.toggleMobileCard = function (id) {
     const selectedCard = document.getElementById('card-' + id);
     if (!selectedCard) return;
 
-    // 1. Close ALL other open cards first (Auto-closing behavior)
-    document.querySelectorAll('.mobile-card.expanded').forEach(card => {
+    // 1. Close ALL other open cards first (Auto-closing accordion behavior)
+    document.querySelectorAll('.premium-mobile-card.expanded').forEach(card => {
         // Skip the one we just clicked if it was already open (so let it toggle normally)
         if (card.id !== 'card-' + id) {
             card.classList.remove('expanded');

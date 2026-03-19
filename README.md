@@ -2,9 +2,28 @@
 
 Sistema profesional de gestión de recursos humanos diseñado para optimizar permisos laborales, gestión de usuarios y control de periodos de nómina.
 
-## 🛠 Configuración del Entorno (Debian Server)
+## ⚡ Instalación Rápida (Recomendada)
 
-Siga estos pasos para configurar el servidor y ejecutar el proyecto.
+Usa el script automatizado incluido en `db/` para instalar y configurar todo en un solo paso:
+
+```bash
+# Clona el repositorio y entra a la carpeta db/
+git clone <repo-url> TecRHPermisos
+cd TecRHPermisos/db
+
+# Ejecuta el script como root
+sudo bash setup.sh
+```
+
+El script instala automáticamente: **dependencias del sistema**, **.NET 10 SDK**, **Docker Engine**, y despliega **SQL Server 2025 Express** como demonio `systemd` bajo root, inicializando la base de datos completa.
+
+> Ver sección [4. Inicialización de la Base de Datos](#4-inicialización-de-la-base-de-datos) para más detalles sobre los scripts SQL.
+
+---
+
+## 🛠 Configuración Manual del Entorno (Debian Server)
+
+Siga estos pasos si prefiere una instalación paso a paso.
 
 ### 1. Instalación de .NET SDK
 

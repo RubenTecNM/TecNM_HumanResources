@@ -24,7 +24,7 @@ namespace RecursosHumanosWeb.Services
 
         Task<int> CreateUsuarioAsync(Usuario usuario, int idUsuarioCrea, string claveTextoPlano);
 
-        Task<bool> UpdateUsuarioAsync(Usuario usuario, int idUsuarioModifica, string claveTextoPlano = null);
+        Task<bool> UpdateUsuarioAsync(Usuario usuario, int idUsuarioModifica, string? claveTextoPlano = null);
 
         Task<bool> DeleteUsuarioAsync(int id, int idUsuarioModifica);
 

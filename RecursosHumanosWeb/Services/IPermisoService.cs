@@ -9,7 +9,7 @@ namespace RecursosHumanosWeb.Services
 {
     public interface IPermisoService
     {
-        Task<IPagedList<PermisosDTO>> GetPermisosPagedAsync(int userId, int? areaId, string nombreUsuario, DateTime? delDia, DateTime? alDia, int page, int pageSize);
+        Task<IPagedList<PermisosDTO>> GetPermisosPagedAsync(int userId, int? areaId, string nombreUsuario, DateTime? delDia, DateTime? alDia, bool? revisado, int page, int pageSize);
         Task<object> GetStatsAsync(int userId, int userType);
         Task<int> CreatePermisoAsync(Permiso permiso, int idUsuarioCrea);
         Task<bool> UpdatePermisoAsync(Permiso permiso, int idUsuarioModifica);
