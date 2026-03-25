@@ -77,9 +77,6 @@ MSSQL_SA_PASSWORD="buss1ness!2026"         # ⚠  Cambiar en producción
 MSSQL_PID="Express"
 MSSQL_DB_NAME="RecursosHumanos"
 
-DACPAC_FILE="$DB_DIR/RecursosHumanos.dacpac"   # ← nombre de tu archivo
-SQLPACKAGE_AVAILABLE=false
-
 # ── App ASP.NET (nativa) ──────────────────────────────────────────────────────
 APP_PORT="5000"                            # Puerto Kestrel; Nginx hace proxy aquí
 APP_PUBLISH_DIR="/var/www/RecursosHumanosWeb"
@@ -103,6 +100,8 @@ PROJECT_ROOT="$(dirname "$DB_DIR")"
 ASPNET_DIR="$PROJECT_ROOT/RecursosHumanosWeb"
 SCHEMA_SQL="$DB_DIR/schemaDB.sql"
 INSERTS_SQL="$DB_DIR/InsertsDB.sql"
+DACPAC_FILE="$DB_DIR/RecursosHumanos.dacpac"   # ← nombre de tu archivo
+SQLPACKAGE_AVAILABLE=false
 
 # ── Tiempos de espera ─────────────────────────────────────────────────────────
 SQL_READY_TIMEOUT=120
