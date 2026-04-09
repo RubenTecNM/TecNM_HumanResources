@@ -100,7 +100,7 @@ PROJECT_ROOT="$(dirname "$DB_DIR")"
 ASPNET_DIR="$PROJECT_ROOT/RecursosHumanosWeb"
 SCHEMA_SQL="$DB_DIR/schemaDB.sql"
 INSERTS_SQL="$DB_DIR/InsertsDB.sql"
-DACPAC_FILE="$DB_DIR/RecursosHumanos.dacpac"   # ← nombre de tu archivo
+DACPAC_FILE="$DB_DIR/RHdatabase-schema.dacpac"   # ← nombre de tu archivo
 SQLPACKAGE_AVAILABLE=false
 
 # ── Tiempos de espera ─────────────────────────────────────────────────────────
