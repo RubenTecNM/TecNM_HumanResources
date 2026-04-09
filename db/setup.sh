@@ -672,7 +672,7 @@ init_database() {
 
     log_section "PASO 6 — Inicializando la base de datos"
 
-    # Helpers SQL (sin cambios)
+    # ── Helpers SQL ───────────────────────────────────────────────────────────
     run_sql() {
         docker exec -i "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
@@ -692,107 +692,28 @@ init_database() {
             -d "$MSSQL_DB_NAME" -C -b -Q "$1"
     }
 
-    # ── Verificar si la BD ya existe ──────────────────────────────────────────
-    log_step "Verificando si '$MSSQL_DB_NAME' ya existe..."
-    local db_exists
-    db_exists=$(docker exec "$MSSQL_CONTAINER" \
-        /opt/mssql-tools18/bin/sqlcmd \
-        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
-        -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name='${MSSQL_DB_NAME}'" \
-        -h -1 2>/dev/null | tr -d '[:space:]' || echo "0")
-
-    if [[ "$db_exists" == "1" ]]; then
-        log_warn "La base de datos '$MSSQL_DB_NAME' ya existe."
-        if [[ "$FLAG_RESET_DB" == "true" ]]; then
-            log_warn "--reset-db activo: se recreará la BD sin preguntar."
-        else
-            read -rp "  ¿Eliminar y recrear la BD? Esto borrará TODOS los datos [s/N]: " ans
-            if [[ ! "$ans" =~ ^[sS]$ ]]; then
-                log_info "BD conservada. Usando datos existentes."
-                return 0
-            fi
-        fi
-
-        log_step "Eliminando '$MSSQL_DB_NAME'..."
-        docker exec "$MSSQL_CONTAINER" \
+    # Deshabilita restricciones FK (necesario para inserts masivos)
+    disable_fks() {
+        log_step "Deshabilitando restricciones FK temporalmente..."
+        local sql_nocheck
+        sql_nocheck=$(docker exec "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
-            -Q "ALTER DATABASE [${MSSQL_DB_NAME}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                DROP DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || \
-            die "No se pudo eliminar la BD. Detén el servicio primero:\n  systemctl stop $APP_SERVICE"
-        log_info "BD eliminada correctamente."
-    fi
+            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
+            -d "$MSSQL_DB_NAME" -C -h -1 \
+            -Q "SET NOCOUNT ON;
+                SELECT 'ALTER TABLE [' + OBJECT_NAME(parent_object_id) +
+                       '] NOCHECK CONSTRAINT [' + name + '];'
+                FROM sys.foreign_keys
+                ORDER BY OBJECT_NAME(parent_object_id);" \
+            2>/dev/null | grep "^ALTER" || true)
 
-    # ── ESTRATEGIA 1: .dacpac vía sqlpackage ──────────────────────────────────
-    if [[ "$SQLPACKAGE_AVAILABLE" == "true" ]] && [[ -f "$DACPAC_FILE" ]]; then
-        log_step "Estrategia 1: Publicando schema desde .dacpac → $DACPAC_FILE"
+        while IFS= read -r stmt; do
+            [[ -z "$stmt" ]] && continue
+            run_sql_inline "$stmt"
+        done <<< "$sql_nocheck"
+    }
 
-        # Crear la BD vacía primero (sqlpackage necesita que exista)
-        docker exec "$MSSQL_CONTAINER" \
-            /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
-            -Q "CREATE DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || \
-            log_warn "La BD ya existe o no se pudo crear — sqlpackage intentará de todas formas."
-
-        local tools_path="$HOME/.dotnet/tools"
-        export PATH="$PATH:$tools_path"
-
-        if sqlpackage \
-            /Action:Publish \
-            /SourceFile:"$DACPAC_FILE" \
-            /TargetServerName:"localhost,${MSSQL_PORT}" \
-            /TargetDatabaseName:"$MSSQL_DB_NAME" \
-            /TargetUser:"sa" \
-            /TargetPassword:"$MSSQL_SA_PASSWORD" \
-            /TargetTrustServerCertificate:True \
-            /p:BlockOnPossibleDataLoss=False 2>&1; then
-
-            log_done "Schema aplicado correctamente desde .dacpac."
-            DB_SCHEMA_METHOD="dacpac"
-        else
-            log_warn "sqlpackage falló. Intentando fallback con schemaDB.sql..."
-            DB_SCHEMA_METHOD="fallback"
-        fi
-    else
-        [[ "$SQLPACKAGE_AVAILABLE" == "false" ]] && \
-            log_warn "sqlpackage no disponible."
-        [[ ! -f "$DACPAC_FILE" ]] && \
-            log_warn "No se encontró: $DACPAC_FILE"
-        log_step "Usando fallback directo: schemaDB.sql"
-        DB_SCHEMA_METHOD="fallback"
-    fi
-
-    # ── ESTRATEGIA 2: schemaDB.sql (fallback) ─────────────────────────────────
-    if [[ "$DB_SCHEMA_METHOD" == "fallback" ]]; then
-        log_step "Estrategia 2 (fallback): Ejecutando schemaDB.sql..."
-        check_sql_files  # Verificar que existe
-        if ! run_sql < "$SCHEMA_SQL"; then
-            die "Error en schemaDB.sql. Revisa el log: docker logs $MSSQL_CONTAINER"
-        fi
-        log_info "schemaDB.sql → OK"
-    fi
-
-    # ── Inserts (siempre, independiente del método de schema) ─────────────────
-    log_step "Deshabilitando FK para inserts..."
-    disable_fks
-
-    log_step "Ejecutando InsertsDB.sql (datos iniciales)..."
-    local tmp_inserts
-    tmp_inserts=$(mktemp /tmp/inserts_clean.XXXXXX.sql)
-    grep -v "sp_MSforeachtable" "$INSERTS_SQL" > "$tmp_inserts" || true
-
-    if ! run_sql_db < "$tmp_inserts"; then
-        rm -f "$tmp_inserts"
-        die "Error en InsertsDB.sql."
-    fi
-    rm -f "$tmp_inserts"
-
-    enable_fks
-    log_done "Base de datos '$MSSQL_DB_NAME' inicializada (método: ${DB_SCHEMA_METHOD})."
-}
-
-    # Rehabilita y verifica TODAS las FKs — WITH CHECK CHECK garantiza que los
-    # datos existentes también cumplen la restricción (marca la FK como confiable)
+    # Rehabilita y verifica TODAS las FKs
     enable_fks() {
         log_step "Rehabilitando y verificando restricciones FK..."
         local sql_check
@@ -824,7 +745,7 @@ init_database() {
         fi
     }
 
-    # ── Verificar si la BD ya existe ─────────────────────────────────────────
+    # ── Verificar si la BD ya existe ──────────────────────────────────────────
     log_step "Verificando si '$MSSQL_DB_NAME' ya existe..."
     local db_exists
     db_exists=$(docker exec "$MSSQL_CONTAINER" \
@@ -835,62 +756,89 @@ init_database() {
 
     if [[ "$db_exists" == "1" ]]; then
         log_warn "La base de datos '$MSSQL_DB_NAME' ya existe."
-
         if [[ "$FLAG_RESET_DB" == "true" ]]; then
             log_warn "--reset-db activo: se recreará la BD sin preguntar."
         else
             read -rp "  ¿Eliminar y recrear la BD? Esto borrará TODOS los datos [s/N]: " ans
             if [[ ! "$ans" =~ ^[sS]$ ]]; then
                 log_info "BD conservada. Usando datos existentes."
-                log_info "(Usa --reset-db para forzar recreación sin preguntar.)"
                 return 0
             fi
         fi
 
-        log_step "Eliminando '$MSSQL_DB_NAME' (cerrando conexiones activas primero)..."
-        if ! docker exec "$MSSQL_CONTAINER" \
+        log_step "Eliminando '$MSSQL_DB_NAME' (cerrando conexiones activas)..."
+        docker exec "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
             -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
             -Q "ALTER DATABASE [${MSSQL_DB_NAME}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                DROP DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null; then
-            die "No se pudo eliminar la BD '$MSSQL_DB_NAME'.\nPuede haber conexiones activas desde la app.\nDetén el servicio primero:\n  systemctl stop $APP_SERVICE\ny vuelve a ejecutar el script."
-        fi
+                DROP DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || \
+            die "No se pudo eliminar la BD. Detén el servicio primero:\n  systemctl stop $APP_SERVICE"
         log_info "BD eliminada correctamente."
     fi
 
-    # ── Ejecutar schema ───────────────────────────────────────────────────────
-    log_step "Ejecutando schemaDB.sql (tablas, relaciones, índices)..."
-    if ! run_sql < "$SCHEMA_SQL"; then
-        die "Error en schemaDB.sql.\nPosibles causas:\n  - Sintaxis SQL inválida\n  - Permisos insuficientes del usuario SA\nRevisa el log: docker logs $MSSQL_CONTAINER"
-    fi
-    log_info "schemaDB.sql → OK"
+    # ── ESTRATEGIA 1: .dacpac vía sqlpackage ──────────────────────────────────
+    local DB_SCHEMA_METHOD="unknown"
+    if [[ "$SQLPACKAGE_AVAILABLE" == "true" ]] && [[ -f "$DACPAC_FILE" ]]; then
+        log_step "Estrategia 1: Publicando schema desde .dacpac → $DACPAC_FILE"
 
-    # ── Deshabilitar FKs antes de los inserts ─────────────────────────────────
-    # sp_MSforeachtable falla en algunos contextos de ejecución no interactivos.
-    # El script genera y ejecuta los ALTER TABLE NOCHECK directamente desde
-    # sys.foreign_keys — garantizado independiente del entorno.
+        # Crear la BD vacía primero (sqlpackage la necesita para publicar)
+        docker exec "$MSSQL_CONTAINER" \
+            /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
+            -Q "CREATE DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || true
+
+        if sqlpackage \
+            /Action:Publish \
+            /SourceFile:"$DACPAC_FILE" \
+            /TargetServerName:"localhost,${MSSQL_PORT}" \
+            /TargetDatabaseName:"$MSSQL_DB_NAME" \
+            /TargetUser:"sa" \
+            /TargetPassword:"$MSSQL_SA_PASSWORD" \
+            /TargetTrustServerCertificate:True \
+            /p:BlockOnPossibleDataLoss=False 2>&1; then
+
+            log_done "Schema aplicado correctamente desde .dacpac."
+            DB_SCHEMA_METHOD="dacpac"
+        else
+            log_warn "sqlpackage falló. Intentando fallback con schemaDB.sql..."
+            DB_SCHEMA_METHOD="fallback"
+        fi
+    else
+        [[ "$SQLPACKAGE_AVAILABLE" == "false" ]] && log_warn "sqlpackage no disponible."
+        [[ ! -f "$DACPAC_FILE" ]] && log_warn "No se encontró: $DACPAC_FILE"
+        log_step "Usando fallback directo: schemaDB.sql"
+        DB_SCHEMA_METHOD="fallback"
+    fi
+
+    # ── ESTRATEGIA 2: schemaDB.sql (fallback) ─────────────────────────────────
+    if [[ "$DB_SCHEMA_METHOD" == "fallback" ]]; then
+        log_step "Estrategia 2 (fallback): Ejecutando schemaDB.sql..."
+        check_sql_files  # Verificar existencia de archivos
+        if ! run_sql < "$SCHEMA_SQL"; then
+            die "Error en schemaDB.sql. Revisa el log: docker logs $MSSQL_CONTAINER"
+        fi
+        log_info "schemaDB.sql → OK"
+    fi
+
+    # ── Inserts (Catálogos y datos iniciales) ──────────────────────────────────
+    log_step "Preparando inserción de datos iniciales..."
     disable_fks
 
-    # ── Ejecutar inserts ──────────────────────────────────────────────────────
-    log_step "Ejecutando InsertsDB.sql (datos iniciales, catálogos, usuarios)..."
-    # Quitar cualquier sp_MSforeachtable del archivo para evitar conflictos
-    # con nuestro manejo explícito de FKs
+    log_step "Ejecutando InsertsDB.sql..."
     local tmp_inserts
     tmp_inserts=$(mktemp /tmp/inserts_clean.XXXXXX.sql)
+    # Limpiamos sp_MSforeachtable si existe para usar nuestro manejo explícito de FKs
     grep -v "sp_MSforeachtable" "$INSERTS_SQL" > "$tmp_inserts" || true
 
     if ! run_sql_db < "$tmp_inserts"; then
         rm -f "$tmp_inserts"
-        die "Error en InsertsDB.sql.\nEl schema se creó pero los datos iniciales fallaron.\nRevisa los errores arriba.\nPuedes reintentar solo los inserts con:\n  sudo bash db/setup.sh --reset-db"
+        die "Error en InsertsDB.sql. Revisa los logs arriba."
     fi
     rm -f "$tmp_inserts"
     log_info "InsertsDB.sql → OK"
 
-    # ── Rehabilitar y verificar FKs ───────────────────────────────────────────
     enable_fks
-    log_info "InsertsDB.sql → OK"
-
-    log_done "Base de datos '$MSSQL_DB_NAME' inicializada con éxito."
+    log_done "Base de datos '$MSSQL_DB_NAME' inicializada con éxito (método: ${DB_SCHEMA_METHOD})."
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
