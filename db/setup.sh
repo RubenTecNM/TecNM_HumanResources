@@ -2,7 +2,7 @@
 # =============================================================================
 #  setup.sh — RecursosHumanosWeb · Script de Instalación Automatizada
 #  Autor   : TecNM Campus Monclova
-#  Versión : 3.0.0
+#  Versión : 3.1.0
 #  Fecha   : 2026-03-19
 #
 #  ARQUITECTURA:
@@ -17,8 +17,7 @@
 #    <raíz>/   (ej: itsmRH_GestionPermisos/)
 #    ├── db/
 #    │   ├── setup.sh          ← Este script
-#    │   ├── schemaDB.sql
-#    │   └── InsertsDB.sql
+#    │   └── RHdatabase.bacpac ← Exportación completa (esquema + datos)
 #    └── RecursosHumanosWeb/
 #        ├── RecursosHumanosWeb.csproj
 #        ├── appsettings.json
@@ -98,9 +97,7 @@ SMTP_PASSWORD_APP="gsgvdlywyzzjxzsn"
 DB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$DB_DIR")"
 ASPNET_DIR="$PROJECT_ROOT/RecursosHumanosWeb"
-SCHEMA_SQL="$DB_DIR/schemaDB.sql"
-INSERTS_SQL="$DB_DIR/InsertsDB.sql"
-DACPAC_FILE="$DB_DIR/RHdatabase-schema.dacpac"   # ← nombre de tu archivo
+BACPAC_FILE="$DB_DIR/RHdatabase.bacpac"   # ← Exportación completa (esquema + datos)
 SQLPACKAGE_AVAILABLE=false
 
 # ── Tiempos de espera ─────────────────────────────────────────────────────────
@@ -222,11 +219,11 @@ check_internet() {
 }
 
 check_sql_files() {
-    log_step "Verificando archivo DACPAC..."
-    if [[ ! -f "$DACPAC_FILE" ]]; then
-        die "Archivo DACPAC no encontrado en: $DACPAC_FILE\nAsegúrate de que 'RHdatabase-schema.dacpac' está en la carpeta db/."
+    log_step "Verificando archivo BACPAC..."
+    if [[ ! -f "$BACPAC_FILE" ]]; then
+        die "Archivo BACPAC no encontrado en: $BACPAC_FILE\nAsegúrate de que 'RHdatabase.bacpac' está en la carpeta db/."
     fi
-    log_info "Archivo DACPAC ✔"
+    log_info "Archivo BACPAC ✔  ($(du -sh "$BACPAC_FILE" | cut -f1))"
 }
 
 check_aspnet_project() {
@@ -460,13 +457,14 @@ ${repo_base} ${docker_codename} stable" \
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
-# PASO 3.5 — SQLPACKAGE (para publicar .dacpac)
+# PASO 3.5 — SQLPACKAGE (para importar .bacpac)
 # ──────────────────────────────────────────────────────────────────────────────
 install_sqlpackage() {
-    log_section "PASO 3.5 — sqlpackage (publicación de .dacpac)"
+    log_section "PASO 3.5 — sqlpackage (importación de .bacpac)"
 
     if command -v sqlpackage &>/dev/null; then
         log_warn "sqlpackage ya instalado: $(sqlpackage --version 2>/dev/null | head -1)"
+        SQLPACKAGE_AVAILABLE=true
         return 0
     fi
 
@@ -475,7 +473,7 @@ install_sqlpackage() {
 
     log_step "Instalando sqlpackage como herramienta global de .NET..."
     if ! "$DOTNET_INSTALL_DIR/dotnet" tool install -g microsoft.sqlpackage 2>&1; then
-        log_warn "No se pudo instalar sqlpackage. Se usará schemaDB.sql como fallback."
+        log_warn "No se pudo instalar sqlpackage. La importación del .bacpac no podrá completarse."
         SQLPACKAGE_AVAILABLE=false
         return 0
     fi
@@ -656,6 +654,10 @@ wait_for_mssql() {
 
 # ──────────────────────────────────────────────────────────────────────────────
 # PASO 6 — INICIALIZACIÓN DE LA BASE DE DATOS
+#
+# Se usa sqlpackage /Action:Import para restaurar desde el archivo .bacpac,
+# que contiene tanto el esquema como los datos exportados.
+# Import crea la BD por sí solo — NO se debe crear antes con CREATE DATABASE.
 # ──────────────────────────────────────────────────────────────────────────────
 init_database() {
     if [[ "$FLAG_SKIP_DB" == "true" ]]; then
@@ -666,76 +668,11 @@ init_database() {
     log_section "PASO 6 — Inicializando la base de datos"
 
     # ── Helpers SQL ───────────────────────────────────────────────────────────
-    run_sql() {
-        docker exec -i "$MSSQL_CONTAINER" \
-            /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
-            -C -b
-    }
-    run_sql_db() {
-        docker exec -i "$MSSQL_CONTAINER" \
-            /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
-            -d "$MSSQL_DB_NAME" -C -b
-    }
     run_sql_inline() {
         docker exec "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
             -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
-            -d "$MSSQL_DB_NAME" -C -b -Q "$1"
-    }
-
-    # Deshabilita restricciones FK (necesario para inserts masivos)
-    disable_fks() {
-        log_step "Deshabilitando restricciones FK temporalmente..."
-        local sql_nocheck
-        sql_nocheck=$(docker exec "$MSSQL_CONTAINER" \
-            /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
-            -d "$MSSQL_DB_NAME" -C -h -1 \
-            -Q "SET NOCOUNT ON;
-                SELECT 'ALTER TABLE [' + OBJECT_NAME(parent_object_id) +
-                       '] NOCHECK CONSTRAINT [' + name + '];'
-                FROM sys.foreign_keys
-                ORDER BY OBJECT_NAME(parent_object_id);" \
-            2>/dev/null | grep "^ALTER" || true)
-
-        while IFS= read -r stmt; do
-            [[ -z "$stmt" ]] && continue
-            run_sql_inline "$stmt"
-        done <<< "$sql_nocheck"
-    }
-
-    # Rehabilita y verifica TODAS las FKs
-    enable_fks() {
-        log_step "Rehabilitando y verificando restricciones FK..."
-        local sql_check
-        sql_check=$(docker exec "$MSSQL_CONTAINER" \
-            /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
-            -d "$MSSQL_DB_NAME" -C -h -1 \
-            -Q "SET NOCOUNT ON;
-                SELECT 'ALTER TABLE [' + OBJECT_NAME(parent_object_id) +
-                       '] WITH CHECK CHECK CONSTRAINT [' + name + '];'
-                FROM sys.foreign_keys
-                ORDER BY OBJECT_NAME(parent_object_id);" \
-            2>/dev/null | grep "^ALTER" || true)
-
-        local errors=0
-        while IFS= read -r stmt; do
-            [[ -z "$stmt" ]] && continue
-            if ! run_sql_inline "$stmt" 2>/dev/null; then
-                log_warn "FK con datos inconsistentes: $stmt"
-                errors=$((errors + 1))
-            fi
-        done <<< "$sql_check"
-
-        if [[ $errors -gt 0 ]]; then
-            log_warn "$errors FK(s) no pudieron rehabilitarse — hay datos huérfanos."
-            log_warn "Ejecuta el diagnóstico para ver cuáles: sudo bash db/setup.sh --check-db"
-        else
-            log_info "Todas las FK rehabilitadas y verificadas correctamente."
-        fi
+            -C -b -Q "$1"
     }
 
     # ── Verificar si la BD ya existe ──────────────────────────────────────────
@@ -769,26 +706,24 @@ init_database() {
         log_info "BD eliminada correctamente."
     fi
 
-    # ── PUBLICACIÓN DESDE DACPAC ──────────────────────────────────────────────
+    # ── IMPORTACIÓN DESDE BACPAC (esquema + datos) ────────────────────────────
+    # /Action:Import restaura esquema Y datos desde el archivo .bacpac exportado.
+    # IMPORTANTE: sqlpackage Import crea la BD por sí solo.
+    #             No se debe ejecutar CREATE DATABASE antes de este paso.
     if [[ "$SQLPACKAGE_AVAILABLE" != "true" ]]; then
-        die "sqlpackage no está disponible o no se instaló correctamente. Es requerido para publicar el .dacpac."
+        die "sqlpackage no está disponible o no se instaló correctamente. Es requerido para importar el .bacpac."
     fi
 
-    if [[ ! -f "$DACPAC_FILE" ]]; then
-        die "No se encontró el archivo: $DACPAC_FILE"
+    if [[ ! -f "$BACPAC_FILE" ]]; then
+        die "No se encontró el archivo: $BACPAC_FILE"
     fi
 
-    log_step "Publicando base de datos completa desde → $DACPAC_FILE"
-
-    # Crear la BD vacía primero (sqlpackage la necesita para publicar o actualizar)
-    docker exec "$MSSQL_CONTAINER" \
-        /opt/mssql-tools18/bin/sqlcmd \
-        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
-        -Q "CREATE DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || true
+    log_step "Importando base de datos completa (esquema + datos) desde → $BACPAC_FILE"
+    log_info "(Este proceso puede tardar varios minutos dependiendo del tamaño del .bacpac)"
 
     if sqlpackage \
-        /Action:Publish \
-        /SourceFile:"$DACPAC_FILE" \
+        /Action:Import \
+        /SourceFile:"$BACPAC_FILE" \
         /TargetServerName:"localhost,${MSSQL_PORT}" \
         /TargetDatabaseName:"$MSSQL_DB_NAME" \
         /TargetUser:"sa" \
@@ -796,9 +731,9 @@ init_database() {
         /TargetTrustServerCertificate:True \
         /p:BlockOnPossibleDataLoss=False 2>&1 | grep -v 'Time elapsed'; then
 
-        log_done "Base de datos publicada exitosamente con DACPAC."
+        log_done "Base de datos importada exitosamente desde BACPAC (esquema + datos incluidos)."
     else
-        die "Fallo crítico al ejecutar sqlpackage para el archivo .dacpac. Revisa la salida de la consola."
+        die "Fallo crítico al ejecutar sqlpackage para el archivo .bacpac.\nRevisa la salida de la consola.\nPosibles causas:\n  - El archivo .bacpac está corrupto o incompleto\n  - SQL Server no tiene suficiente espacio en disco\n  - La BD '$MSSQL_DB_NAME' ya existe con datos (usa --reset-db para forzar recreación)"
     fi
 }
 
@@ -903,7 +838,7 @@ generate_env_file() {
 #  /etc/recursoshumanosweb.env — Secretos de producción
 #  Cargado por systemd (EnvironmentFile=) en el servicio recursoshumanosweb
 #  ⚠  Permisos 600 — solo root puede leerlo. NUNCA versionar este archivo.
-#  Generado por setup.sh v3.0.0 — $(date '+%Y-%m-%d %H:%M:%S')
+#  Generado por setup.sh v3.1.0 — $(date '+%Y-%m-%d %H:%M:%S')
 # =============================================================================
 
 # ── ASP.NET Core ──────────────────────────────────────────────────────────────
@@ -948,7 +883,7 @@ setup_app_service() {
 # =============================================================================
 #  systemd — ${APP_SERVICE}.service
 #  Corre la app ASP.NET con Kestrel directamente en el servidor (sin Docker)
-#  Generado por setup.sh v3.0.0
+#  Generado por setup.sh v3.1.0
 # =============================================================================
 
 [Unit]
@@ -1034,7 +969,7 @@ configure_nginx() {
 # =============================================================================
 #  Nginx — RecursosHumanosWeb
 #  Tráfico externo (80) → Kestrel (localhost:${APP_PORT})
-#  Generado por setup.sh v3.0.0
+#  Generado por setup.sh v3.1.0
 # =============================================================================
 
 server {
@@ -1179,7 +1114,7 @@ main() {
     echo "   ██║  ██║██║  ██║    ██║  ██║███████╗╚██████╗ ╚██████╔╝██║  ██║███████║╚██████╔╝███████║"
     echo "   ╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝"
     echo ""
-    echo -e "  RecursosHumanosWeb — Script de Instalación Automatizada v3.0.0${RESET}"
+    echo -e "  RecursosHumanosWeb — Script de Instalación Automatizada v3.1.0${RESET}"
     echo -e "  TecNM Campus Monclova © 2026"
     echo ""
 
@@ -1203,10 +1138,10 @@ main() {
     install_system_deps     # Paso 1: nginx, curl, gnupg, etc.
     install_dotnet          # Paso 2: .NET SDK global en /usr/share/dotnet
     install_docker          # Paso 3: Docker CE (con fallback para Debian 13)
-    install_sqlpackage      # Paso 3.5: sqlpackage para publicar .dacpac
+    install_sqlpackage      # Paso 3.5: sqlpackage para importar .bacpac
     setup_mssql_container   # Paso 4: contenedor SQL Server + servicio rh-sql
     wait_for_mssql          # Paso 5: esperar a que el motor SQL esté listo
-    init_database           # Paso 6: schema + inserts (con protección de datos)
+    init_database           # Paso 6: import .bacpac (esquema + datos)
     publish_aspnet_app      # Paso 7: dotnet publish Release → /var/www/
     generate_env_file       # Paso 8: /etc/recursoshumanosweb.env (chmod 600)
     setup_app_service       # Paso 9: servicio systemd para Kestrel
