@@ -16,8 +16,9 @@
 #  ESTRUCTURA ESPERADA DEL REPOSITORIO:
 #    <raíz>/   (ej: itsmRH_GestionPermisos/)
 #    ├── db/
-#    │   ├── setup.sh          ← Este script
-#    │   └── RHdatabase.bacpac ← Exportación completa (esquema + datos)
+#    │   ├── setup.sh                  ← Este script
+#    │   ├── RHdatabase-schema.dacpac  ← Esquema de la BD
+#    │   └── InsertsDB.sql             ← Datos iniciales
 #    └── RecursosHumanosWeb/
 #        ├── RecursosHumanosWeb.csproj
 #        ├── appsettings.json
@@ -97,7 +98,8 @@ SMTP_PASSWORD_APP="gsgvdlywyzzjxzsn"
 DB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$DB_DIR")"
 ASPNET_DIR="$PROJECT_ROOT/RecursosHumanosWeb"
-BACPAC_FILE="$DB_DIR/RHdatabase-schema.dacpac"   # ← Exportación completa (esquema + datos)
+DACPAC_FILE="$DB_DIR/RHdatabase-schema.dacpac"   # ← Esquema de la BD
+INSERTS_SQL="$DB_DIR/InsertsDB.sql"             # ← Datos iniciales
 SQLPACKAGE_AVAILABLE=false
 
 # ── Tiempos de espera ─────────────────────────────────────────────────────────
@@ -219,11 +221,17 @@ check_internet() {
 }
 
 check_sql_files() {
-    log_step "Verificando archivo BACPAC..."
-    if [[ ! -f "$BACPAC_FILE" ]]; then
-        die "Archivo BACPAC no encontrado en: $BACPAC_FILE\nAsegúrate de que 'RHdatabase.bacpac' está en la carpeta db/."
+    log_step "Verificando archivos de base de datos..."
+    if [[ ! -f "$DACPAC_FILE" ]]; then
+        die "Archivo DACPAC no encontrado en: $DACPAC_FILE\nAsegúrate de que 'RHdatabase-schema.dacpac' está en la carpeta db/."
     fi
-    log_info "Archivo BACPAC ✔  ($(du -sh "$BACPAC_FILE" | cut -f1))"
+    log_info "Esquema DACPAC ✔  ($(du -sh "$DACPAC_FILE" | cut -f1))"
+
+    if [[ ! -f "$INSERTS_SQL" ]]; then
+        log_warn "No se encontró InsertsDB.sql — la BD se creará solo con el esquema, sin datos iniciales."
+    else
+        log_info "Datos SQL     ✔  ($(du -sh "$INSERTS_SQL" | cut -f1))"
+    fi
 }
 
 check_aspnet_project() {
@@ -460,7 +468,7 @@ ${repo_base} ${docker_codename} stable" \
 # PASO 3.5 — SQLPACKAGE (para importar .bacpac)
 # ──────────────────────────────────────────────────────────────────────────────
 install_sqlpackage() {
-    log_section "PASO 3.5 — sqlpackage (importación de .bacpac)"
+    log_section "PASO 3.5 — sqlpackage (publicación de esquema .dacpac)"
 
     if command -v sqlpackage &>/dev/null; then
         log_warn "sqlpackage ya instalado: $(sqlpackage --version 2>/dev/null | head -1)"
@@ -478,8 +486,14 @@ install_sqlpackage() {
         return 0
     fi
 
-    # Agregar tools al PATH global
-    export PATH="$PATH:$HOME/.dotnet/tools"
+    # Agregar tools al PATH global (root instala en /root/.dotnet/tools)
+    export PATH="$PATH:/root/.dotnet/tools"
+
+    # Registrar en el entorno global para que sudo y futuras sesiones lo encuentren
+    if ! grep -q 'dotnet/tools' /etc/profile.d/dotnet.sh 2>/dev/null; then
+        echo 'export PATH=$PATH:/root/.dotnet/tools' >> /etc/profile.d/dotnet.sh
+    fi
+
     SQLPACKAGE_AVAILABLE=true
     log_done "sqlpackage instalado correctamente."
 }
@@ -655,9 +669,12 @@ wait_for_mssql() {
 # ──────────────────────────────────────────────────────────────────────────────
 # PASO 6 — INICIALIZACIÓN DE LA BASE DE DATOS
 #
-# Se usa sqlpackage /Action:Import para restaurar desde el archivo .bacpac,
-# que contiene tanto el esquema como los datos exportados.
-# Import crea la BD por sí solo — NO se debe crear antes con CREATE DATABASE.
+# Flujo en dos etapas:
+#   1. sqlpackage /Action:Publish  → aplica el esquema desde el .dacpac
+#   2. sqlcmd + InsertsDB.sql      → inserta los datos iniciales
+#
+# El .dacpac solo contiene esquema; los datos viven en InsertsDB.sql.
+# Se deshabilitan las FK antes de los inserts y se rehabilitan al final.
 # ──────────────────────────────────────────────────────────────────────────────
 init_database() {
     if [[ "$FLAG_SKIP_DB" == "true" ]]; then
@@ -672,7 +689,59 @@ init_database() {
         docker exec "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
             -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
-            -C -b -Q "$1"
+            -d "$MSSQL_DB_NAME" -C -b -Q "$1"
+    }
+
+    # Deshabilita restricciones FK (necesario para inserts masivos)
+    disable_fks() {
+        log_step "Deshabilitando restricciones FK temporalmente..."
+        local sql_nocheck
+        sql_nocheck=$(docker exec "$MSSQL_CONTAINER" \
+            /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
+            -d "$MSSQL_DB_NAME" -C -h -1 \
+            -Q "SET NOCOUNT ON;
+                SELECT 'ALTER TABLE [' + OBJECT_NAME(parent_object_id) +
+                       '] NOCHECK CONSTRAINT [' + name + '];'
+                FROM sys.foreign_keys
+                ORDER BY OBJECT_NAME(parent_object_id);" \
+            2>/dev/null | grep "^ALTER" || true)
+
+        while IFS= read -r stmt; do
+            [[ -z "$stmt" ]] && continue
+            run_sql_inline "$stmt"
+        done <<< "$sql_nocheck"
+    }
+
+    # Rehabilita y verifica TODAS las FKs
+    enable_fks() {
+        log_step "Rehabilitando y verificando restricciones FK..."
+        local sql_check
+        sql_check=$(docker exec "$MSSQL_CONTAINER" \
+            /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
+            -d "$MSSQL_DB_NAME" -C -h -1 \
+            -Q "SET NOCOUNT ON;
+                SELECT 'ALTER TABLE [' + OBJECT_NAME(parent_object_id) +
+                       '] WITH CHECK CHECK CONSTRAINT [' + name + '];'
+                FROM sys.foreign_keys
+                ORDER BY OBJECT_NAME(parent_object_id);" \
+            2>/dev/null | grep "^ALTER" || true)
+
+        local errors=0
+        while IFS= read -r stmt; do
+            [[ -z "$stmt" ]] && continue
+            if ! run_sql_inline "$stmt" 2>/dev/null; then
+                log_warn "FK con datos inconsistentes: $stmt"
+                errors=$((errors + 1))
+            fi
+        done <<< "$sql_check"
+
+        if [[ $errors -gt 0 ]]; then
+            log_warn "$errors FK(s) no pudieron rehabilitarse — hay datos huérfanos."
+        else
+            log_info "Todas las FK rehabilitadas y verificadas correctamente."
+        fi
     }
 
     # ── Verificar si la BD ya existe ──────────────────────────────────────────
@@ -706,35 +775,65 @@ init_database() {
         log_info "BD eliminada correctamente."
     fi
 
-    # ── IMPORTACIÓN DESDE BACPAC (esquema + datos) ────────────────────────────
-    # /Action:Import restaura esquema Y datos desde el archivo .bacpac exportado.
-    # IMPORTANTE: sqlpackage Import crea la BD por sí solo.
-    #             No se debe ejecutar CREATE DATABASE antes de este paso.
+    # ── ETAPA 1: PUBLICAR ESQUEMA DESDE DACPAC ────────────────────────────────
     if [[ "$SQLPACKAGE_AVAILABLE" != "true" ]]; then
-        die "sqlpackage no está disponible o no se instaló correctamente. Es requerido para importar el .bacpac."
+        die "sqlpackage no está disponible o no se instaló correctamente. Es requerido para aplicar el esquema desde el .dacpac."
     fi
 
-    if [[ ! -f "$BACPAC_FILE" ]]; then
-        die "No se encontró el archivo: $BACPAC_FILE"
+    if [[ ! -f "$DACPAC_FILE" ]]; then
+        die "No se encontró el archivo de esquema: $DACPAC_FILE"
     fi
 
-    log_step "Importando base de datos completa (esquema + datos) desde → $BACPAC_FILE"
-    log_info "(Este proceso puede tardar varios minutos dependiendo del tamaño del .bacpac)"
+    log_step "Creando BD vacía para recibir el esquema..."
+    docker exec "$MSSQL_CONTAINER" \
+        /opt/mssql-tools18/bin/sqlcmd \
+        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
+        -Q "CREATE DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || true
 
+    log_step "Publicando esquema desde → $DACPAC_FILE"
     if sqlpackage \
-        /Action:Import \
-        /SourceFile:"$BACPAC_FILE" \
+        /Action:Publish \
+        /SourceFile:"$DACPAC_FILE" \
         /TargetServerName:"localhost,${MSSQL_PORT}" \
         /TargetDatabaseName:"$MSSQL_DB_NAME" \
         /TargetUser:"sa" \
         /TargetPassword:"$MSSQL_SA_PASSWORD" \
         /TargetTrustServerCertificate:True \
         /p:BlockOnPossibleDataLoss=False 2>&1 | grep -v 'Time elapsed'; then
-
-        log_done "Base de datos importada exitosamente desde BACPAC (esquema + datos incluidos)."
+        log_done "Esquema aplicado exitosamente desde DACPAC."
     else
-        die "Fallo crítico al ejecutar sqlpackage para el archivo .bacpac.\nRevisa la salida de la consola.\nPosibles causas:\n  - El archivo .bacpac está corrupto o incompleto\n  - SQL Server no tiene suficiente espacio en disco\n  - La BD '$MSSQL_DB_NAME' ya existe con datos (usa --reset-db para forzar recreación)"
+        die "Fallo al publicar el esquema desde el .dacpac.\nRevisa la salida de la consola."
     fi
+
+    # ── ETAPA 2: INSERTAR DATOS DESDE InsertsDB.sql ───────────────────────────
+    if [[ ! -f "$INSERTS_SQL" ]]; then
+        log_warn "No se encontró $INSERTS_SQL — la BD quedará sin datos iniciales."
+        return 0
+    fi
+
+    log_step "Insertando datos iniciales desde → $INSERTS_SQL"
+    disable_fks
+
+    # Copiar el SQL al contenedor y ejecutarlo desde dentro
+    # (evita problemas de rutas y permisos con docker exec -i y archivos grandes)
+    docker cp "$INSERTS_SQL" "${MSSQL_CONTAINER}:/tmp/InsertsDB.sql"
+
+    if docker exec "$MSSQL_CONTAINER" \
+        /opt/mssql-tools18/bin/sqlcmd \
+        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
+        -d "$MSSQL_DB_NAME" -C -b \
+        -i /tmp/InsertsDB.sql 2>&1; then
+        log_info "Datos insertados correctamente."
+    else
+        log_warn "Algunos inserts fallaron. Revisa los datos con:"
+        log_warn "  docker exec -it $MSSQL_CONTAINER /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '$MSSQL_SA_PASSWORD' -d $MSSQL_DB_NAME -C"
+    fi
+
+    # Limpiar archivo temporal del contenedor
+    docker exec "$MSSQL_CONTAINER" rm -f /tmp/InsertsDB.sql 2>/dev/null || true
+
+    enable_fks
+    log_done "Base de datos inicializada con esquema y datos."
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
