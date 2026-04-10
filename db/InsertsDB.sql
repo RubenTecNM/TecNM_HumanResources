@@ -46,8 +46,8 @@ DBCC CHECKIDENT ('ApiPermisosApiKeysTabla', RESEED, 1);
 -- DESHABILITAR FK
 -- =============================================
 EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
+INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('root', 'controlpermisos@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-01-21 08:22:14', NULL, 1, 1, 1, 1, 1, 1, NULL, NULL);
 
-INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('PRUEBAa', 'prueba@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-03-13 06:53:35', NULL, 1, 4, 4, 3, 3, 1, NULL, NULL);
 
 -- =============================================
 -- PASO 1: TipoUsuario
@@ -129,7 +129,6 @@ INSERT INTO Puesto (Descripcion, ClaveTabular, FechaCreacion, FechaModificacion,
 -- =============================================
 -- PASO 5: Usuario
 -- =============================================
-INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('root', 'controlpermisos@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-01-21 08:22:14', NULL, 1, 1, 1, 1, 1, 1, NULL, NULL);
 INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('RODRIGUEZ HERNANDEZ FRANCISCO', 'francisco.rh@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-01-21 08:22:32', NULL, 1, 1, 2, 19, 1, 1, NULL, NULL);
 INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('MONTOYA ELIZONDO MAIRA DE JESUS', 'maira.me@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-01-21 08:22:32', NULL, 1, 2, 2, 5, 2, 1, NULL, NULL);
 INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('AGUILERA MANCILLA DANIELA', 'daniela.am@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-01-21 08:22:32', NULL, 1, 4, 3, 26, 3, 1, NULL, NULL);
