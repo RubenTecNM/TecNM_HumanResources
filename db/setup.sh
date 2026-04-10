@@ -222,18 +222,11 @@ check_internet() {
 }
 
 check_sql_files() {
-    log_step "Verificando archivos SQL..."
-    local missing=0
-    for f in "$SCHEMA_SQL" "$INSERTS_SQL"; do
-        if [[ ! -f "$f" ]]; then
-            log_error "Faltante: $f"
-            missing=$((missing + 1))
-        fi
-    done
-    if [[ $missing -gt 0 ]]; then
-        die "$missing archivo(s) SQL no encontrado(s).\nEjecuta desde la raíz del repo: sudo bash db/setup.sh"
+    log_step "Verificando archivo DACPAC..."
+    if [[ ! -f "$DACPAC_FILE" ]]; then
+        die "Archivo DACPAC no encontrado en: $DACPAC_FILE\nAsegúrate de que 'RHdatabase-schema.dacpac' está en la carpeta db/."
     fi
-    log_info "schemaDB.sql ✔   InsertsDB.sql ✔"
+    log_info "Archivo DACPAC ✔"
 }
 
 check_aspnet_project() {
@@ -776,69 +769,37 @@ init_database() {
         log_info "BD eliminada correctamente."
     fi
 
-    # ── ESTRATEGIA 1: .dacpac vía sqlpackage ──────────────────────────────────
-    local DB_SCHEMA_METHOD="unknown"
-    if [[ "$SQLPACKAGE_AVAILABLE" == "true" ]] && [[ -f "$DACPAC_FILE" ]]; then
-        log_step "Estrategia 1: Publicando schema desde .dacpac → $DACPAC_FILE"
+    # ── PUBLICACIÓN DESDE DACPAC ──────────────────────────────────────────────
+    if [[ "$SQLPACKAGE_AVAILABLE" != "true" ]]; then
+        die "sqlpackage no está disponible o no se instaló correctamente. Es requerido para publicar el .dacpac."
+    fi
 
-        # Crear la BD vacía primero (sqlpackage la necesita para publicar)
-        docker exec "$MSSQL_CONTAINER" \
-            /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
-            -Q "CREATE DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || true
+    if [[ ! -f "$DACPAC_FILE" ]]; then
+        die "No se encontró el archivo: $DACPAC_FILE"
+    fi
 
-        if sqlpackage \
-            /Action:Publish \
-            /SourceFile:"$DACPAC_FILE" \
-            /TargetServerName:"localhost,${MSSQL_PORT}" \
-            /TargetDatabaseName:"$MSSQL_DB_NAME" \
-            /TargetUser:"sa" \
-            /TargetPassword:"$MSSQL_SA_PASSWORD" \
-            /TargetTrustServerCertificate:True \
-            /p:BlockOnPossibleDataLoss=False 2>&1; then
+    log_step "Publicando base de datos completa desde → $DACPAC_FILE"
 
-            log_done "Schema aplicado correctamente desde .dacpac."
-            DB_SCHEMA_METHOD="dacpac"
-        else
-            log_warn "sqlpackage falló. Intentando fallback con schemaDB.sql..."
-            DB_SCHEMA_METHOD="fallback"
-        fi
+    # Crear la BD vacía primero (sqlpackage la necesita para publicar o actualizar)
+    docker exec "$MSSQL_CONTAINER" \
+        /opt/mssql-tools18/bin/sqlcmd \
+        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
+        -Q "CREATE DATABASE [${MSSQL_DB_NAME}];" 2>/dev/null || true
+
+    if sqlpackage \
+        /Action:Publish \
+        /SourceFile:"$DACPAC_FILE" \
+        /TargetServerName:"localhost,${MSSQL_PORT}" \
+        /TargetDatabaseName:"$MSSQL_DB_NAME" \
+        /TargetUser:"sa" \
+        /TargetPassword:"$MSSQL_SA_PASSWORD" \
+        /TargetTrustServerCertificate:True \
+        /p:BlockOnPossibleDataLoss=False 2>&1 | grep -v 'Time elapsed'; then
+
+        log_done "Base de datos publicada exitosamente con DACPAC."
     else
-        [[ "$SQLPACKAGE_AVAILABLE" == "false" ]] && log_warn "sqlpackage no disponible."
-        [[ ! -f "$DACPAC_FILE" ]] && log_warn "No se encontró: $DACPAC_FILE"
-        log_step "Usando fallback directo: schemaDB.sql"
-        DB_SCHEMA_METHOD="fallback"
+        die "Fallo crítico al ejecutar sqlpackage para el archivo .dacpac. Revisa la salida de la consola."
     fi
-
-    # ── ESTRATEGIA 2: schemaDB.sql (fallback) ─────────────────────────────────
-    if [[ "$DB_SCHEMA_METHOD" == "fallback" ]]; then
-        log_step "Estrategia 2 (fallback): Ejecutando schemaDB.sql..."
-        check_sql_files  # Verificar existencia de archivos
-        if ! run_sql < "$SCHEMA_SQL"; then
-            die "Error en schemaDB.sql. Revisa el log: docker logs $MSSQL_CONTAINER"
-        fi
-        log_info "schemaDB.sql → OK"
-    fi
-
-    # ── Inserts (Catálogos y datos iniciales) ──────────────────────────────────
-    log_step "Preparando inserción de datos iniciales..."
-    disable_fks
-
-    log_step "Ejecutando InsertsDB.sql..."
-    local tmp_inserts
-    tmp_inserts=$(mktemp /tmp/inserts_clean.XXXXXX.sql)
-    # Limpiamos sp_MSforeachtable si existe para usar nuestro manejo explícito de FKs
-    grep -v "sp_MSforeachtable" "$INSERTS_SQL" > "$tmp_inserts" || true
-
-    if ! run_sql_db < "$tmp_inserts"; then
-        rm -f "$tmp_inserts"
-        die "Error en InsertsDB.sql. Revisa los logs arriba."
-    fi
-    rm -f "$tmp_inserts"
-    log_info "InsertsDB.sql → OK"
-
-    enable_fks
-    log_done "Base de datos '$MSSQL_DB_NAME' inicializada con éxito (método: ${DB_SCHEMA_METHOD})."
 }
 
 # ──────────────────────────────────────────────────────────────────────────────
