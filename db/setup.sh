@@ -801,7 +801,8 @@ init_database() {
         /TargetTrustServerCertificate:True \
         /p:BlockOnPossibleDataLoss=False \
         /p:VerifyDeployment=False \
-        /p:ScriptRefreshStoredProcedures=False \
+        /p:AllowIncompatiblePlatform=True \
+        /p:ExcludeObjectTypes=StoredProcedures;Triggers \
         /p:TreatVerificationErrorsAsWarnings=True 2>&1 | grep -v 'Time elapsed'; then
 
         log_done "Esquema aplicado exitosamente desde DACPAC."

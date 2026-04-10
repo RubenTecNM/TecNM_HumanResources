@@ -250,3 +250,126 @@ INSERT INTO TipoPermiso (Descripcion, FechaCreacion, FechaModificacion, Estatus,
 -- REACTIVAR FK
 -- =============================================
 EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';
+GO
+
+-- =============================================
+-- OBJETOS RESTAURADOS MANUALMENTE (FIX)
+-- =============================================
+IF NOT EXISTS (SELECT * FROM sys.types WHERE name = 'IdTableType' AND is_table_type = 1)
+BEGIN
+    CREATE TYPE IdTableType AS TABLE (Id INT);
+END
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[BuscarPermisosFiltrados]
+    @FromDate DATETIME = NULL, @ToDate DATETIME = NULL, @UserId INT = NULL, @UserEmail NVARCHAR(100) = NULL, @AreaId INT = NULL, @PermissionTypeId INT = 0, @IsEmployeer BIT = 0, @IsAutorizer BIT = 0, @Page INT = 1, @Limit INT = 10
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @Offset INT = (@Page - 1) * @Limit;
+    ;WITH PermisosFiltrados AS (
+        SELECT p.Descripcion, p.DiasSolicitados, p.ConGoce, p.HoraEntrada, p.HorarioCubrir, p.Evidencia, p.DelDia, p.AlDia, p.FechaCreacion, p.FechaAutorizacion, p.FechaSolicitud, p.IdCorte, p.IdTipo_Permisos, p.Estatus, u.Nombre, u.Correo, u.IdArea, u.Id AS IdUsuario, p.Id AS IdPermiso
+        FROM Permiso p INNER JOIN Usuario u ON p.IdUsuarioSolicitud = u.Id
+        WHERE (@FromDate IS NULL OR p.FechaCreacion >= @FromDate) AND (@ToDate IS NULL OR p.FechaCreacion <= @ToDate) AND ((@IsEmployeer = 1 AND @IsAutorizer = 0 AND u.Id = @UserId) OR (@UserEmail IS NOT NULL AND u.Correo = @UserEmail) OR ((@IsEmployeer = 0 AND @IsAutorizer = 1 AND u.IdArea = @AreaId) OR (@AreaId IS NOT NULL AND u.IdArea = @AreaId))) AND (@PermissionTypeId = 0 OR p.IdTipo_Permisos = @PermissionTypeId)
+    )
+    SELECT * FROM PermisosFiltrados ORDER BY FechaCreacion DESC OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
+    SELECT COUNT(*) AS Total FROM PermisosFiltrados;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[GetPermissionsAuthorizer]
+    @IdArea INT, @Estatus BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT Descripcion, DiasSolicitados, ConGoce, HoraEntrada, HorarioCubrir, Evidencia, DelDia, AlDia, FechaCreacion, FechaAutorizacion, IdTipo_Permisos, Estatus, NombreUsuario, Correo, Id
+    FROM [dbo].[VW_Permisos_Usuario]
+    WHERE IdArea = @IdArea AND IdCorte = (SELECT Id FROM [dbo].[Corte] WHERE Estatus = 1) AND Estatus = @Estatus;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[InsertPermission]  
+    @Motivo VARCHAR(255), @Fecha1 DATETIME, @Fecha2 DATETIME, @IdCorte INT, @IdTipoPermiso INT, @IdUsuarioSolicita INT, @IdUsuarioCrea INT, @IdUsuarioModifica INT, @Evidencia VARCHAR(255) = NULL, @IdPermiso INT OUTPUT  
+AS  
+BEGIN  
+    SET NOCOUNT ON;  
+    DECLARE @ErrorMsg NVARCHAR(4000), @Dias INT, @MaxCourtId INT;  
+    BEGIN TRY  
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Usuario] WHERE Id = @IdUsuarioSolicita AND Estatus = 1) RAISERROR (N'IdUsuarioSolicita inválido: %d', 16, 1, @IdUsuarioSolicita);  
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Usuario] WHERE Id = @IdUsuarioCrea AND Estatus = 1) RAISERROR (N'IdUsuarioCrea inválido: %d', 16, 1, @IdUsuarioCrea);  
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Usuario] WHERE Id = @IdUsuarioModifica AND Estatus = 1) RAISERROR (N'IdUsuarioModifica inválido: %d', 16, 1, @IdUsuarioModifica);  
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[TipoPermiso] WHERE Id = @IdTipoPermiso AND Estatus = 1) RAISERROR (N'IdTipoPermiso inválido: %d', 16, 1, @IdTipoPermiso);  
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Corte] WHERE Id = @IdCorte) RAISERROR (N'IdCorte no existe: %d', 16, 1, @IdCorte);  
+        SELECT @MaxCourtId = MAX(Id) FROM [dbo].[Corte];  
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Corte] WHERE Id = @IdCorte AND (Estatus = 1 OR (Estatus = 0 AND Id = @MaxCourtId))) RAISERROR (N'IdCorte inválido: %d. Un corte con Estatus = 0 solo se permite si es el de mayor Id (%d).', 16, 1, @IdCorte, @MaxCourtId);  
+        SET @Dias = CASE WHEN @IdTipoPermiso IN (2, 4, 5) AND @Fecha1 IS NOT NULL AND @Fecha2 IS NOT NULL THEN DATEDIFF(DAY, @Fecha1, @Fecha2) + 1 WHEN @IdTipoPermiso = 3 AND @Fecha1 IS NOT NULL THEN 1 ELSE NULL END;  
+        DECLARE @InsertedIds TABLE (Id INT);  
+        INSERT INTO [dbo].[Permiso] (Motivo, Fecha1, Fecha2, Dias, IdUsuarioSolicita, IdUsuarioCrea, IdUsuarioModifica, IdTipoPermiso, IdCorte, Goce, Estatus, Evidencia, FechaCreacion, FechaModificacion)
+        OUTPUT INSERTED.Id INTO @InsertedIds(Id) VALUES (@Motivo, @Fecha1, CASE WHEN @IdTipoPermiso IN (2, 4, 5) THEN @Fecha2 ELSE NULL END, @Dias, @IdUsuarioSolicita, @IdUsuarioCrea, @IdUsuarioModifica, @IdTipoPermiso, @IdCorte, 0, 1, @Evidencia, GETDATE(), GETDATE());  
+        SET @IdPermiso = (SELECT Id FROM @InsertedIds);  
+        SELECT @IdPermiso AS IdPermiso;  
+    END TRY  
+    BEGIN CATCH  
+        SET @ErrorMsg = 'Error en InsertPermission: ' + ERROR_MESSAGE(); RAISERROR (@ErrorMsg, 16, 1);  
+    END CATCH  
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[LoginUsuario]
+    @mail NVARCHAR(100), @password NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SELECT u.Id, u.Nombre, u.Correo, u.IdArea, a.Descripcion AS NombreArea, u.IdTipoUsuario
+    FROM Usuario u INNER JOIN Area a ON u.IdArea = a.Id
+    WHERE u.Correo = @mail AND u.Clave = CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', CONVERT(VARCHAR(100), @password)), 2);
+END;
+GO
+
+CREATE OR ALTER PROCEDURE UpdateFechaModificacion
+    @TableId INT, @Ids IdTableType READONLY
+AS
+BEGIN
+    DECLARE @TableName NVARCHAR(128);
+    SELECT @TableName = Descripcion FROM Tabla WHERE Id = @TableId;
+    DECLARE @SQL NVARCHAR(MAX) = N'UPDATE ' + QUOTENAME(@TableName) + N' SET FechaModificacion = GETDATE() WHERE Id IN (SELECT Id FROM @Ids)';
+    EXEC sp_executesql @SQL, N'@Ids IdTableType READONLY', @Ids;
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[UpdatePermission]
+    @IdPermiso INT, @Descripcion VARCHAR(255) = NULL, @DelDia DATE = NULL, @AlDia DATE = NULL, @HoraEntrada TIME(0) = NULL, @HorarioCubrir TIME(0) = NULL, @IdCorte INT = NULL, @IdTipo_Permisos INT = NULL, @IdUsuarioModifica INT, @Estatus BIT = NULL, @Now DATETIME, @IdApiKey INT = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Permiso] WHERE Id = @IdPermiso AND Estatus = 1) RAISERROR (N'Permiso no encontrado: %d', 16, 1, @IdPermiso);
+        UPDATE [dbo].[Permiso] SET Descripcion = ISNULL(@Descripcion, Descripcion), DelDia = ISNULL(@DelDia, DelDia), AlDia = ISNULL(@AlDia, AlDia), HoraEntrada = ISNULL(@HoraEntrada, HoraEntrada), HorarioCubrir = ISNULL(@HorarioCubrir, HorarioCubrir), IdCorte = ISNULL(@IdCorte, IdCorte), IdTipo_Permisos = ISNULL(@IdTipo_Permisos, IdTipo_Permisos), IdUsuarioModifica = @IdUsuarioModifica, FechaModificacion = @Now, Estatus = ISNULL(@Estatus, Estatus), DiasSolicitados = CASE WHEN @IdTipo_Permisos IN (2, 4, 5) THEN DATEDIFF(DAY, ISNULL(@DelDia, DelDia), ISNULL(@AlDia, AlDia)) + 1 ELSE DiasSolicitados END WHERE Id = @IdPermiso;
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMsg NVARCHAR(4000) = 'Error en UpdatePermission: ' + ERROR_MESSAGE(); RAISERROR (@ErrorMsg, 16, 1);
+    END CATCH
+END;
+GO
+
+CREATE OR ALTER PROCEDURE [dbo].[UpdateStatusOfPermission]
+    @IdPermiso INT, @ConGoce BIT, @IdUsuarioModifica INT, @IdUsuarioAutorizador INT, @Estatus BIT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    BEGIN TRY
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Permiso] WHERE Id = @IdPermiso) RAISERROR (N'Permiso no encontrado: %d', 16, 1, @IdPermiso);
+        UPDATE [dbo].[Permiso] SET ConGoce = @ConGoce, IdUsuarioModifica = @IdUsuarioModifica, IdUsuarioAutorizador = @IdUsuarioAutorizador, Estatus = @Estatus, FechaModificacion = GETDATE(), FechaAutorizacion = GETDATE() WHERE Id = @IdPermiso;
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrorMsg NVARCHAR(4000) = 'Error en UpdateStatusOfPermission: ' + ERROR_MESSAGE(); RAISERROR (@ErrorMsg, 16, 1);
+    END CATCH
+END;
+GO
+
+-- RE-AGREGAR TRIGGERS
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_Permiso_UpdateFechaModificacion') DROP TRIGGER trg_Permiso_UpdateFechaModificacion;
+GO
+CREATE TRIGGER trg_Permiso_UpdateFechaModificacion ON Permiso AFTER UPDATE AS BEGIN DECLARE @Ids IdTableType; INSERT INTO @Ids SELECT Id FROM inserted; EXEC UpdateFechaModificacion 8, @Ids; END;
+GO
+
