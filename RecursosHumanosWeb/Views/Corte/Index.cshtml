@@ -1,4 +1,4 @@
-﻿@model RecursosHumanosWeb.Models.ViewModels.SearchCorteViewModel
+@model RecursosHumanosWeb.Models.ViewModels.SearchCorteViewModel
 @using System.Security.Claims
 @using X.PagedList.Mvc.Core
 
@@ -89,11 +89,11 @@
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Estatus del Período</label>
-                                <select id="statusFilter" name="statusFilter" class="form-control filter-input-pill form-select">
-                                    <option value="" selected="@(string.IsNullOrEmpty(ViewBag.StatusFilter?.ToString()) ? "selected" : null)">Todos los estatus</option>
-                                    <option value="true" selected="@(ViewBag.StatusFilter is true ? "selected" : null)">Activo</option>
-                                    <option value="false" selected="@(ViewBag.StatusFilter is false ? "selected" : null)">Inactivo</option>
-                                </select>
+                                    <select id="statusFilter" name="statusFilter" class="form-control filter-input-pill form-select">
+                                        <option value="" selected="@(ViewBag.StatusFilter == null ? "selected" : null)">Todos los estatus</option>
+                                        <option value="true" selected="@(ViewBag.StatusFilter is true ? "selected" : null)">Activo</option>
+                                        <option value="false" selected="@(ViewBag.StatusFilter is false ? "selected" : null)">Inactivo</option>
+                                    </select>
                             </div>
                         </div>
                     </div>

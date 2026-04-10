@@ -1,4 +1,4 @@
-﻿using ClosedXML.Excel;
+using ClosedXML.Excel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -46,6 +46,12 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 5, int? idFilter = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, bool? statusFilter = null)
         {
+            // Borrado lógico: Por defecto solo mostrar activos si no se especifica filtro en la URL
+            if (!HttpContext.Request.Query.ContainsKey("statusFilter"))
+            {
+                statusFilter = true;
+            }
+
             // Validar parámetros de paginación
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 100) pageSize = 5;
