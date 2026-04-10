@@ -24,22 +24,22 @@ DELETE FROM Area;
 DELETE FROM TipoUsuario;
 
 -- Resetear los contadores IDENTITY a 0
-DBCC CHECKIDENT ('TipoUsuario', RESEED, 0);
-DBCC CHECKIDENT ('Area', RESEED, 0);
-DBCC CHECKIDENT ('Departamento', RESEED, 0);
-DBCC CHECKIDENT ('Puesto', RESEED, 0);
-DBCC CHECKIDENT ('Usuario', RESEED, 0);
-DBCC CHECKIDENT ('ApiFunctions', RESEED, 0);
-DBCC CHECKIDENT ('ApiPermiso', RESEED, 0);
-DBCC CHECKIDENT ('Tabla', RESEED, 0);
-DBCC CHECKIDENT ('TipoOrigen', RESEED, 0);
-DBCC CHECKIDENT ('TipoPermiso', RESEED, 0);
-DBCC CHECKIDENT ('ApiKey', RESEED, 0);
-DBCC CHECKIDENT ('Corte', RESEED, 0);
-DBCC CHECKIDENT ('Permiso', RESEED, 0);
-DBCC CHECKIDENT ('Auditoria', RESEED, 0);
-DBCC CHECKIDENT ('ResetPasswordTokens', RESEED, 0);
-DBCC CHECKIDENT ('ApiPermisosApiKeysTabla', RESEED, 0);
+DBCC CHECKIDENT ('TipoUsuario', RESEED, 1);
+DBCC CHECKIDENT ('Area', RESEED, 1);
+DBCC CHECKIDENT ('Departamento', RESEED, 1);
+DBCC CHECKIDENT ('Puesto', RESEED, 1);
+DBCC CHECKIDENT ('Usuario', RESEED, 1);
+DBCC CHECKIDENT ('ApiFunctions', RESEED, 1);
+DBCC CHECKIDENT ('ApiPermiso', RESEED, 1);
+DBCC CHECKIDENT ('Tabla', RESEED, 1);
+DBCC CHECKIDENT ('TipoOrigen', RESEED, 1);
+DBCC CHECKIDENT ('TipoPermiso', RESEED, 1);
+DBCC CHECKIDENT ('ApiKey', RESEED, 1);
+DBCC CHECKIDENT ('Corte', RESEED, 1);
+DBCC CHECKIDENT ('Permiso', RESEED, 1);
+DBCC CHECKIDENT ('Auditoria', RESEED, 1);
+DBCC CHECKIDENT ('ResetPasswordTokens', RESEED, 1);
+DBCC CHECKIDENT ('ApiPermisosApiKeysTabla', RESEED, 1);
 
 
 -- =============================================
