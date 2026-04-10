@@ -97,7 +97,7 @@ SMTP_PASSWORD_APP="gsgvdlywyzzjxzsn"
 DB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$DB_DIR")"
 ASPNET_DIR="$PROJECT_ROOT/RecursosHumanosWeb"
-BACPAC_FILE="$DB_DIR/RHdatabase.bacpac"   # ← Exportación completa (esquema + datos)
+BACPAC_FILE="$DB_DIR/RHdatabase-schema.dacpac"   # ← Exportación completa (esquema + datos)
 SQLPACKAGE_AVAILABLE=false
 
 # ── Tiempos de espera ─────────────────────────────────────────────────────────
