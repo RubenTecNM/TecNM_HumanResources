@@ -1,4 +1,4 @@
-﻿@model RecursosHumanosWeb.Models.Permiso
+@model RecursosHumanosWeb.Models.Permiso
 @using System.IO
 @using System.Globalization
 @using RecursosHumanosWeb.Models.Enums
@@ -75,7 +75,7 @@
 
     // Authorization logic for review
     int currentUserType = ViewBag.CurrentUserType ?? 0;
-    bool isRHOrAdmin = currentUserType == (int)TipoUsuarioEnum.RecursosHumanos || currentUserType == (int)TipoUsuarioEnum.Administrador;
+    bool isRHOrAdmin = currentUserType == (int)TipoUsuarioEnum.Administrador;
     bool isApprover = ViewBag.IsApprover ?? false;
     
     // RH/Admin can review any pending, Approvers only current court

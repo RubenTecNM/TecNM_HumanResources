@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -367,6 +367,11 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> Review(int id, PermissionReviewViewModel model)
         {
             if (id != model.Id) return Json(new AlertResponseDTO { Success = false, Message = "ID mismatch" });
+            
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+            if (userType != (int)TipoUsuarioEnum.Administrador && userType != (int)TipoUsuarioEnum.Autorizador)
+                return Json(new AlertResponseDTO { Success = false, Message = "Acceso Denegado: Su rol no cuenta con los privilegios para autorizar permisos." });
+
             int authId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             bool success = await _permisoService.AutorizarPermisoAsync(id, authId, model.Goce, "Revisado");
@@ -403,7 +408,7 @@ namespace RecursosHumanosWeb.Controllers
             
             ViewBag.CurrentUserId = userId;
             ViewBag.CurrentUserType = userType;
-            ViewBag.IsApprover = userType == (int)TipoUsuarioEnum.RecursosHumanos || userType == (int)TipoUsuarioEnum.Administrador;
+            ViewBag.IsApprover = userType == (int)TipoUsuarioEnum.Administrador;
             
             if (userType == (int)TipoUsuarioEnum.Autorizador)
             {
