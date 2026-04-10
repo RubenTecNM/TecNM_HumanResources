@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -60,11 +60,17 @@ namespace RecursosHumanosWeb.Controllers
             ViewBag.DepartamentoSortParm = sortOrder == "departamento" ? "departamento_desc" : "departamento";
             ViewBag.FechaSortParm = sortOrder == "fecha" ? "fecha_desc" : "fecha";
 
-            // Si hay un nuevo filtro, resetear a la página 1
+            // Lógica de filtrado y paginación corregida
             if (nombreFilter != null || correoFilter != null || departamentoFilter != null || estadoFilter != null)
-                page = 1;
+            {
+                // Si es una nueva búsqueda (sin parámetro de página), empezamos en 1
+                if (!page.HasValue) page = 1;
+            }
             else
+            {
+                // Si no hay parámetros nuevos, recuperamos el filtro actual
                 nombreFilter = currentFilter;
+            }
 
             ViewBag.CurrentFilter = nombreFilter;
 
