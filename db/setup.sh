@@ -802,7 +802,7 @@ init_database() {
         /p:BlockOnPossibleDataLoss=False \
         /p:VerifyDeployment=False \
         /p:AllowIncompatiblePlatform=True \
-        /p:ExcludeObjectTypes=StoredProcedures;Triggers \
+        "/p:ExcludeObjectTypes=StoredProcedures;Triggers" \
         /p:TreatVerificationErrorsAsWarnings=True 2>&1 | grep -v 'Time elapsed'; then
 
         log_done "Esquema aplicado exitosamente desde DACPAC."
