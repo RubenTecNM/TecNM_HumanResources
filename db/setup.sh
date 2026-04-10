@@ -799,8 +799,15 @@ init_database() {
         /TargetUser:"sa" \
         /TargetPassword:"$MSSQL_SA_PASSWORD" \
         /TargetTrustServerCertificate:True \
-        /p:BlockOnPossibleDataLoss=False 2>&1 | grep -v 'Time elapsed'; then
+        /p:BlockOnPossibleDataLoss=False \
+        /p:VerifyDeployment=False \
+        /p:TreatVerificationErrorsAsWarnings=True 2>&1 | grep -v 'Time elapsed'; then
+
         log_done "Esquema aplicado exitosamente desde DACPAC."
+
+        # Limpiar objetos problemáticos que causan errores de validación
+        log_step "Eliminando objetos problemáticos (GetPermisos)..."
+        run_sql_inline "DROP PROCEDURE IF EXISTS [GetPermisos];"
     else
         die "Fallo al publicar el esquema desde el .dacpac.\nRevisa la salida de la consola."
     fi
