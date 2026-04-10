@@ -47,6 +47,8 @@ DBCC CHECKIDENT ('ApiPermisosApiKeysTabla', RESEED, 0);
 -- =============================================
 EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
 
+INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('PRUEBAa', 'prueba@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-03-13 06:53:35', NULL, 1, 4, 4, 3, 3, 1, NULL, NULL);
+
 -- =============================================
 -- PASO 1: TipoUsuario
 -- =============================================
@@ -198,7 +200,6 @@ INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Es
 INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('FARIAS MARTINEZ RAUL SERGIO', 'sergio.farias@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-01-22 11:59:58', NULL, 1, 2, 2, 1, 1, 1, NULL, NULL);
 INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('LIÑAN TORRES RAFAEL', 'rafael.linan@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-01-23 10:36:59', NULL, 1, 2, 3, 4, 15, 1, NULL, NULL);
 INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('DE LA GARZA DE LUNA JESUS ROBERTO', 'jesus.delagarza@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-02-06 11:18:19', NULL, 1, 2, 4, 1, 1, 1, NULL, NULL);
-INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, FechaModificacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea, IdUsuarioModifica, IdApiKey) VALUES ('PRUEBAa', 'prueba@monclova.tecnm.mx', '4183B9F5ED14B64D012CE1E728CFA1E7AFC399CB82B6729B222784DB6B1A50A7', '2026-03-13 06:53:35', NULL, 1, 4, 4, 3, 3, 1, NULL, NULL);
 
 -- =============================================
 -- PASO 6: Tablas restantes
