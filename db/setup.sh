@@ -72,8 +72,8 @@ done
 MSSQL_IMAGE="mcr.microsoft.com/mssql/server:2025-latest"
 MSSQL_CONTAINER="rh_sql"
 MSSQL_VOLUME="rh_sqldata"
-MSSQL_PORT="1433"
-MSSQL_SA_PASSWORD="buss1ness!2026"         # ⚠  Cambiar en producción
+MSSQL_PORT="1434"
+MSSQL_SA_PASSWORD="Buss1ness!2026"         # ⚠  Cambiar en producción
 MSSQL_PID="Express"
 MSSQL_DB_NAME="RecursosHumanos"
 
