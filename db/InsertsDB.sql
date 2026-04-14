@@ -262,17 +262,56 @@ END
 GO
 
 CREATE OR ALTER PROCEDURE [dbo].[BuscarPermisosFiltrados]
-    @FromDate DATETIME = NULL, @ToDate DATETIME = NULL, @UserId INT = NULL, @UserEmail NVARCHAR(100) = NULL, @AreaId INT = NULL, @PermissionTypeId INT = 0, @IsEmployeer BIT = 0, @IsAutorizer BIT = 0, @Page INT = 1, @Limit INT = 10
+    @FromDate DATETIME = NULL,
+    @ToDate DATETIME = NULL,
+    @UserId INT = NULL,
+    @UserEmail NVARCHAR(100) = NULL,
+    @AreaId INT = NULL,
+    @PermissionTypeId INT = 0,
+    @IsEmployeer BIT = 0,
+    @IsAutorizer BIT = 0,
+    @Page INT = 1,
+    @Limit INT = 10
 AS
 BEGIN
     SET NOCOUNT ON;
     DECLARE @Offset INT = (@Page - 1) * @Limit;
     ;WITH PermisosFiltrados AS (
-        SELECT p.Descripcion, p.DiasSolicitados, p.ConGoce, p.HoraEntrada, p.HorarioCubrir, p.Evidencia, p.DelDia, p.AlDia, p.FechaCreacion, p.FechaAutorizacion, p.FechaSolicitud, p.IdCorte, p.IdTipo_Permisos, p.Estatus, u.Nombre, u.Correo, u.IdArea, u.Id AS IdUsuario, p.Id AS IdPermiso
-        FROM Permiso p INNER JOIN Usuario u ON p.IdUsuarioSolicitud = u.Id
-        WHERE (@FromDate IS NULL OR p.FechaCreacion >= @FromDate) AND (@ToDate IS NULL OR p.FechaCreacion <= @ToDate) AND ((@IsEmployeer = 1 AND @IsAutorizer = 0 AND u.Id = @UserId) OR (@UserEmail IS NOT NULL AND u.Correo = @UserEmail) OR ((@IsEmployeer = 0 AND @IsAutorizer = 1 AND u.IdArea = @AreaId) OR (@AreaId IS NOT NULL AND u.IdArea = @AreaId))) AND (@PermissionTypeId = 0 OR p.IdTipo_Permisos = @PermissionTypeId)
+        SELECT
+            p.Motivo        AS Descripcion,
+            p.Dias          AS DiasSolicitados,
+            p.Goce          AS ConGoce,
+            p.Fecha1        AS DelDia,
+            p.Fecha2        AS AlDia,
+            p.Evidencia,
+            p.FechaCreacion,
+            p.FechaAutorizacion,
+            p.FechaCreacion AS FechaSolicitud,
+            p.IdCorte,
+            p.IdTipoPermiso AS IdTipo_Permisos,
+            p.Estatus,
+            u.Nombre,
+            u.Correo,
+            u.IdArea,
+            u.Id            AS IdUsuario,
+            p.Id            AS IdPermiso
+        FROM Permiso p
+        INNER JOIN Usuario u ON p.IdUsuarioSolicita = u.Id
+        WHERE
+            (@FromDate IS NULL OR p.FechaCreacion >= @FromDate)
+            AND (@ToDate IS NULL OR p.FechaCreacion <= @ToDate)
+            AND (
+                (@IsEmployeer = 1 AND @IsAutorizer = 0 AND u.Id = @UserId)
+                OR (@UserEmail IS NOT NULL AND u.Correo = @UserEmail)
+                OR (@IsEmployeer = 0 AND @IsAutorizer = 1 AND u.IdArea = @AreaId)
+                OR (@AreaId IS NOT NULL AND u.IdArea = @AreaId)
+            )
+            AND (@PermissionTypeId = 0 OR p.IdTipoPermiso = @PermissionTypeId)
     )
-    SELECT * FROM PermisosFiltrados ORDER BY FechaCreacion DESC OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
+    SELECT * FROM PermisosFiltrados
+    ORDER BY FechaCreacion DESC
+    OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
+
     SELECT COUNT(*) AS Total FROM PermisosFiltrados;
 END;
 GO
@@ -338,31 +377,73 @@ END;
 GO
 
 CREATE OR ALTER PROCEDURE [dbo].[UpdatePermission]
-    @IdPermiso INT, @Descripcion VARCHAR(255) = NULL, @DelDia DATE = NULL, @AlDia DATE = NULL, @HoraEntrada TIME(0) = NULL, @HorarioCubrir TIME(0) = NULL, @IdCorte INT = NULL, @IdTipo_Permisos INT = NULL, @IdUsuarioModifica INT, @Estatus BIT = NULL, @Now DATETIME, @IdApiKey INT = NULL
+    @IdPermiso INT,
+    @Descripcion VARCHAR(255) = NULL,
+    @DelDia DATE = NULL,
+    @AlDia DATE = NULL,
+    @HoraEntrada TIME(0) = NULL,
+    @HorarioCubrir TIME(0) = NULL,
+    @IdCorte INT = NULL,
+    @IdTipo_Permisos INT = NULL,
+    @IdUsuarioModifica INT,
+    @Estatus BIT = NULL,
+    @Now DATETIME,
+    @IdApiKey INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[Permiso] WHERE Id = @IdPermiso AND Estatus = 1) RAISERROR (N'Permiso no encontrado: %d', 16, 1, @IdPermiso);
-        UPDATE [dbo].[Permiso] SET Descripcion = ISNULL(@Descripcion, Descripcion), DelDia = ISNULL(@DelDia, DelDia), AlDia = ISNULL(@AlDia, AlDia), HoraEntrada = ISNULL(@HoraEntrada, HoraEntrada), HorarioCubrir = ISNULL(@HorarioCubrir, HorarioCubrir), IdCorte = ISNULL(@IdCorte, IdCorte), IdTipo_Permisos = ISNULL(@IdTipo_Permisos, IdTipo_Permisos), IdUsuarioModifica = @IdUsuarioModifica, FechaModificacion = @Now, Estatus = ISNULL(@Estatus, Estatus), DiasSolicitados = CASE WHEN @IdTipo_Permisos IN (2, 4, 5) THEN DATEDIFF(DAY, ISNULL(@DelDia, DelDia), ISNULL(@AlDia, AlDia)) + 1 ELSE DiasSolicitados END WHERE Id = @IdPermiso;
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Permiso] WHERE Id = @IdPermiso AND Estatus = 1)
+            RAISERROR (N'Permiso no encontrado: %d', 16, 1, @IdPermiso);
+
+        UPDATE [dbo].[Permiso] SET
+            Motivo            = ISNULL(@Descripcion, Motivo),
+            Fecha1            = ISNULL(@DelDia, Fecha1),
+            Fecha2            = ISNULL(@AlDia, Fecha2),
+            IdCorte           = ISNULL(@IdCorte, IdCorte),
+            IdTipoPermiso     = ISNULL(@IdTipo_Permisos, IdTipoPermiso),
+            IdUsuarioModifica = @IdUsuarioModifica,
+            FechaModificacion = @Now,
+            Estatus           = ISNULL(@Estatus, Estatus),
+            Dias              = CASE
+                                    WHEN @IdTipo_Permisos IN (2, 4, 5)
+                                    THEN DATEDIFF(DAY, ISNULL(@DelDia, Fecha1), ISNULL(@AlDia, Fecha2)) + 1
+                                    ELSE Dias
+                                END
+        WHERE Id = @IdPermiso;
     END TRY
     BEGIN CATCH
-        DECLARE @ErrorMsg NVARCHAR(4000) = 'Error en UpdatePermission: ' + ERROR_MESSAGE(); RAISERROR (@ErrorMsg, 16, 1);
+        DECLARE @ErrorMsg NVARCHAR(4000) = 'Error en UpdatePermission: ' + ERROR_MESSAGE();
+        RAISERROR (@ErrorMsg, 16, 1);
     END CATCH
 END;
 GO
 
 CREATE OR ALTER PROCEDURE [dbo].[UpdateStatusOfPermission]
-    @IdPermiso INT, @ConGoce BIT, @IdUsuarioModifica INT, @IdUsuarioAutorizador INT, @Estatus BIT
+    @IdPermiso INT,
+    @ConGoce BIT,
+    @IdUsuarioModifica INT,
+    @IdUsuarioAutorizador INT,
+    @Estatus BIT
 AS
 BEGIN
     SET NOCOUNT ON;
     BEGIN TRY
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[Permiso] WHERE Id = @IdPermiso) RAISERROR (N'Permiso no encontrado: %d', 16, 1, @IdPermiso);
-        UPDATE [dbo].[Permiso] SET ConGoce = @ConGoce, IdUsuarioModifica = @IdUsuarioModifica, IdUsuarioAutorizador = @IdUsuarioAutorizador, Estatus = @Estatus, FechaModificacion = GETDATE(), FechaAutorizacion = GETDATE() WHERE Id = @IdPermiso;
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[Permiso] WHERE Id = @IdPermiso)
+            RAISERROR (N'Permiso no encontrado: %d', 16, 1, @IdPermiso);
+
+        UPDATE [dbo].[Permiso] SET
+            Goce                = @ConGoce,
+            IdUsuarioModifica   = @IdUsuarioModifica,
+            IdUsuarioAutoriza   = @IdUsuarioAutorizador,
+            Estatus             = @Estatus,
+            FechaModificacion   = GETDATE(),
+            FechaAutorizacion   = GETDATE()
+        WHERE Id = @IdPermiso;
     END TRY
     BEGIN CATCH
-        DECLARE @ErrorMsg NVARCHAR(4000) = 'Error en UpdateStatusOfPermission: ' + ERROR_MESSAGE(); RAISERROR (@ErrorMsg, 16, 1);
+        DECLARE @ErrorMsg NVARCHAR(4000) = 'Error en UpdateStatusOfPermission: ' + ERROR_MESSAGE();
+        RAISERROR (@ErrorMsg, 16, 1);
     END CATCH
 END;
 GO
