@@ -26,7 +26,7 @@ COPY db/schema_objects.sql ./db/schema_objects.sql
 # RUN apt-get update && apt-get install -y libicu-dev && rm -rf /var/lib/apt/lists/*
 
 # Configuración de red para el contenedor
-ENV ASPNETCORE_URLS=http://+:5011
-EXPOSE 5011
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "RecursosHumanosWeb.dll"]
