@@ -152,7 +152,23 @@ using (var scope = app.Services.CreateScope())
 
 
             
+            // Diagnóstico: Listar tablas existentes
+            try {
+                var tables = new List<string>();
+                using (var command = context.Database.GetDbConnection().CreateCommand()) {
+                    command.CommandText = "SELECT name FROM sys.tables";
+                    if (command.Connection.State != System.Data.ConnectionState.Open) command.Connection.Open();
+                    using (var reader = command.ExecuteReader()) {
+                        while (reader.Read()) tables.Add(reader.GetString(0));
+                    }
+                }
+                logger.LogInformation("Tablas encontradas en la DB: {Tables}", string.Join(", ", tables));
+            } catch (Exception ex) {
+                logger.LogWarning("No se pudo listar las tablas: {Message}", ex.Message);
+            }
+
             if (!context.Usuarios.Any())
+
             {
                 // 4.1 Inserción de Datos Básicos
                 var insertsPath = Path.Combine(AppContext.BaseDirectory, "db", "inserts.sql");
