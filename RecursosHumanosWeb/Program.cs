@@ -105,31 +105,44 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 
-// 4. Lógica de Inicialización de Base de Datos Automatizada
+// 4. Lógica de Inicialización de Base de Datos Automatizada con Reintentos
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<RecursosHumanosContext>();
-    try 
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    
+    int retries = 10;
+    while (retries > 0)
     {
-        // Asegurar que la BD existe
-        context.Database.EnsureCreated();
-        
-        // Ejecutar inserts.sql solo si la tabla Usuarios está vacía
-        if (!context.Usuarios.Any())
+        try 
         {
-            var sqlPath = Path.Combine(AppContext.BaseDirectory, "db", "inserts.sql");
-            if (File.Exists(sqlPath))
+            logger.LogInformation("Intentando conectar a la base de datos... (Intentos restantes: {Retries})", retries);
+            context.Database.EnsureCreated();
+            
+            if (!context.Usuarios.Any())
             {
-                var sql = File.ReadAllText(sqlPath);
-                context.Database.ExecuteSqlRaw(sql);
+                var sqlPath = Path.Combine(AppContext.BaseDirectory, "db", "inserts.sql");
+                if (File.Exists(sqlPath))
+                {
+                    var sql = File.ReadAllText(sqlPath);
+                    context.Database.ExecuteSqlRaw(sql);
+                    logger.LogInformation("Base de datos inicializada y poblada con éxito.");
+                }
             }
+            break;
         }
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Ocurrió un error al inicializar la base de datos.");
+        catch (Exception ex)
+        {
+            retries--;
+            if (retries == 0) 
+            {
+                logger.LogCritical(ex, "Error fatal: No se pudo conectar a SQL Server.");
+                throw;
+            }
+            logger.LogWarning("SQL Server no está listo. Reintentando en 10s...");
+            Thread.Sleep(10000);
+        }
     }
 }
 

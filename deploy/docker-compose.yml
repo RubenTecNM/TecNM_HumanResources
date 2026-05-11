@@ -29,10 +29,12 @@ services:
     volumes:
       - api_permisos_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/1433"]
+      # Usar formato de lista (CMD) evita que el shell interprete mal los caracteres especiales
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "Buss1ness!2026", "-C", "-Q", "SELECT 1"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
     networks:
       - nexsmart_network
 
