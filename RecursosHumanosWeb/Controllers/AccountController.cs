@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,19 +24,9 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Login(string? returnUrl = null)
         {
-            // Reset de contraseña solicitado para i22050326@monclova.tecnm.mx
-            try {
-                var correoReset = "i22050326@monclova.tecnm.mx";
-                var userReset = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == correoReset);
-                if (userReset != null) {
-                    userReset.Clave = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256("axel");
-                    _context.Update(userReset);
-                    await _context.SaveChangesAsync();
-                }
-            } catch { /* Ignorar si falla el reset temporal */ }
-
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Permiso");
+
 
             return View(new LoginViewModel { ReturnUrl = returnUrl });
         }
