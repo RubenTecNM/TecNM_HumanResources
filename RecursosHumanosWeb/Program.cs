@@ -114,8 +114,9 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 app.UseCors("OpenCors");
 
-// Root Health Check para pruebas del túnel
-app.MapGet("/", () => Results.Ok(new { Message = "TecRH Permisos API is running", Environment = app.Environment.EnvironmentName }));
+// Health Check para monitoreo del túnel
+app.MapGet("/health", () => Results.Ok(new { Message = "TecRH Permisos API is running", Environment = app.Environment.EnvironmentName }));
+
 
 
 // 4. Lógica de Inicialización de Base de Datos Automatizada con Reintentos
