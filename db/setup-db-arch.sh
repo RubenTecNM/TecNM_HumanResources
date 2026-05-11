@@ -16,17 +16,16 @@
 #  REQUISITOS PREVIOS (instalar con pacman si no están):
 #    sudo pacman -S docker
 #    sudo systemctl enable --now docker
-#    dotnet tool install -g microsoft.sqlpackage
 # =============================================================================
 
 set -euo pipefail
 
 # ── Configuración ─────────────────────────────────────────────────────────────
-MSSQL_IMAGE="mcr.microsoft.com/mssql/server:2025-latest"
-MSSQL_CONTAINER="rh_sql"
+MSSQL_IMAGE="mcr.microsoft.com/mssql/server:2022-latest"
+MSSQL_CONTAINER="db_sqlserver"
 MSSQL_VOLUME="rh_sqldata"
-MSSQL_HOST_PORT="1434"          # Puerto en el HOST (cambia si hay conflicto)
-MSSQL_SA_PASSWORD="Buss1ness!2026"  # ⚠ Debe tener mayúscula, número y símbolo
+MSSQL_HOST_PORT="1433"          # Puerto en el HOST
+MSSQL_SA_PASSWORD="Buss1ness.2026"  
 MSSQL_PID="Express"
 MSSQL_DB_NAME="RecursosHumanos"
 SQL_READY_TIMEOUT=120
@@ -68,9 +67,9 @@ for arg in "$@"; do
 done
 
 # =============================================================================
-# 1. VERIFICACIONES PREVIAS
+# 1. VERIFICACIONES PREVIAS Y HERRAMIENTAS
 # =============================================================================
-log_section "1. Verificaciones previas"
+log_section "1. Verificaciones y Herramientas"
 
 # Docker disponible
 if ! command -v docker &>/dev/null; then
@@ -78,23 +77,29 @@ if ! command -v docker &>/dev/null; then
 fi
 log_info "Docker: $(docker --version | awk '{print $3}' | tr -d ',')"
 
-# Docker daemon activo
-if ! docker info &>/dev/null; then
-    die "El daemon de Docker no está corriendo.\nInicia con: sudo systemctl start docker\nO habilítalo permanentemente: sudo systemctl enable --now docker"
-fi
-log_info "Docker daemon: activo"
+# sqlpackage (necesario para DACPAC)
+install_sqlpackage() {
+    if command -v sqlpackage &>/dev/null; then
+        return 0
+    fi
+    
+    log_step "sqlpackage no encontrado. Intentando instalar vía dotnet..."
+    if ! command -v dotnet &>/dev/null; then
+        log_warn ".NET SDK no encontrado. El esquema DACPAC podría fallar si no instalas sqlpackage manualmente."
+        return 1
+    fi
 
-# sqlpackage disponible
-SQLPACKAGE_BIN=""
-if command -v sqlpackage &>/dev/null; then
-    SQLPACKAGE_BIN="sqlpackage"
-elif [[ -x "$HOME/.dotnet/tools/sqlpackage" ]]; then
-    SQLPACKAGE_BIN="$HOME/.dotnet/tools/sqlpackage"
-    export PATH="$PATH:$HOME/.dotnet/tools"
-else
-    die "sqlpackage no encontrado.\nInstálalo con:\n  dotnet tool install -g microsoft.sqlpackage\nLuego agrega al PATH:\n  export PATH=\$PATH:\$HOME/.dotnet/tools"
-fi
-log_info "sqlpackage: disponible ($SQLPACKAGE_BIN)"
+    dotnet tool install -g microsoft.sqlpackage || true
+    export PATH="$PATH:$HOME/.dotnet/tools:/root/.dotnet/tools"
+    
+    if ! command -v sqlpackage &>/dev/null; then
+        log_error "No se pudo instalar/encontrar sqlpackage."
+        return 1
+    fi
+    return 0
+}
+
+install_sqlpackage || true
 
 # Archivos de BD
 if [[ ! -f "$DACPAC_FILE" ]]; then
@@ -143,10 +148,10 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${MSSQL_CONTAINER}$"; then
 else
     # -- Descargar imagen si no existe localmente ------------------------------
     if ! docker image inspect "$MSSQL_IMAGE" &>/dev/null; then
-        log_step "Descargando imagen SQL Server 2025 (~1.5 GB, puede tardar varios minutos)..."
+        log_step "Descargando imagen $MSSQL_IMAGE (~1.5 GB)..."
         docker pull "$MSSQL_IMAGE" || die "No se pudo descargar la imagen: $MSSQL_IMAGE"
     else
-        log_info "Imagen SQL Server 2025 ya descargada localmente."
+        log_info "Imagen SQL Server ya descargada localmente."
     fi
 
     # -- Crear contenedor ------------------------------------------------------
@@ -174,7 +179,7 @@ log_section "3. Esperando que SQL Server acepte conexiones"
 sql_is_ready() {
     docker exec "$MSSQL_CONTAINER" \
         /opt/mssql-tools18/bin/sqlcmd \
-        -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" \
+        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
         -C -Q "SELECT 1" \
         > /dev/null 2>&1
 }
@@ -216,7 +221,7 @@ log_section "4. Inicializando la base de datos '$MSSQL_DB_NAME'"
 # -- Verificar si la BD ya existe ----------------------------------------------
 db_exists=$(docker exec "$MSSQL_CONTAINER" \
     /opt/mssql-tools18/bin/sqlcmd \
-    -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" -C \
+    -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
     -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE name='${MSSQL_DB_NAME}'" \
     -h -1 2>/dev/null | tr -d '[:space:]' || echo "0")
 
@@ -227,7 +232,7 @@ if [[ "$db_exists" == "1" ]]; then
         log_step "Eliminando BD existente..."
         docker exec "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
-            -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" -C \
+            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
             -Q "ALTER DATABASE [${MSSQL_DB_NAME}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [${MSSQL_DB_NAME}];" \
             2>/dev/null || die "No se pudo eliminar la BD."
         log_info "BD eliminada."
@@ -240,30 +245,37 @@ if [[ "$db_exists" == "1" ]]; then
     fi
 fi
 
-# -- Etapa 1: Crear BD vacía y aplicar esquema DACPAC -------------------------
-log_step "Creando base de datos vacía..."
+# -- Etapa 1: Aplicar esquema DACPAC ------------------------------------------
+log_step "Asegurando existencia de la base de datos '$MSSQL_DB_NAME'..."
+
+# Crear la base de datos si no existe
 docker exec "$MSSQL_CONTAINER" \
     /opt/mssql-tools18/bin/sqlcmd \
-    -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" -C \
-    -Q "CREATE DATABASE [${MSSQL_DB_NAME}];" \
-    2>/dev/null || true
+    -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C \
+    -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = '$MSSQL_DB_NAME') CREATE DATABASE [$MSSQL_DB_NAME];" || true
 
-log_step "Publicando esquema desde DACPAC (puede tardar 2-5 minutos)..."
-"$SQLPACKAGE_BIN" \
-    /Action:Publish \
-    /SourceFile:"$DACPAC_FILE" \
-    /TargetServerName:"localhost,${MSSQL_HOST_PORT}" \
-    /TargetDatabaseName:"$MSSQL_DB_NAME" \
-    /TargetUser:"sa" \
-    /TargetPassword:"$MSSQL_SA_PASSWORD" \
-    /TargetTrustServerCertificate:True \
-    /p:BlockOnPossibleDataLoss=False \
-    /p:AllowIncompatiblePlatform=True \
-    /p:TreatVerificationErrorsAsWarnings=True \
-    2>&1 | grep -v "^Time elapsed" \
-    || die "Falló la publicación del esquema DACPAC."
+log_step "Publicando esquema desde $DACPAC_FILE (vía sqlpackage)..."
 
-log_info "Esquema aplicado correctamente."
+if command -v sqlpackage &>/dev/null; then
+    sqlpackage \
+        /Action:Publish \
+        /SourceFile:"$DACPAC_FILE" \
+        /TargetServerName:"localhost,${MSSQL_HOST_PORT}" \
+        /TargetDatabaseName:"$MSSQL_DB_NAME" \
+        /TargetUser:"sa" \
+        /TargetPassword:"$MSSQL_SA_PASSWORD" \
+        /TargetTrustServerCertificate:True \
+        /p:BlockOnPossibleDataLoss=False \
+        /p:AllowIncompatiblePlatform=True \
+        /p:TreatVerificationErrorsAsWarnings=True \
+        2>&1 | grep -v "^Time elapsed" || {
+            log_error "Falló la publicación del DACPAC."
+            log_warn "Asegúrate de que la base de datos sea accesible y la contraseña sea correcta."
+        }
+else
+    log_error "sqlpackage no disponible. No se puede aplicar el esquema DACPAC."
+    log_info "Puedes instalarlo con: dotnet tool install -g microsoft.sqlpackage"
+fi
 
 # -- Etapa 2: Insertar datos iniciales ----------------------------------------
 if [[ "$FLAG_SKIP_DATA" == "true" ]]; then
@@ -272,7 +284,7 @@ else
     log_step "Deshabilitando restricciones FK temporalmente..."
     nocheck_stmts=$(docker exec "$MSSQL_CONTAINER" \
         /opt/mssql-tools18/bin/sqlcmd \
-        -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" \
+        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
         -d "$MSSQL_DB_NAME" -C -h -1 \
         -Q "SET NOCOUNT ON;
             SELECT 'ALTER TABLE [' + OBJECT_NAME(parent_object_id) + '] NOCHECK CONSTRAINT [' + name + '];'
@@ -283,7 +295,7 @@ else
         [[ -z "$stmt" ]] && continue
         docker exec "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
-            -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" \
+            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
             -d "$MSSQL_DB_NAME" -C -b -Q "$stmt" 2>/dev/null || true
     done <<< "$nocheck_stmts"
 
@@ -292,7 +304,7 @@ else
 
     if docker exec "$MSSQL_CONTAINER" \
         /opt/mssql-tools18/bin/sqlcmd \
-        -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" \
+        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
         -d "$MSSQL_DB_NAME" -C -b \
         -i /tmp/InsertsDB.sql 2>&1; then
         log_info "Datos insertados correctamente."
@@ -306,7 +318,7 @@ else
     log_step "Rehabilitando restricciones FK..."
     check_stmts=$(docker exec "$MSSQL_CONTAINER" \
         /opt/mssql-tools18/bin/sqlcmd \
-        -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" \
+        -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
         -d "$MSSQL_DB_NAME" -C -h -1 \
         -Q "SET NOCOUNT ON;
             SELECT 'ALTER TABLE [' + OBJECT_NAME(parent_object_id) + '] WITH CHECK CHECK CONSTRAINT [' + name + '];'
@@ -317,7 +329,7 @@ else
         [[ -z "$stmt" ]] && continue
         docker exec "$MSSQL_CONTAINER" \
             /opt/mssql-tools18/bin/sqlcmd \
-            -S 127.0.0.1 -U sa -P "$MSSQL_SA_PASSWORD" \
+            -S localhost -U sa -P "$MSSQL_SA_PASSWORD" \
             -d "$MSSQL_DB_NAME" -C -b -Q "$stmt" 2>/dev/null || true
     done <<< "$check_stmts"
 
@@ -348,7 +360,7 @@ echo -e "    Server=localhost,${MSSQL_HOST_PORT};Database=${MSSQL_DB_NAME};User 
 echo ""
 echo -e "  ${BOLD}Comandos útiles:${RESET}"
 echo -e "    Ver logs    : docker logs $MSSQL_CONTAINER -f"
-echo -e "    Conectar    : docker exec -it $MSSQL_CONTAINER /opt/mssql-tools18/bin/sqlcmd -S 127.0.0.1 -U sa -P '$MSSQL_SA_PASSWORD' -C"
+echo -e "    Conectar    : docker exec -it $MSSQL_CONTAINER /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '$MSSQL_SA_PASSWORD' -C"
 echo -e "    Detener     : docker stop $MSSQL_CONTAINER"
 echo -e "    Iniciar     : docker start $MSSQL_CONTAINER"
 echo -e "    Reset total : bash $(basename "${BASH_SOURCE[0]}") --reset"

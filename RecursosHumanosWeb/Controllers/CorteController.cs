@@ -143,24 +143,6 @@ namespace RecursosHumanosWeb.Controllers
             return View(model);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Close(int id)
-        {
-            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            if (userId == 0) return Unauthorized();
-
-            bool result = await _corteService.CloseCorteAsync(id, userId);
-            if (result)
-            {
-                TempData["SuccessAlert"] = "Periodo cerrado exitosamente. Los permisos pendientes han sido rechazados automáticamente.";
-            }
-            else
-            {
-                TempData["ErrorAlert"] = "No se pudo cerrar el periodo. Verifique si ya está inactivo.";
-            }
-
-            return RedirectToAction(nameof(Index));
-        }
 
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(int id)
@@ -396,10 +378,11 @@ namespace RecursosHumanosWeb.Controllers
                 return Json(new AlertResponseDTO
                 {
                     ShowConfirmation = true,
-                    Title = "¿Eliminar Corte?",
-                    Message = $"¿Estás seguro de que deseas eliminar el corte que inicia {corte.Inicia.ToString("dd/MM/yyyy")}?",
-                    Icon = "question",
-                    ConfirmButtonText = "Sí, eliminar"
+                    Title = "¿Cerrar e Inactivar Periodo?",
+                    Message = $"¿Estás seguro de que deseas cerrar el periodo que inicia **{corte.Inicia.ToString("dd/MM/yyyy")}**?<br><br><small class='text-muted'>Esta acción marcará los permisos asociados como procesados.</small>",
+                    Icon = "warning",
+                    ConfirmButtonText = "Sí, cerrar periodo",
+                    CancelButtonText = "Cancelar"
                 });
             }
 
@@ -408,7 +391,7 @@ namespace RecursosHumanosWeb.Controllers
 
             if (success)
             {
-                return Json(new AlertResponseDTO { Success = true, Title = "Eliminado", Message = "El corte fue inactivado correctamente.", Icon = "success", RedirectUrl = "/Corte/Index" });
+                return Json(new AlertResponseDTO { Success = true, Title = "Periodo Cerrado", Message = "El periodo ha sido inactivado y cerrado correctamente.", Icon = "success", RedirectUrl = "/Corte/Index" });
             }
             else
             {

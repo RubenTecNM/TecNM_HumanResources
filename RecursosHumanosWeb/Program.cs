@@ -6,8 +6,32 @@ using RecursosHumanosWeb.Models;
 using Microsoft.Extensions.Options;
 using RecursosHumanosWeb.Filters;
 using RecursosHumanosWeb.Services;
+using Microsoft.AspNetCore.HttpOverrides;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 1. Configurar CORS (Abierto para microservicios)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("OpenCors", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
+// 2. Configurar OpenAPI con servidores explícitos para Producción
+builder.Services.AddOpenApi(options => {
+    options.AddDocumentTransformer((document, context, cancellationToken) => {
+        document.Servers = new List<Microsoft.OpenApi.Models.OpenApiServer> {
+            new() { Url = "https://apitecrh.monclova.tecnm.mx" }, // Ajustar al dominio real
+            new() { Url = "http://localhost:5011" }
+        };
+        return Task.CompletedTask;
+    });
+});
 
 builder.Services.AddLogging(logging =>
 {
@@ -73,6 +97,42 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
+// 3. Middlewares prioritarios e infraestructura
+app.UseCors("OpenCors");
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+// 4. Lógica de Inicialización de Base de Datos Automatizada
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<RecursosHumanosContext>();
+    try 
+    {
+        // Asegurar que la BD existe
+        context.Database.EnsureCreated();
+        
+        // Ejecutar inserts.sql solo si la tabla Usuarios está vacía
+        if (!context.Usuarios.Any())
+        {
+            var sqlPath = Path.Combine(AppContext.BaseDirectory, "db", "inserts.sql");
+            if (File.Exists(sqlPath))
+            {
+                var sql = File.ReadAllText(sqlPath);
+                context.Database.ExecuteSqlRaw(sql);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrió un error al inicializar la base de datos.");
+    }
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -111,5 +171,13 @@ app.Use(async (context, next) =>
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Account}/{action=Login}/{id?}");
+
+// 5. Configurar Scalar API Documentation
+app.MapOpenApi();
+app.MapScalarApiReference(options => {
+    options.WithTitle("Recursos Humanos API")
+           .WithTheme(ScalarTheme.Moon)
+           .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient);
+});
 
 app.Run();

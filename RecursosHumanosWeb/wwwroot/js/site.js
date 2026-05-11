@@ -1,4 +1,4 @@
-﻿// site.js
+// site.js
 
 // ----------------------------------------------------------------------
 // 1. FUNCIONES AUXILIARES PARA MANEJO DE ALERTA Y VALIDACIÓN
@@ -195,10 +195,18 @@ function handleActionWithConfirmation(url, data = {}, options = {}) {
         })
         .catch(error => {
             console.error('❌ Error en handleActionWithConfirmation:', error);
+            
+            let detailedMessage = 'Ocurrió un error al procesar la solicitud.';
+            if (error.message && error.message.includes('HTTP:')) {
+                detailedMessage = `Error de servidor: ${error.message}. Por favor, contacte a soporte técnico.`;
+            } else if (error.message) {
+                detailedMessage = `Error: ${error.message}`;
+            }
+
             handleAlertResponse({
                 success: false,
-                title: 'Error de Conexión',
-                message: error.message || 'Ocurrió un error al procesar la solicitud.',
+                title: 'Error de Comunicación',
+                message: detailedMessage,
                 icon: 'error'
             });
             return { success: false, error: error.message };
@@ -287,8 +295,11 @@ $(document).ready(function () {
         const controller = $btn.data('controller') || 'Permisos';
         const id = $btn.data('id');
 
-        const url = `/${controller}/${action}`;
+        // Soporte para URL dinámica (Url.Action) o construcción manual (compatibilidad)
+        const url = $btn.data('url') || `/${controller}/${action}`;
         const data = { id: id };
+
+        console.log(`📡 Ejecutando acción: ${url}`, data);
 
         // Deshabilitar botón durante la petición
         $btn.prop('disabled', true);

@@ -1,0 +1,45 @@
+services:
+  api_permisos:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: itmsrh_gestion_permisos_api
+    ports:
+      - "5011:5011"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5011
+      - ConnectionStrings__RecursosHumanosContext=Server=db_sqlserver,1433;Database=RecursosHumanos;User Id=sa;Password=Buss1ness!2026;Encrypt=False;TrustServerCertificate=True;
+      # Configuración para ForwardedHeaders (Cloudflare)
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+    depends_on:
+      db_sqlserver:
+        condition: service_healthy
+    networks:
+      - nexsmart_network
+
+  db_sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: api_permisos_db
+    ports:
+      - "1434:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Buss1ness!2026
+      - MSSQL_PID=Express
+    volumes:
+      - api_permisos_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Buss1ness!2026' -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - nexsmart_network
+
+networks:
+  nexsmart_network:
+    external: true
+
+volumes:
+  api_permisos_data:

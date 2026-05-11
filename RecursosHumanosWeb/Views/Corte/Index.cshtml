@@ -273,29 +273,26 @@
                             
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-2">
-                                            @if (item.Estatus)
-                                            {
-                                                <a asp-action="Close" asp-route-id="@item.Id" class="action-btn btn-warning" title="Cerrar Periodo" aria-label="Cerrar periodo manualmente">
-                                                    <i class="fas fa-lock"></i>
-                                                </a>
-                                            }
-                                            else
-                                            {
-                                                <button class="action-btn btn-secondary opacity-50" disabled title="El periodo ya está cerrado" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
-                                                    <i class="fas fa-lock"></i>
-                                                </button>
-                                            }
-
                                             @if (User.HasClaim("TipoUsuario", "1"))
                                             {
-                                                <a href="#" class="action-btn btn-delete" title="Eliminar" aria-label="Eliminar periodo" data-action="DeleteAjax" data-controller="Corte" data-id="@item.Id">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
+                                                if (item.Estatus)
+                                                {
+                                                    <a href="#" class="action-btn btn-delete" title="Cerrar Periodo" aria-label="Cerrar periodo" 
+                                                       data-url="@Url.Action("DeleteAjax", "Corte")" data-action="DeleteAjax" data-controller="Corte" data-id="@item.Id">
+                                                        <i class="fas fa-lock"></i>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <button class="action-btn btn-secondary opacity-50" disabled title="Este periodo ya se encuentra cerrado" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                        <i class="fas fa-lock"></i>
+                                                    </button>
+                                                }
                                             }
                                             else
                                             {
-                                                <button class="action-btn btn-secondary opacity-50" disabled title="Solo el administrador puede eliminar periodos" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
-                                                    <i class="fas fa-trash"></i>
+                                                <button class="action-btn btn-secondary opacity-50" disabled title="Solo el administrador puede cerrar periodos" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                    <i class="fas fa-ban"></i>
                                                 </button>
                                             }
 
