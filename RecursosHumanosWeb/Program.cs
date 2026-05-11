@@ -177,11 +177,12 @@ using (var scope = app.Services.CreateScope())
                 logger.LogCritical(ex, "Error fatal: No se pudo conectar a SQL Server.");
                 throw;
             }
-            logger.LogWarning("SQL Server no está listo. Reintentando en 10s...");
+            logger.LogWarning("SQL Server no está listo: {ErrorMessage}. Reintentando en 10s...", ex.Message);
             Thread.Sleep(10000);
         }
     }
 }
+
 
 if (!app.Environment.IsDevelopment())
 {

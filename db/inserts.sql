@@ -207,7 +207,7 @@ INSERT INTO Tabla (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES
 ('TipoPermiso', GETDATE(), 1, 1),
 ('TipoUsuario', GETDATE(), 1, 1),
 ('Usuario', GETDATE(), 1, 1),
-('ResetPasswordTokens', GETDATE(), 1, 1),
+('ResetPasswordToken', GETDATE(), 1, 1),
 ('Auditoria', GETDATE(), 1, 1),
 ('TipoOrigen', GETDATE(), 1, 1),
 ('TipoEstadoCorte', GETDATE(), 1, 1),
