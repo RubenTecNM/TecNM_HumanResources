@@ -147,6 +147,7 @@ BEGIN
     INSERT INTO @Ids SELECT Id FROM inserted; 
     EXEC UpdateFechaModificacion 8, @Ids; 
 END;
+--###--
 
 -- =============================================
 -- 9. TRIGGERS NUEVOS ESTADOS
@@ -164,3 +165,4 @@ BEGIN
     INSERT INTO @Ids SELECT Id FROM inserted; 
     EXEC UpdateFechaModificacion (SELECT Id FROM Tabla WHERE Descripcion = 'TipoEstadoPermiso'), @Ids; 
 END;
+--###--
