@@ -28,24 +28,31 @@ namespace RecursosHumanosWeb.Controllers
         private readonly ILogger<CorteController> _logger;
         private readonly ICorteService _corteService;
         private readonly IExportService _exportService;
+        private readonly IConfiguration _configuration;
 
         public CorteController(
             RecursosHumanosContext context, 
             AutoMapper.IMapper mapper, 
             ILogger<CorteController> logger,
             ICorteService corteService,
-            IExportService exportService)
+            IExportService exportService,
+            IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
             _corteService = corteService;
             _exportService = exportService;
+            _configuration = configuration;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int pageSize = 5, int? idFilter = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, bool? statusFilter = null)
+        public async Task<IActionResult> Index(int page = 1, int? pageSize = null, int? idFilter = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, bool? statusFilter = null)
         {
+            int defaultPageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
+            int maxPageSize = _configuration.GetValue<int>("BusinessRules:Pagination:MaxPageSize");
+            
+            int actualPageSize = pageSize ?? defaultPageSize;
             // Borrado lógico: Por defecto solo mostrar activos si no se especifica filtro en la URL
             if (!HttpContext.Request.Query.ContainsKey("statusFilter"))
             {
@@ -54,7 +61,7 @@ namespace RecursosHumanosWeb.Controllers
 
             // Validar parámetros de paginación
             if (page < 1) page = 1;
-            if (pageSize < 1 || pageSize > 100) pageSize = 5;
+            if (actualPageSize < 1 || actualPageSize > maxPageSize) actualPageSize = defaultPageSize;
 
             // Obtener información del usuario autenticado
             bool isAdministrador = User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.Administrador).ToString());
@@ -106,7 +113,7 @@ namespace RecursosHumanosWeb.Controllers
                 .OrderByDescending(c => c.Id); // Ordenar por Id descendente
 
             // Obtener resultados paginados
-            var cortes = cortesQueryFiltered.ToPagedList(page, pageSize);
+            var cortes = cortesQueryFiltered.ToPagedList(page, actualPageSize);
 
             // Preparar el ViewModel
             var model = new SearchCorteViewModel

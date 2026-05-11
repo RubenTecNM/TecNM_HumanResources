@@ -22,15 +22,18 @@ namespace RecursosHumanosWeb.Controllers
         private readonly IMapper _mapper;
         private readonly ILogger<UsuarioController> _logger;
         private readonly IUsuarioService _usuarioService;
+        private readonly IConfiguration _configuration;
 
         public UsuarioController(
             IMapper mapper,
             ILogger<UsuarioController> logger,
-            IUsuarioService usuarioService)
+            IUsuarioService usuarioService,
+            IConfiguration configuration)
         {
             _mapper = mapper;
             _logger = logger;
             _usuarioService = usuarioService;
+            _configuration = configuration;
         }
 
         #region INDEX Y BÚSQUEDA
@@ -73,8 +76,8 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             ViewBag.CurrentFilter = nombreFilter;
-
-            int pageSize = 10;
+            
+            int pageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
             int pageNumber = page ?? 1;
 
             var usuariosPaginados = await _usuarioService.GetUsuariosPagedAsync(

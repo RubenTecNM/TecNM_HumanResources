@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
@@ -19,11 +19,13 @@ namespace RecursosHumanosWeb.Controllers
         public string Clave { get; set; }
         private readonly RecursosHumanosContext _context;
         private readonly AutoMapper.IMapper _mapper;
+        private readonly IConfiguration _configuration;
 
-        public ApiKeyController(RecursosHumanosContext context, AutoMapper.IMapper mapper)
+        public ApiKeyController(RecursosHumanosContext context, AutoMapper.IMapper mapper, IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
+            _configuration = configuration;
         }
 
         // GET: ApiKeys
@@ -253,7 +255,7 @@ namespace RecursosHumanosWeb.Controllers
             var usuarios = await _context.Usuarios
                 .Where(u => u.Nombre.Contains(term) || u.Correo.Contains(term))
                 .OrderBy(u => u.Nombre)
-                .Take(10) // Limitar resultados para eficiencia
+                .Take(_configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize")) // Limitar resultados para eficiencia
                 .Select(u => new
                 {
                     id = u.Id,

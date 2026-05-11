@@ -27,6 +27,7 @@ namespace RecursosHumanosWeb.Controllers
         private readonly ILogger<PermisoController> _logger;
         private readonly IPermisoService _permisoService;
         private readonly ICorteService _corteService;
+        private readonly IConfiguration _configuration;
 
         public PermisoController(
             RecursosHumanosContext context,
@@ -34,7 +35,8 @@ namespace RecursosHumanosWeb.Controllers
             IMapper mapper,
             ILogger<PermisoController> logger,
             IPermisoService permisoService,
-            ICorteService corteService)
+            ICorteService corteService,
+            IConfiguration configuration)
         {
             _context = context;
             _environment = environment;
@@ -42,6 +44,7 @@ namespace RecursosHumanosWeb.Controllers
             _logger = logger;
             _permisoService = permisoService;
             _corteService = corteService;
+            _configuration = configuration;
         }
 
         #region VISTAS Y FILTROS
@@ -54,7 +57,8 @@ namespace RecursosHumanosWeb.Controllers
             int idUsuario = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int tipoUsuario = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
 
-            var permisos = await _permisoService.GetPermisosPagedAsync(idUsuario, idArea, nombreUsuario, delDia, alDia, revisado, page ?? 1, 10);
+            int pageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
+            var permisos = await _permisoService.GetPermisosPagedAsync(idUsuario, idArea, nombreUsuario, delDia, alDia, revisado, page ?? 1, pageSize);
 
             var areas = (tipoUsuario == (int)TipoUsuarioEnum.RecursosHumanos || tipoUsuario == (int)TipoUsuarioEnum.Administrador)
                 ? await _context.Areas.Where(a => a.Estatus).Select(a => new AreasDTO { Id = a.Id, Descripcion = a.Descripcion }).OrderBy(a => a.Descripcion).ToListAsync()
@@ -510,7 +514,8 @@ namespace RecursosHumanosWeb.Controllers
 
         private async Task<string?> SaveEvidenceFile(IFormFile file, int userId)
         {
-            if (file.Length > 5 * 1024 * 1024) return null;
+            int maxMb = _configuration.GetValue<int>("BusinessRules:Uploads:MaxFileSizeMB");
+            if (file.Length > maxMb * 1024 * 1024) return null;
             string uploads = Path.Combine(_environment.WebRootPath, "Evidences");
             if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
             string name = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(file.FileName).ToLower()}";
