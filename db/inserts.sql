@@ -231,4 +231,3 @@ INSERT INTO TipoPermiso (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VAL
 
 -- 5. REACTIVAR FK
 EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';
-GO
