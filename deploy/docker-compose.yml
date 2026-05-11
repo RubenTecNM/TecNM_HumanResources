@@ -3,14 +3,13 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
-    container_name: itmsrh_gestion_permisos_api
+    container_name: itsmrh_gestion_permisos_api
     ports:
       - "5011:5011"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:5011
       - ConnectionStrings__RecursosHumanosContext=Server=db_sqlserver,1433;Database=RecursosHumanos;User Id=sa;Password=Buss1ness!2026;Encrypt=False;TrustServerCertificate=True;
-      # Configuración para ForwardedHeaders (Cloudflare)
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     depends_on:
       db_sqlserver:
@@ -30,7 +29,7 @@ services:
     volumes:
       - api_permisos_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Buss1ness!2026' -Q 'SELECT 1'"]
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/1433"]
       interval: 10s
       timeout: 5s
       retries: 10
