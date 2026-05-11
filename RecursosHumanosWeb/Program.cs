@@ -7,7 +7,10 @@ using RecursosHumanosWeb.Filters;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Services;
 using RecursosHumanosWeb.Settings;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Scalar.AspNetCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -128,7 +131,26 @@ using (var scope = app.Services.CreateScope())
         try 
         {
             logger.LogInformation("Intentando conectar a la base de datos... (Intentos restantes: {Retries})", retries);
+            
+            // Si la base de datos no existe, la crea. 
+            // Si existe, NO hace nada (ni siquiera crea tablas faltantes).
             context.Database.EnsureCreated();
+
+            // Lógica extra: Si la DB existe pero no tiene tablas, forzamos la creación del esquema.
+            var databaseCreator = context.Database.GetService<IRelationalDatabaseCreator>() 
+                                  as RelationalDatabaseCreator;
+            
+            try {
+                if (databaseCreator != null) {
+                    databaseCreator.CreateTables();
+                    logger.LogInformation("Esquema de tablas creado exitosamente.");
+                }
+            } catch (Exception) {
+                // Si las tablas ya existen, CreateTables lanzará una excepción, la ignoramos.
+                logger.LogDebug("Las tablas ya existen o no se pudieron crear manualmente (omitiendo).");
+            }
+
+
             
             if (!context.Usuarios.Any())
             {
