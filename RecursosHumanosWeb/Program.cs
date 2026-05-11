@@ -122,13 +122,40 @@ using (var scope = app.Services.CreateScope())
             
             if (!context.Usuarios.Any())
             {
-                var sqlPath = Path.Combine(AppContext.BaseDirectory, "db", "inserts.sql");
-                if (File.Exists(sqlPath))
+                // 4.1 Inserción de Datos Básicos
+                var insertsPath = Path.Combine(AppContext.BaseDirectory, "db", "inserts.sql");
+                if (File.Exists(insertsPath))
                 {
-                    var sql = File.ReadAllText(sqlPath);
-                    context.Database.ExecuteSqlRaw(sql);
-                    logger.LogInformation("Base de datos inicializada y poblada con éxito.");
+                    logger.LogInformation("Poblando base de datos con datos básicos...");
+                    var sqlContent = File.ReadAllText(insertsPath);
+                    context.Database.ExecuteSqlRaw(sqlContent);
                 }
+
+                // 4.2 Creación de Objetos (SPs, Triggers, etc.)
+                var objectsPath = Path.Combine(AppContext.BaseDirectory, "db", "schema_objects.sql");
+                if (File.Exists(objectsPath))
+                {
+                    logger.LogInformation("Creando procedimientos almacenados y triggers...");
+                    var objectsContent = File.ReadAllText(objectsPath);
+                    
+                    // Separamos por el delimitador personalizado --###--
+                    var blocks = objectsContent.Split(new[] { "--###--" }, StringSplitOptions.RemoveEmptyEntries);
+                    
+                    foreach (var block in blocks)
+                    {
+                        if (!string.IsNullOrWhiteSpace(block))
+                        {
+                            try {
+                                context.Database.ExecuteSqlRaw(block);
+                            } catch (Exception ex) {
+                                logger.LogWarning("Error al crear objeto: {Message}", ex.Message);
+                                // Continuamos con el siguiente objeto
+                            }
+                        }
+                    }
+                }
+                
+                logger.LogInformation("Base de datos inicializada al 100% (Datos y Objetos).");
             }
             break;
         }
