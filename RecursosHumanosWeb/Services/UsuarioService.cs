@@ -115,12 +115,12 @@ namespace RecursosHumanosWeb.Services
 
             // Obtener contadores de permisos
             var permisosStats = await _context.Permisos
-                .Where(p => p.IdUsuarioSolicita == id && p.Estatus)
+                .Where(p => p.IdUsuarioSolicita == id && p.IdEstadoPermiso != 3)
                 .GroupBy(p => 1)
                 .Select(g => new
                 {
                     TotalPermisos = g.Count(),
-                    PermisosRevisados = g.Count(p => p.Revisado),
+                    PermisosRevisados = g.Count(p => p.IdEstadoPermiso != 1),
                     ConGoce = g.Count(p => p.Goce),
                     SinGoce = g.Count(p => !p.Goce)
                 })

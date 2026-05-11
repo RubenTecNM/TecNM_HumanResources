@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models.DTOs;
@@ -46,6 +46,8 @@ public partial class RecursosHumanosContext : DbContext
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<TipoOrigen> TipoOrigenes { get; set; }
+    public virtual DbSet<TipoEstadoCorte> TipoEstadoCortes { get; set; }
+    public virtual DbSet<TipoEstadoPermiso> TipoEstadoPermisos { get; set; }
     public virtual DbSet<ResetPasswordToken> ResetPasswordTokens { get; set; }
     public virtual DbSet<Auditoria> Auditorias { get; set; }
     public virtual DbSet<VwPermisosUsuario> VwPermisosUsuarios { get; set; }
@@ -224,7 +226,7 @@ public partial class RecursosHumanosContext : DbContext
 
             entity.ToTable("Corte", tb => tb.HasTrigger("trg_Corte_UpdateFechaModificacion"));
 
-            entity.Property(e => e.Estatus).HasDefaultValue(true);
+            entity.Property(e => e.IdEstadoCorte).HasDefaultValue(1);
             entity.Property(e => e.FechaCreacion)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(getdate())");
@@ -234,6 +236,11 @@ public partial class RecursosHumanosContext : DbContext
             entity.Property(e => e.IdUsuarioModifica).HasDefaultValueSql("(NULL)");
             entity.Property(e => e.Inicia).HasColumnType("datetime");
             entity.Property(e => e.Termina).HasColumnType("datetime");
+
+            entity.HasOne(d => d.IdEstadoCorteNavigation).WithMany(p => p.Cortes)
+                .HasForeignKey(d => d.IdEstadoCorte)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Corte_TipoEstadoCorte");
 
             entity.HasOne(d => d.IdUsuarioCreaNavigation).WithMany(p => p.CorteIdUsuarioCreaNavigations)
                 .HasForeignKey(d => d.IdUsuarioCrea)
@@ -280,6 +287,7 @@ public partial class RecursosHumanosContext : DbContext
             entity.ToTable("Permiso", tb => tb.HasTrigger("trg_Permiso_UpdateFechaModificacion"));
 
             entity.Property(e => e.Estatus).HasDefaultValue(true);
+            entity.Property(e => e.IdEstadoPermiso).HasDefaultValue(1);
             entity.Property(e => e.Evidencia)
                 .HasMaxLength(255)
                 .IsUnicode(false);
@@ -303,6 +311,11 @@ public partial class RecursosHumanosContext : DbContext
                 .HasForeignKey(d => d.IdCorte)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Permiso__IdCorte__2A6B46EF");
+
+            entity.HasOne(d => d.IdEstadoPermisoNavigation).WithMany(p => p.Permisos)
+                .HasForeignKey(d => d.IdEstadoPermiso)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Permiso_TipoEstadoPermiso");
 
             entity.HasOne(d => d.IdTipoPermisoNavigation).WithMany(p => p.Permisos)
                 .HasForeignKey(d => d.IdTipoPermiso)
@@ -443,6 +456,26 @@ public partial class RecursosHumanosContext : DbContext
                 .HasConstraintName("FK__TipoUsuar__IdUsu__373B3228");
         });
 
+        modelBuilder.Entity<TipoEstadoCorte>(entity =>
+        {
+            entity.ToTable("TipoEstadoCorte", tb => tb.HasTrigger("trg_TipoEstadoCorte_UpdateFechaModificacion"));
+            entity.Property(e => e.Descripcion).HasMaxLength(50).IsUnicode(false);
+            entity.Property(e => e.Color).HasMaxLength(20).IsUnicode(false);
+            entity.Property(e => e.Estatus).HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
+            entity.HasOne(d => d.IdUsuarioCreaNavigation).WithMany().HasForeignKey(d => d.IdUsuarioCrea).HasConstraintName("FK_TipoEstadoCorte_UsuarioCrea");
+        });
+
+        modelBuilder.Entity<TipoEstadoPermiso>(entity =>
+        {
+            entity.ToTable("TipoEstadoPermiso", tb => tb.HasTrigger("trg_TipoEstadoPermiso_UpdateFechaModificacion"));
+            entity.Property(e => e.Descripcion).HasMaxLength(50).IsUnicode(false);
+            entity.Property(e => e.Color).HasMaxLength(20).IsUnicode(false);
+            entity.Property(e => e.Estatus).HasDefaultValue(true);
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
+            entity.HasOne(d => d.IdUsuarioCreaNavigation).WithMany().HasForeignKey(d => d.IdUsuarioCrea).HasConstraintName("FK_TipoEstadoPermiso_UsuarioCrea");
+        });
+
         modelBuilder.Entity<TipoOrigen>(entity =>
         {
             entity.ToTable("TipoOrigen");
@@ -531,23 +564,44 @@ public partial class RecursosHumanosContext : DbContext
         {
             entity.HasKey(e => e.Id);
 
-            entity.ToTable("ResetPasswordTokens", tb => tb.HasTrigger("trg_ResetPasswordTokens_UpdateFechaModificacion"));
+            entity.ToTable("ResetPasswordToken", tb => tb.HasTrigger("trg_ResetPasswordToken_UpdateFechaModificacion"));
 
             entity.Property(e => e.Selector)
-                .HasMaxLength(255)
+                .HasMaxLength(20)
                 .IsUnicode(false);
             entity.Property(e => e.TokenHash)
-                .HasMaxLength(255)
+                .HasMaxLength(64)
                 .IsUnicode(false);
             entity.Property(e => e.Estatus).HasDefaultValue(true);
             entity.Property(e => e.FechaCreacion)
                 .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FechaCaducidad)
                 .HasColumnType("datetime");
             entity.Property(e => e.FechaModificacion)
                 .HasDefaultValueSql("(NULL)")
                 .HasColumnType("datetime");
             entity.Property(e => e.Utilizado).HasDefaultValue(false);
             entity.Property(e => e.IdUsuarioModifica).HasDefaultValueSql("(NULL)");
+
+            // FK heredadas de BaseEntity
+            entity.HasOne(d => d.IdUsuarioCreaNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.IdUsuarioCrea)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ResetPasswordToken_UsuarioCrea");
+
+            entity.HasOne(d => d.IdUsuarioModificaNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.IdUsuarioModifica)
+                .HasConstraintName("FK_ResetPasswordToken_UsuarioModifica");
+
+            // FK propia de ResetPasswordToken
+            entity.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(d => d.IdUsuarioSolicita)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ResetPasswordToken_UsuarioSolicita");
         });
 
         modelBuilder.Entity<Auditoria>(entity =>

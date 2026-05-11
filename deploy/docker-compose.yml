@@ -10,7 +10,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:5011
-      - ConnectionStrings__RecursosHumanosContext=Server=sqlserver_central;Database=RecursosHumanosDB;User Id=sa;Password=Buss1ness.2026;Encrypt=False;TrustServerCertificate=True;
+      - ConnectionStrings__RecursosHumanosContext=Server=nexsmart_central_db_sql;Database=RecursosHumanosDB;User Id=sa;Password=Buss1ness.2026;Encrypt=False;TrustServerCertificate=True;
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     networks:
       - nexsmart_network

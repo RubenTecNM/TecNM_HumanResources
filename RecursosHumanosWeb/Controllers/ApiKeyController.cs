@@ -16,6 +16,7 @@ namespace RecursosHumanosWeb.Controllers
     [Authorize(Policy = "AdminOnly")]
     public class ApiKeyController : Controller
     {
+        #region FIELDS & CONSTRUCTOR
         public string Clave { get; set; }
         private readonly RecursosHumanosContext _context;
         private readonly AutoMapper.IMapper _mapper;
@@ -27,8 +28,9 @@ namespace RecursosHumanosWeb.Controllers
             _mapper = mapper;
             _configuration = configuration;
         }
+        #endregion
 
-        // GET: ApiKeys
+        #region INDEX
         // GET: ApiKeys
         public async Task<IActionResult> Index(string nombreUsuario, DateTime? delDia, DateTime? alDia)
         {
@@ -58,7 +60,9 @@ namespace RecursosHumanosWeb.Controllers
 
             return View(await query.OrderByDescending(a => a.FechaCreacion).ToListAsync());
         }
+        #endregion
 
+        #region DETAILS
         // GET: ApiKeys/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -94,9 +98,10 @@ namespace RecursosHumanosWeb.Controllers
 
             return View(apiKey);
         }
+        #endregion
 
+        #region CREATE
         // GET: ApiKeys/Create
-
         public IActionResult Create()
         {
             // CORRECCIÓN: Usamos proyección segura para evitar nulos en el SelectList
@@ -242,30 +247,9 @@ namespace RecursosHumanosWeb.Controllers
                 }
             }
         }
+        #endregion
 
-        [HttpGet]
-        public async Task<JsonResult> GetUsuariosParaBusqueda(string term)
-        {
-            // Si no hay término de búsqueda, devolvemos una lista vacía o los primeros 10.
-            if (string.IsNullOrWhiteSpace(term))
-            {
-                term = string.Empty;
-            }
-
-            var usuarios = await _context.Usuarios
-                .Where(u => u.Nombre.Contains(term) || u.Correo.Contains(term))
-                .OrderBy(u => u.Nombre)
-                .Take(_configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize")) // Limitar resultados para eficiencia
-                .Select(u => new
-                {
-                    id = u.Id,
-                    text = u.Nombre ?? u.Correo
-                })
-                .ToListAsync();
-
-            return Json(new { results = usuarios });
-        }
-
+        #region EDIT
         // GET: ApiKeys/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -431,7 +415,9 @@ namespace RecursosHumanosWeb.Controllers
                 }
             }
         }
+        #endregion
 
+        #region DELETE
         // GET: ApiKeys/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -527,10 +513,36 @@ namespace RecursosHumanosWeb.Controllers
                 return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = $"Ocurrió un error al inactivar: {ex.Message}", Icon = "error" });
             }
         }
+        #endregion
+
+        #region AJAX & HELPERS
+        [HttpGet]
+        public async Task<JsonResult> GetUsuariosParaBusqueda(string term)
+        {
+            // Si no hay término de búsqueda, devolvemos una lista vacía o los primeros 10.
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                term = string.Empty;
+            }
+
+            var usuarios = await _context.Usuarios
+                .Where(u => u.Nombre.Contains(term) || u.Correo.Contains(term))
+                .OrderBy(u => u.Nombre)
+                .Take(_configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize")) // Limitar resultados para eficiencia
+                .Select(u => new
+                {
+                    id = u.Id,
+                    text = u.Nombre ?? u.Correo
+                })
+                .ToListAsync();
+
+            return Json(new { results = usuarios });
+        }
 
         private bool ApiKeyExists(int id)
         {
             return _context.ApiKeys.Any(e => e.Id == id);
         }
+        #endregion
     }
 }

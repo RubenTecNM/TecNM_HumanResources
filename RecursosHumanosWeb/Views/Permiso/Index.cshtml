@@ -1,4 +1,4 @@
-﻿@using X.PagedList.Mvc.Core
+@using X.PagedList.Mvc.Core
 @model RecursosHumanosWeb.Models.ViewModels.SearchPermissionsViewModel
 
 @{
@@ -144,9 +144,9 @@
                                     <span class="info-pill-sm" style="background: rgba(100, 116, 139, 0.1); color: #64748b;">
                                         #@item.Id
                                     </span>
-                                    <span class="info-pill-sm" style="@(item.Revisado ? "background: rgba(16, 185, 129, 0.1); color: #059669;" : "background: rgba(245, 158, 11, 0.1); color: #d97706;")">
-                                        <i class="fas @(item.Revisado ? "fa-check-circle" : "fa-clock") me-1"></i>
-                                        @(item.Revisado ? "Revisado" : "Pendiente")
+                                    <span class="badge rounded-pill bg-@item.EstadoColor">
+                                        <i class="fas @(item.IdEstadoPermiso == 1 ? "fa-clock" : (item.IdEstadoPermiso == 2 ? "fa-check-circle" : (item.IdEstadoPermiso == 4 ? "fa-times-circle" : "fa-ban"))) me-1"></i>
+                                        @item.EstadoDescripcion
                                     </span>
                                 </div>
                             </div>
@@ -176,12 +176,13 @@
                                 @{
                                     bool isOwner = item.IdUsuarioSolicita == currentUserId;
                                     bool inActiveCourt = item.IdCorte == currentCourtId;
-                                    bool canEdit = (isAdministrador || isRH || isOwner) && inActiveCourt && !isAutorizador;
-                                    bool canDelete = (isAdministrador || isRH || isOwner) && (!item.Revisado || inActiveCourt) && !isAutorizador;
+                                    bool isPending = item.IdEstadoPermiso == 1; // 1 = Pendiente
+                                    bool canEdit = (isAdministrador || isRH || isOwner) && inActiveCourt && isPending && !isAutorizador;
+                                    bool canDelete = (isAdministrador || isRH || isOwner) && (isPending || inActiveCourt) && !isAutorizador;
                                 }
 
                                 <authorize-section policy="AutorizadorOnly">
-                                    @if (!item.Revisado && inActiveCourt)
+                                    @if (item.IdEstadoPermiso == 1 && inActiveCourt)
                                     {
                                         <div style="grid-column: span 3;">
                                             <a asp-action="Review" asp-route-id="@item.Id" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">
@@ -252,9 +253,9 @@
                                     <tr>
                                         <td class="text-center" data-label="ID">@item.Id</td>
                                         <td data-label="Solicitante"><strong>@(item.Nombre ?? "-")</strong></td>
-                                        <td class="text-center" data-label="Revisado">
-                                            <span class="badge-soft @(item.Revisado ? "badge-success-soft" : "badge-danger-soft")">
-                                                @(item.Revisado ? "Sí" : "No")
+                                        <td class="text-center" data-label="Estado">
+                                            <span class="badge rounded-pill bg-@item.EstadoColor">
+                                                @item.EstadoDescripcion
                                             </span>
                                         </td>
                                         <td class="text-center" data-label="Creación">
@@ -289,7 +290,7 @@
                                                 @* LÓGICA DE BOTONES SEGÚN ROL Y ESTADO *@
                                                 
                                                 <authorize-section policy="AutorizadorOnly">
-                                                    @if (!item.Revisado)
+                                                    @if (item.IdEstadoPermiso == 1)
                                                     {
                                                         <a asp-action="Review" asp-route-id="@item.Id" class="action-btn btn-approve" title="Revisar y autorizar permiso" aria-label="Revisar permiso" style="background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);">
                                                             <i class="fas fa-user-check"></i>
@@ -298,11 +299,12 @@
                                                 </authorize-section>
                                                  <authorize-section policy="!AutorizadorOnly">
                                                     @{
-                                                        bool isOwnerDesktop = item.IdUsuarioSolicita == currentUserId;
-                                                        bool inActiveCourtDesktop = item.IdCorte == currentCourtId;
-                                                        bool canEditDesktop = (isAdministrador || isRH || isOwnerDesktop) && inActiveCourtDesktop && !isAutorizador;
-                                                        bool canDeleteDesktop = (isAdministrador || isRH || isOwnerDesktop) && (!item.Revisado || inActiveCourtDesktop) && !isAutorizador;
-                                                    }
+                                                         bool isOwnerDesktop = item.IdUsuarioSolicita == currentUserId;
+                                                         bool inActiveCourtDesktop = item.IdCorte == currentCourtId;
+                                                         bool isPendingDesktop = item.IdEstadoPermiso == 1;
+                                                         bool canEditDesktop = (isAdministrador || isRH || isOwnerDesktop) && inActiveCourtDesktop && isPendingDesktop && !isAutorizador;
+                                                         bool canDeleteDesktop = (isAdministrador || isRH || isOwnerDesktop) && (isPendingDesktop || inActiveCourtDesktop) && !isAutorizador;
+                                                     }
 
                                                     @if (canEditDesktop)
                                                     {
@@ -346,7 +348,7 @@
                                 <tr>
                                     <th class="text-center">ID</th>
                                     <th class="text-center">Solicitante</th>
-                                    <th class="text-center">Revisado</th>
+                                    <th class="text-center">Estado</th>
                                     <th class="text-center">Creación</th>
                                     <th class="text-center">Modificación</th>
                                     <th class="text-center">Acciones</th>

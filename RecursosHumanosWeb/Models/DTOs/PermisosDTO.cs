@@ -1,4 +1,4 @@
-﻿namespace RecursosHumanosWeb.Models.DTOs
+namespace RecursosHumanosWeb.Models.DTOs
 {
     public class PermisosDTO
     {
@@ -20,7 +20,9 @@
 
         public DateTime? FechaModificacion { get; set; }
 
-        public bool Revisado { get; set; }
+        public int IdEstadoPermiso { get; set; }
+        public string EstadoDescripcion { get; set; }
+        public string EstadoColor { get; set; }
 
         public bool Goce { get; set; }
 

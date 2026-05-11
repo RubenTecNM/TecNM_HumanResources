@@ -1,35 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RecursosHumanosWeb.Models;
 
-public partial class ApiPermisosApiKeysTabla
+[Table("ApiPermisosApiKeysTabla")]
+public partial class ApiPermisosApiKeysTabla : BaseEntity
 {
-    public int Id { get; set; }
+    // ──────────────────────────────────────────────────────────────
+    // LLAVES FORÁNEAS
+    // ──────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// FK → ApiKey. Asocia esta entrada con una clave de API específica.
+    /// </summary>
+    [Required]
     public int IdApiKey { get; set; }
 
+    /// <summary>
+    /// FK → ApiPermiso. Tipo de permiso concedido por esta clave.
+    /// </summary>
+    [Required]
     public int IdApiPermiso { get; set; }
 
+    /// <summary>
+    /// FK → Tabla. Tabla de la DB sobre la que aplica el permiso.
+    /// </summary>
+    [Required]
     public int IdTabla { get; set; }
 
-    public DateTime FechaCreacion { get; set; }
-
-    public DateTime? FechaModificacion { get; set; }
-
-    public bool Estatus { get; set; }
-
-    public int IdUsuarioCrea { get; set; }
-
-    public int? IdUsuarioModifica { get; set; }
-
+    // ──────────────────────────────────────────────────────────────
+    // PROPIEDADES DE NAVEGACIÓN ESPECÍFICAS
+    // ──────────────────────────────────────────────────────────────
     public virtual ApiKey IdApiKeyNavigation { get; set; } = null!;
-
     public virtual ApiPermiso IdApiPermisoNavigation { get; set; } = null!;
-
     public virtual Tabla IdTablaNavigation { get; set; } = null!;
-
-    public virtual Usuario IdUsuarioCreaNavigation { get; set; } = null!;
-
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
 }

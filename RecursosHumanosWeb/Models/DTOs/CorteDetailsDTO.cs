@@ -6,7 +6,9 @@ namespace RecursosHumanosWeb.Models.DTOs
         public int Id { get; set; }
         public DateTime? Inicia { get; set; }
         public DateTime? Termina { get; set; }
-        public bool Estatus { get; set; }
+        public int IdEstadoCorte { get; set; }
+        public string? EstadoDescripcion { get; set; }
+        public string? EstadoColor { get; set; }
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaModificacion { get; set; }
 

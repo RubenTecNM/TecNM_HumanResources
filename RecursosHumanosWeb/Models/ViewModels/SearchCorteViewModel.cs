@@ -1,4 +1,4 @@
-﻿using RecursosHumanosWeb.Models.DTOs;
+using RecursosHumanosWeb.Models.DTOs;
 using X.PagedList;
 
 namespace RecursosHumanosWeb.Models.ViewModels
@@ -11,7 +11,7 @@ namespace RecursosHumanosWeb.Models.ViewModels
         public string FechaHasta { get; set; }
         public string UsuarioCreadorFilter { get; set; }
         public string CorreoCreadorFilter { get; set; }
-        public string StatusFilter { get; set; }
+        public int? StatusId { get; set; }
         public bool IsAdministrador { get; set; }
     }
 }

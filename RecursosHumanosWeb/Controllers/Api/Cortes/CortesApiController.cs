@@ -33,7 +33,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Cortes
                     c.Id,
                     c.Inicia,
                     c.Termina,
-                    c.Estatus
+                    c.IdEstadoCorte
                 })
                 .ToListAsync();
 
@@ -54,7 +54,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Cortes
                     c.Id,
                     c.Inicia,
                     c.Termina,
-                    c.Estatus,
+                    c.IdEstadoCorte,
                     c.FechaCreacion,
                     c.FechaModificacion,
                     CreadoPor = c.IdUsuarioCreaNavigation.Nombre,
@@ -77,7 +77,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Cortes
             var userId = HttpContext.Items["ApiUserId"] as int? ?? 1;
 
             var corte = _mapper.Map<Corte>(model);
-            corte.Estatus = true;
+            corte.IdEstadoCorte = 1; // Abierto
             corte.FechaCreacion = DateTime.Now;
             corte.FechaModificacion = DateTime.Now;
             corte.IdUsuarioCrea = userId;
@@ -121,11 +121,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Cortes
             if (corte == null) return NotFound();
 
             // Los cortes usualmente no se borran si tienen permisos, pero aquí hacemos soft delete básico
-            if (!corte.Estatus) return BadRequest("El corte ya está inactivo.");
+            if (corte.IdEstadoCorte == 2) return BadRequest("El corte ya está cerrado/inactivo.");
 
             var userId = HttpContext.Items["ApiUserId"] as int? ?? corte.IdUsuarioModifica;
 
-            corte.Estatus = false;
+            corte.IdEstadoCorte = 2; // Cerrar/Inactivar
             corte.FechaModificacion = DateTime.Now;
             corte.IdUsuarioModifica = userId;
 

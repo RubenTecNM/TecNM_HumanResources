@@ -1,4 +1,4 @@
-﻿namespace RecursosHumanosWeb.Models.DTOs
+namespace RecursosHumanosWeb.Models.DTOs
 {
     public class CortesDTO
     {
@@ -12,7 +12,9 @@
 
         public DateTime? FechaModificacion { get; set; }
 
-        public bool Estatus { get; set; }
+        public int IdEstadoCorte { get; set; }
+        public string EstadoDescripcion { get; set; }
+        public string EstadoColor { get; set; }
 
         public int IdUsuarioCrea { get; set; }
 

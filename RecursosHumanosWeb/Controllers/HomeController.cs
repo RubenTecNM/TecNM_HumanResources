@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using RecursosHumanosWeb.Models;
+using RecursosHumanosWeb.Models.ViewModels;
 
 namespace RecursosHumanosWeb.Controllers
 {

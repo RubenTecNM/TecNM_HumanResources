@@ -36,7 +36,7 @@ namespace RecursosHumanosWeb.Services
                         .Where(p => p.IdCorte == corteId &&
                                     p.IdUsuarioSolicitaNavigation.IdArea == area.Id &&
                                     p.IdTipoPermiso != 5 &&
-                                    p.Estatus != false)
+                                    p.IdEstadoPermiso != 3) // Excluyendo Invalidados
                         .Include(p => p.IdUsuarioSolicitaNavigation)
                         .Include(p => p.IdUsuarioAutorizaNavigation)
                         .Include(p => p.IdTipoPermisoNavigation)
@@ -106,7 +106,7 @@ namespace RecursosHumanosWeb.Services
                         .Where(p => p.IdCorte == corteId &&
                                     p.IdUsuarioSolicitaNavigation.IdArea == area.Id &&
                                     p.IdTipoPermiso == 5 &&
-                                    p.Estatus != false)
+                                    p.IdEstadoPermiso != 3)
                         .Include(p => p.IdUsuarioSolicitaNavigation)
                         .Include(p => p.IdUsuarioAutorizaNavigation)
                         .Include(p => p.IdTipoPermisoNavigation)
@@ -242,7 +242,7 @@ namespace RecursosHumanosWeb.Services
             if (corte == null) return (null, null);
 
             var permisos = await _context.Permisos
-                .Where(p => p.IdCorte == corteId && p.Estatus != false)
+                .Where(p => p.IdCorte == corteId && p.IdEstadoPermiso != 3)
                 .Include(p => p.IdUsuarioSolicitaNavigation)
                     .ThenInclude(u => u.IdAreaNavigation)
                 .Include(p => p.IdUsuarioAutorizaNavigation)
@@ -250,7 +250,7 @@ namespace RecursosHumanosWeb.Services
                 .ToListAsync();
 
             var csv = new StringBuilder();
-            csv.AppendLine("ID,Solicitante,Área,Tipo Permiso,Motivo,Días,Con Goce,Del Día,Al Día,Revisado,Autorizado Por,Fecha Creación");
+            csv.AppendLine("ID,Solicitante,Área,Tipo Permiso,Motivo,Días,Con Goce,Del Día,Al Día,Estado,Autorizado Por,Fecha Creación");
 
             foreach (var p in permisos)
             {
@@ -263,7 +263,7 @@ namespace RecursosHumanosWeb.Services
                     $"{(p.Goce ? "Sí" : "No")}," +
                     $"{p.Fecha1?.ToString("yyyy-MM-dd")}," +
                     $"{p.Fecha2?.ToString("yyyy-MM-dd")}," +
-                    $"{(p.Revisado ? "Sí" : "No")}," +
+                    $"{(p.IdEstadoPermiso == 2 ? "Sí" : "No")}," +
                     $"\"{p.IdUsuarioAutorizaNavigation?.Nombre}\"," +
                     $"{p.FechaCreacion.ToString("yyyy-MM-dd HH:mm")}");
             }
@@ -281,7 +281,7 @@ namespace RecursosHumanosWeb.Services
             if (corte == null) return (null, null);
 
             var permisos = await _context.Permisos
-                .Where(p => p.IdCorte == corteId && p.Estatus != false)
+                .Where(p => p.IdCorte == corteId && p.IdEstadoPermiso != 3)
                 .Include(p => p.IdUsuarioSolicitaNavigation)
                     .ThenInclude(u => u.IdAreaNavigation)
                 .Include(p => p.IdUsuarioAutorizaNavigation)
@@ -297,7 +297,7 @@ namespace RecursosHumanosWeb.Services
                     ConGoce = p.Goce,
                     DelDia = p.Fecha1,
                     AlDia = p.Fecha2,
-                    Revisado = p.Revisado,
+                    IdEstadoPermiso = p.IdEstadoPermiso,
                     AutorizadoPor = p.IdUsuarioAutorizaNavigation != null ? p.IdUsuarioAutorizaNavigation.Nombre : null,
                     FechaCreacion = p.FechaCreacion
                 })
@@ -310,14 +310,14 @@ namespace RecursosHumanosWeb.Services
                     Id = corte.Id,
                     FechaInicio = corte.Inicia,
                     FechaFin = corte.Termina,
-                    Estatus = corte.Estatus
+                    IdEstadoCorte = corte.IdEstadoCorte
                 },
                 Permisos = permisos,
                 Estadisticas = new
                 {
                     Total = permisos.Count,
-                    Aprobados = permisos.Count(p => p.Revisado ),
-                    Pendientes = permisos.Count(p => !p.Revisado),
+                    Aprobados = permisos.Count(p => p.IdEstadoPermiso == 2),
+                    Pendientes = permisos.Count(p => p.IdEstadoPermiso == 1),
                     DiasPromedio = permisos.Any() ? permisos.Average(p => p.Dias ?? 0) : 0
                 }
             };
@@ -336,7 +336,7 @@ namespace RecursosHumanosWeb.Services
             if (corte == null) return (null, null);
 
             var permisos = await _context.Permisos
-                .Where(p => p.IdCorte == corteId && p.Estatus != false)
+                .Where(p => p.IdCorte == corteId && p.IdEstadoPermiso != 3)
                 .Include(p => p.IdUsuarioSolicitaNavigation)
                     .ThenInclude(u => u.IdAreaNavigation)
                 .Include(p => p.IdUsuarioAutorizaNavigation)
@@ -352,12 +352,12 @@ namespace RecursosHumanosWeb.Services
                 xmlWriter.WriteElementString("Id", corte.Id.ToString());
                 xmlWriter.WriteElementString("FechaInicio", corte.Inicia.ToString("yyyy-MM-dd") ?? "");
                 xmlWriter.WriteElementString("FechaFin", corte.Termina.ToString("yyyy-MM-dd") ?? "");
-                xmlWriter.WriteElementString("Estatus", corte.Estatus.ToString());
+                xmlWriter.WriteElementString("IdEstadoCorte", corte.IdEstadoCorte.ToString());
 
                 xmlWriter.WriteStartElement("Estadisticas");
                 xmlWriter.WriteElementString("Total", permisos.Count.ToString());
-                xmlWriter.WriteElementString("Aprobados", permisos.Count(p => p.Revisado).ToString());
-                xmlWriter.WriteElementString("Pendientes", permisos.Count(p => !p.Revisado).ToString());
+                xmlWriter.WriteElementString("Aprobados", permisos.Count(p => p.IdEstadoPermiso == 2).ToString());
+                xmlWriter.WriteElementString("Pendientes", permisos.Count(p => p.IdEstadoPermiso == 1).ToString());
                 xmlWriter.WriteElementString("DiasPromedio", (permisos.Any() ? permisos.Average(p => p.Dias ?? 0) : 0).ToString("F2"));
                 xmlWriter.WriteEndElement(); 
 
@@ -374,7 +374,7 @@ namespace RecursosHumanosWeb.Services
                     xmlWriter.WriteElementString("ConGoce", p.Goce ? "Sí" : "No");
                     xmlWriter.WriteElementString("DelDia", p.Fecha1?.ToString("yyyy-MM-dd") ?? "");
                     xmlWriter.WriteElementString("AlDia", p.Fecha2?.ToString("yyyy-MM-dd") ?? "");
-                    xmlWriter.WriteElementString("Revisado", p.Revisado ? "Sí" : "No");
+                    xmlWriter.WriteElementString("Estado", p.IdEstadoPermiso == 2 ? "Sí" : "No");
                     xmlWriter.WriteElementString("AutorizadoPor", p.IdUsuarioAutorizaNavigation?.Nombre ?? "");
                     xmlWriter.WriteElementString("FechaCreacion", p.FechaCreacion.ToString("yyyy-MM-dd HH:mm") ?? "");
                     xmlWriter.WriteEndElement(); 

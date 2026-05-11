@@ -1,4 +1,4 @@
-﻿@model RecursosHumanosWeb.Models.DTOs.CorteDetailsDTO
+@model RecursosHumanosWeb.Models.DTOs.CorteDetailsDTO
 
 @{
     ViewData["Title"] = "Detalles del Periodo";
@@ -24,10 +24,9 @@
                         </p>
                     </div>
                 </div>
-              <div class="status-glass rounded-pill shadow-sm">
-                    <span class="status-dot @(Model.Estatus ? "dot-active" : "dot-closed")"></span>
-                    <span class="small text-uppercase">
-                        @(Model.Estatus ? "Periodo Activo" : "Periodo Cerrado")
+                <div class="status-glass rounded-pill shadow-sm px-3 py-1" style="background: @(Model.EstadoColor ?? "#64748b"); color: white;">
+                    <span class="small text-uppercase fw-bold">
+                        @(Model.EstadoDescripcion ?? "Sin Estado")
                     </span>
                 </div>
             </div>

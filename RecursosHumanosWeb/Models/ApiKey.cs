@@ -1,27 +1,21 @@
-﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RecursosHumanosWeb.Models;
 
-public partial class ApiKey
+[Table("ApiKey")]
+public partial class ApiKey : BaseEntity
 {
-    public int Id { get; set; }
-
+    /// <summary>
+    /// Clave de autenticación de la API. SHA-256 produce exactamente 64 caracteres hexadecimales.
+    /// </summary>
+    [Required(ErrorMessage = "La clave de API es obligatoria.")]
+    [StringLength(64, MinimumLength = 64, ErrorMessage = "La clave debe ser un hash SHA-256 de exactamente 64 caracteres.")]
     public string Clave { get; set; } = null!;
 
-    public DateTime FechaCreacion { get; set; }
-
-    public DateTime? FechaModificacion { get; set; }
-
-    public bool Estatus { get; set; }
-
-    public int IdUsuarioCrea { get; set; }
-
-    public int? IdUsuarioModifica { get; set; }
-
+    // ──────────────────────────────────────────────────────────────
+    // COLECCIONES
+    // ──────────────────────────────────────────────────────────────
     public virtual ICollection<ApiPermisosApiKeysTabla> ApiPermisosApiKeysTablas { get; set; } = new List<ApiPermisosApiKeysTabla>();
-
-    public virtual Usuario IdUsuarioCreaNavigation { get; set; } = null!;
-
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
 }

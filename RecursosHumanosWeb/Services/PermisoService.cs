@@ -34,7 +34,7 @@ namespace RecursosHumanosWeb.Services
             var query = _context.Permisos
                 .Include(p => p.IdUsuarioSolicitaNavigation)
                 .Include(p => p.IdTipoPermisoNavigation)
-                .Where(p => p.Estatus)
+                .Where(p => p.IdEstadoPermiso != 3)
                 .AsQueryable();
 
             // Restricciones por tipo de usuario (Seguridad y Reglas de Negocio)
@@ -45,14 +45,14 @@ namespace RecursosHumanosWeb.Services
             else if (user.IdTipoUsuario == (int)TipoUsuarioEnum.Autorizador)
             {
                 var currentCourtId = await _context.Cortes
-                    .Where(c => c.Estatus)
+                    .Where(c => c.IdEstadoCorte == (int)CorteEstadoEnum.Abierto)
                     .OrderByDescending(c => c.Id)
                     .Select(c => c.Id)
                     .FirstOrDefaultAsync();
 
                 // Regla: Propios de cualquier corte O (De su área EN corte activo Y que aún no estén revisados)
                 query = query.Where(p => p.IdUsuarioSolicita == userId || 
-                                       (p.IdUsuarioSolicitaNavigation.IdArea == user.IdArea && p.IdCorte == currentCourtId && !p.Revisado));
+                                       (p.IdUsuarioSolicitaNavigation.IdArea == user.IdArea && p.IdCorte == currentCourtId && p.IdEstadoPermiso == (int)PermisoEstadoEnum.Pendiente));
             }
             else
             {
@@ -62,7 +62,12 @@ namespace RecursosHumanosWeb.Services
 
             // Filtros manuales del panel de búsqueda
             if (revisado.HasValue)
-                query = query.Where(p => p.Revisado == revisado.Value);
+            {
+                if (revisado.Value)
+                    query = query.Where(p => p.IdEstadoPermiso != (int)PermisoEstadoEnum.Pendiente);
+                else
+                    query = query.Where(p => p.IdEstadoPermiso == (int)PermisoEstadoEnum.Pendiente);
+            }
             if (!string.IsNullOrEmpty(nombreUsuario))
                 query = query.Where(p => p.IdUsuarioSolicitaNavigation.Nombre.Contains(nombreUsuario));
 
@@ -87,7 +92,7 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<object> GetStatsAsync(int userId, int userType)
         {
-            IQueryable<Permiso> query = _context.Permisos.Where(p => p.Estatus);
+            IQueryable<Permiso> query = _context.Permisos.Where(p => p.IdEstadoPermiso != 3);
 
             if (userType != (int)TipoUsuarioEnum.Administrador && userType != (int)TipoUsuarioEnum.RecursosHumanos)
             {
@@ -99,8 +104,8 @@ namespace RecursosHumanosWeb.Services
               .Select(g => new
               {
                   Total = g.Count(),
-                  Pendientes = g.Count(p => !p.Revisado),
-                  Aprobados = g.Count(p => p.Revisado),
+                  Pendientes = g.Count(p => p.IdEstadoPermiso == (int)PermisoEstadoEnum.Pendiente),
+                  Aprobados = g.Count(p => p.IdEstadoPermiso == (int)PermisoEstadoEnum.Aprobado),
                   ConGoce = g.Count(p => p.Goce),
                   SinGoce = g.Count(p => !p.Goce),
                   EsteMes = g.Count(p => p.FechaCreacion.Month == DateTime.Now.Month && p.FechaCreacion.Year == DateTime.Now.Year)
@@ -117,19 +122,24 @@ namespace RecursosHumanosWeb.Services
                 throw new InvalidOperationException("Los jefes de área no pueden crear solicitudes de permiso para asegurar la imparcialidad del proceso.");
 
             var corteActivo = await _context.Cortes
-                .Where(c => c.Estatus)
+                .Where(c => c.IdEstadoCorte == (int)CorteEstadoEnum.Abierto)
                 .OrderByDescending(c => c.Id)
                 .FirstOrDefaultAsync();
 
             if (corteActivo == null) throw new InvalidOperationException("No se encontró un corte activo.");
+
+            // Validación de fechas contra el periodo del corte
+            if (permiso.Fecha1 < corteActivo.Inicia || (permiso.Fecha2.HasValue && permiso.Fecha2 > corteActivo.Termina))
+            {
+                throw new InvalidOperationException($"Las fechas del permiso ({permiso.Fecha1:yyyy-MM-dd} - {permiso.Fecha2:yyyy-MM-dd}) deben estar dentro del periodo del corte activo ({corteActivo.Inicia:yyyy-MM-dd} - {corteActivo.Termina:yyyy-MM-dd}).");
+            }
 
             permiso.IdCorte = corteActivo.Id;
             permiso.IdUsuarioCrea = idUsuarioCrea;
             permiso.IdUsuarioModifica = idUsuarioCrea;
             permiso.FechaCreacion = DateTime.Now;
             permiso.FechaModificacion = DateTime.Now;
-            permiso.Estatus = true;
-            permiso.Revisado = false;
+            permiso.IdEstadoPermiso = (int)PermisoEstadoEnum.Pendiente;
 
             _context.Permisos.Add(permiso);
             await _context.SaveChangesAsync();
@@ -149,7 +159,7 @@ namespace RecursosHumanosWeb.Services
             if (existing == null) return false;
             
             // Reglas de negocio
-            if (existing.Revisado || (existing.IdCorteNavigation != null && !existing.IdCorteNavigation.Estatus))
+            if (existing.IdEstadoPermiso != (int)PermisoEstadoEnum.Pendiente || (existing.IdCorteNavigation != null && existing.IdCorteNavigation.IdEstadoCorte != (int)CorteEstadoEnum.Abierto))
                 return false;
 
             int originalCorteId = existing.IdCorte;
@@ -165,7 +175,7 @@ namespace RecursosHumanosWeb.Services
             existing.IdCorte = originalCorteId; // Preservar el periodo original
             existing.IdUsuarioModifica = idUsuarioModifica;
             existing.FechaModificacion = DateTime.Now;
-            existing.Revisado = false; // Reset revision on update
+            existing.IdEstadoPermiso = (int)PermisoEstadoEnum.Pendiente; // Reset revision on update
 
             _context.Update(existing);
             return await _context.SaveChangesAsync() > 0;
@@ -176,7 +186,7 @@ namespace RecursosHumanosWeb.Services
             var permiso = await _context.Permisos.FindAsync(id);
             if (permiso == null) return false;
 
-            permiso.Estatus = false;
+            permiso.IdEstadoPermiso = (int)PermisoEstadoEnum.InvalidadoPorPeriodo;
             permiso.IdUsuarioModifica = idUsuarioModifica;
             permiso.FechaModificacion = DateTime.Now;
 
@@ -189,7 +199,7 @@ namespace RecursosHumanosWeb.Services
             var permiso = await _context.Permisos.FindAsync(id);
             if (permiso == null) return false;
 
-            permiso.Revisado = true;
+            permiso.IdEstadoPermiso = aprobado ? (int)PermisoEstadoEnum.Aprobado : (int)PermisoEstadoEnum.Rechazado;
             permiso.Goce = aprobado;
             permiso.IdUsuarioAutoriza = idUsuarioAutoriza;
             permiso.FechaAutorizacion = DateTime.Now;

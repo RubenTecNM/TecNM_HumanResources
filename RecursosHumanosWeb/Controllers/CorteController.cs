@@ -47,16 +47,18 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int? pageSize = null, int? idFilter = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, bool? statusFilter = null)
+        public async Task<IActionResult> Index(int page = 1, int? pageSize = null, int? idFilter = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, int? statusId = null)
         {
             int defaultPageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
             int maxPageSize = _configuration.GetValue<int>("BusinessRules:Pagination:MaxPageSize");
             
             int actualPageSize = pageSize ?? defaultPageSize;
-            // Borrado lógico: Por defecto solo mostrar activos si no se especifica filtro en la URL
-            if (!HttpContext.Request.Query.ContainsKey("statusFilter"))
+            
+            // Mapeo categórico: Por defecto mostrar todos o filtrar por ID de estado
+            int? statusIdFilter = null;
+            if (statusId.HasValue)
             {
-                statusFilter = true;
+                statusIdFilter = statusId.Value;
             }
 
             // Validar parámetros de paginación
@@ -98,9 +100,9 @@ namespace RecursosHumanosWeb.Controllers
             {
                 cortesQuery = cortesQuery.Where(c => c.IdUsuarioCrea == correoCreadorFilter.Value);
             }
-            if (statusFilter.HasValue)
+            if (statusIdFilter.HasValue)
             {
-                cortesQuery = cortesQuery.Where(c => c.Estatus == statusFilter.Value);
+                cortesQuery = cortesQuery.Where(c => c.IdEstadoCorte == statusIdFilter.Value);
             }
 
             // Nota: ya no obtenemos la lista completa de usuarios aquí.
@@ -124,7 +126,7 @@ namespace RecursosHumanosWeb.Controllers
                 FechaHasta = fechaHasta?.ToString("yyyy-MM-dd")!,
                 UsuarioCreadorFilter = usuarioCreadorFilter?.ToString()!,
                 CorreoCreadorFilter = correoCreadorFilter?.ToString()!,
-                StatusFilter = statusFilter?.ToString()!,
+                StatusId = statusId,
                 IsAdministrador = isAdministrador
             };
 
@@ -134,7 +136,7 @@ namespace RecursosHumanosWeb.Controllers
             ViewBag.FechaHasta = fechaHasta;
             ViewBag.UsuarioCreadorFilter = usuarioCreadorFilter;
             ViewBag.CorreoCreadorFilter = correoCreadorFilter;
-            ViewBag.StatusFilter = statusFilter;
+            ViewBag.StatusId = statusId;
 
             if (usuarioCreadorFilter.HasValue)
             {
@@ -250,7 +252,8 @@ namespace RecursosHumanosWeb.Controllers
                 var nuevoCorte = new Corte
                 {
                     Inicia = viewModel.Inicia,
-                    Termina = viewModel.Termina
+                    Termina = viewModel.Termina,
+                    IdEstadoCorte = 1 // Abierto por defecto
                 };
 
                 var success = await _corteService.CreateCorteAsync(nuevoCorte, idUsuario);
@@ -291,7 +294,7 @@ namespace RecursosHumanosWeb.Controllers
         // POST: Cortes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Inicia,Termina,FechaCreacion,FechaModificacion,Estatus,IdUsuarioCrea,IdUsuarioModifica")] Corte corte)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Inicia,Termina,FechaCreacion,FechaModificacion,IdEstadoCorte,IdUsuarioCrea,IdUsuarioModifica")] Corte corte)
         {
             if (id != corte.Id)
             {
@@ -407,7 +410,59 @@ namespace RecursosHumanosWeb.Controllers
         }
 
 
-        // Reemplaza tu método [HttpGet] Details(int? id) existente por este:
+        // AJAX: Close Period via fetch
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CloseAjax([FromBody] ActionRequestDTO request)
+        {
+            if (request == null || request.Id <= 0)
+                return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "ID no válido.", Icon = "error" });
+
+            if (!User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.RecursosHumanos).ToString()) && 
+                !User.HasClaim("TipoUsuario", ((int)TipoUsuarioEnum.Administrador).ToString()))
+            {
+                return Json(new AlertResponseDTO { Success = false, Title = "Acceso denegado", Message = "No tiene permisos para cerrar periodos.", Icon = "error" });
+            }
+
+            var corte = await _context.Cortes.FindAsync(request.Id);
+            if (corte == null)
+                return Json(new AlertResponseDTO { Success = false, Title = "No encontrado", Message = "Periodo no encontrado.", Icon = "error" });
+
+            if (corte.IdEstadoCorte != (int)CorteEstadoEnum.Abierto)
+                return Json(new AlertResponseDTO { Success = false, Title = "Estado inválido", Message = "Solo se pueden cerrar periodos que estén Abiertos.", Icon = "warning" });
+
+            if (!request.Confirmed)
+            {
+                // Verificar si hay permisos pendientes para advertir
+                bool tienePendientes = await _corteService.HasPendingPermissionsAsync(request.Id);
+                string extraWarning = tienePendientes 
+                    ? "<br><br><div class='alert alert-danger py-2 small'><i class='fas fa-exclamation-triangle me-1'></i> <strong>¡Atención!</strong> Hay permisos pendientes que serán <strong>RECHAZADOS</strong> automáticamente al cerrar.</div>" 
+                    : "";
+
+                return Json(new AlertResponseDTO
+                {
+                    ShowConfirmation = true,
+                    Title = "¿Cerrar Periodo de Corte?",
+                    Message = $"¿Estás seguro de que deseas finalizar oficialmente el periodo que termina el **{corte.Termina.ToString("dd/MM/yyyy")}**?{extraWarning}",
+                    Icon = "warning",
+                    ConfirmButtonText = "Sí, cerrar periodo",
+                    CancelButtonText = "Cancelar"
+                });
+            }
+
+            int idUsuario = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var success = await _corteService.CloseCorteAsync(request.Id, idUsuario);
+
+            if (success)
+            {
+                _logger.LogInformation("Usuario {IdUsuario} cerró manualmente el periodo {CorteId}", idUsuario, request.Id);
+                return Json(new AlertResponseDTO { Success = true, Title = "Periodo Finalizado", Message = "El periodo ha sido cerrado y los permisos pendientes han sido procesados.", Icon = "success", RedirectUrl = "/Corte/Index" });
+            }
+            else
+            {
+                return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "Ocurrió un error al intentar cerrar el periodo.", Icon = "error" });
+            }
+        }
 
        [HttpGet]
         public async Task<IActionResult> Details(int? id)
@@ -424,7 +479,7 @@ namespace RecursosHumanosWeb.Controllers
 
             // 2. Obtener los permisos activos para las estadísticas
             var permisos = await _context.Permisos
-                .Where(p => p.IdCorte == id && p.Estatus != false)
+                .Where(p => p.IdCorte == id && p.IdEstadoPermiso != 3) // Excluyendo Invalidados
                 .Include(p => p.IdTipoPermisoNavigation)
                 .Include(p => p.IdUsuarioSolicitaNavigation)
                     .ThenInclude(u => u.IdAreaNavigation)
@@ -458,8 +513,8 @@ namespace RecursosHumanosWeb.Controllers
                 .Select(g => new {
                     Month = g.Key ?? "S/F",
                     Total = g.Count(),
-                    Aprobados = g.Count(x => x.Goce == true),
-                    Pendientes = g.Count(x => x.Goce != true)
+                    Aprobados = g.Count(x => x.IdEstadoPermiso == 2),
+                    Pendientes = g.Count(x => x.IdEstadoPermiso == 1)
                 }).ToList();
 
             var heatmap = permisos
@@ -476,7 +531,9 @@ namespace RecursosHumanosWeb.Controllers
                 Id = corte.Id,
                 Inicia = corte.Inicia,
                 Termina = corte.Termina,
-                Estatus = corte.Estatus,
+                IdEstadoCorte = corte.IdEstadoCorte,
+                EstadoDescripcion = corte.IdEstadoCorteNavigation?.Descripcion,
+                EstadoColor = corte.IdEstadoCorteNavigation?.Color,
                 UsuarioCrea = corte.IdUsuarioCreaNavigation?.Nombre ?? "Sistema",
                 UsuarioModifica = corte.IdUsuarioModificaNavigation?.Nombre,
                 TotalPermisos = permisos.Count,

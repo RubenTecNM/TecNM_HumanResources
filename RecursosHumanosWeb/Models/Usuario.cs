@@ -1,60 +1,91 @@
-﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RecursosHumanosWeb.Models;
 
-public partial class Usuario
+[Table("Usuario")]
+public partial class Usuario : BaseEntity
 {
-    public int Id { get; set; }
+    // ──────────────────────────────────────────────────────────────
+    // INFORMACIÓN PERSONAL Y DE ACCESO
+    // ──────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Nombre completo del empleado. Máximo 50 caracteres.
+    /// </summary>
+    [Required(ErrorMessage = "El nombre es obligatorio.")]
+    [StringLength(50, ErrorMessage = "El nombre no puede superar los 50 caracteres.")]
     public string Nombre { get; set; } = null!;
 
+    /// <summary>
+    /// Correo electrónico. Se usa como nombre de usuario de inicio de sesión.
+    /// Debe ser único en la base de datos.
+    /// </summary>
+    [Required(ErrorMessage = "El correo electrónico es obligatorio.")]
+    [StringLength(100, ErrorMessage = "El correo no puede superar los 100 caracteres.")]
+    [EmailAddress(ErrorMessage = "El formato del correo electrónico no es válido.")]
     public string Correo { get; set; } = null!;
 
+    /// <summary>
+    /// Contraseña almacenada como hash SHA-256.
+    /// SHA-256 produce siempre exactamente 64 caracteres hexadecimales.
+    /// </summary>
+    [Required(ErrorMessage = "La clave es obligatoria.")]
+    [StringLength(64, MinimumLength = 64, ErrorMessage = "La clave debe ser un hash SHA-256 de exactamente 64 caracteres.")]
     public string Clave { get; set; } = null!;
 
-    public DateTime FechaCreacion { get; set; }
+    // ──────────────────────────────────────────────────────────────
+    // POSICIÓN ORGANIZACIONAL - LLAVES FORÁNEAS
+    // ──────────────────────────────────────────────────────────────
 
-    public DateTime? FechaModificacion { get; set; }
-
-    public bool Estatus { get; set; }
-
+    /// <summary>
+    /// FK → TipoUsuario. Rol del usuario en el sistema.
+    /// </summary>
+    [Required]
     public int IdTipoUsuario { get; set; }
 
+    /// <summary>
+    /// FK → Area. Área organizacional a la que pertenece el usuario.
+    /// </summary>
+    [Required]
     public int IdArea { get; set; }
 
+    /// <summary>
+    /// FK → Departamento. Departamento al que pertenece el usuario.
+    /// </summary>
+    [Required]
     public int IdDepartamento { get; set; }
 
+    /// <summary>
+    /// FK → Puesto. Puesto o cargo del usuario.
+    /// </summary>
+    [Required]
     public int IdPuesto { get; set; }
 
-    public int IdUsuarioCrea { get; set; }
-
-    public int? IdUsuarioModifica { get; set; }
-
+    /// <summary>
+    /// FK → ApiKey (opcional). Clave de API asignada al usuario para acceso programático.
+    /// </summary>
     public int? IdApiKey { get; set; }
 
-    // ==========================================
-    // PROPIEDADES DE NAVEGACIÓN (CORREGIDAS)
-    // ==========================================
-    // El '?' permite que Entity Framework maneje los ciclos del ID 1 
-    // y los valores NULL del ID 2 sin lanzar excepciones.
-
+    // ──────────────────────────────────────────────────────────────
+    // PROPIEDADES DE NAVEGACIÓN ESPECÍFICAS
+    // (La herencia de BaseEntity ya provee IdUsuarioCreaNavigation e IdUsuarioModificaNavigation,
+    //  pero Usuario se auto-referencia, así que los sobrescribimos de forma nullable.)
+    // ──────────────────────────────────────────────────────────────
     public virtual Area? IdAreaNavigation { get; set; }
-
     public virtual Departamento? IdDepartamentoNavigation { get; set; }
-
     public virtual Puesto? IdPuestoNavigation { get; set; }
-
     public virtual TipoUsuario? IdTipoUsuarioNavigation { get; set; }
 
-    public virtual Usuario? IdUsuarioCreaNavigation { get; set; }
+    // Auto-referencia: El creador/modificador también es un Usuario.
+    // Se usa '?' para evitar ciclos de dependencia al cargar el Id=1 (root).
+    public new virtual Usuario? IdUsuarioCreaNavigation { get; set; }
+    public new virtual Usuario? IdUsuarioModificaNavigation { get; set; }
 
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
-
-    // ==========================================
-    // COLECCIONES DE RELACIONES
-    // ==========================================
-
+    // ──────────────────────────────────────────────────────────────
+    // COLECCIONES DE REGISTROS DONDE ESTE USUARIO ES AUDITOR
+    // ──────────────────────────────────────────────────────────────
     public virtual ICollection<ApiFunction> ApiFunctionIdUsuarioCreaNavigations { get; set; } = new List<ApiFunction>();
     public virtual ICollection<ApiFunction>? ApiFunctionIdUsuarioModificaNavigations { get; set; }
 
@@ -76,6 +107,7 @@ public partial class Usuario
     public virtual ICollection<Departamento> DepartamentoIdUsuarioCreaNavigations { get; set; } = new List<Departamento>();
     public virtual ICollection<Departamento>? DepartamentoIdUsuarioModificaNavigations { get; set; }
 
+    // Colección inversa de la auto-referencia de auditoría
     public virtual ICollection<Usuario> InverseIdUsuarioCreaNavigation { get; set; } = new List<Usuario>();
     public virtual ICollection<Usuario>? InverseIdUsuarioModificaNavigation { get; set; }
 

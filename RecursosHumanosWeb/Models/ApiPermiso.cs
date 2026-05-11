@@ -1,27 +1,20 @@
-﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RecursosHumanosWeb.Models;
 
-public partial class ApiPermiso
+[Table("ApiPermiso")]
+public partial class ApiPermiso : BaseEntity
 {
-    public int Id { get; set; }
-
+    /// <summary>
+    /// Descripción del permiso de API (lectura, escritura, etc.). Máximo 50 caracteres. Opcional.
+    /// </summary>
+    [StringLength(50, ErrorMessage = "La descripción no puede superar los 50 caracteres.")]
     public string? Descripcion { get; set; }
 
-    public DateTime FechaCreacion { get; set; }
-
-    public DateTime? FechaModificacion { get; set; }
-
-    public bool Estatus { get; set; }
-
-    public int IdUsuarioCrea { get; set; }
-
-    public int? IdUsuarioModifica { get; set; }
-
+    // ──────────────────────────────────────────────────────────────
+    // COLECCIONES
+    // ──────────────────────────────────────────────────────────────
     public virtual ICollection<ApiPermisosApiKeysTabla> ApiPermisosApiKeysTablas { get; set; } = new List<ApiPermisosApiKeysTabla>();
-
-    public virtual Usuario IdUsuarioCreaNavigation { get; set; } = null!;
-
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
 }

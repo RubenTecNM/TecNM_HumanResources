@@ -3,8 +3,12 @@ using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Models.DTOs;
 
-namespace RecursosHumanosWeb.Controllers
+namespace RecursosHumanosWeb.Controllers.Api
 {
+    /// <summary>
+    /// Controlador de pruebas para validar casos de negocio durante desarrollo.
+    /// Solo debe estar activo en entornos de Development.
+    /// </summary>
     [ApiController]
     [Route("Test")]
     public class TestController : ControllerBase
@@ -21,7 +25,7 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> RunCase(int @case = 1, bool confirmed = false)
         {
             // Buscar corte activo
-            var corteActivo = await _context.Cortes.Where(c => c.Estatus).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
+            var corteActivo = await _context.Cortes.Where(c => c.IdEstadoCorte == 1).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
             if (corteActivo == null)
                 return BadRequest(new AlertResponseDTO { Success = false, Title = "Error de Corte", Message = "No se encontró un corte activo." });
 
@@ -37,7 +41,7 @@ namespace RecursosHumanosWeb.Controllers
                 if (fecha1 < corteActivo.Inicia)
                 {
                     var dto = new AlertResponseDTO { Success = false, Title = "Error de Validación", Message = "La fecha y hora de inicio debe estar dentro del periodo del corte vigente." };
-                    dto.Errors = new System.Collections.Generic.Dictionary<string, string[]>{{"Fecha1", new[]{"La fecha y hora de inicio debe estar dentro del periodo del corte vigente."}}};
+                    dto.Errors = new System.Collections.Generic.Dictionary<string, string[]> { { "Fecha1", new[] { "La fecha y hora de inicio debe estar dentro del periodo del corte vigente." } } };
                     return Ok(dto);
                 }
             }
@@ -72,16 +76,13 @@ namespace RecursosHumanosWeb.Controllers
                         IdTipoPermiso = 2,
                         IdUsuarioSolicita = usuario.Id,
                         IdUsuarioCrea = usuario.Id,
-                        IdUsuarioModifica = usuario.Id,
                         FechaCreacion = DateTime.Now,
-                        FechaModificacion = DateTime.Now,
-                        Estatus = true,
-                        Revisado = false,
+                        IdEstadoPermiso = 1,
                         Goce = false
                     };
                     _context.Permisos.Add(permiso);
                     await _context.SaveChangesAsync();
-                    return Ok(new AlertResponseDTO("Permiso", $"Permiso creado (ID: {permiso.Id})") );
+                    return Ok(new AlertResponseDTO("Permiso", $"Permiso creado (ID: {permiso.Id})"));
                 }
             }
 
@@ -100,11 +101,8 @@ namespace RecursosHumanosWeb.Controllers
                     IdTipoPermiso = 2,
                     IdUsuarioSolicita = usuario.Id,
                     IdUsuarioCrea = usuario.Id,
-                    IdUsuarioModifica = usuario.Id,
                     FechaCreacion = DateTime.Now,
-                    FechaModificacion = DateTime.Now,
-                    Estatus = true,
-                    Revisado = false,
+                    IdEstadoPermiso = 1,
                     Goce = false
                 };
                 _context.Permisos.Add(permiso);

@@ -28,7 +28,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permisos
             var permisos = await _context.Permisos
                 .Include(p => p.IdUsuarioSolicitaNavigation)
                 .Include(p => p.IdTipoPermisoNavigation)
-                .Where(p => p.Estatus == true)
+                .Where(p => p.IdEstadoPermiso != 3)
                 .OrderByDescending(p => p.FechaCreacion)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -40,7 +40,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permisos
                     p.Fecha1,
                     p.Fecha2,
                     p.Motivo,
-                    p.Revisado,
+                    p.IdEstadoPermiso,
                     p.Goce
                 })
                 .ToListAsync();
@@ -71,7 +71,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permisos
                 permiso.Fecha2,
                 permiso.Motivo,
                 permiso.Evidencia, // URL relativa
-                permiso.Revisado,
+                Estado = permiso.IdEstadoPermiso,
                 permiso.Goce,
                 permiso.FechaCreacion,
                 Corte = permiso.IdCorteNavigation.Inicia.ToString("yyyy-MM-dd") + " - " + permiso.IdCorteNavigation.Termina.ToString("yyyy-MM-dd")
@@ -96,7 +96,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permisos
 
             // Encontrar Corte activo
             var corteActivo = await _context.Cortes
-                .Where(c => c.Estatus)
+                .Where(c => c.IdEstadoCorte == 1)
                 .OrderByDescending(c => c.Id)
                 .FirstOrDefaultAsync();
 
@@ -118,8 +118,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permisos
                 IdUsuarioSolicita = solicitanteId,
                 IdCorte = corteActivo.Id,
                 Goce = model.Goce,
-                Estatus = true,
-                Revisado = false,
+                IdEstadoPermiso = 1,
                 Dias = dias,
                 FechaCreacion = DateTime.Now,
                 FechaModificacion = DateTime.Now,
@@ -143,7 +142,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permisos
             var permiso = await _context.Permisos.FindAsync(id);
             if (permiso == null) return NotFound();
 
-            if (permiso.Revisado == true) return BadRequest("No se puede modificar un permiso ya revisado.");
+            if (permiso.IdEstadoPermiso != 1) return BadRequest("No se puede modificar un permiso ya revisado o invalidado.");
 
             var userId = HttpContext.Items["ApiUserId"] as int? ?? permiso.IdUsuarioModifica;
 
@@ -177,11 +176,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Permisos
             var permiso = await _context.Permisos.FindAsync(id);
             if (permiso == null) return NotFound();
 
-            if (!permiso.Estatus) return BadRequest("El permiso ya está inactivo.");
+            if (permiso.IdEstadoPermiso == 3) return BadRequest("El permiso ya está invalidado.");
 
             var userId = HttpContext.Items["ApiUserId"] as int? ?? permiso.IdUsuarioModifica;
 
-            permiso.Estatus = false;
+            permiso.IdEstadoPermiso = 3; // Invalidado
             permiso.FechaModificacion = DateTime.Now;
             permiso.IdUsuarioModifica = userId;
 

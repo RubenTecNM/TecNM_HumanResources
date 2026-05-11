@@ -12,6 +12,7 @@ using RecursosHumanosWeb.Helpers;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Logging;
+using RecursosHumanosWeb.Settings;
 
 namespace RecursosHumanosWeb.Controllers
 {
@@ -83,10 +84,7 @@ namespace RecursosHumanosWeb.Controllers
                 TokenHash = tokenHash,
                 Utilizado = false,
                 IdUsuarioSolicita = user.Id,
-                IdUsuarioCrea = null,
-                IdUsuarioModifica = null,
-                Estatus = true,
-                FechaCreacion = DateTime.Now,
+                IdUsuarioCrea = user.Id,   // BaseEntity.IdUsuarioCrea es int (no nullable); el solicitante crea su propio token
                 FechaCaducidad = DateTime.Now.Add(TokenLifetime)
             };
 

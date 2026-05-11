@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 
 namespace RecursosHumanosWeb.Models.ViewModels
@@ -11,7 +11,7 @@ namespace RecursosHumanosWeb.Models.ViewModels
         public int Id { get; set; } 
 
         [Display(Name = "Clave")]
-        public string Clave { get; set; } = null!; 
+        public string? Clave { get; set; }
 
         [Display(Name = "Fecha Creación")]
         public DateTime FechaCreacion { get; set; } 
@@ -21,7 +21,6 @@ namespace RecursosHumanosWeb.Models.ViewModels
         public int IdUsuarioCrea { get; set; }
 
         // Campo para la selección del usuario titular (se puede cambiar en EDIT)
-        [Required(ErrorMessage = "El titular de la API Key es obligatorio.")]
         [Display(Name = "Usuario Titular")]
         public int? IdUsuarioTitular { get; set; }
 

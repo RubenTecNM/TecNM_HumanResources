@@ -79,7 +79,7 @@
     bool isApprover = ViewBag.IsApprover ?? false;
     
     // RH/Admin can review any pending, Approvers only current court
-    bool canReview = !Model.Revisado && (isRHOrAdmin || (isApprover && Model.IdCorte == (int?)ViewBag.CurrentCourtId));
+    bool canReview = (Model.IdEstadoPermiso == 1) && (isRHOrAdmin || (isApprover && Model.IdCorte == (int?)ViewBag.CurrentCourtId));
     
     string solicitanteNombre = Model.IdUsuarioSolicitaNavigation?.Nombre ?? "Usuario";
     string inicial = !string.IsNullOrEmpty(solicitanteNombre) ? solicitanteNombre.Substring(0, 1).ToUpper() : "U";
@@ -140,10 +140,10 @@
                     </div>
                 </div>
                 <div class="status-glass rounded-pill px-3 py-2 d-flex align-items-center shadow-sm" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
-                    <span class="status-dot @(Model.Revisado ? "dot-active" : "dot-closed")"></span>
-                    <span class="small text-uppercase fw-bold">
-                         @(Model.Revisado ? "REVISADO" : "PENDIENTE")
-                    </span>
+                    @if (Model.IdEstadoPermiso == 1) { <span class="status-dot dot-closed"></span> <span class="small text-uppercase fw-bold">PENDIENTE</span> }
+                    else if (Model.IdEstadoPermiso == 2) { <span class="status-dot dot-active"></span> <span class="small text-uppercase fw-bold">APROBADO</span> }
+                    else if (Model.IdEstadoPermiso == 3) { <span class="status-dot opacity-50" style="background-color: #64748b;"></span> <span class="small text-uppercase fw-bold">INVALIDADO</span> }
+                    else { <span class="status-dot" style="background-color: #ef4444;"></span> <span class="small text-uppercase fw-bold">RECHAZADO</span> }
                 </div>
             </div>
         </div>
@@ -320,52 +320,6 @@
                     </div>
                 }
 
-                <!-- MÓDULO DE AUTORIZACIÓN INTEGRADO -->
-                @if (canReview)
-                {
-                    <div class="col-12 goce-decision-integrated shadow-sm">
-                        <div class="text-center mb-5">
-                            <h3 class="fw-bold h4 text-gradient"><i class="fas fa-user-shield me-2 text-primary"></i> M&oacute;dulo de Autorizaci&oacute;n</h3>
-                            <p class="text-muted small">Determine el goce de sueldo para autorizar formalmente esta solicitud.</p>
-                            <div class="mx-auto bg-primary rounded-pill mt-2" style="width: 50px; height: 3px;"></div>
-                        </div>
-                        
-                        <form asp-action="Review" method="post" id="reviewFormInline">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="Id" value="@Model.Id" />
-                            
-                            <div class="goce-options d-flex gap-4 justify-content-center flex-wrap">
-                                <div class="goce-option" data-value="true" style="min-width: 250px;">
-                                    <input type="radio" name="Goce" id="goceTrue" value="true" @(Model.Goce == true ? "checked" : "") style="display:none;">
-                                    <div class="option-content p-4 rounded-4 text-center border-2 bg-white shadow-sm transition-all h-100">
-                                        <div class="option-icon bg-success text-white mx-auto shadow-sm mb-3" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-check fa-lg"></i>
-                                        </div>
-                                        <h5 class="fw-bold mb-1">CON GOCE</h5>
-                                        <p class="small text-muted mb-0">El tiempo se pagar&aacute; normal</p>
-                                    </div>
-                                </div>
-
-                                <div class="goce-option" data-value="false" style="min-width: 250px;">
-                                    <input type="radio" name="Goce" id="goceFalse" value="false" @(Model.Goce == false ? "checked" : "") style="display:none;">
-                                    <div class="option-content p-4 rounded-4 text-center border-2 bg-white shadow-sm transition-all h-100">
-                                        <div class="option-icon bg-warning text-white mx-auto shadow-sm mb-3" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                            <i class="fas fa-times fa-lg"></i>
-                                        </div>
-                                        <h5 class="fw-bold mb-1">SIN GOCE</h5>
-                                        <p class="small text-muted mb-0">Se descontar&aacute; del salario</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="text-center mt-5">
-                                <button type="submit" id="submitReviewBtn" class="btn btn-success btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg transition-all" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none;">
-                                    <i class="fas fa-check-double me-2"></i> Finalizar y Autorizar Permiso
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                }
 
                 <!-- AUDITORÍA (PIE DE PÁGINA) -->
                 <div class="col-12 mt-5 pt-4 border-top">
@@ -397,7 +351,7 @@
                                 </div>
                             </div>
                         </div>
-                        @if (Model.Revisado)
+                        @if (Model.IdEstadoPermiso == 2)
                         {
                             <div class="col-md-4">
                                 <div class="audit-card bg-light rounded-3 p-3 h-100 border-success shadow-sm" style="border-width: 2px;">
@@ -423,7 +377,7 @@
                 <i class="fas fa-arrow-left me-2"></i> Volver al Portal
             </a>
             
-            @if (canReview == false && Model.IdCorte == (int?)ViewBag.CurrentCourtId && !Model.Revisado && (int?)ViewBag.CurrentUserId == Model.IdUsuarioSolicita)
+            @if (canReview == false && Model.IdCorte == (int?)ViewBag.CurrentCourtId && (Model.IdEstadoPermiso == 1) && (int?)ViewBag.CurrentUserId == Model.IdUsuarioSolicita)
             {
                 <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
                     <i class="fas fa-edit me-2"></i> Editar Solicitud

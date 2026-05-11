@@ -36,10 +36,11 @@ namespace RecursosHumanosWeb.Mapping
             CreateMap<Usuario, UsuarioUpdateViewModel>()
                 .ForMember(dest => dest.IdUsuario, opt => opt.MapFrom(src => src.Id));
 
-            // 3. Mapeos de Permisos y DTOs
             CreateMap<Permiso, PermisosDTO>()
                 .ForMember(d => d.Nombre, o => o.MapFrom(s => s.IdUsuarioSolicitaNavigation.Nombre ?? "N/A"))
-                .ForMember(d => d.TipoPermiso, o => o.MapFrom(s => s.IdTipoPermisoNavigation.Descripcion ?? "N/A"));
+                .ForMember(d => d.TipoPermiso, o => o.MapFrom(s => s.IdTipoPermisoNavigation.Descripcion ?? "N/A"))
+                .ForMember(d => d.EstadoDescripcion, o => o.MapFrom(s => s.IdEstadoPermisoNavigation.Descripcion ?? "N/A"))
+                .ForMember(d => d.EstadoColor, o => o.MapFrom(s => s.IdEstadoPermisoNavigation.Color ?? "secondary"));
 
             CreateMap<Permiso, PermissionsCreateViewModel>()
                 .ForMember(dest => dest.Fecha1Date, opt => opt.MapFrom(src => src.Fecha1))
@@ -50,7 +51,9 @@ namespace RecursosHumanosWeb.Mapping
                 .ForMember(dest => dest.Evidencia, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Evidencia)));
 
             // 4. Listados
-            CreateMap<Corte, CortesDTO>();
+            CreateMap<Corte, CortesDTO>()
+                .ForMember(d => d.EstadoDescripcion, o => o.MapFrom(s => s.IdEstadoCorteNavigation.Descripcion ?? "N/A"))
+                .ForMember(d => d.EstadoColor, o => o.MapFrom(s => s.IdEstadoCorteNavigation.Color ?? "secondary"));
             CreateMap<Usuario, UsuariosDTO>();
             CreateMap<Usuario, UsuariosListDTO>()
                 .ForMember(d => d.Departamento, o => o.MapFrom(s => s.IdDepartamentoNavigation.Descripcion ?? "N/A"));

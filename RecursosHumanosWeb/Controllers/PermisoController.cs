@@ -135,9 +135,11 @@ namespace RecursosHumanosWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            if (permiso.Revisado || !(permiso.IdCorteNavigation?.Estatus ?? false))
+            bool isPending = permiso.IdEstadoPermiso == 1; // 1 = Pendiente
+            var corte = permiso.IdCorteNavigation;
+            if (!isPending || corte == null || corte.IdEstadoCorte != 1) // 1 = Abierto
             {
-                TempData["ErrorAlert"] = GetAlertJson("No permitido", "No se puede editar un permiso revisado o de un corte cerrado.");
+                TempData["ErrorAlert"] = GetAlertJson("No permitido", "Solo se pueden editar permisos pendientes en un corte abierto.");
                 return RedirectToAction("Index");
             }
 
@@ -198,6 +200,7 @@ namespace RecursosHumanosWeb.Controllers
 
                 var permiso = _mapper.Map<Permiso>(model);
                 permiso.Evidencia = evidenciaPath;
+                permiso.IdEstadoPermiso = 1; // Pendiente por defecto
                 await _permisoService.CreatePermisoAsync(permiso, idUsuario);
 
                 return Json(new AlertResponseDTO(controllerName: "Permiso", message: "Permiso creado con éxito."));
@@ -310,9 +313,11 @@ namespace RecursosHumanosWeb.Controllers
             var permiso = await _context.Permisos.Include(p => p.IdCorteNavigation).FirstOrDefaultAsync(p => p.Id == id);
             if (permiso != null && _permisoService.CanUserAccessPermiso(userId, userType, permiso))
             {
-                if (permiso.Revisado && !(permiso.IdCorteNavigation?.Estatus ?? false))
+                bool isPending = permiso.IdEstadoPermiso == 1;
+                var corte = permiso.IdCorteNavigation;
+                if (!isPending && (corte == null || corte.IdEstadoCorte != 1))
                 {
-                    TempData["ErrorAlert"] = GetAlertJson("Error", "No se puede borrar un permiso revisado de un corte cerrado.");
+                    TempData["ErrorAlert"] = GetAlertJson("Error", "No se puede borrar un permiso ya revisado de un corte cerrado.");
                     return RedirectToAction("Index");
                 }
                 await _permisoService.DeletePermisoAsync(id, userId);
@@ -332,12 +337,15 @@ namespace RecursosHumanosWeb.Controllers
                 int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
 
                 var permiso = await _context.Permisos.Include(p => p.IdUsuarioSolicitaNavigation).Include(p => p.IdCorteNavigation).FirstOrDefaultAsync(p => p.Id == request.Id);
-                if (permiso == null || !permiso.Estatus) return Json(new AlertResponseDTO { Success = false, Message = "No encontrado o ya eliminado." });
+                if (permiso == null || permiso.IdEstadoPermiso == 4) // 4 = Rechazado/Eliminado? No, usually 4 is Rechazado.
+                    return Json(new AlertResponseDTO { Success = false, Message = "No encontrado o ya procesado." });
 
                 if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
 
-                if (permiso.Revisado && !(permiso.IdCorteNavigation?.Estatus ?? false))
-                    return Json(new AlertResponseDTO { Success = false, Message = "Permiso revisado de corte cerrado." });
+                bool isPending = permiso.IdEstadoPermiso == 1;
+                var corte = permiso.IdCorteNavigation;
+                if (!isPending && (corte == null || corte.IdEstadoCorte != 1))
+                    return Json(new AlertResponseDTO { Success = false, Message = "El permiso ya no se puede eliminar (periodo cerrado)." });
 
                 if (!request.Confirmed)
                 {
@@ -424,6 +432,45 @@ namespace RecursosHumanosWeb.Controllers
                 }
             }
 
+            if (permiso.IdEstadoPermiso == 1 && (userType == (int)TipoUsuarioEnum.Autorizador || userType == (int)TipoUsuarioEnum.Administrador))
+            {
+                 // Si es el autorizador asignado, redirigir a Authorize
+                 if (ViewBag.IsApprover == true) return RedirectToAction("Authorize", new { id });
+            }
+
+            return View(permiso);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Authorize(int id)
+        {
+            var permiso = await _context.Permisos
+                .Include(p => p.IdTipoPermisoNavigation)
+                .Include(p => p.IdUsuarioSolicitaNavigation).ThenInclude(u => u.IdAreaNavigation)
+                .Include(p => p.IdUsuarioAutorizaNavigation)
+                .Include(p => p.IdCorteNavigation)
+                .FirstOrDefaultAsync(p => p.Id == id);
+            
+            if (permiso == null) return NotFound();
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
+
+            if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Forbid();
+            
+            var currentCourt = await _corteService.GetActiveCorteAsync();
+            ViewBag.CurrentCourtId = currentCourt?.Id ?? 0;
+            ViewBag.CurrentUserId = userId;
+            ViewBag.CurrentUserType = userType;
+            
+            bool isApprover = userType == (int)TipoUsuarioEnum.Administrador;
+            if (userType == (int)TipoUsuarioEnum.Autorizador)
+            {
+                var userArea = await _context.Usuarios.Where(u => u.Id == userId).Select(u => u.IdArea).FirstOrDefaultAsync();
+                if (permiso.IdUsuarioSolicitaNavigation.IdArea == userArea) isApprover = true;
+            }
+            ViewBag.IsApprover = isApprover;
+
             return View(permiso);
         }
 
@@ -437,7 +484,18 @@ namespace RecursosHumanosWeb.Controllers
             int userType = int.Parse(User.FindFirst("TipoUsuario")?.Value ?? "0");
 
             if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Json(new { exists = true, hasAccess = false });
-            return Json(new { exists = true, hasAccess = true, url = Url.Action("Details", "Permiso", new { id }) });
+            
+            // Si es autorizador y esta pendiente, mandar a Authorize
+            bool isApprover = userType == (int)TipoUsuarioEnum.Administrador || userType == (int)TipoUsuarioEnum.RecursosHumanos;
+            if (!isApprover && userType == (int)TipoUsuarioEnum.Autorizador)
+            {
+                var solicitante = await _context.Usuarios.FindAsync(permiso.IdUsuarioSolicita);
+                var autorizador = await _context.Usuarios.FindAsync(userId);
+                if (solicitante?.IdArea == autorizador?.IdArea) isApprover = true;
+            }
+
+            string action = (isApprover && permiso.IdEstadoPermiso == 1) ? "Authorize" : "Details";
+            return Json(new { exists = true, hasAccess = true, url = Url.Action(action, "Permiso", new { id }) });
         }
 
         #endregion
@@ -475,8 +533,7 @@ namespace RecursosHumanosWeb.Controllers
                     IdUsuarioModifica = autorizadores.ContainsKey(user.IdArea) ? autorizadores[user.IdArea] : adminId,
                     FechaCreacion = DateTime.Now,
                     FechaModificacion = DateTime.Now,
-                    Estatus = true,
-                    Revisado = false,
+                    IdEstadoPermiso = 1, // Pendiente
                     Goce = random.Next(100) < 70
                 });
 

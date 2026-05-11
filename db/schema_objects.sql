@@ -82,9 +82,9 @@ BEGIN
     SET NOCOUNT ON;  
     DECLARE @Dias INT = CASE WHEN @IdTipoPermiso IN (2, 4, 5) THEN DATEDIFF(DAY, @Fecha1, @Fecha2) + 1 ELSE 1 END;  
     DECLARE @InsertedIds TABLE (Id INT);  
-    INSERT INTO [dbo].[Permiso] (Motivo, Fecha1, Fecha2, Dias, IdUsuarioSolicita, IdUsuarioCrea, IdUsuarioModifica, IdTipoPermiso, IdCorte, Goce, Estatus, Evidencia, FechaCreacion, FechaModificacion)
+    INSERT INTO [dbo].[Permiso] (Motivo, Fecha1, Fecha2, Dias, IdUsuarioSolicita, IdUsuarioCrea, IdUsuarioModifica, IdTipoPermiso, IdCorte, Goce, Estatus, IdEstadoPermiso, Evidencia, FechaCreacion, FechaModificacion)
     OUTPUT INSERTED.Id INTO @InsertedIds(Id) 
-    VALUES (@Motivo, @Fecha1, @Fecha2, @Dias, @IdUsuarioSolicita, @IdUsuarioCrea, @IdUsuarioModifica, @IdTipoPermiso, @IdCorte, 0, 1, @Evidencia, GETDATE(), GETDATE());  
+    VALUES (@Motivo, @Fecha1, @Fecha2, @Dias, @IdUsuarioSolicita, @IdUsuarioCrea, @IdUsuarioModifica, @IdTipoPermiso, @IdCorte, 0, 1, 1, @Evidencia, GETDATE(), GETDATE());  
     SET @IdPermiso = (SELECT Id FROM @InsertedIds);  
 END;
 --###--
@@ -95,13 +95,15 @@ END;
 CREATE OR ALTER PROCEDURE [dbo].[UpdatePermission]
     @IdPermiso INT, @Descripcion VARCHAR(255) = NULL, @DelDia DATE = NULL, @AlDia DATE = NULL,
     @IdCorte INT = NULL, @IdTipo_Permisos INT = NULL, @IdUsuarioModifica INT,
-    @Estatus BIT = NULL, @Now DATETIME
+    @Estatus BIT = NULL, @IdEstadoPermiso INT = NULL, @Now DATETIME
 AS
 BEGIN
     UPDATE [dbo].[Permiso] SET
         Motivo = ISNULL(@Descripcion, Motivo), Fecha1 = ISNULL(@DelDia, Fecha1), Fecha2 = ISNULL(@AlDia, Fecha2),
         IdCorte = ISNULL(@IdCorte, IdCorte), IdTipoPermiso = ISNULL(@IdTipo_Permisos, IdTipoPermiso),
-        IdUsuarioModifica = @IdUsuarioModifica, FechaModificacion = @Now, Estatus = ISNULL(@Estatus, Estatus)
+        IdUsuarioModifica = @IdUsuarioModifica, FechaModificacion = @Now, 
+        Estatus = ISNULL(@Estatus, Estatus),
+        IdEstadoPermiso = ISNULL(@IdEstadoPermiso, IdEstadoPermiso)
     WHERE Id = @IdPermiso;
 END;
 --###--
@@ -110,12 +112,12 @@ END;
 -- 6. UpdateStatusOfPermission
 -- =============================================
 CREATE OR ALTER PROCEDURE [dbo].[UpdateStatusOfPermission]
-    @IdPermiso INT, @ConGoce BIT, @IdUsuarioModifica INT, @IdUsuarioAutorizador INT, @Estatus BIT
+    @IdPermiso INT, @ConGoce BIT, @IdUsuarioModifica INT, @IdUsuarioAutorizador INT, @IdEstadoPermiso INT
 AS
 BEGIN
     UPDATE [dbo].[Permiso] SET
         Goce = @ConGoce, IdUsuarioModifica = @IdUsuarioModifica, IdUsuarioAutoriza = @IdUsuarioAutorizador,
-        Estatus = @Estatus, FechaModificacion = GETDATE(), FechaAutorizacion = GETDATE()
+        IdEstadoPermiso = @IdEstadoPermiso, FechaModificacion = GETDATE(), FechaAutorizacion = GETDATE()
     WHERE Id = @IdPermiso;
 END;
 --###--
@@ -144,4 +146,21 @@ BEGIN
     DECLARE @Ids IdTableType; 
     INSERT INTO @Ids SELECT Id FROM inserted; 
     EXEC UpdateFechaModificacion 8, @Ids; 
+END;
+
+-- =============================================
+-- 9. TRIGGERS NUEVOS ESTADOS
+-- =============================================
+CREATE TRIGGER trg_TipoEstadoCorte_UpdateFechaModificacion ON TipoEstadoCorte AFTER UPDATE AS 
+BEGIN 
+    DECLARE @Ids IdTableType; 
+    INSERT INTO @Ids SELECT Id FROM inserted; 
+    EXEC UpdateFechaModificacion (SELECT Id FROM Tabla WHERE Descripcion = 'TipoEstadoCorte'), @Ids; 
+END;
+--###--
+CREATE TRIGGER trg_TipoEstadoPermiso_UpdateFechaModificacion ON TipoEstadoPermiso AFTER UPDATE AS 
+BEGIN 
+    DECLARE @Ids IdTableType; 
+    INSERT INTO @Ids SELECT Id FROM inserted; 
+    EXEC UpdateFechaModificacion (SELECT Id FROM Tabla WHERE Descripcion = 'TipoEstadoPermiso'), @Ids; 
 END;

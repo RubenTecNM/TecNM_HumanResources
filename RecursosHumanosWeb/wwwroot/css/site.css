@@ -1,4 +1,4 @@
-﻿/* =================================
+/* =================================
    VARIABLES CSS - PALETA DE COLORES
    ================================= */
 :root {
@@ -2934,6 +2934,10 @@ body {
     background: linear-gradient(135deg, var(--danger-color) 0%, #DC2626 100%);
 }
 
+.action-btn.btn-warning {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #D97706 100%);
+}
+
 .action-btn.btn-view {
     background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
 }
@@ -3235,6 +3239,10 @@ textarea::placeholder {
 
 .btn-delete {
     background: linear-gradient(135deg, var(--danger-color) 0%, #DC2626 100%);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #D97706 100%);
 }
 
 .btn-view {

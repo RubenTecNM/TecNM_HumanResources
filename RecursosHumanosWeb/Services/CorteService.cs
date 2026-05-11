@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
+using RecursosHumanosWeb.Models.Enums;
 
 namespace RecursosHumanosWeb.Services
 {
@@ -17,7 +18,7 @@ namespace RecursosHumanosWeb.Services
         public async Task<Corte> GetActiveCorteAsync()
         {
             return await _context.Cortes
-                .Where(c => c.Estatus)
+                .Where(c => c.IdEstadoCorte == (int)CorteEstadoEnum.Abierto)
                 .OrderByDescending(c => c.Termina)
                 .FirstOrDefaultAsync();
         }
@@ -31,7 +32,7 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<bool> HasPendingPermissionsAsync(int corteId)
         {
-            return await _context.Permisos.AnyAsync(p => p.IdCorte == corteId && !p.Revisado && p.Estatus);
+            return await _context.Permisos.AnyAsync(p => p.IdCorte == corteId && p.IdEstadoPermiso == (int)PermisoEstadoEnum.Pendiente && p.Estatus);
         }
 
         public async Task AutoCloseCorteIfNeededAsync()
@@ -39,7 +40,7 @@ namespace RecursosHumanosWeb.Services
             try
             {
                 var cortesExpirados = await _context.Cortes
-                    .Where(c => c.Estatus && c.Termina.Date < DateTime.Now.Date)
+                    .Where(c => c.IdEstadoCorte == (int)CorteEstadoEnum.Abierto && c.Termina.Date < DateTime.Now.Date)
                     .ToListAsync();
 
                 foreach (var corteActivo in cortesExpirados)
@@ -48,16 +49,16 @@ namespace RecursosHumanosWeb.Services
                     _context._auditOrigenOverride = (int)TipoOrigenEnum.SistemaAutomatico;
                     int rootId = 1; // Root User ID
 
-                    // 1. Manejar permisos pendientes (Rechazo automático)
+                    // 1. Rechazar permisos pendientes
                     var pendientes = await _context.Permisos
-                        .Where(p => p.IdCorte == corteActivo.Id && !p.Revisado && p.Estatus)
+                        .Where(p => p.IdCorte == corteActivo.Id && p.IdEstadoPermiso == (int)PermisoEstadoEnum.Pendiente)
                         .ToListAsync();
 
                     if (pendientes.Any())
                     {
                         foreach (var p in pendientes)
                         {
-                            p.Revisado = true;
+                            p.IdEstadoPermiso = (int)PermisoEstadoEnum.Rechazado;
                             p.Goce = false; // Rechazo automático
                             p.IdUsuarioAutoriza = rootId;
                             p.FechaAutorizacion = DateTime.Now;
@@ -68,7 +69,7 @@ namespace RecursosHumanosWeb.Services
                     }
 
                     // 2. Cerrar Corte
-                    corteActivo.Estatus = false;
+                    corteActivo.IdEstadoCorte = (int)CorteEstadoEnum.Cerrado;
                     corteActivo.FechaModificacion = DateTime.Now;
                     corteActivo.IdUsuarioModifica = rootId;
                         
@@ -100,10 +101,21 @@ namespace RecursosHumanosWeb.Services
                             return false; // No se puede crear si hay pendientes
                         }
 
-                        corteActivo.Estatus = false;
+                        corteActivo.IdEstadoCorte = (int)CorteEstadoEnum.Cerrado;
                         corteActivo.FechaModificacion = ahora;
                         corteActivo.IdUsuarioModifica = userId;
                         _context.Update(corteActivo);
+                    }
+
+                    // Validación de traslape con cualquier corte existente
+                    bool traslapa = await _context.Cortes.AnyAsync(c => 
+                        (nuevoCorte.Inicia >= c.Inicia && nuevoCorte.Inicia <= c.Termina) ||
+                        (nuevoCorte.Termina >= c.Inicia && nuevoCorte.Termina <= c.Termina) ||
+                        (c.Inicia >= nuevoCorte.Inicia && c.Inicia <= nuevoCorte.Termina));
+
+                    if (traslapa)
+                    {
+                        return false; // El periodo se encima con uno existente
                     }
 
                     nuevoCorte.Inicia = nuevoCorte.Inicia.Date;
@@ -112,7 +124,7 @@ namespace RecursosHumanosWeb.Services
                     nuevoCorte.IdUsuarioModifica = userId;
                     nuevoCorte.FechaCreacion = ahora;
                     nuevoCorte.FechaModificacion = ahora;
-                    nuevoCorte.Estatus = true;
+                    nuevoCorte.IdEstadoCorte = (int)CorteEstadoEnum.Abierto;
 
                     _context.Add(nuevoCorte);
                     await _context.SaveChangesAsync();
@@ -137,13 +149,13 @@ namespace RecursosHumanosWeb.Services
             {
                 try
                 {
-                    // 1. Inactivar Periodo
-                    corte.Estatus = false;
+                    // 1. Invalidar Periodo
+                    corte.IdEstadoCorte = (int)CorteEstadoEnum.Invalidado;
                     corte.FechaModificacion = DateTime.Now;
                     corte.IdUsuarioModifica = userId;
                     _context.Update(corte);
 
-                    // 2. Inactivar Permisos relacionados (Borrado lógico en cascada)
+                    // 2. Invalidar Permisos relacionados (Cambio de estado masivo)
                     var permisos = await _context.Permisos
                         .Where(p => p.IdCorte == id && p.Estatus)
                         .ToListAsync();
@@ -152,7 +164,7 @@ namespace RecursosHumanosWeb.Services
                     {
                         foreach (var p in permisos)
                         {
-                            p.Estatus = false; // Desactivar permiso
+                            p.IdEstadoPermiso = (int)PermisoEstadoEnum.InvalidadoPorPeriodo;
                             p.FechaModificacion = DateTime.Now;
                             p.IdUsuarioModifica = userId;
                         }
@@ -175,28 +187,28 @@ namespace RecursosHumanosWeb.Services
         public async Task<bool> CloseCorteAsync(int id, int userId)
         {
             var corte = await _context.Cortes.FindAsync(id);
-            if (corte == null || !corte.Estatus) return false;
+            if (corte == null || corte.IdEstadoCorte != (int)CorteEstadoEnum.Abierto) return false;
 
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
                 try
                 {
                     // 1. Cerrar Periodo
-                    corte.Estatus = false;
+                    corte.IdEstadoCorte = (int)CorteEstadoEnum.Cerrado;
                     corte.FechaModificacion = DateTime.Now;
                     corte.IdUsuarioModifica = userId;
                     _context.Update(corte);
 
                     // 2. Rechazar automáticamente permisos pendientes
                     var pendientes = await _context.Permisos
-                        .Where(p => p.IdCorte == id && !p.Revisado && p.Estatus)
+                        .Where(p => p.IdCorte == id && p.IdEstadoPermiso == (int)PermisoEstadoEnum.Pendiente && p.Estatus)
                         .ToListAsync();
 
                     if (pendientes.Any())
                     {
                         foreach (var p in pendientes)
                         {
-                            p.Revisado = true;
+                            p.IdEstadoPermiso = (int)PermisoEstadoEnum.Rechazado;
                             p.Goce = false; // Sin goce por cierre manual
                             p.FechaAutorizacion = DateTime.Now;
                             p.IdUsuarioAutoriza = userId;

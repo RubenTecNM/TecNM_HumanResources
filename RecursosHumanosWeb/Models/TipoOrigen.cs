@@ -1,37 +1,21 @@
-using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RecursosHumanosWeb.Models;
 
-public partial class TipoOrigen
+[Table("TipoOrigen")]
+public partial class TipoOrigen : BaseEntity
 {
-    public int Id { get; set; }
-
+    /// <summary>
+    /// Nombre del origen de la operación de auditoría (WebApp, API, SistemaAutomatico). Máximo 50 caracteres.
+    /// </summary>
+    [Required(ErrorMessage = "La descripción del origen es obligatoria.")]
+    [StringLength(50, ErrorMessage = "La descripción no puede superar los 50 caracteres.")]
     public string Descripcion { get; set; } = null!;
 
-    public DateTime FechaCreacion { get; set; }
-
-    public DateTime? FechaModificacion { get; set; }
-
-    public bool Estatus { get; set; }
-
-    public int IdUsuarioCrea { get; set; }
-
-    public int? IdUsuarioModifica { get; set; }
-
+    // ──────────────────────────────────────────────────────────────
+    // COLECCIONES
+    // ──────────────────────────────────────────────────────────────
     public virtual ICollection<Auditoria> Auditoria { get; set; } = new List<Auditoria>();
-
-    public virtual Usuario IdUsuarioCreaNavigation { get; set; } = null!;
-
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
-}
-
-public static class TipoOrigenEnum
-{
-    public const int InterfazWeb = 1;
-    public const int APIExterna = 2;
-    public const int SistemaAutomatico = 3;
-    public const int JobProgramado = 4;
-    public const int SincronizacionLDAP = 5;
-    public const int MigracionDatos = 6;
 }

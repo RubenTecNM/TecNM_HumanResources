@@ -16,6 +16,19 @@ INSERT INTO TipoUsuario (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VAL
 ('Recursos Humanos', GETDATE(), 1, 1),
 ('Trabajador', GETDATE(), 1, 1);
 
+-- TipoEstadoCorte
+INSERT INTO TipoEstadoCorte (Descripcion, Color, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+('Abierto', 'success', GETDATE(), 1, 1),
+('Cerrado', 'secondary', GETDATE(), 1, 1),
+('Invalidado', 'danger', GETDATE(), 1, 1);
+
+-- TipoEstadoPermiso
+INSERT INTO TipoEstadoPermiso (Descripcion, Color, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+('Pendiente por Revisar', 'warning', GETDATE(), 1, 1),
+('Revisado / Aprobado', 'success', GETDATE(), 1, 1),
+('Invalidado por Periodo', 'danger', GETDATE(), 1, 1),
+('Rechazado', 'dark', GETDATE(), 1, 1);
+
 -- Area
 INSERT INTO Area (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
 ('SUBDIRECCION DE SERVICIOS ADMINISTRATIVOS', GETDATE(), 1, 1),
@@ -196,7 +209,9 @@ INSERT INTO Tabla (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES
 ('Usuario', GETDATE(), 1, 1),
 ('ResetPasswordTokens', GETDATE(), 1, 1),
 ('Auditoria', GETDATE(), 1, 1),
-('TipoOrigen', GETDATE(), 1, 1);
+('TipoOrigen', GETDATE(), 1, 1),
+('TipoEstadoCorte', GETDATE(), 1, 1),
+('TipoEstadoPermiso', GETDATE(), 1, 1);
 
 -- TipoOrigen
 INSERT INTO TipoOrigen (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 

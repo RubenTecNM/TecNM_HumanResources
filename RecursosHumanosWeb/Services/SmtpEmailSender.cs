@@ -3,9 +3,11 @@ using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using RecursosHumanosWeb.Models.ViewModels.ResetPassword;
+using RecursosHumanosWeb.Settings;
 using System.Web;
+using RecursosHumanosWeb.Models;
 
-namespace RecursosHumanosWeb.Models
+namespace RecursosHumanosWeb.Services
 {
     public class SmtpEmailSender : IEmailSender
     {
@@ -46,18 +48,17 @@ namespace RecursosHumanosWeb.Models
         public Task<bool> SendTokenEmailAsync(RequestTokenEmailModel model)
         {
             var body = FormatTokenEmail(model);
-            return SendEmailAsync(model.Email, "Cambio de contraseÒa - Enlace de verificaciÛn", body);
+            return SendEmailAsync(model.Email, "Cambio de contrase√±a - Enlace de verificaci√≥n", body);
         }
 
-        // Helper that formats the email body using the RequestTokenEmailModel
         private string FormatTokenEmail(RequestTokenEmailModel model)
         {
             var html = $@"<div style='font-family: Inter, system-ui, -apple-system, Roboto, Segoe UI, Helvetica Neue, Arial; color: #111827;'>
-                    <h2>Cambio de contraseÒa</h2>
+                    <h2>Cambio de contrase√±a</h2>
                     <p>Hola,</p>
-                    <p>Se solicitÛ un restablecimiento de contraseÒa para la cuenta asociada a <strong>{HttpUtility.HtmlEncode(model.Email)}</strong>.</p>
-                    <p>Haz clic en el siguiente enlace para restablecer tu contraseÒa. El enlace expirar· en {model.ExpirationMinutes} minutos.</p>
-                    <p><a href='{HttpUtility.HtmlEncode(model.Link)}' target='_blank'>Restablecer contraseÒa</a></p>
+                    <p>Se solicit√≥ un restablecimiento de contrase√±a para la cuenta asociada a <strong>{HttpUtility.HtmlEncode(model.Email)}</strong>.</p>
+                    <p>Haz clic en el siguiente enlace para restablecer tu contrase√±a. El enlace expirar√° en {model.ExpirationMinutes} minutos.</p>
+                    <p><a href='{HttpUtility.HtmlEncode(model.Link)}' target='_blank'>Restablecer contrase√±a</a></p>
                     <p>Si no solicitaste este cambio, ignora este correo.</p>
                     <hr />
                     <p style='font-size:0.85rem; color:#6b7280;'>Si el enlace no funciona, copia y pega la siguiente URL en tu navegador:<br />{HttpUtility.HtmlEncode(model.Link)}</p>
