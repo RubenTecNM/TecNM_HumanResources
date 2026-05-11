@@ -27,9 +27,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddOpenApi(options => {
     options.AddDocumentTransformer((document, context, cancellationToken) => {
         document.Servers = new List<Microsoft.OpenApi.Models.OpenApiServer> {
-            new() { Url = "https://apitecrh.monclova.tecnm.mx" }, // Ajustar al dominio real
+            new() { Url = "https://nexsmart.online" },
             new() { Url = "http://localhost:5011" }
         };
+
         return Task.CompletedTask;
     });
 });
@@ -99,12 +100,20 @@ builder.Services.AddAuthorization(options =>
 var app = builder.Build();
 
 // 3. Middlewares prioritarios e infraestructura
-app.UseCors("OpenCors");
-
+// IMPORTANTE: ForwardedHeaders debe ir antes que cualquier otro middleware
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    // Permitir redes locales de Docker
+    KnownNetworks = { }, 
+    KnownProxies = { }
 });
+
+app.UseCors("OpenCors");
+
+// Root Health Check para pruebas del túnel
+app.MapGet("/", () => Results.Ok(new { Message = "TecRH Permisos API is running", Environment = app.Environment.EnvironmentName }));
+
 
 // 4. Lógica de Inicialización de Base de Datos Automatizada con Reintentos
 using (var scope = app.Services.CreateScope())
