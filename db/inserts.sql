@@ -175,7 +175,7 @@ INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, Estatus, IdTipoUsuari
 -- 4. CONFIGURACIÓN DE TABLAS DE SISTEMA Y API
 
 -- ApiFunctions
-INSERT INTO ApiFunctions (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+INSERT INTO ApiFunction (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
 ('GET', GETDATE(), 1, 1),
 ('POST', GETDATE(), 1, 1),
 ('PUT', GETDATE(), 1, 1),
