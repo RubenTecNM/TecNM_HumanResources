@@ -11,11 +11,8 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Forzar el puerto 8080 para Kestrel (requerido para el mapeo del túnel Cloudflare)
-builder.WebHost.UseUrls("http://*:8080");
-
-
 // 1. Configurar CORS (Abierto para microservicios)
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("OpenCors", policy =>
@@ -199,7 +196,8 @@ else
     });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Comentado para evitar errores 502 en Tunnel Cloudflare
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
