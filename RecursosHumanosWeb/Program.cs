@@ -79,6 +79,9 @@ builder.Services.AddDbContext<RecursosHumanosContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("RecursosHumanosContext"));
 });
+
+// Registrar el Guardián de Integridad de Periodos
+builder.Services.AddHostedService<RecursosHumanosWeb.Services.PeriodIntegrityWorker>();
 builder.Services.AddHttpContextAccessor();
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(RecursosHumanosWeb.Mapping.AutoMapperProfile));

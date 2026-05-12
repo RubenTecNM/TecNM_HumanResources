@@ -224,3 +224,26 @@ BEGIN
     END
 END;
 GO
+
+-- =============================================
+-- 10. TRIGGER: Cascada de Cierre (Corte -> Permiso)
+-- =============================================
+CREATE OR ALTER TRIGGER trg_Corte_Cascada_Cierre ON Corte AFTER UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Si el estado del corte cambió a Cerrado (2) o Invalidado (3)
+    IF UPDATE(IdEstadoCorte)
+    BEGIN
+        -- Mapear permisos pendientes (1) a Invalidado por Periodo (3)
+        UPDATE p
+        SET p.IdEstadoPermiso = 3, -- Invalidado por Periodo
+            p.FechaModificacion = GETDATE(),
+            p.IdUsuarioModifica = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdUsuario') AS INT), 1)
+        FROM Permiso p
+        INNER JOIN inserted i ON p.IdCorte = i.Id
+        WHERE i.IdEstadoCorte IN (2, 3) -- Cerrado o Invalidado
+          AND p.IdEstadoPermiso = 1;   -- Solo los que estén Pendientes
+    END
+END;
+GO
