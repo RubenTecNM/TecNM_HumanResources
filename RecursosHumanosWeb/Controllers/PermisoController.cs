@@ -137,9 +137,15 @@ namespace RecursosHumanosWeb.Controllers
 
             bool isPending = permiso.IdEstadoPermiso == 1; // 1 = Pendiente
             var corte = permiso.IdCorteNavigation;
-            if (!isPending || corte == null || corte.IdEstadoCorte != 1) // 1 = Abierto
+            if (corte == null || corte.IdEstadoCorte != 1) // 1 = Abierto
             {
-                TempData["ErrorAlert"] = GetAlertJson("No permitido", "Solo se pueden editar permisos pendientes en un corte abierto.");
+                TempData["ErrorAlert"] = GetAlertJson("No permitido", "No se puede editar un permiso si el periodo ya está cerrado o invalidado.");
+                return RedirectToAction("Index");
+            }
+
+            if (!isPending)
+            {
+                TempData["ErrorAlert"] = GetAlertJson("No permitido", "Solo se pueden editar permisos en estado Pendiente.");
                 return RedirectToAction("Index");
             }
 
@@ -342,10 +348,8 @@ namespace RecursosHumanosWeb.Controllers
 
                 if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
 
-                bool isPending = permiso.IdEstadoPermiso == 1;
-                var corte = permiso.IdCorteNavigation;
-                if (!isPending && (corte == null || corte.IdEstadoCorte != 1))
-                    return Json(new AlertResponseDTO { Success = false, Message = "El permiso ya no se puede eliminar (periodo cerrado)." });
+                if (corte == null || corte.IdEstadoCorte != 1)
+                    return Json(new AlertResponseDTO { Success = false, Message = "El permiso ya no se puede eliminar porque el periodo ya está cerrado o invalidado." });
 
                 if (!request.Confirmed)
                 {

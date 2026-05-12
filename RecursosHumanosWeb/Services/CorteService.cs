@@ -165,6 +165,7 @@ namespace RecursosHumanosWeb.Services
                         foreach (var p in permisos)
                         {
                             p.IdEstadoPermiso = (int)PermisoEstadoEnum.InvalidadoPorPeriodo;
+                            p.Estatus = false; // Borrado lógico como solicitó el usuario
                             p.FechaModificacion = DateTime.Now;
                             p.IdUsuarioModifica = userId;
                         }

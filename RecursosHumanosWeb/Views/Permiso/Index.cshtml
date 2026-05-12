@@ -177,8 +177,13 @@
                                     bool isOwner = item.IdUsuarioSolicita == currentUserId;
                                     bool inActiveCourt = item.IdCorte == currentCourtId;
                                     bool isPending = item.IdEstadoPermiso == 1; // 1 = Pendiente
+                                    
+                                    // REGLAS:
+                                    // 1. Si el periodo se cerró (inActiveCourt == false), nadie edita ni borra.
+                                    // 2. Si está vigente, dueño o RH/Admin pueden borrar.
+                                    // 3. Si está vigente y pendiente, dueño o RH/Admin pueden editar.
                                     bool canEdit = (isAdministrador || isRH || isOwner) && inActiveCourt && isPending && !isAutorizador;
-                                    bool canDelete = (isAdministrador || isRH || isOwner) && (isPending || inActiveCourt) && !isAutorizador;
+                                    bool canDelete = (isAdministrador || isRH || isOwner) && inActiveCourt && !isAutorizador;
                                 }
 
                                 <authorize-section policy="AutorizadorOnly">
@@ -303,7 +308,7 @@
                                                          bool inActiveCourtDesktop = item.IdCorte == currentCourtId;
                                                          bool isPendingDesktop = item.IdEstadoPermiso == 1;
                                                          bool canEditDesktop = (isAdministrador || isRH || isOwnerDesktop) && inActiveCourtDesktop && isPendingDesktop && !isAutorizador;
-                                                         bool canDeleteDesktop = (isAdministrador || isRH || isOwnerDesktop) && (isPendingDesktop || inActiveCourtDesktop) && !isAutorizador;
+                                                         bool canDeleteDesktop = (isAdministrador || isRH || isOwnerDesktop) && inActiveCourtDesktop && !isAutorizador;
                                                      }
 
                                                     @if (canEditDesktop)
