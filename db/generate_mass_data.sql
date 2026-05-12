@@ -21,9 +21,11 @@ WHILE @CurrentInicia < @Today AND @TotalPermissions < @TargetTotal
 BEGIN
     SET @CurrentTermina = DATEADD(SECOND, -1, DATEADD(DAY, 15, @CurrentInicia)); -- Quincena exacta (termina 23:59:59)
     
-    -- Insertar Corte (Estado 2 = Cerrado para historial)
+    -- Determinar estado: 2 (Cerrado) si ya terminó, 1 (Abierto) si es el periodo actual
+    DECLARE @StatusCorte INT = CASE WHEN @CurrentTermina < GETDATE() THEN 2 ELSE 1 END;
+
     INSERT INTO Corte (Inicia, Termina, IdEstadoCorte, FechaCreacion, IdUsuarioCrea, IdUsuarioModifica, Estatus)
-    VALUES (@CurrentInicia, @CurrentTermina, 2, @CurrentInicia, 1, 1, 1);
+    VALUES (@CurrentInicia, @CurrentTermina, @StatusCorte, @CurrentInicia, 1, 1, 1);
     
     SET @CorteId = @@IDENTITY;
     

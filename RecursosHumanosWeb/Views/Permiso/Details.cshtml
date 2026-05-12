@@ -285,7 +285,10 @@
                                 <span class="small fw-medium text-secondary text-uppercase">Periodo de Corte</span>
                             </div>
                             <p class="h6 fw-semibold text-dark mb-0 ms-5">
-                                Periodo #@Model.IdCorte - @(Model.IdCorteNavigation?.IdUsuarioCreaNavigation?.Nombre ?? "Corte Activo")
+                                Periodo #@Model.IdCorte - 
+                                @if (Model.IdCorteNavigation?.IdEstadoCorte == 1) { <span class="text-success">Vigente / Abierto</span> }
+                                else if (Model.IdCorteNavigation?.IdEstadoCorte == 2) { <span class="text-warning">Cerrado</span> }
+                                else { <span class="text-danger">Invalidado</span> }
                             </p>
                         </div>
                     </div>
