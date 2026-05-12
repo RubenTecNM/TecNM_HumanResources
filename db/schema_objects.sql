@@ -5,7 +5,7 @@ IF NOT EXISTS (SELECT * FROM sys.types WHERE name = 'IdTableType' AND is_table_t
 BEGIN
     CREATE TYPE IdTableType AS TABLE (Id INT);
 END;
---###--
+GO
 
 -- =============================================
 -- 1. LoginUsuario
@@ -19,7 +19,7 @@ BEGIN
     FROM Usuario u INNER JOIN Area a ON u.IdArea = a.Id
     WHERE u.Correo = @mail AND u.Clave = @password;
 END;
---###--
+GO
 
 -- =============================================
 -- 2. BuscarPermisosFiltrados
@@ -51,7 +51,7 @@ BEGIN
     OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
     SELECT COUNT(*) AS Total FROM PermisosFiltrados;
 END;
---###--
+GO
 
 -- =============================================
 -- 3. GetPermissionsAuthorizer
@@ -68,7 +68,7 @@ BEGIN
     FROM Permiso p INNER JOIN Usuario u ON p.IdUsuarioSolicita = u.Id
     WHERE u.IdArea = @IdArea AND p.Estatus = @Estatus;
 END;
---###--
+GO
 
 -- =============================================
 -- 4. InsertPermission
@@ -87,7 +87,7 @@ BEGIN
     VALUES (@Motivo, @Fecha1, @Fecha2, @Dias, @IdUsuarioSolicita, @IdUsuarioCrea, @IdUsuarioModifica, @IdTipoPermiso, @IdCorte, 0, 1, 1, @Evidencia, GETDATE(), GETDATE());  
     SET @IdPermiso = (SELECT Id FROM @InsertedIds);  
 END;
---###--
+GO
 
 -- =============================================
 -- 5. UpdatePermission
@@ -106,7 +106,7 @@ BEGIN
         IdEstadoPermiso = ISNULL(@IdEstadoPermiso, IdEstadoPermiso)
     WHERE Id = @IdPermiso;
 END;
---###--
+GO
 
 -- =============================================
 -- 6. UpdateStatusOfPermission
@@ -120,49 +120,107 @@ BEGIN
         IdEstadoPermiso = @IdEstadoPermiso, FechaModificacion = GETDATE(), FechaAutorizacion = GETDATE()
     WHERE Id = @IdPermiso;
 END;
---###--
+GO
 
 -- =============================================
--- 7. UpdateFechaModificacion
+-- 7. UpdateFechaModificacion (Optimizado con Sesión)
 -- =============================================
 CREATE OR ALTER PROCEDURE UpdateFechaModificacion
     @TableId INT, @Ids IdTableType READONLY
 AS
 BEGIN
+    SET NOCOUNT ON;
     DECLARE @TableName NVARCHAR(128);
     SELECT @TableName = Descripcion FROM Tabla WHERE Id = @TableId;
-    DECLARE @SQL NVARCHAR(MAX) = N'UPDATE ' + QUOTENAME(@TableName) + N' SET FechaModificacion = GETDATE() WHERE Id IN (SELECT Id FROM @Ids)';
+    
+    -- Recuperar usuario de la sesión seteada por C#
+    DECLARE @UserId INT = TRY_CAST(SESSION_CONTEXT(N'IdUsuario') AS INT);
+    
+    DECLARE @SQL NVARCHAR(MAX) = N'UPDATE ' + QUOTENAME(@TableName) + 
+                                 N' SET FechaModificacion = GETDATE()';
+                                 
+    -- Si hay un usuario en sesión, actualizar también IdUsuarioModifica
+    IF @UserId IS NOT NULL
+        SET @SQL += N', IdUsuarioModifica = ' + CAST(@UserId AS NVARCHAR(20));
+        
+    SET @SQL += N' WHERE Id IN (SELECT Id FROM @Ids)';
+    
     EXEC sp_executesql @SQL, N'@Ids IdTableType READONLY', @Ids;
 END;
---###--
+GO
 
 -- =============================================
--- 8. TRIGGER Auditoria
+-- 8. TRIGGER GLOBAL: Auditoría y Trazabilidad (Permiso)
 -- =============================================
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_Permiso_Auditoria') DROP TRIGGER trg_Permiso_Auditoria;
 IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_Permiso_UpdateFechaModificacion') DROP TRIGGER trg_Permiso_UpdateFechaModificacion;
---###--
-CREATE TRIGGER trg_Permiso_UpdateFechaModificacion ON Permiso AFTER UPDATE AS 
-BEGIN 
-    DECLARE @Ids IdTableType; 
-    INSERT INTO @Ids SELECT Id FROM inserted; 
-    EXEC UpdateFechaModificacion 8, @Ids; 
+IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_Permiso_Global') DROP TRIGGER trg_Permiso_Global;
+GO
+
+CREATE TRIGGER trg_Permiso_Global ON Permiso AFTER INSERT, UPDATE, DELETE AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- 1. Capturar contexto de la aplicación
+    DECLARE @IdUsuario INT = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdUsuario') AS INT), 1);
+    DECLARE @IdTipoOrigen INT = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdTipoOrigen') AS INT), 1);
+    DECLARE @IdApiFunction INT = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdApiFunction') AS INT), 
+        CASE 
+            WHEN EXISTS(SELECT 1 FROM inserted) AND EXISTS(SELECT 1 FROM deleted) THEN 3 -- UPDATE
+            WHEN EXISTS(SELECT 1 FROM inserted) THEN 2 -- INSERT
+            ELSE 4 -- DELETE
+        END);
+    
+    DECLARE @IdTabla INT = (SELECT Id FROM [Tabla] WHERE Descripcion = 'Permiso');
+
+    -- 2. Ejecutar Auditoría
+    IF EXISTS(SELECT 1 FROM inserted) -- INSERT o UPDATE
+    BEGIN
+        INSERT INTO Auditoria (IdTabla, IdRegistro, IdApiFunction, IdTipoOrigen, DatosAnteriores, IdUsuarioCrea, FechaCreacion, Estatus)
+        SELECT @IdTabla, i.Id, @IdApiFunction, @IdTipoOrigen, (SELECT d.* FOR JSON PATH, WITHOUT_ARRAY_WRAPPER), @IdUsuario, GETDATE(), 1
+        FROM inserted i LEFT JOIN deleted d ON i.Id = d.Id;
+        
+        -- 3. Si es UPDATE, disparar actualización de fecha y usuario modifica automaticamente
+        -- Evitamos bucles infinitos validando si realmente hubo un cambio (no auditamos la auditoría)
+        IF EXISTS(SELECT 1 FROM deleted) AND NOT UPDATE(FechaModificacion)
+        BEGIN
+            DECLARE @Ids IdTableType;
+            INSERT INTO @Ids SELECT Id FROM inserted;
+            EXEC UpdateFechaModificacion @IdTabla, @Ids;
+        END
+    END
+    ELSE -- DELETE
+    BEGIN
+        INSERT INTO Auditoria (IdTabla, IdRegistro, IdApiFunction, IdTipoOrigen, DatosAnteriores, IdUsuarioCrea, FechaCreacion, Estatus)
+        SELECT @IdTabla, d.Id, @IdApiFunction, @IdTipoOrigen, (SELECT d.* FOR JSON PATH, WITHOUT_ARRAY_WRAPPER), @IdUsuario, GETDATE(), 1
+        FROM deleted d;
+    END
 END;
---###--
+GO
 
 -- =============================================
--- 9. TRIGGERS NUEVOS ESTADOS
+-- 9. TRIGGERS DE CATÁLOGOS (Trazabilidad Simple)
 -- =============================================
-CREATE TRIGGER trg_TipoEstadoCorte_UpdateFechaModificacion ON TipoEstadoCorte AFTER UPDATE AS 
+CREATE OR ALTER TRIGGER trg_TipoEstadoCorte_UpdateFechaModificacion ON TipoEstadoCorte AFTER UPDATE AS 
 BEGIN 
-    DECLARE @Ids IdTableType; 
-    INSERT INTO @Ids SELECT Id FROM inserted; 
-    EXEC UpdateFechaModificacion (SELECT Id FROM Tabla WHERE Descripcion = 'TipoEstadoCorte'), @Ids; 
+    IF NOT UPDATE(FechaModificacion)
+    BEGIN
+        DECLARE @Ids IdTableType; 
+        DECLARE @TableId INT = (SELECT Id FROM Tabla WHERE Descripcion = 'TipoEstadoCorte');
+        INSERT INTO @Ids SELECT Id FROM inserted; 
+        EXEC UpdateFechaModificacion @TableId, @Ids; 
+    END
 END;
---###--
-CREATE TRIGGER trg_TipoEstadoPermiso_UpdateFechaModificacion ON TipoEstadoPermiso AFTER UPDATE AS 
+GO
+
+CREATE OR ALTER TRIGGER trg_TipoEstadoPermiso_UpdateFechaModificacion ON TipoEstadoPermiso AFTER UPDATE AS 
 BEGIN 
-    DECLARE @Ids IdTableType; 
-    INSERT INTO @Ids SELECT Id FROM inserted; 
-    EXEC UpdateFechaModificacion (SELECT Id FROM Tabla WHERE Descripcion = 'TipoEstadoPermiso'), @Ids; 
+    IF NOT UPDATE(FechaModificacion)
+    BEGIN
+        DECLARE @Ids IdTableType; 
+        DECLARE @TableId INT = (SELECT Id FROM Tabla WHERE Descripcion = 'TipoEstadoPermiso');
+        INSERT INTO @Ids SELECT Id FROM inserted; 
+        EXEC UpdateFechaModificacion @TableId, @Ids; 
+    END
 END;
---###--
+GO

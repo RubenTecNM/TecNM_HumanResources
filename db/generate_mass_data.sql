@@ -2,8 +2,7 @@
 -- Genera aprox 100,000 registros de permisos distribuidos en periodos (Cortes) desde 2020.
 -- Garantiza no traslapes de periodos y fechas dentro de rangos (00:00:00 - 23:59:59).
 
-USE RecursosHumanosDB;
-GO
+SET NOCOUNT ON;
 
 SET NOCOUNT ON;
 
@@ -23,10 +22,10 @@ BEGIN
     SET @CurrentTermina = DATEADD(SECOND, -1, DATEADD(DAY, 15, @CurrentInicia)); -- Quincena exacta (termina 23:59:59)
     
     -- Insertar Corte (Estado 2 = Cerrado para historial)
-    INSERT INTO Corte (Inicia, Termina, IdEstadoCorte, FechaCreacion, IdUsuarioCrea, IdUsuarioModifica)
-    VALUES (@CurrentInicia, @CurrentTermina, 2, @CurrentInicia, 1, 1);
+    INSERT INTO Corte (Inicia, Termina, IdEstadoCorte, FechaCreacion, IdUsuarioCrea, IdUsuarioModifica, Estatus)
+    VALUES (@CurrentInicia, @CurrentTermina, 2, @CurrentInicia, 1, 1, 1);
     
-    SET @CorteId = SCOPE_IDENTITY();
+    SET @CorteId = @@IDENTITY;
     
     -- Insertar Permisos para este Corte
     DECLARE @j INT = 1;
@@ -49,13 +48,13 @@ BEGIN
         INSERT INTO Permiso (
             Motivo, Fecha1, Fecha2, IdTipoPermiso, IdUsuarioSolicita, 
             IdCorte, IdEstadoPermiso, Goce, FechaCreacion, IdUsuarioCrea, 
-            IdUsuarioModifica, FechaModificacion
+            IdUsuarioModifica, FechaModificacion, Estatus
         )
         VALUES (
             'Simulación de carga masiva #' + CAST(@TotalPermissions AS VARCHAR), 
             @FechaPermiso, @FechaPermiso, @TipoPermisoId, @UserId, 
             @CorteId, @EstadoId, CASE WHEN @EstadoId = 2 THEN 1 ELSE 0 END, 
-            @FechaPermiso, 1, 1, @FechaPermiso
+            @FechaPermiso, 1, 1, @FechaPermiso, 1
         );
         
         SET @j = @j + 1;
@@ -74,4 +73,4 @@ PRINT 'GENERACIÓN COMPLETADA EXITOSAMENTE';
     PRINT 'Total de permisos: ' + CAST(@TotalPermissions AS VARCHAR);
     PRINT 'Total de cortes: ' + CAST(@TotalCortes AS VARCHAR);
 PRINT '*********************************************************';
-GO
+PRINT '*********************************************************';

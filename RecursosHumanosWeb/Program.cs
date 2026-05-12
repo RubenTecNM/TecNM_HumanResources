@@ -195,8 +195,9 @@ using (var scope = app.Services.CreateScope())
                     logger.LogInformation("Creando procedimientos almacenados y triggers...");
                     var objectsContent = File.ReadAllText(objectsPath);
                     
-                    // Separamos por el delimitador personalizado --###--
-                    var blocks = objectsContent.Split(new[] { "--###--" }, StringSplitOptions.RemoveEmptyEntries);
+                    // Separamos por el delimitador estándar GO (insensible a mayúsculas y con posibles espacios)
+                    var blocks = System.Text.RegularExpressions.Regex.Split(objectsContent, @"^\s*GO\s*$", System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
                     
                     foreach (var block in blocks)
                     {

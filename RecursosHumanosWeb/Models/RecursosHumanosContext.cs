@@ -721,6 +721,25 @@ public partial class RecursosHumanosContext : DbContext
              await Database.ExecuteSqlRawAsync("EXEC sp_set_session_context @key=N'IdTipoOrigen', @value=@val", 
                 new Microsoft.Data.SqlClient.SqlParameter("@val", idTipoOrigen));
         }
+
+        // 5. Establecer IdApiFunction basado en el método HTTP
+        int? idApiFunction = httpContext.Request.Method switch
+        {
+            "GET" => 1,
+            "POST" => 2,
+            "PUT" => 3,
+            "DELETE" => 4, // Mapeado a DELETE FISICO por defecto
+            "PATCH" => 5,
+            "HEAD" => 6,
+            "OPTIONS" => 7,
+            _ => null
+        };
+
+        if (idApiFunction.HasValue)
+        {
+            await Database.ExecuteSqlRawAsync("EXEC sp_set_session_context @key=N'IdApiFunction', @value=@val",
+                new Microsoft.Data.SqlClient.SqlParameter("@val", idApiFunction.Value));
+        }
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
