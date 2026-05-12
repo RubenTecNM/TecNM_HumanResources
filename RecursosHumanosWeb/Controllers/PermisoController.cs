@@ -348,6 +348,7 @@ namespace RecursosHumanosWeb.Controllers
 
                 if (!_permisoService.CanUserAccessPermiso(userId, userType, permiso)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
 
+                var corte = permiso.IdCorteNavigation;
                 if (corte == null || corte.IdEstadoCorte != 1)
                     return Json(new AlertResponseDTO { Success = false, Message = "El permiso ya no se puede eliminar porque el periodo ya está cerrado o invalidado." });
 
