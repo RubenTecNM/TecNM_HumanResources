@@ -1,0 +1,121 @@
+/* ==========================================================================
+   _REQUIREMENTS.CSS
+   Visual layout for indicating data requirements (Single or Bulk)
+   ========================================================================== */
+
+.req-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl);
+}
+
+.req-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-soft);
+    padding: 1.5rem;
+    transition: var(--t-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.req-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.req-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.req-card.required::before {
+    background: var(--danger-500);
+}
+
+.req-card.optional::before {
+    background: var(--primary-400);
+}
+
+.req-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.req-title {
+    font-weight: 700;
+    color: var(--primary-900);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.req-id-badge {
+    font-size: 0.7rem;
+    background: var(--surface-alt);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-soft);
+    color: var(--text-muted);
+}
+
+.req-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+.req-badge.red {
+    background: var(--danger-100);
+    color: var(--danger-700);
+}
+
+.req-badge.blue {
+    background: var(--primary-100);
+    color: var(--primary-700);
+}
+
+.req-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.req-example {
+    background: var(--surface-alt);
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--primary-700);
+    border: 1px dashed var(--primary-200);
+}
+
+/* --- Bulk Section --- */
+.req-bulk-info {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--primary-900) 0%, var(--primary-950) 100%);
+    color: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: var(--spacing-lg);
+}
+
+.req-bulk-icon {
+    font-size: 3rem;
+    opacity: 0.5;
+}

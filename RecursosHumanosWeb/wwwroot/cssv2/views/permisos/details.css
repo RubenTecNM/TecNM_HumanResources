@@ -1,0 +1,39 @@
+/* ==========================================================================
+   VIEWS/PERMISOS/DETAILS.CSS
+   Styles for the Permission Details read-only view.
+   ========================================================================== */
+
+/* The details view currently inherits from _details.css global module.
+   Add any overrides or Permiso-specific detail styles below. */
+
+/* --- Container width for uniform distribution --- */
+.details-container {
+   max-width: 1200px;
+   margin: 0 auto;
+   padding: 0 1rem;
+}
+
+/* --- Enhance Shadow --- */
+.details-card {
+   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+.details-header-v2 {
+   color: var(--white);
+}
+
+.details-header-v2 .h4,
+.details-header-v2 .page-title,
+.details-header-v2 .text-white {
+   color: var(--white) !important;
+}
+
+/* --- Expand Motivo de Ausencia --- */
+.motivo-box {
+   min-height: 120px;
+   display: flex;
+   align-items: center;
+   padding: 1.5rem !important;
+}
+
+/* Inherits premium styles from global _components.css */

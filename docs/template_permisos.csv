@@ -1,0 +1,15 @@
+ID Tipo de Permiso (OBLIGATORIO),Dato Solicitado,¿Es Obligatorio?,Instrucciones para el Usuario,Ejemplo de Llenado
+1,Tipo de Permiso,SÍ,"Use (1) Retardo, (2) Turno x Turno, (3) Falta, (4) Cambio Horario",1
+,Fecha de Inicio,SÍ,"El primer día que inicia el permiso (Formato: Día/Mes/Año)",20/06/2026
+,Fecha de Término,NO,"Si el permiso es por varios días, indique la fecha final",22/06/2026
+,Hora de Inicio,NO,"Si el permiso es por horas, indique la hora (HH:MM)",08:00
+,Hora de Término,NO,"Si el permiso es por horas, indique la hora (HH:MM)",13:00
+,Motivo o Explicación,SÍ,"Breve descripción del porqué solicita el permiso",Cita médica programada
+,Documento Adjunto,NO,"Nombre del archivo (Ejemplo: justificante.pdf)",justificante.pdf
+
+--- CATALOGO DE TIPOS DE PERMISO (REFERENCIA) ---,,,
+ID,Nombre del Permiso,Descripción,
+1,Retardo,Llegada tarde justificable,
+2,Turno por Turno,Permiso por jornada completa,
+3,Falta,Ausencia programada,
+4,Cambio de Horario,Permiso para laborar en horario distinto,

@@ -86,64 +86,32 @@
 }
 
 @section Styles {
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/Permisos/review.css" asp-append-version="true" />
-    <style>
-        .details-container { max-width: 100% !important; width: 100% !important; padding: 2rem !important; }
-        .card-body { background-color: #ffffff !important; color: #1e293b !important; }
-        .info-card { background-color: #f8fafc !important; border: 1px solid #e2e8f0; }
-        .section-title { color: #1e293b !important; border-bottom: 2px solid #e2e8f0 !important; padding-bottom: 1rem; margin-bottom: 2rem !important; }
-        .text-dark { color: #1e293b !important; }
-        .text-secondary { color: #64748b !important; }
-        
-        /* Estilos inspirados en Usuario/Details */
-        .info-card-purple .icon-circle { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
-        .info-card-orange .icon-circle { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
-        .info-card-indigo .icon-circle { background: rgba(79, 70, 229, 0.1); color: #4F46E5; }
-        .icon-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        
-        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 10px; position: relative; }
-        .dot-active { background-color: #10b981; box-shadow: 0 0 10px #10b981; }
-        .dot-closed { background-color: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
-        
-        .goce-decision-integrated {
-            margin-top: 3rem;
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        .permission-type-card { border: 2px solid #e2e8f0; border-radius: 12px; transition: all 0.3s ease; }
-        .permission-type-card.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
-        .type-icon { font-size: 1.25rem; margin-bottom: 0.5rem; }
-    </style>
+    <link rel="stylesheet" href="~/cssv2/views/permisos/details.css" asp-append-version="true" />
 }
 
 <div class="details-container">
-    <div class="card details-card shadow-lg rounded-3 overflow-hidden border-0">
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden border">
         
-        <div class="details-header-gradient text-white px-4 px-md-5 py-4" style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%);">
-            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold" style="width: 60px; height: 60px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);">
-                        @inicial
+        <div class="details-header-v2 p-4 p-md-5 w-100">
+            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-4 w-100">
+                <div class="d-flex align-items-center gap-4 text-start">
+                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 shadow-sm flex-shrink-0">
+                        <i class="fas fa-file-signature"></i>
                     </div>
                     <div>
-                        <h2 class="h4 fw-semibold mb-1">Permiso #@Model.Id</h2>
-                        <p class="mb-0 d-flex align-items-center gap-2" style="color: #dbeafe; opacity: 0.9;">
-                             <i class="fas fa-user-circle"></i> @solicitanteNombre
-                        </p>
+                        <h2 class="h3 fw-bold mb-1 text-white">ID #@Model.Id</h2>
+                        <div class="ms-1 d-flex align-items-center gap-2 opacity-90 text-white small">
+                             <i class="fas fa-user-circle"></i> 
+                             <span class="opacity-75">Solicitante:</span> 
+                             <span class="fw-bold">@solicitanteNombre</span>
+                        </div>
                     </div>
                 </div>
-                <div class="status-glass rounded-pill px-3 py-2 d-flex align-items-center shadow-sm" style="background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
-                    @if (Model.IdEstadoPermiso == 1) { <span class="status-dot dot-closed"></span> <span class="small text-uppercase fw-bold">PENDIENTE</span> }
-                    else if (Model.IdEstadoPermiso == 2) { <span class="status-dot dot-active"></span> <span class="small text-uppercase fw-bold">APROBADO</span> }
-                    else if (Model.IdEstadoPermiso == 3) { <span class="status-dot opacity-50" style="background-color: #64748b;"></span> <span class="small text-uppercase fw-bold">INVALIDADO</span> }
-                    else { <span class="status-dot" style="background-color: #ef4444;"></span> <span class="small text-uppercase fw-bold">RECHAZADO</span> }
+                <div class="status-glass rounded-pill px-4 py-2 d-flex align-items-center shadow-sm border-white-20 ms-auto">
+                    @if (Model.IdEstadoPermiso == 1) { <span class="status-dot dot-closed"></span> <span class="small text-uppercase fw-bold text-white">PENDIENTE</span> }
+                    else if (Model.IdEstadoPermiso == 2) { <span class="status-dot dot-active"></span> <span class="small text-uppercase fw-bold text-white">APROBADO</span> }
+                    else if (Model.IdEstadoPermiso == 3) { <span class="status-dot dot-invalid"></span> <span class="small text-uppercase fw-bold text-white text-muted">INVALIDADO</span> }
+                    else { <span class="status-dot dot-danger"></span> <span class="small text-uppercase fw-bold text-white">RECHAZADO</span> }
                 </div>
             </div>
         </div>
@@ -153,26 +121,26 @@
                 
                 <!-- COLUMNA IZQUIERDA: INFORMACION DEL PERMISO -->
                 <div class="col-12 col-lg-6">
-                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
                         <i class="fas fa-info-circle text-primary"></i>
                         Informaci&oacute;n del Permiso
                     </h3>
 
                     <div class="mb-4">
-                        <div class="info-card info-card-purple p-3 rounded-3">
-                            <div class="d-flex align-items-center gap-3 mb-2">
-                                <div class="icon-circle">
-                                    <i class="fas fa-tag small"></i>
+                        <div class="info-card p-4 rounded-4 shadow-sm border">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="icon-circle bg-primary-subtle text-primary">
+                                    <i class="fas fa-tag"></i>
                                 </div>
                                 <span class="small fw-bold text-dark text-uppercase">Tipo de Permiso</span>
                             </div>
-                            <div class="ms-5">
+                            <div class="ms-1">
                                 <div class="permission-types d-flex gap-2">
                                     @foreach(var item in new[] { (ID:3, Icon:"fa-calendar-times", Label:"Falta"), (ID:1, Icon:"fa-clock", Label:"Retardo"), (ID:4, Icon:"fa-exchange-alt", Label:"Horario"), (ID:2, Icon:"fa-sync-alt", Label:"Turno") })
                                     {
-                                        <div class="permission-type-card p-2 text-center flex-grow-1 @(Model.IdTipoPermiso == item.ID ? "active border-primary shadow-sm" : "opacity-50 grayscale")" style="max-width: 80px;">
-                                            <i class="fas @item.Icon type-icon @(Model.IdTipoPermiso == item.ID ? "text-primary" : "")"></i>
-                                            <p class="mb-0" style="font-size: 0.7rem; font-weight: 700;">@item.Label</p>
+                                        <div class="permission-type-card p-2 text-center rounded-3 flex-grow-1 @(Model.IdTipoPermiso == item.ID ? "active border-primary bg-primary-50" : "opacity-50 grayscale border")" style="max-width: 80px;">
+                                            <i class="fas @item.Icon type-icon @(Model.IdTipoPermiso == item.ID ? "text-primary" : "") mb-1"></i>
+                                            <p class="mb-0 fw-bold" style="font-size: 0.65rem;">@item.Label</p>
                                         </div>
                                     }
                                 </div>
@@ -181,35 +149,40 @@
                     </div>
 
                     <div class="mb-4">
-                        <div class="info-card info-card-orange p-3 rounded-3">
+                        <div class="info-card p-4 rounded-4 shadow-sm border @(Model.Goce ? "border-success-subtle" : "border-danger-subtle")">
                             <div class="d-flex align-items-center gap-3 mb-2">
-                                <div class="icon-circle">
-                                    <i class="fas fa-money-bill-wave small"></i>
+                                <div class="icon-circle @(Model.Goce ? "bg-success-subtle text-success" : "bg-danger-subtle text-danger")">
+                                    <i class="fas fa-money-bill-wave"></i>
                                 </div>
-                                <span class="small fw-medium text-secondary text-uppercase">Estatus de Pago</span>
+                                <span class="small fw-bold text-dark text-uppercase">Estatus de Pago</span>
                             </div>
-                            <p class="h6 fw-semibold mb-0 ms-5 @(Model.Goce ? "text-success" : "text-danger")">
+                            <p class="h6 fw-bold mb-0 ms-5 @(Model.Goce ? "text-success" : "text-danger")">
                                 @(Model.Goce ? "✓ Con Goce de Sueldo" : "✗ Sin Goce de Sueldo")
                             </p>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <div class="info-card p-3 rounded-3">
-                            <div class="d-flex align-items-center gap-3 mb-2">
-                                <div class="icon-circle text-primary" style="background: rgba(37, 99, 235, 0.1);">
-                                    <i class="fas fa-comment-dots small"></i>
+                        <div class="info-card p-4 rounded-4 shadow-sm border border-soft">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="icon-circle bg-gray-100 text-gray-500">
+                                    <i class="fas fa-comment-dots"></i>
                                 </div>
-                                <span class="small fw-medium text-secondary text-uppercase">Motivo de Ausencia</span>
+                                <span class="small fw-bold text-dark text-uppercase">Motivo de Ausencia</span>
                             </div>
-                            <p class="h6 fw-normal text-dark mb-0 ms-5" style="white-space: pre-wrap; line-height: 1.6;">@Model.Motivo</p>
+                            <div class="bg-light p-4 rounded-3 ms-1 motivo-box border">
+                                <p class="text-dark mb-0 fw-medium" style="white-space: pre-wrap; line-height: 1.8; font-size: 0.95rem;">@Model.Motivo</p>
+                            </div>
+                            <div class="d-flex justify-content-end mt-2 opacity-50">
+                                <small class="fw-bold">@((Model.Motivo?.Length ?? 0)) / 255 caracteres</small>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- COLUMNA DERECHA: FECHAS Y AUDITORIA -->
                 <div class="col-12 col-lg-6">
-                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
                         <i class="fas fa-calendar-alt text-primary"></i>
                         Fechas y Horarios
                     </h3>
@@ -219,10 +192,10 @@
                             @if (config != null && config["Fecha1"].show && Model.Fecha1 != null)
                             {
                                 <div class="col-md-6">
-                                    <div class="p-3 border-start border-primary border-3 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Fecha1"].label)</p>
+                                    <div class="p-3 border-start border-primary border-4 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Fecha1"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
-                                            <i class="fas fa-calendar-alt text-primary me-2"></i> @FormatFechaCompleta(Model.Fecha1.Value)
+                                            @FormatFechaCompleta(Model.Fecha1.Value)
                                         </p>
                                     </div>
                                 </div>
@@ -230,8 +203,8 @@
                             @if (config != null && config["Hora1"].show && !string.IsNullOrEmpty(hora1))
                             {
                                 <div class="col-md-6">
-                                    <div class="p-3 border-start border-info border-3 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Hora1"].label)</p>
+                                    <div class="p-3 border-start border-info border-4 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Hora1"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
                                             <i class="fas fa-clock text-info me-2"></i> @hora1
                                         </p>
@@ -241,10 +214,10 @@
                             @if (config != null && config["Fecha2"].show && Model.Fecha2.HasValue)
                             {
                                 <div class="col-md-6">
-                                    <div class="p-3 border-start border-primary border-3 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Fecha2"].label)</p>
+                                    <div class="p-3 border-start border-primary border-4 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Fecha2"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
-                                            <i class="fas fa-calendar-alt text-primary me-2"></i> @FormatFechaCompleta(Model.Fecha2.Value)
+                                            @FormatFechaCompleta(Model.Fecha2.Value)
                                         </p>
                                     </div>
                                 </div>
@@ -252,8 +225,8 @@
                             @if (config != null && config["Hora2"].show && !string.IsNullOrEmpty(hora2))
                             {
                                 <div class="col-md-6">
-                                    <div class="p-3 border-start border-info border-3 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">@Html.Raw(config["Hora2"].label)</p>
+                                    <div class="p-3 border-start border-info border-4 bg-light rounded-end h-100 shadow-sm">
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Hora2"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
                                             <i class="fas fa-clock text-info me-2"></i> @hora2
                                         </p>
@@ -263,8 +236,8 @@
                         </div>
                         @if (showDias)
                         {
-                            <div class="p-3 border-start border-success border-3 bg-light rounded-end shadow-sm">
-                                <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">D&iacute;as Totales</p>
+                            <div class="p-3 border-start border-success border-4 bg-light rounded-end shadow-sm">
+                                <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">D&iacute;as Totales</p>
                                 <p class="small fw-bold text-dark mb-0">
                                     <i class="fas fa-calendar-check text-success me-2"></i> @Model.Dias @(Model.Dias == 1 ? "d&iacute;a" : "d&iacute;as") solicitados
                                 </p>
@@ -277,19 +250,20 @@
                     </h3>
                     
                     <div class="mb-3">
-                        <div class="info-card info-card-indigo p-3 rounded-3">
+                        <div class="info-card p-4 rounded-4 shadow-sm border border-start-4 border-start-indigo">
                             <div class="d-flex align-items-center gap-3 mb-2">
-                                <div class="icon-circle">
-                                    <i class="fas fa-hashtag small"></i>
+                                <div class="icon-circle bg-indigo-50 text-indigo-600">
+                                    <i class="fas fa-hashtag"></i>
                                 </div>
-                                <span class="small fw-medium text-secondary text-uppercase">Periodo de Corte</span>
+                                <span class="small fw-bold text-dark text-uppercase">Periodo de Corte</span>
                             </div>
-                            <p class="h6 fw-semibold text-dark mb-0 ms-5">
-                                Periodo #@Model.IdCorte - 
-                                @if (Model.IdCorteNavigation?.IdEstadoCorte == 1) { <span class="text-success">Vigente / Abierto</span> }
-                                else if (Model.IdCorteNavigation?.IdEstadoCorte == 2) { <span class="text-warning">Cerrado</span> }
-                                else { <span class="text-danger">Invalidado</span> }
-                            </p>
+                            <div class="ms-5 d-flex align-items-center gap-2">
+                                <span class="fw-bold text-dark">#@Model.IdCorte</span>
+                                <div class="v2-badge @(Model.IdCorteNavigation?.IdEstadoCorte == 1 ? "v2-badge-success" : "v2-badge-secondary")">
+                                    <span class="v2-badge-dot"></span>
+                                    @(Model.IdCorteNavigation?.IdEstadoCorte == 1 ? "Corte Abierto" : "Corte Cerrado")
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -297,26 +271,29 @@
                 <!-- SECCIÓN DE EVIDENCIA (ANCHO COMPLETO) -->
                 @if (!string.IsNullOrEmpty(Model.Evidencia))
                 {
-                    <div class="col-12 mt-4 pt-4 border-top">
-                        <h3 class="h5 fw-semibold text-dark mb-4 d-flex align-items-center gap-2">
+                    <div class="col-12 mt-4 pt-5 border-top">
+                        <h3 class="h5 fw-bold text-dark mb-4 d-flex align-items-center gap-2">
                             <i class="fas fa-paperclip text-primary"></i> Evidencia Documental
                         </h3>
-                        <div class="audit-card bg-light rounded-3 p-0 overflow-hidden shadow-sm" style="border: 1px solid #e2e8f0; border-radius: 12px;">
+                        <div class="audit-card bg-light rounded-4 overflow-hidden border shadow-sm">
                             @if (evidenceExists)
                             {
-                                <div class="p-3 bg-primary text-white d-flex justify-content-between align-items-center">
-                                    <span class="small fw-bold"><i class="fas fa-file-pdf me-2"></i> @System.IO.Path.GetFileName(evidenceUrl)</span>
-                                    <a href="@evidenceUrl" target="_blank" class="btn btn-sm btn-light py-0 fw-bold shadow-sm" style="color: #1e40af;">
-                                        <i class="fas fa-external-link-alt me-1"></i> Ver en Pantalla Completa
+                                <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
+                                    <span class="small fw-bold text-dark"><i class="fas fa-file-pdf me-2 text-danger"></i> @System.IO.Path.GetFileName(evidenceUrl)</span>
+                                    <a href="@evidenceUrl" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                                        <i class="fas fa-external-link-alt me-1"></i> Abrir PDF
                                     </a>
                                 </div>
-                                <iframe src="@evidenceUrl" style="width: 100%; height: 500px; border: none;"></iframe>
+                                <iframe src="@evidenceUrl" class="w-100 border-0" style="height: 600px;"></iframe>
                             }
                             else
                             {
-                                <div class="p-5 text-center text-danger bg-white">
-                                    <i class="fas fa-exclamation-triangle fs-1 mb-3"></i>
-                                    <p class="mb-0 fw-bold underline">Archivo no disponible en el servidor: @System.IO.Path.GetFileName(Model.Evidencia)</p>
+                                <div class="p-5 text-center bg-white">
+                                    <div class="bg-danger-subtle text-danger rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 64px; height: 64px;">
+                                        <i class="fas fa-exclamation-triangle fs-2"></i>
+                                    </div>
+                                    <h5 class="fw-bold text-dark">Archivo no encontrado</h5>
+                                    <p class="text-muted small mb-0">No se pudo localizar el archivo: @System.IO.Path.GetFileName(Model.Evidencia)</p>
                                 </div>
                             }
                         </div>
@@ -325,31 +302,31 @@
 
 
                 <!-- AUDITORÍA (PIE DE PÁGINA) -->
-                <div class="col-12 mt-5 pt-4 border-top">
-                    <h3 class="h6 fw-bold text-secondary text-uppercase mb-4">Registro de Auditor&iacute;a</h3>
-                    <div class="row g-3">
+                <div class="col-12 mt-5 pt-5 border-top">
+                    <h3 class="h6 fw-bold text-secondary text-uppercase mb-4">Bit&aacute;cora de Registro</h3>
+                    <div class="row g-4">
                         <div class="col-md-4">
-                            <div class="audit-card bg-light rounded-3 p-3 h-100 border shadow-sm">
+                            <div class="audit-card bg-light p-3 rounded-4 border border-soft h-100">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="audit-icon bg-success text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                    <div class="icon-circle bg-success text-white">
                                         <i class="fas fa-calendar-plus"></i>
                                     </div>
                                     <div>
-                                        <p class="small text-secondary mb-0 fw-bold">Fecha de Solicitud</p>
-                                        <p class="small fw-bold text-dark mb-0">@Model.FechaCreacion.ToString("dd/MM/yyyy hh:mm tt", new System.Globalization.CultureInfo("es-MX")).ToUpper()</p>
+                                        <p class="small text-muted mb-0 fw-bold">Fecha Solicitud</p>
+                                        <p class="small fw-bold text-dark mb-0">@Model.FechaCreacion.ToString("dd/MM/yyyy hh:mm tt", culture).ToUpper()</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="audit-card bg-light rounded-3 p-3 h-100 border shadow-sm">
+                            <div class="audit-card bg-light p-3 rounded-4 border border-soft h-100">
                                 <div class="d-flex align-items-center gap-3">
-                                    <div class="audit-icon bg-blue-600 text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background-color: #2563eb;">
+                                    <div class="icon-circle bg-primary text-white">
                                         <i class="fas fa-user-tag"></i>
                                     </div>
                                     <div>
-                                        <p class="small text-secondary mb-0 fw-bold">Creado por</p>
-                                        <p class="small fw-bold text-dark mb-0">@(Model.IdUsuarioCreaNavigation?.Nombre ?? "Sistema")</p>
+                                        <p class="small text-muted mb-0 fw-bold">Creado por</p>
+                                        <p class="small fw-bold text-dark mb-0 truncate-1">@(Model.IdUsuarioCreaNavigation?.Nombre ?? "Sistema")</p>
                                     </div>
                                 </div>
                             </div>
@@ -357,14 +334,14 @@
                         @if (Model.IdEstadoPermiso == 2)
                         {
                             <div class="col-md-4">
-                                <div class="audit-card bg-light rounded-3 p-3 h-100 border-success shadow-sm" style="border-width: 2px;">
+                                <div class="audit-card bg-white p-3 rounded-4 border-success border-1 shadow-sm h-100" style="background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);">
                                     <div class="d-flex align-items-center gap-3">
-                                        <div class="audit-icon bg-success text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                        <div class="icon-circle bg-success text-white">
                                             <i class="fas fa-user-check"></i>
                                         </div>
                                         <div>
-                                            <p class="small text-secondary mb-0 fw-bold">Autorizado por</p>
-                                            <p class="small fw-bold text-success mb-0">@(Model.IdUsuarioAutorizaNavigation?.Nombre ?? "N/A")</p>
+                                            <p class="small text-success mb-0 fw-bold">Autorizado por</p>
+                                            <p class="small fw-bold text-dark mb-0 truncate-1">@(Model.IdUsuarioAutorizaNavigation?.Nombre ?? "N/A")</p>
                                         </div>
                                     </div>
                                 </div>
@@ -377,54 +354,41 @@
 
         <div class="card-footer py-4 px-5 bg-light border-top d-flex justify-content-between align-items-center">
             <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
-                <i class="fas fa-arrow-left me-2"></i> Volver al Portal
+                <i class="fas fa-arrow-left me-2"></i> Volver al Listado
             </a>
             
-            @if (canReview == false && Model.IdCorte == (int?)ViewBag.CurrentCourtId && (Model.IdEstadoPermiso == 1) && (int?)ViewBag.CurrentUserId == Model.IdUsuarioSolicita)
-            {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
-                    <i class="fas fa-edit me-2"></i> Editar Solicitud
-                </a>
-            }
+            <div class="d-flex gap-3">
+                @if (canReview == false && Model.IdCorte == (int?)ViewBag.CurrentCourtId && (Model.IdEstadoPermiso == 1) && (int?)ViewBag.CurrentUserId == Model.IdUsuarioSolicita)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="v2-btn btn-primary shadow-sm">
+                        <i class="fas fa-edit"></i> Editar Solicitud
+                    </a>
+                }
+
+                @if (canReview)
+                {
+                    <button type="button" class="v2-btn btn-success shadow-sm" onclick="document.getElementById('reviewFormInline')?.scrollIntoView({behavior:'smooth'})">
+                        <i class="fas fa-check-double"></i> Revisar Ahora
+                    </button>
+                }
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Animacion de entrada para las secciones
-            const elements = document.querySelectorAll('.info-card, .border-start, .audit-card, .goce-decision-integrated, .section-title');
-            elements.forEach((el, index) => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(15px)';
-                setTimeout(() => {
-                    el.style.transition = 'all 0.5s cubic-bezier(0.23, 1, 0.32, 1)';
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, 40 * (index + 1));
-            });
-
-            // Logica para autorizacion inline
+            // Logica para autorizacion inline (si existiera el formulario)
             const reviewForm = document.getElementById('reviewFormInline');
             const goceOptions = document.querySelectorAll('.goce-option');
             
             if (reviewForm) {
                 function updateUi() {
                     const selected = document.querySelector('input[name="Goce"]:checked');
-                    goceOptions.forEach(opt => {
-                        const content = opt.querySelector('.option-content');
-                        content.style.borderColor = '#e2e8f0';
-                        content.style.background = '#ffffff';
-                        content.style.transform = 'scale(1)';
-                    });
+                    goceOptions.forEach(opt => opt.classList.remove('active'));
                     if (selected) {
-                        const content = selected.closest('.goce-option').querySelector('.option-content');
-                        content.style.borderColor = '#3b82f6';
-                        content.style.background = 'rgba(59, 130, 246, 0.05)';
-                        content.style.transform = 'scale(1.02)';
+                        selected.closest('.goce-option').classList.add('active');
                     }
                 }
                 
@@ -432,9 +396,11 @@
                     opt.addEventListener('click', () => {
                         const val = opt.dataset.value;
                         const radio = document.getElementById(val === 'true' ? 'goceTrue' : 'goceFalse');
-                        if (radio) { radio.checked = true; updateUi(); }
+                        if (radio) { 
+                            radio.checked = true; 
+                            updateUi(); 
+                        }
                     });
-                    opt.style.cursor = 'pointer';
                 });
                 
                 updateUi();
@@ -468,23 +434,11 @@
                             headers: { 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value },
                             body: formData
                         });
-                        if (!response.ok) throw new Error('Error al conectar con el servidor');
                         const data = await response.json();
-                        // Deleger el manejo de alertas al sistema central de site.js
                         if (typeof handleAlertResponse === 'function') { 
                             await handleAlertResponse(data); 
                         } else {
-                            // Fallback de emergencia si site.js no cargó
-                            const isSuccess = data.success ?? data.Success;
-                            const message = data.message ?? data.Message ?? (isSuccess ? 'Operaci&oacute;n exitosa' : 'Ocurri&oacute; un error');
-                            const redirectUrl = data.redirectUrl ?? data.RedirectUrl;
-
-                            await Swal.fire({
-                                icon: isSuccess ? 'success' : 'error',
-                                title: isSuccess ? '&iexcl;Autorizado!' : 'Error',
-                                text: message
-                            });
-                            if (isSuccess) window.location.href = redirectUrl || '/Permiso/Index';
+                            window.location.href = data.redirectUrl || '/Permiso/Index';
                         }
                     } catch (err) {
                         Swal.fire('Error', err.message, 'error');

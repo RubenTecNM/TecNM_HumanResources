@@ -11,12 +11,12 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Permisos/index.css" asp-append-version="true" />
+    @* Usando estilos globales de v2-site.css *@
 }
 
 <div class="index-container">
     @Html.AntiForgeryToken()
-    <div class="permission-header fade-in">
+    <div class="page-header-v2 fade-in">
         <div class="header-content">
             <h1 class="page-title text-gradient">
                 <i class="fas fa-file-alt"></i>
@@ -24,14 +24,12 @@
             </h1>
             <p class="page-subtitle">Administra los permisos solicitados</p>
         </div>
-        <div class="header-decoration">
+        <div class="header-actions">
             <authorize-section policy="!AutorizadorOnly">
-                <div class="header-actions">
-                    <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo permiso">
-                        <i class="fas fa-plus"></i>
-                        Crear Permiso
-                    </a>
-                </div>
+                <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo permiso">
+                    <i class="fas fa-plus"></i>
+                    Crear Permiso
+                </a>
             </authorize-section>
         </div>
     </div>
@@ -44,11 +42,33 @@
             </div>
             <div class="filter-body-premium">
                 <form id="searchForm" method="get" asp-action="Index">
-                    <div class="row g-4">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <div class="filter-group">
+                                <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Vigencia Desde</label>
+                                <input type="date" id="delDia" name="delDia" class="form-control filter-input-pill" value="@ViewBag.DelDia" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="filter-group">
+                                <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Vigencia Hasta</label>
+                                <input type="date" id="alDia" name="alDia" class="form-control filter-input-pill" value="@ViewBag.AlDia" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="filter-group">
+                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Estado</label>
+                                <select id="revisado" name="revisado" class="form-control filter-input-pill select2-simple">
+                                    <option value="">Cualquiera</option>
+                                    <option value="false" selected="@(ViewBag.Revisado != null && !(bool)ViewBag.Revisado ? "selected" : null)">Pendientes</option>
+                                    <option value="true" selected="@(ViewBag.Revisado != null && (bool)ViewBag.Revisado ? "selected" : null)">Revisados</option>
+                                </select>
+                            </div>
+                        </div>
                         <authorize-section policy="AutorizadorOrAbove">
                             <div class="col-md-3">
                                 <div class="filter-group">
-                                    <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Colaborador</label>
+                                    <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Creado por</label>
                                     <select id="nombreUsuario" name="nombreUsuario" class="form-control user-autocomplete w-100">
                                         <option value="">Todos los empleados</option>
                                     </select>
@@ -71,28 +91,6 @@
                                 </div>
                             </div>
                         </authorize-section>
-                        <div class="col-md-3">
-                            <div class="filter-group">
-                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Estado de Revisión</label>
-                                <select id="revisado" name="revisado" class="form-control filter-input-pill select2-simple">
-                                    <option value="">Todos los estados</option>
-                                    <option value="false" selected="@(ViewBag.Revisado != null && !(bool)ViewBag.Revisado ? "selected" : null)">Pendientes</option>
-                                    <option value="true" selected="@(ViewBag.Revisado != null && (bool)ViewBag.Revisado ? "selected" : null)">Revisados</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="filter-group">
-                                <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Desde el</label>
-                                <input type="date" id="delDia" name="delDia" class="form-control filter-input-pill" value="@ViewBag.DelDia" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="filter-group">
-                                <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Hasta el</label>
-                                <input type="date" id="alDia" name="alDia" class="form-control filter-input-pill" value="@ViewBag.AlDia" />
-                            </div>
-                        </div>
                     </div>
                     <div class="d-flex justify-content-end mt-4 pt-3 border-top gap-3">
                         <button type="button" onclick="clearAllFilters()" class="btn btn-light rounded-pill px-4 fw-bold text-secondary border hover-shadow" style="transition: all 0.2s;">
@@ -110,135 +108,8 @@
 
     @if (Model.Permisos.Any())
     {
-        <!-- MOBILE CARD VIEW (Visible < 992px) -->
-        <div class="mobile-view-container fade-in">
-            @foreach (var item in Model.Permisos)
-            {
-                var uniqueId = "mob-" + item.Id;
-                // Cloudflare-inspired varied palette
-                var colorIndex = (item.Id % 5);
-                var boxGradient = "";
-                var accentColor = "";
-                
-                switch (colorIndex) {
-                    case 0: boxGradient = "linear-gradient(135deg, #6366f1, #4338ca)"; accentColor = "#4338ca"; break;
-                    case 1: boxGradient = "linear-gradient(135deg, #10b981, #059669)"; accentColor = "#059669"; break;
-                    case 2: boxGradient = "linear-gradient(135deg, #f59e0b, #d97706)"; accentColor = "#d97706"; break;
-                    case 3: boxGradient = "linear-gradient(135deg, #f43f5e, #e11d48)"; accentColor = "#e11d48"; break;
-                    case 4: boxGradient = "linear-gradient(135deg, #0ea5e9, #0284c7)"; accentColor = "#0284c7"; break;
-                }
 
-                <div class="card premium-mobile-card mb-3" id="card-@uniqueId">
-                    <div class="mobile-card-header-premium d-flex align-items-center justify-content-between" 
-                         onclick="toggleMobileCard('@uniqueId')"
-                         style="border-left: 5px solid @accentColor; border-top-left-radius: 20px; border-bottom-left-radius: 20px;">
-                        
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="id-box-premium" style="background: @boxGradient;">
-                                @(item.Nombre?.Substring(0, 1).ToUpper() ?? "U")
-                            </div>
-                            
-                            <div>
-                                <h6 class="mb-1 fw-bold text-dark">@(item.Nombre ?? "Usuario")</h6>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="info-pill-sm" style="background: rgba(100, 116, 139, 0.1); color: #64748b;">
-                                        #@item.Id
-                                    </span>
-                                    <span class="badge rounded-pill bg-@item.EstadoColor">
-                                        <i class="fas @(item.IdEstadoPermiso == 1 ? "fa-clock" : (item.IdEstadoPermiso == 2 ? "fa-check-circle" : (item.IdEstadoPermiso == 4 ? "fa-times-circle" : "fa-ban"))) me-1"></i>
-                                        @item.EstadoDescripcion
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <i class="fas fa-chevron-down rotate-icon text-muted opacity-50"></i>
-                    </div>
-
-                    <div class="expandable-content" id="body-@uniqueId">
-                        <div class="p-4">
-                            <div class="row g-3 mb-4">
-                                <div class="col-6">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">Creación</small>
-                                        <span class="fw-bold text-dark small">@(item.FechaCreacion != default ? item.FechaCreacion.ToString("dd MMM, yyyy") : "-")</span>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">Editado</small>
-                                        <span class="fw-bold text-dark small">@(item.FechaModificacion != default ? item.FechaModificacion?.ToString("dd MMM, yyyy") : "-")</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="action-grid d-grid gap-2" style="grid-template-columns: repeat(3, 1fr);">
-                                @{
-                                    bool isOwner = item.IdUsuarioSolicita == currentUserId;
-                                    bool inActiveCourt = item.IdCorte == currentCourtId;
-                                    bool isPending = item.IdEstadoPermiso == 1; // 1 = Pendiente
-                                    
-                                    // REGLAS:
-                                    // 1. Si el periodo se cerró (inActiveCourt == false), nadie edita ni borra.
-                                    // 2. Si está vigente, dueño o RH/Admin pueden borrar.
-                                    // 3. Si está vigente y pendiente, dueño o RH/Admin pueden editar.
-                                    bool canEdit = (isAdministrador || isRH || isOwner) && inActiveCourt && isPending && !isAutorizador;
-                                    bool canDelete = (isAdministrador || isRH || isOwner) && inActiveCourt && !isAutorizador;
-                                }
-
-                                <authorize-section policy="AutorizadorOnly">
-                                    @if (item.IdEstadoPermiso == 1 && inActiveCourt)
-                                    {
-                                        <div style="grid-column: span 3;">
-                                            <a asp-action="Review" asp-route-id="@item.Id" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">
-                                                <i class="fas fa-check-double me-2"></i> Revisar Solicitud
-                                            </a>
-                                        </div>
-                                    }
-
-                                </authorize-section>
-
-                                <authorize-section policy="!AutorizadorOnly">
-                                    @if (canEdit)
-                                    {
-                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary rounded-pill shadow-sm py-2 text-white" title="Editar">
-                                            <i class="fas fa-pen"></i>
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-light rounded-pill opacity-50 py-2" disabled title="Bloqueado">
-                                            <i class="fas fa-lock"></i>
-                                        </button>
-                                    }
-
-                                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info text-white rounded-pill shadow-sm py-2" title="Ver">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-
-                                    @if (canDelete)
-                                    {
-                                        <button class="btn btn-danger rounded-pill shadow-sm py-2" 
-                                                data-action="DeleteAjax" data-controller="Permiso" data-id="@item.Id" title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-light rounded-pill opacity-50 py-2" disabled title="Bloqueado">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    }
-                                </authorize-section>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <!-- DESKTOP TABLE VIEW (Hidden < 992px via CSS) -->
-        <div class="table-container fade-in mb-4">
+        <div class="table-container fade-in">
             <div class="table-inner">
                 <div class="overflow-x-auto">
                     <table id="permisosTable" class="data-table" style="width:100%; border: none; overflow: hidden; padding: 0;" aria-label="Tabla de permisos">
@@ -259,9 +130,10 @@
                                         <td class="text-center" data-label="ID">@item.Id</td>
                                         <td data-label="Solicitante"><strong>@(item.Nombre ?? "-")</strong></td>
                                         <td class="text-center" data-label="Estado">
-                                            <span class="badge rounded-pill bg-@item.EstadoColor">
+                                            <div class="v2-badge v2-badge-@item.EstadoColor">
+                                                <span class="v2-badge-dot"></span>
                                                 @item.EstadoDescripcion
-                                            </span>
+                                            </div>
                                         </td>
                                         <td class="text-center" data-label="Creación">
                                             @if (item.FechaCreacion != default)
@@ -319,7 +191,7 @@
                                                     }
                                                     else
                                                     {
-                                                        <button class="action-btn btn-secondary opacity-50" disabled title="No se puede editar fuera del periodo vigente" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                        <button class="action-btn opacity-50" disabled title="No se puede editar fuera del periodo vigente" style="cursor: not-allowed;">
                                                             <i class="fas fa-lock"></i>
                                                         </button>
                                                     }
@@ -332,7 +204,7 @@
                                                     }
                                                     else
                                                     {
-                                                        <button class="action-btn btn-secondary opacity-50" disabled title="No se puede eliminar un permiso revisado de un periodo cerrado" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                        <button class="action-btn opacity-50" disabled title="No se puede eliminar un permiso revisado de un periodo cerrado" style="cursor: not-allowed;">
                                                             <i class="fas fa-trash-alt"></i>
                                                         </button>
                                                     }
@@ -368,37 +240,24 @@
     <!-- SHARED PAGINATION (Visible in both views) -->
     @if (Model.Permisos.Any())
     {
-        <div class="pagination-container mt-4 fade-in">
-            <div class="pagination-info text-muted small mb-2 text-center text-md-start">
-                Mostrando @Model.Permisos.FirstItemOnPage - @Model.Permisos.LastItemOnPage de @Model.Permisos.TotalItemCount permisos
+        <div class="pagination-container-v2 fade-in">
+            <div class="pagination-info-v2">
+                <i class="fas fa-list-ol me-2 opacity-50"></i>
+                Mostrando <span class="fw-bold">@Model.Permisos.FirstItemOnPage</span> - <span class="fw-bold">@Model.Permisos.LastItemOnPage</span> de <span class="fw-bold">@Model.Permisos.TotalItemCount</span> permisos
             </div>
-
-            <div class="d-flex justify-content-center justify-content-md-end">
-                @Html.PagedListPager(
-                Model.Permisos,
-                                page => Url.Action("Index", new
-                                {
-                                    page,
-                                    sortOrder = ViewBag.CurrentSort,
-                                    nombreFilter = ViewBag.NombreFilter,
-                                    correoFilter = ViewBag.CorreoFilter,
-                                    departamentoFilter = ViewBag.DepartamentoFilter,
-                                    estadoFilter = ViewBag.EstadoFilter,
-                                    revisado = ViewBag.Revisado
-                                }),
-                                new PagedListRenderOptions
-                                {
-                                    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
-                                    DisplayLinkToLastPage = PagedListDisplayMode.Always,
-                                    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
-                                    DisplayLinkToNextPage = PagedListDisplayMode.Always,
-                                    DisplayLinkToIndividualPages = true,
-                                    MaximumPageNumbersToDisplay = 5,
-                                    DisplayEllipsesWhenNotShowingAllPageNumbers = true,
-                                    UlElementClasses = new[] { "pagination", "pagination-sm", "m-0" },
-                                    LiElementClasses = new[] { "page-item" },
-                                    PageClasses = new[] { "page-link" }
-                                })
+            <div class="v2-pagination">
+                @Html.PagedListPager(Model.Permisos, page => Url.Action("Index", 
+                    new { page, pageSize = Model.Permisos.PageSize, nombreUsuario = ViewBag.NombreUsuario, idArea = Model.SelectedArea, revisado = ViewBag.Revisado, delDia = ViewBag.DelDia, alDia = ViewBag.AlDia }), 
+                    new PagedListRenderOptions {
+                        DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                        DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                        DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                        DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                        MaximumPageNumbersToDisplay = 5,
+                        UlElementClasses = new[] { "pagination" },
+                        LiElementClasses = new[] { "page-item" },
+                        PageClasses = new[] { "page-link" }
+                    })
             </div>
         </div>
     }

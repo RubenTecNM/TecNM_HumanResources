@@ -8,115 +8,17 @@
 }
 
 @section Styles {
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-    <style>
-        /* Audit Detail Overlay & Floating Card */
-        .audit-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .audit-overlay.show {
-            display: flex;
-            opacity: 1;
-        }
-
-        .audit-floating-card {
-            background: rgba(255, 255, 255, 0.95);
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-            position: relative;
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .audit-overlay.show .audit-floating-card {
-            transform: scale(1);
-        }
-
-        .audit-card-header {
-            padding: 1.5rem 2rem;
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-darkest) 100%);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .audit-card-body {
-            padding: 2rem;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .close-audit-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .close-audit-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: rotate(90deg);
-        }
-
-        .json-viewer {
-            background: #1e1e2e;
-            color: #cdd6f4;
-            padding: 1.5rem;
-            border-radius: 12px;
-            font-family: 'Fira Code', 'Cascadia Code', monospace;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            border-left: 4px solid var(--primary-medium);
-            margin-top: 1rem;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-    </style>
-    <link href="~/css/site.css" rel="stylesheet" />
-
+    <link href="~/cssv2/views/auditoria/index.css" rel="stylesheet" asp-append-version="true" />
 }
 
 <div class="index-container">
-    <div class="permission-header fade-in">
+    <div class="page-header-v2 fade-in">
         <div class="header-content">
             <h1 class="page-title text-gradient">
                 <i class="fas fa-history"></i>
                 Auditoría del Sistema
             </h1>
             <p class="page-subtitle">Rastreo de cambios y operaciones en la base de datos</p>
-        </div>
-        <div class="header-decoration">
-            <div class="floating-icon">
-                <i class="fas fa-clipboard-list"></i>
-            </div>
         </div>
     </div>
 
@@ -172,123 +74,8 @@
 
     @if (Model.Any())
     {
-        <!-- MOBILE CARD VIEW (Visible < 992px) -->
-        <div class="mobile-view-container fade-in">
-            @foreach (var item in Model)
-            {
-                var uniqueId = "mob-" + item.Id; 
-                var badgeClass = item.Accion.Contains("POST") ? "background: rgba(16, 185, 129, 0.1); color: #059669;" : 
-                                item.Accion.Contains("PUT") ? "background: rgba(245, 158, 11, 0.1); color: #d97706;" :
-                                item.Accion.Contains("DELETE") ? "background: rgba(239, 68, 68, 0.1); color: #ef4444;" : 
-                                "background: rgba(59, 130, 246, 0.1); color: #3b82f6;";
-                
-                var actionIcon = item.Accion.Contains("POST") ? "fa-plus-circle" : 
-                                item.Accion.Contains("PUT") ? "fa-edit" :
-                                item.Accion.Contains("DELETE") ? "fa-trash-alt" : "fa-info-circle";
 
-                // Origin Logic
-                var originClass = "origin-default";
-                var originIcon = "fa-question";
-                var originText = item.TipoOrigenDesc ?? "Desconocido";
-
-                if (originText.Contains("Web")) { originClass = "origin-web"; originIcon = "fa-user"; }
-                else if (originText.Contains("API")) { originClass = "origin-api"; originIcon = "fa-key"; }
-                else if (originText.Contains("Sistema")) { originClass = "origin-system"; originIcon = "fa-robot"; }
-                else if (originText.Contains("Job")) { originClass = "origin-job"; originIcon = "fa-clock"; }
-                else if (originText.Contains("LDAP")) { originClass = "origin-ldap"; originIcon = "fa-sync"; }
-
-                // Cloudflare-inspired varied palette
-                var colorIndex = (item.Id % 5);
-                var boxGradient = "";
-                var accentColor = "";
-                
-                switch (colorIndex) {
-                    case 0: boxGradient = "linear-gradient(135deg, #6366f1, #4338ca)"; accentColor = "#4338ca"; break;
-                    case 1: boxGradient = "linear-gradient(135deg, #10b981, #059669)"; accentColor = "#059669"; break;
-                    case 2: boxGradient = "linear-gradient(135deg, #f59e0b, #d97706)"; accentColor = "#d97706"; break;
-                    case 3: boxGradient = "linear-gradient(135deg, #f43f5e, #e11d48)"; accentColor = "#e11d48"; break;
-                    case 4: boxGradient = "linear-gradient(135deg, #0ea5e9, #0284c7)"; accentColor = "#0284c7"; break;
-                }
-
-                <div class="card premium-mobile-card mb-3" id="card-@uniqueId">
-                    <div class="mobile-card-header-premium d-flex align-items-center justify-content-between" 
-                         onclick="toggleMobileCard('@uniqueId')"
-                         style="border-left: 5px solid @accentColor; border-top-left-radius: 20px; border-bottom-left-radius: 20px;">
-                        
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="id-box-premium" style="background: @boxGradient;">
-                                @(item.Tabla.Length > 0 ? item.Tabla.Substring(0, 1).ToUpper() : "A")
-                            </div>
-                            
-                            <div>
-                                <h6 class="mb-1 fw-bold text-dark">@item.Tabla</h6>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="info-pill-sm @originClass">
-                                        <i class="fas @originIcon me-1"></i> @originText
-                                    </span>
-                                    <span class="info-pill-sm" style="@badgeClass">
-                                        <i class="fas @actionIcon me-1"></i> @item.Accion
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <i class="fas fa-chevron-down rotate-icon text-muted opacity-50"></i>
-                    </div>
-
-                    <div class="expandable-content" id="body-@uniqueId">
-                        <div class="p-4">
-                            <!-- Details Grid -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-6">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm h-100">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">
-                                            <i class="fas fa-calendar-alt me-1"></i> Fecha
-                                        </small>
-                                        <span class="fw-bold text-dark small">@item.FechaCreacion.ToString("dd MMM, HH:mm")</span>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm h-100">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">
-                                            <i class="fas fa-user-circle me-1"></i> Usuario
-                                        </small>
-                                        <span class="fw-bold text-dark small text-truncate d-block">@item.Usuario</span>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">
-                                            <i class="fas fa-fingerprint me-1"></i> ID Registro
-                                        </small>
-                                        <span class="fw-bold text-dark">#@item.IdRegistro</span>
-                                    </div>
-                                </div>
-                                @if(!string.IsNullOrEmpty(item.ApiKeyDesc) && item.ApiKeyDesc != "N/A") {
-                                    <div class="col-12">
-                                        <div class="p-3 bg-white border border-light rounded-4 shadow-sm">
-                                            <small class="text-muted d-block uppercase-tracking mb-1">
-                                                <i class="fas fa-link me-1"></i> Detalle Origen
-                                            </small>
-                                            <span class="fw-bold text-dark small">@item.ApiKeyDesc</span>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="action-grid d-grid">
-                                <button type="button" onclick="showAuditDetails('@item.Id')" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm py-2">
-                                    <i class="fas fa-search-plus me-2"></i> Ver Detalle de Auditoría
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-
-        <div class="table-container fade-in mb-4">
+        <div class="table-container fade-in">
             <div class="table-inner">
                 <div class="overflow-x-auto">
                     <table class="data-table" style="width:100%; border: none; overflow: hidden; padding: 0;">
@@ -306,9 +93,9 @@
                         <tbody>
                             @foreach (var item in Model)
                             {
-                                var badgeClass = item.Accion.Contains("POST") ? "badge-success-soft" :
-                                                item.Accion.Contains("PUT") ? "badge-warning-soft" :
-                                                item.Accion.Contains("DELETE") ? "badge-danger-soft" : "badge-info-soft";
+                                var badgeClass = item.Accion.Contains("POST") ? "success" :
+                                                item.Accion.Contains("PUT") ? "warning" :
+                                                item.Accion.Contains("DELETE") ? "danger" : "info";
                                 
                                 var originClass = "origin-default";
                                 var originIcon = "fa-question";
@@ -330,7 +117,10 @@
                                     </td>
                                     <td class="text-center"><strong>@item.Tabla</strong></td>
                                     <td class="text-center">
-                                        <span class="badge-soft @badgeClass">@item.Accion</span>
+                                        <div class="v2-badge v2-badge-@badgeClass">
+                                            <span class="v2-badge-dot"></span>
+                                            @item.Accion
+                                        </div>
                                     </td>
                                     <td class="text-center">
                                         <span class="badge-origin @originClass">
@@ -380,16 +170,24 @@
     
     @if (Model.Any())
     {
-        <div class="pagination-container fade-in">
-            <div class="pagination-info">
-                Página @Model.PageNumber de @Model.PageCount (@Model.TotalItemCount registros)
+        <div class="pagination-container-v2 fade-in">
+            <div class="pagination-info-v2">
+                <i class="fas fa-history me-2 opacity-50"></i>
+                Página <span class="fw-bold">@Model.PageNumber</span> de <span class="fw-bold">@Model.PageCount</span> (<span class="fw-bold">@Model.TotalItemCount</span> registros)
             </div>
-            @Html.PagedListPager(Model, page => Url.Action("Index", new { page, fechaDesde = ViewBag.FechaDesde, fechaHasta = ViewBag.FechaHasta, idTabla = ViewBag.IdTabla }), 
-            new PagedListRenderOptions {
-                LiElementClasses = new[] { "page-item" },
-                PageClasses = new[] { "page-link" },
-                UlElementClasses = new[] { "pagination justify-content-center" }
-            })
+            <div class="v2-pagination">
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, fechaDesde = ViewBag.FechaDesde, fechaHasta = ViewBag.FechaHasta, idTabla = ViewBag.IdTabla }), 
+                new PagedListRenderOptions {
+                    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                    DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                    DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                    MaximumPageNumbersToDisplay = 5,
+                    UlElementClasses = new[] { "pagination" },
+                    LiElementClasses = new[] { "page-item" },
+                    PageClasses = new[] { "page-link" }
+                })
+            </div>
         </div>
     }
 </div>

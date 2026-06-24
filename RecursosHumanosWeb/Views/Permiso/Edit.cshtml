@@ -5,24 +5,17 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/Permisos/edit.css" asp-append-version="true" />
-    <style>
-        .permission-request-container { max-width: 100% !important; width: 100% !important; padding: 2rem !important; }
-        .form-section { background-color: #ffffff !important; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    </style>
+    <link rel="stylesheet" href="~/cssv2/views/permisos/create.css" asp-append-version="true" />
 }
 
 <div class="permission-request-container">
-    <div class="permission-header fade-in">
+    <div class="page-header-v2 fade-in">
         <div class="header-content">
             <h1 class="page-title text-gradient">
                 <i class="fas fa-edit"></i>
                 Modificar Permiso
             </h1>
             <p class="page-subtitle">Actualice los detalles de su solicitud</p>
-        </div>
-        <div class="header-decoration">
-           
         </div>
     </div>
 
@@ -163,12 +156,12 @@
                         <span class="required">*</span>
                     </label>
                     <div class="textarea-wrapper">
-                        <textarea asp-for="Motivo" class="form-control" rows="4" placeholder="Ej: Cita médica en el IMSS o Trámite personal..." maxlength="255"></textarea>
+                        <textarea asp-for="Motivo" class="form-control-v2" rows="4" placeholder="Ej: Cita médica en el IMSS o Trámite personal..." maxlength="255"></textarea>
                         <div class="char-counter">
                             <span id="char-count">0</span>/255 caracteres
                         </div>
                     </div>
-                    <span asp-validation-for="Motivo" class="text-danger validation-message"></span>
+                    <span asp-validation-for="Motivo" class="text-danger small"></span>
                 </div>
             </div>
 
@@ -202,10 +195,17 @@
                     <input asp-for="Evidencia" type="hidden" />
                     @if (!string.IsNullOrEmpty(Model.Evidencia))
                     {
-                        <small class="text-muted mt-2 d-block">
-                            <i class="fas fa-check-circle text-success"></i>
-                            Documento actual: <a href="@Model.Evidencia" target="_blank">Ver documento</a>
-                        </small>
+                        <div class="mt-3 p-3 bg-light rounded-4 border-start border-success border-4 d-flex align-items-center gap-3">
+                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold text-success small">Documento Existente</div>
+                                <a href="@Model.Evidencia" target="_blank" class="text-decoration-none small fw-semibold">
+                                    <i class="fas fa-external-link-alt me-1"></i> Ver documento actual
+                                </a>
+                            </div>
+                        </div>
                     }
                 </div>
             </div>
@@ -213,11 +213,9 @@
 
         <!-- Botones de Acción -->
         <div class="form-actions">
-            <div class="actions-content">
-
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <i class="fas fa-save"></i>
-                    Guardar Cambios
+            <div class="actions-content justify-content-end">
+                <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-bold shadow-sm" id="submitBtn">
+                    <i class="fas fa-save me-2"></i> Guardar Cambios
                 </button>
             </div>
         </div>
@@ -228,7 +226,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/Permisos/edit.js" asp-append-version="true"></script>
 }

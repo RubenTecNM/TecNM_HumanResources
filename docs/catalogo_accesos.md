@@ -1,0 +1,64 @@
+# Catálogo de Accesos para Trabajadores - TecRH
+
+Este documento contiene la información de acceso para el personal con rol de **Trabajador** y la estructura organizacional.
+
+## 🔐 CREDENCIALES DE ACCESO
+**Contraseña general para todos los trabajadores:** `Buss1ness.2026`
+
+| ID | Nombre del Trabajador | Correo Electrónico | Departamento |
+| :--- | :--- | :--- | :--- |
+| **10** | AGUILERA MANCILLA DANIELA | `daniela.am@monclova.tecnm.mx` | SERVICIOS ESCOLARES |
+| **16** | RIVERA QUINTERO OLGA LUCINDA | `olga.rq@monclova.tecnm.mx` | RECURSOS FINANCIEROS |
+| **17** | RAMIREZ GOMEZ RAQUEL DODANIM | `raquel.rg@monclova.tecnm.mx` | RECURSOS FINANCIEROS |
+| **24** | VILLANUEVA FLORES MAYRA | `mayra.vf@monclova.tecnm.mx` | DIRECCION GENERAL |
+| **26** | OZUNA RODRIGUEZ RAQUEL | `raquel.or@monclova.tecnm.mx` | PREFECTURA |
+| **27** | VAZQUEZ QUINTERO JUAN | `juan.vq@monclova.tecnm.mx` | ENFERMERÍA |
+| **37** | GONZALEZ FLORES LAURA ISELDA | `laura.gf@monclova.tecnm.mx` | SERVICIOS ESCOLARES |
+| **38** | CAMPOS RODRIGUEZ LETICIA ABIGAIL | `leticia.cr@monclova.tecnm.mx` | SERVICIOS ESCOLARES |
+| **41** | LOERA SOLIS JUAN FRANCISCO | `francisco.ls@monclova.tecnm.mx` | GESTIÓN TECNOLÓGICA |
+| **43** | LOZANO FERNANDEZ JESUS FERNANDO | `fernando.lf@monclova.tecnm.mx` | PREFECTURA |
+| **44** | PECINA VAZQUEZ ELSA MARICELA | `elsa.pv@monclova.tecnm.mx` | BIBLIOTECA |
+
+---
+
+## 📂 CATÁLOGO DE DEPARTAMENTOS Y ÁREAS
+La siguiente tabla muestra el ID de cada departamento y el Área a la que pertenece.
+
+| ID Dept | Departamento | ID Área | Nombre del Área |
+| :--- | :--- | :--- | :--- |
+| **1** | ACTIVIDADES EXTRAESCOLARES | 1 | SERVICIOS ADMINISTRATIVOS |
+| **2** | ACTIVO FIJO | 1 | SERVICIOS ADMINISTRATIVOS |
+| **3** | ASUNTOS ACADÉMICOS | 4 | DIRECCIÓN ACADÉMICA |
+| **4** | BIBLIOTECA | 4 | DIRECCIÓN ACADÉMICA |
+| **5** | CENTRO DE CÓMPUTO | 1 | SERVICIOS ADMINISTRATIVOS |
+| **6** | CENTRO DE ENTRENAMIENTO NAUTILUS | 1 | SERVICIOS ADMINISTRATIVOS |
+| **7** | CIE | 1 | SERVICIOS ADMINISTRATIVOS |
+| **8** | COMPRAS | 1 | SERVICIOS ADMINISTRATIVOS |
+| **9** | COMUNICACIÓN | 3 | PLANEACIÓN Y VINCULACIÓN |
+| **10** | CONTROL INTERNO | 2 | DIRECCIÓN GENERAL |
+| **11** | COORDINACIÓN ACADÉMICA | 4 | DIRECCIÓN ACADÉMICA |
+| **12** | COORDINACIÓN DE INNOVACIÓN EDUCATIVA | 4 | DIRECCIÓN ACADÉMICA |
+| **13** | DEPARTAMENTO JURÍDICO | 2 | DIRECCIÓN GENERAL |
+| **14** | DIRECCION GENERAL | 2 | DIRECCIÓN GENERAL |
+| **15** | ENFERMERÍA | 1 | SERVICIOS ADMINISTRATIVOS |
+| **16** | GESTIÓN TECNOLÓGICA Y VINCULACION | 3 | PLANEACIÓN Y VINCULACIÓN |
+| **17** | IDIOMAS | 3 | PLANEACIÓN Y VINCULACIÓN |
+| **18** | INNOVACIÓN Y CALIDAD | 3 | PLANEACIÓN Y VINCULACIÓN |
+| **19** | MANTENIMIENTO | 1 | SERVICIOS ADMINISTRATIVOS |
+| **20** | PLANEACIÓN Y PRESUPUESTO | 3 | PLANEACIÓN Y VINCULACIÓN |
+| **21** | PREFECTURA | 3 | PLANEACIÓN Y VINCULACIÓN |
+| **22** | PSICOLOGÍA | 4 | DIRECCIÓN ACADÉMICA |
+| **23** | RECURSOS FINANCIEROS | 1 | SERVICIOS ADMINISTRATIVOS |
+| **24** | RECURSOS HUMANOS | 1 | SERVICIOS ADMINISTRATIVOS |
+| **25** | SERVICIOS ESCOLARES | 1 | SERVICIOS ADMINISTRATIVOS |
+| **26** | SUBDIRECCIÓN DE SERVICIOS | 1 | SERVICIOS ADMINISTRATIVOS |
+| **27** | TALLER DE LIT | 4 | DIRECCIÓN ACADÉMICA |
+| **28** | TRABAJO SOCIAL | 4 | DIRECCIÓN ACADÉMICA |
+
+---
+
+## 🏢 REFERENCIA DE ÁREAS (ID PRINCIPAL)
+1. SUBDIRECCION DE SERVICIOS ADMINISTRATIVOS
+2. DIRECCION GENERAL
+3. DIRECCION DE PLANEACION Y VINCULACION
+4. DIRECCION ACADEMICA

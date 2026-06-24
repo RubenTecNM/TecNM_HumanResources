@@ -70,8 +70,17 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 
 // Persistencia de llaves para evitar errores de Antiforgery en Docker
+var keysPath = builder.Environment.IsDevelopment() 
+    ? Path.Combine(builder.Environment.ContentRootPath, "Keys") 
+    : "/app/keys";
+
+if (!Directory.Exists(keysPath))
+{
+    Directory.CreateDirectory(keysPath);
+}
+
 builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(@"/app/keys"))
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
     .SetApplicationName("TecRHPermisosApp");
 
 

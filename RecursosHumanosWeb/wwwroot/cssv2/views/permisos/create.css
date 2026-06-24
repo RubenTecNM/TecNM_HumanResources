@@ -1,0 +1,439 @@
+/* ==========================================================================
+   VIEWS/PERMISOS/CREATE.CSS
+   Premium layout and input styles for the New Permission Request form.
+   Mirrors the login-style inputs and restores the original dark hero header.
+   ========================================================================== */
+
+/* --- Page Container --- */
+.permission-request-container {
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* --- Hero Header Banner (Dark Gradient) --- */
+.permission-header {
+    background: linear-gradient(135deg, var(--primary-900) 0%, var(--primary-700) 60%, var(--primary-600) 100%);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem 2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(30, 64, 175, 0.35);
+}
+
+.permission-header::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+}
+
+.permission-header::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    right: 80px;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 50%;
+}
+
+.header-content {
+    z-index: 1;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 0 0 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(90deg, #ffffff 0%, #bfdbfe 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.page-subtitle {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* --- Form Card (White container) --- */
+.permission-form {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+}
+
+.form-sections {
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Form Section (each step) --- */
+.form-section {
+    padding: 2rem;
+    border-bottom: 1px solid var(--border-soft);
+    animation: v2-sectionIn 0.4s ease-out;
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+@keyframes v2-sectionIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Section Header Row --- */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-900);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.section-header h3 i {
+    color: var(--primary-500);
+}
+
+.section-indicator {
+    width: 28px;
+    height: 28px;
+    background: var(--primary-600);
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+/* --- Form Group & Labels --- */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-dark, #0f172a);
+    margin-bottom: 0.5rem;
+}
+
+.required {
+    color: var(--danger);
+    margin-left: 2px;
+}
+
+/* --- Premium Input (Login-style) --- */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1.1rem;
+    color: var(--primary-400);
+    z-index: 2;
+    pointer-events: none;
+    transition: var(--t-fast);
+}
+
+.input-wrapper .form-control,
+.input-wrapper .form-control-v2,
+.form-control-v2 {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.85rem;
+    border: 2px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    background: var(--white);
+    color: var(--text-body);
+    transition: var(--t-normal);
+    appearance: none;
+}
+
+/* Override Bootstrap's focus ring with the premium V2 one */
+.input-wrapper .form-control:focus,
+.input-wrapper .form-control-v2:focus,
+.form-control-v2:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    outline: none;
+    background: var(--white);
+    transform: translateY(-1px);
+}
+
+.input-wrapper .form-control:focus~.input-icon,
+.input-wrapper .form-control-v2:focus~.input-icon {
+    color: var(--primary-600);
+}
+
+/* --- Datetime Grid --- */
+.datetime-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* --- Textarea & Char Counter --- */
+.textarea-wrapper {
+    position: relative;
+}
+
+.textarea-v2 {
+    min-height: 110px;
+    resize: vertical;
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    width: 100%;
+    transition: var(--t-normal);
+}
+
+.textarea-v2:focus {
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+.char-counter {
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.85rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.85);
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* --- Permission Type Cards Grid --- */
+.permission-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.permission-type-card {
+    cursor: pointer;
+    transition: var(--t-normal);
+}
+
+/* Hide the native radio */
+.permission-type-card input[type="radio"] {
+    display: none;
+}
+
+.type-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.75rem 1.25rem;
+    background: var(--white);
+    border: 2px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--t-spring);
+}
+
+.type-label h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-900);
+    margin: 0 0 0.25rem;
+}
+
+.type-label p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.permission-type-card:hover .type-label {
+    border-color: var(--primary-300);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.permission-type-card.selected .type-label {
+    border-color: var(--primary-600);
+    background: var(--primary-50);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.type-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+    color: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: var(--t-spring);
+}
+
+.permission-type-card:hover .type-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+
+/* --- Evidence File Upload --- */
+.file-upload-area {
+    border: 2px dashed var(--primary-300);
+    border-radius: var(--radius-lg);
+    background: var(--primary-50);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--t-normal);
+    position: relative;
+}
+
+.file-upload-area:hover,
+.file-upload-area.drag-over {
+    background: var(--primary-100);
+    border-color: var(--primary-500);
+}
+
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-upload-icon {
+    font-size: 2.5rem;
+    color: var(--primary-400);
+    margin-bottom: 0.75rem;
+}
+
+.file-upload-text {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--primary-900);
+    margin-bottom: 0.25rem;
+}
+
+.file-upload-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.file-preview {
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.file-info i {
+    font-size: 1.4rem;
+    color: var(--danger);
+}
+
+.remove-file {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--t-normal);
+}
+
+.remove-file:hover {
+    background: var(--danger);
+    color: var(--white);
+}
+
+/* --- Form Actions Footer --- */
+.form-actions {
+    padding: 1.5rem 2rem;
+    background: var(--surface-alt, #f1f5f9);
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+}
+
+.actions-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+/* --- Validation Messages --- */
+.validation-message {
+    display: block;
+    font-size: 0.8rem;
+    margin-top: 0.35rem;
+    color: var(--danger);
+}

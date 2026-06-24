@@ -5,26 +5,27 @@
 }
 
 @section Styles {
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Corte Details uses global components from v2-site.css -->
 }
 
 <div class="details-container">
     <div class="card details-card shadow-lg rounded-3 overflow-hidden">
         
-        <div class="details-header-gradient text-white px-4 px-md-5 py-4">
+        <div class="details-header-v2 text-white px-4 px-md-5 py-4">
             <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold">
+                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold shadow-sm">
                         <i class="fas fa-file-invoice-dollar"></i>
                     </div>
                     <div>
-                        <h2 class="h4 fw-semibold mb-1">Periodo y corte #@Model.Id</h2>
-                        <p class="mb-0 d-flex align-items-center gap-2" style="color: #dbeafe; opacity: 0.9;">
-                            <i class="fas fa-calendar-alt small"></i> Gestión de Periodo de Recursos Humanos
-                        </p>
+                        <h2 class="h4 fw-bold mb-1">Periodo y corte #@Model.Id</h2>
+                        <div class="ms-1 d-flex align-items-center gap-2 opacity-75 small">
+                             <i class="fas fa-calendar-alt"></i> Gestión de Periodo de Recursos Humanos
+                        </div>
                     </div>
                 </div>
-                <div class="status-glass rounded-pill shadow-sm px-3 py-1" style="background: @(Model.EstadoColor ?? "#64748b"); color: white;">
+                <div class="status-glass rounded-pill shadow-sm px-4 py-2 d-flex align-items-center">
+                    <span class="status-dot @(Model.IdEstadoCorte == 1 ? "dot-active" : "dot-closed")"></span>
                     <span class="small text-uppercase fw-bold">
                         @(Model.EstadoDescripcion ?? "Sin Estado")
                     </span>
@@ -228,6 +229,20 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="card-footer py-4 px-5 bg-light border-top d-flex justify-content-between align-items-center">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                <i class="fas fa-arrow-left me-2"></i> Volver al Listado
+            </a>
+            
+            <div class="d-flex gap-2">
+                @if (Model.IdEstadoCorte == 1)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="v2-btn btn-primary shadow-sm">
+                        <i class="fas fa-edit"></i> Editar Periodo
+                    </a>
+                }
             </div>
         </div>
     </div>

@@ -9,8 +9,6 @@ namespace RecursosHumanosWeb.Models.ViewModels
         public List<UsuariosDTO> Usuarios { get; set; }
         public string FechaDesde { get; set; }
         public string FechaHasta { get; set; }
-        public string UsuarioCreadorFilter { get; set; }
-        public string CorreoCreadorFilter { get; set; }
         public int? StatusId { get; set; }
         public bool IsAdministrador { get; set; }
     }

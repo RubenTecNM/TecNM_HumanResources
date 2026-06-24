@@ -1,0 +1,3 @@
+ID_USUARIO,ID_TIPO_PERMISO,MOTIVO,FECHA_INICIO,FECHA_FIN,HORA_ENTRADA,HORA_SALIDA,CON_GOCE
+10,"3","Falta por motivos personales","2026-06-20","2026-06-21","","","No"
+25,"1","Retardo por tráfico","2026-06-22","","08:30","","Sí"

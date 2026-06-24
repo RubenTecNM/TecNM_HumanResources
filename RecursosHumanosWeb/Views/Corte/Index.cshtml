@@ -7,13 +7,12 @@
 }
 
 @section Styles {
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-
+    <!-- Corte Index uses global components from v2-site.css -->
 }
 
 <div class="index-container">
     <!-- Header Section -->
-    <div class="permission-header fade-in">
+    <div class="page-header-v2 fade-in">
         <div class="header-content">
             <h1 class="page-title text-gradient">
                 <i class="fas fa-calendar-alt"></i>
@@ -21,19 +20,12 @@
             </h1>
             <p class="page-subtitle">Administra los períodos laborales del sistema</p>
         </div>
-        <div class="header-decoration">
+        <div class="header-actions">
             <authorize-section policy="RHOrAdmin">
-                <div class="header-actions">
-                    <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo periodo">
-                        <i class="fas fa-plus"></i>
-                        Crear Periodo
-                    </a>
-                </div>
-            </authorize-section>
-            <authorize-section policy="!RHOrAdmin">
-                <div class="floating-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
+                <a asp-action="Create" class="btn btn-create" aria-label="Crear nuevo periodo">
+                    <i class="fas fa-plus"></i>
+                    Crear Periodo
+                </a>
             </authorize-section>
         </div>
     </div>
@@ -49,40 +41,23 @@
                 <form id="searchForm" method="get" asp-action="Index">
                     @Html.AntiForgeryToken()
                     <div class="row g-4">
-                        <div class="col-md-2">
-                             <div class="filter-group">
-                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">ID Periodo</label>
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Vigencia Desde</label>
                                 <div class="input-with-icon">
-                                    <i class="fas fa-hashtag"></i>
-                                    <input type="number" id="idFilter" name="idFilter" value="@Context.Request.Query["idFilter"]" 
-                                           class="form-control filter-input-pill" placeholder="Buscar ID..." />
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <input type="date" id="fechaDesde" name="fechaDesde" class="form-control filter-input-pill" value="@(ViewBag.FechaDesde != null ? ((DateTime)ViewBag.FechaDesde).ToString("yyyy-MM-dd") : "")" />
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <div class="filter-group">
-                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Registrado por (Nombre)</label>
-                                <select id="usuarioCreadorFilter" name="usuarioCreadorFilter" class="form-control user-autocomplete w-100">
-                                    <option value="">-- Seleccionar Usuario --</option>
-                                    @if (ViewBag.UsuarioCreadorFilter != null)
-                                    {
-                                        <option value="@ViewBag.UsuarioCreadorFilter" selected="selected">@ViewBag.SelectedNombreText</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="col-md-3">
-                            <div class="filter-group">
-                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Registrado por (CORREO)</label>
-                                <select id="correoCreadorFilter" name="correoCreadorFilter" class="form-control user-autocomplete w-100">
-                                    <option value="">-- Seleccionar Correo --</option>
-                                    @if (ViewBag.CorreoCreadorFilter != null)
-                                    {
-                                        <option value="@ViewBag.CorreoCreadorFilter" selected="selected">@ViewBag.SelectedCorreoText</option>
-                                    }
-                                </select>
+                                <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Vigencia Hasta</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                    <input type="date" id="fechaHasta" name="fechaHasta" class="form-control filter-input-pill" value="@(ViewBag.FechaHasta != null ? ((DateTime)ViewBag.FechaHasta).ToString("yyyy-MM-dd") : "")" />
+                                </div>
                             </div>
                         </div>
 
@@ -115,122 +90,8 @@
 
     @if (Model.Cortes.Any())
     {
-        <!-- MOBILE CARD VIEW (Visible < 992px) -->
-        <div class="mobile-view-container fade-in">
-            @foreach (var item in Model.Cortes)
-            {
-                var uniqueId = "mob-" + item.Id;
-                var usuarioCrea = Model.Usuarios.FirstOrDefault(u => u.Id == item.IdUsuarioCrea)?.Nombre ?? "Sistema";
-                
-                // Cloudflare-inspired varied palette
-                var colorIndex = (item.Id % 5);
-                var boxGradient = "";
-                var accentColor = "";
-                
-                switch (colorIndex) {
-                    case 0: boxGradient = "linear-gradient(135deg, #6366f1, #4338ca)"; accentColor = "#4338ca"; break;
-                    case 1: boxGradient = "linear-gradient(135deg, #10b981, #059669)"; accentColor = "#059669"; break;
-                    case 2: boxGradient = "linear-gradient(135deg, #f59e0b, #d97706)"; accentColor = "#d97706"; break;
-                    case 3: boxGradient = "linear-gradient(135deg, #f43f5e, #e11d48)"; accentColor = "#e11d48"; break;
-                    case 4: boxGradient = "linear-gradient(135deg, #0ea5e9, #0284c7)"; accentColor = "#0284c7"; break;
-                }
-
-                <div class="card premium-mobile-card mb-3" id="card-@uniqueId">
-                    <div class="mobile-card-header-premium d-flex align-items-center justify-content-between" 
-                         onclick="toggleMobileCard('@uniqueId')"
-                         style="border-left: 5px solid @accentColor; border-top-left-radius: 20px; border-bottom-left-radius: 20px;">
-                        
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="id-box-premium" style="background: @boxGradient;">
-                                @(usuarioCrea.Length > 0 ? usuarioCrea.Substring(0, 1).ToUpper() : "C")
-                            </div>
-                            
-                            <div>
-                                <h6 class="mb-1 fw-bold text-dark">Periodo #@item.Id</h6>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="info-pill-sm" style="background: rgba(100, 116, 139, 0.1); color: #64748b;">
-                                        @item.Inicia.ToString("dd MMM") - @item.Termina.ToString("dd MMM")
-                                    </span>
-                                    <span class="info-pill-sm" style="background: rgba(var(--estado-color-rgb), 0.1); color: var(--estado-color);">
-                                        <i class="fas @(item.IdEstadoCorte == 1 ? "fa-check-circle" : (item.IdEstadoCorte == 2 ? "fa-lock" : "fa-times-circle")) me-1"></i>
-                                        @item.EstadoDescripcion
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <i class="fas fa-chevron-down rotate-icon text-muted opacity-50"></i>
-                    </div>
-
-                    <div class="expandable-content" id="body-@uniqueId">
-                        <div class="p-4">
-                            <!-- Dates Grid -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-6">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm h-100">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">
-                                            <i class="fas fa-calendar-alt me-1"></i> Inicia
-                                        </small>
-                                        <span class="fw-bold text-dark small">@item.Inicia.ToString("dd MMM yyyy")</span>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm h-100">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">
-                                            <i class="fas fa-calendar-check me-1"></i> Termina
-                                        </small>
-                                        <span class="fw-bold text-dark small">@item.Termina.ToString("dd MMM yyyy")</span>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="p-3 bg-white border border-light rounded-4 shadow-sm">
-                                        <small class="text-muted d-block uppercase-tracking mb-1">
-                                            <i class="fas fa-user-edit me-1"></i> Apertura por
-                                        </small>
-                                        <span class="fw-bold text-dark small">@usuarioCrea</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="action-grid d-grid gap-2">
-                                <div class="d-flex gap-2">
-                                    @if (item.IdEstadoCorte == 1)
-                                    {
-                                        <button class="btn btn-warning text-white rounded-pill shadow-sm flex-grow-1 py-2 fw-bold"
-                                                data-action="CloseAjax" data-controller="Corte" data-id="@item.Id">
-                                            <i class="fas fa-lock me-1"></i> Cerrar Periodo
-                                        </button>
-                                    }
-                                    else if (item.IdEstadoCorte == 2)
-                                    {
-                                        <button class="btn btn-secondary rounded-pill opacity-75 flex-grow-1 py-2 fw-bold" disabled>
-                                            <i class="fas fa-lock me-1"></i> @item.EstadoDescripcion
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <button class="btn btn-danger rounded-pill opacity-50 flex-grow-1 py-2 fw-bold" disabled>
-                                            <i class="fas fa-times-circle me-1"></i> @item.EstadoDescripcion
-                                        </button>
-                                    }
-
-                                    @if (User.HasClaim("TipoUsuario", "1"))
-                                    {
-                                        <button class="btn btn-danger rounded-pill shadow-sm py-2 px-3 fw-bold"
-                                                data-action="DeleteAjax" data-controller="Corte" data-id="@item.Id">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
         <!-- Table Section -->
-        <div class="table-container fade-in mb-4">
+        <div class="table-container fade-in">
             <div class="table-inner">
                 <div class="overflow-x-auto">
                     <table id="cortesTable" class="data-table" style="width:100%; border: none; overflow: hidden; padding: 0;" aria-label="Tabla de periodos">
@@ -252,8 +113,8 @@
                                 var usuarioModifica = Model.Usuarios.FirstOrDefault(u => u.Id == item.IdUsuarioModifica)?.Nombre ?? "-";
                                 <tr>
                                     <td class="text-center">@item.Id</td>
-                                    <td class="text-center">@(item.Inicia.ToString("dd/MM/yyyy") ?? "-")</td>
-                                    <td class="text-center">@(item.Termina.ToString("dd/MM/yyyy") ?? "-")</td>
+                                    <td class="text-center"><strong>@(item.Inicia.ToString("dd/MM/yyyy") ?? "-")</strong></td>
+                                    <td class="text-center"><strong>@(item.Termina.ToString("dd/MM/yyyy") ?? "-")</strong></td>
                                     <td class="text-center">
                                         <div style="color: var(--text-medium); font-weight: 500;">
                                             <div style="font-size: 0.875rem;">@item.FechaCreacion.ToString("dd/MM/yyyy")</div>
@@ -274,9 +135,10 @@
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge rounded-pill bg-@item.EstadoColor">
+                                        <div class="v2-badge v2-badge-@item.EstadoColor">
+                                            <span class="v2-badge-dot"></span>
                                             @item.EstadoDescripcion
-                                        </span>
+                                        </div>
                                     </td>
                             
                                     <td class="text-center">
@@ -292,14 +154,14 @@
                                                 }
                                                 else
                                                 {
-                                                    <button class="action-btn btn-secondary opacity-50" disabled title="Este periodo ya no se puede modificar" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                    <button class="action-btn opacity-50" disabled title="Este periodo ya no se puede modificar" style="cursor: not-allowed;">
                                                         <i class="fas fa-lock"></i>
                                                     </button>
                                                 }
                                             }
                                             else
                                             {
-                                                <button class="action-btn btn-secondary opacity-50" disabled title="Solo el administrador puede cerrar periodos" style="cursor: not-allowed; border: none; background: #e2e8f0; color: #64748b;">
+                                                <button class="action-btn opacity-50" disabled title="Solo el administrador puede cerrar periodos" style="cursor: not-allowed;">
                                                     <i class="fas fa-ban"></i>
                                                 </button>
                                             }
@@ -329,42 +191,39 @@
         </div>
     }
     
-    <!-- Shared Pagination (Visible for both) -->
-    @if (Model.Cortes.Any())
-    {
-        <div class="pagination-container fade-in">
-            <div class="pagination-info">
-                Mostrando @Model.Cortes.FirstItemOnPage - @Model.Cortes.LastItemOnPage de @Model.Cortes.TotalItemCount periodos
-            </div>
-
-            @Html.PagedListPager(
-            Model.Cortes,
-                            page => Url.Action("Index", new
-                            {
-                                page,
-                                idFilter = Context.Request.Query["idFilter"],
-                                fechaDesde = Context.Request.Query["fechaDesde"],
-                                fechaHasta = Context.Request.Query["fechaHasta"],
-                                pageSize = Context.Request.Query["pageSize"],
-                                usuarioCreadorFilter = Context.Request.Query["usuarioCreadorFilter"],
-                                correoCreadorFilter = Context.Request.Query["correoCreadorFilter"],
-                                statusId = Context.Request.Query["statusId"]
-                            }),
-                            new PagedListRenderOptions
-                            {
-                                DisplayLinkToFirstPage = PagedListDisplayMode.Always,
-                                DisplayLinkToLastPage = PagedListDisplayMode.Always,
-                                DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
-                                DisplayLinkToNextPage = PagedListDisplayMode.Always,
-                                DisplayLinkToIndividualPages = true,
-                                MaximumPageNumbersToDisplay = 5,
-                                DisplayEllipsesWhenNotShowingAllPageNumbers = true,
-                                UlElementClasses = new[] { "pagination" },
-                                LiElementClasses = new[] { "page-item" },
-                                PageClasses = new[] { "page-link" }
-                            })
+    <!-- Shared Pagination (Now visible for both mobile and desktop) -->
+    <div class="pagination-container-v2 fade-in">
+        <div class="pagination-info-v2">
+            <i class="fas fa-calendar-check me-2 opacity-50"></i>
+            Mostrando <span class="fw-bold">@Model.Cortes.FirstItemOnPage</span> - <span class="fw-bold">@Model.Cortes.LastItemOnPage</span> de <span class="fw-bold">@Model.Cortes.TotalItemCount</span> periodos
         </div>
-    }
+
+        <div class="v2-pagination">
+            @Html.PagedListPager(
+                Model.Cortes,
+                page => Url.Action("Index", new
+                {
+                    page,
+                    fechaDesde = Context.Request.Query["fechaDesde"],
+                    fechaHasta = Context.Request.Query["fechaHasta"],
+                    statusId = Context.Request.Query["statusId"],
+                    pageSize = Context.Request.Query["pageSize"]
+                }),
+                new PagedListRenderOptions
+                {
+                    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                    DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                    DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                    DisplayLinkToIndividualPages = true,
+                    MaximumPageNumbersToDisplay = 5,
+                    DisplayEllipsesWhenNotShowingAllPageNumbers = true,
+                    UlElementClasses = new[] { "pagination" },
+                    LiElementClasses = new[] { "page-item" },
+                    PageClasses = new[] { "page-link" }
+                })
+        </div>
+    </div>
 
     <!-- Empty State -->
     @if (!Model.Cortes.Any())
@@ -384,63 +243,6 @@
         (function(){
             // Inicializar select2 en el select de usuarios para búsqueda remota
             $(document).ready(function(){
-                // Inicializar select2 en el select de usuarios para búsqueda remota (por Nombre)
-                $('#usuarioCreadorFilter').select2({
-                    placeholder: '-- Seleccionar Usuario --',
-                    minimumInputLength: 2,
-                    allowClear: true,
-                    ajax: {
-                        url: '/Usuarios/SearchUsers',
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            return { term: params.term, type: 'name' };
-                        },
-                        processResults: function (data) {
-                            return { results: data };
-                        },
-                        cache: true
-                    }
-                });
-
-                // Inicializar select2 en el select de usuarios para búsqueda remota (por Correo)
-                $('#correoCreadorFilter').select2({
-                    placeholder: '-- Seleccionar Correo --',
-                    minimumInputLength: 2,
-                    allowClear: true,
-                    ajax: {
-                        url: '/Usuarios/SearchUsers',
-                        dataType: 'json',
-                        delay: 250,
-                        data: function (params) {
-                            return { term: params.term, type: 'email' };
-                        },
-                        processResults: function (data) {
-                            return { results: data };
-                        },
-                        cache: true
-                    }
-                });
-
-                // Abrir el dropdown automáticamente al recibir foco
-                $('#usuarioCreadorFilter, #correoCreadorFilter').on('focus', function () {
-                    $(this).select2('open');
-                });
-
-                // Asegurar que el campo de búsqueda interno reciba foco cuando se abra
-                $('#usuarioCreadorFilter, #correoCreadorFilter').on('select2:open', function () {
-                    const searchField = document.querySelector('.select2-container--open .select2-search__field');
-                    if (searchField) searchField.focus();
-                });
-
-                // Limpiar filtros conflictivos (si se busca por nombre, limpiar correo y viceversa)
-                $('#usuarioCreadorFilter').on('select2:select', function() {
-                    $('#correoCreadorFilter').val(null).trigger('change');
-                });
-                $('#correoCreadorFilter').on('select2:select', function() {
-                    $('#usuarioCreadorFilter').val(null).trigger('change');
-                });
-
                 // Initialize Status Filter with premium styles
                 $('#statusId').select2({
                     placeholder: 'Todos los estatus',
@@ -452,15 +254,14 @@
         })();
         function clearAllFilters() {
             // Limpiar inputs estándar
-            $('#idFilter').val('');
+            $('#fechaDesde').val('');
+            $('#fechaHasta').val('');
             
             // Limpiar Select2 (requiere val(null) y trigger('change'))
-            $('#usuarioCreadorFilter').val(null).trigger('change');
-            $('#correoCreadorFilter').val(null).trigger('change');
             $('#statusId').val(null).trigger('change');
             
             // Opcional: Notificar al usuario antes de recargar
-            const toastMessage = '✅ Todos los filtros han sido limpiados';
+            const toastMessage = '✅ Filtros limpiados';
             if (typeof showToast === 'function') {
                 showToast(toastMessage, 'success');
             } else {

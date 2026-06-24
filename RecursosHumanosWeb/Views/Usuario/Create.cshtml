@@ -11,16 +11,16 @@
 @section Styles {
 }
 
-<div class="container fade-in">
+<div class="index-container fade-in">
     <div class="permission-header">
         <div class="header-content">
             <h1 class="page-title text-gradient">
-            <i class="fas fa-user-plus"></i> 
+                <i class="fas fa-user-plus"></i> 
                 Crear Nuevo Usuario
             </h1>
-         <p class="page-subtitle">Complete los campos para agregar un nuevo usuario al sistema</p>
+            <p class="page-subtitle">Complete los campos para agregar un nuevo usuario al sistema</p>
         </div>
-         <div class="header-decoration">
+        <div class="header-decoration">
             <div class="floating-icon">
                 <i class="fas fa-clipboard-check"></i>
             </div>
@@ -28,45 +28,41 @@
     </div>
 
     <div class="card details-card shadow-lg rounded-3 overflow-hidden mb-5">
-        <div class="card-body p-4 p-md-5 bg-white">
+        <div class="card-body p-0 bg-white">
             <form asp-action="Create" method="post" class="create-usuario-form">
                 @Html.AntiForgeryToken()
 
-                <div class="form-sections">
-                    <!-- Información Personal -->
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h3 class="mb-0"><i class="fas fa-user me-2"></i> Información Personal</h3>
-                            <span class="section-indicator">1</span>
-                        </div>
-                    <div class="row">
-                        <div class="col-md-6 form-group mb-3">
-                            <label asp-for="Nombre" class="form-label">
-                                <i class="fas fa-id-card text-primary"></i> Nombre Completo
-                            </label>
-                            <input asp-for="Nombre" class="form-control rounded-pill shadow-sm" placeholder="Ingrese el nombre completo" style="height: 52px; border: 2px solid #ced4da;" />
-                            <span asp-validation-for="Nombre" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6 form-group mb-3">
-                            <label asp-for="Correo" class="form-label">
-                                <i class="fas fa-envelope text-primary"></i> Correo Electrónico
-                            </label>
-                            <input asp-for="Correo" class="form-control rounded-pill shadow-sm" type="email" placeholder="ejemplo@monclova.tecnm.mx" style="height: 52px; border: 2px solid #ced4da;" />
-                            <span asp-validation-for="Correo" class="text-danger"></span>
-                        </div>
+                <!-- Sección: Información Personal -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-user"></i> Información Personal</h3>
+                        <span class="section-indicator">1</span>
                     </div>
-                    <div class="row">
-                        <div class="col-md-12 form-group mb-3">
-                            <label asp-for="Clave" class="form-label">
-                                <i class="fas fa-lock text-primary"></i> Contraseña
-                            </label>
-                            <div class="position-relative">
-                                <input asp-for="Clave" 
-                                       class="form-control rounded-pill pe-5 shadow-sm" 
-                                       type="password" 
-                                       id="passwordInput" 
-                                       placeholder="Ingrese una contraseña segura (mínimo 6 caracteres)" 
-                                       style="height: 52px; border: 2px solid #ced4da;" />
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Nombre" class="form-label">Nombre Completo</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-id-card input-icon"></i>
+                                <input asp-for="Nombre" class="form-control-v2" placeholder="Ingrese el nombre completo" />
+                            </div>
+                            <span asp-validation-for="Nombre" class="text-danger small"></span>
+                        </div>
+                        
+                        <div class="col-md-6 form-group">
+                            <label asp-for="Correo" class="form-label">Correo Electrónico</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope input-icon"></i>
+                                <input asp-for="Correo" class="form-control-v2" type="email" placeholder="ejemplo@monclova.tecnm.mx" />
+                            </div>
+                            <span asp-validation-for="Correo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12 form-group">
+                            <label asp-for="Clave" class="form-label">Contraseña</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-lock input-icon"></i>
+                                <input asp-for="Clave" class="form-control-v2 pe-5" type="password" id="passwordInput" placeholder="Mínimo 6 caracteres" />
                                 <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-2 text-muted text-decoration-none" id="togglePassword">
                                     <i class="fas fa-eye"></i>
                                 </button>
@@ -74,65 +70,72 @@
                             <div class="progress mt-2 rounded-pill" style="height: 6px; background: #e2e8f0;">
                                 <div id="password-strength" class="progress-bar transition-all" role="progressbar" style="width: 0%; border-radius: 50px;"></div>
                             </div>
-                            <small class="form-text text-muted" id="password-hint">
-                                <i class="fas fa-info-circle"></i> La contraseña será encriptada usando SHA-256 antes de almacenarse.
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> La contraseña será encriptada (SHA-256) antes de almacenarse.
                             </small>
-                            <span asp-validation-for="Clave" class="text-danger"></span>
+                            <span asp-validation-for="Clave" class="text-danger small"></span>
                         </div>
-                        </div>
-                    </div>
-
-                    <!-- Información Organizacional -->
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h3 class="mb-0"><i class="fas fa-building me-2"></i> Información Organizacional</h3>
-                            <span class="section-indicator">2</span>
-                        </div>
-                    <div class="row">
-                        <div class="col-md-6 form-group mb-3">
-                            <label asp-for="IdTipoUsuario" class="form-label">
-                                <i class="fas fa-user-tag text-primary"></i> Tipo de Usuario
-                            </label>
-                            <select asp-for="IdTipoUsuario" class="form-select rounded-pill shadow-sm" asp-items="tiposUsuario" style="height: 52px; border: 2px solid #ced4da;">
-                                <option value="">-- Seleccione un tipo de usuario --</option>
-                            </select>
-                            <span asp-validation-for="IdTipoUsuario" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6 form-group mb-3">
-                            <label asp-for="IdArea" class="form-label">
-                                <i class="fas fa-map-marker-alt text-primary"></i> Área
-                            </label>
-                            <select asp-for="IdArea" class="form-select rounded-pill shadow-sm" asp-items="areas" style="height: 52px; border: 2px solid #ced4da;">
-                                <option value="">-- Seleccione un área --</option>
-                            </select>
-                            <span asp-validation-for="IdArea" class="text-danger"></span>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 form-group mb-3">
-                            <label asp-for="IdDepartamento" class="form-label">
-                                <i class="fas fa-sitemap text-primary"></i> Departamento
-                            </label>
-                            <select asp-for="IdDepartamento" class="form-select rounded-pill shadow-sm" asp-items="departamentos" style="height: 52px; border: 2px solid #ced4da;">
-                                <option value="">-- Seleccione un departamento --</option>
-                            </select>
-                            <span asp-validation-for="IdDepartamento" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6 form-group mb-3">
-                            <label asp-for="IdPuesto" class="form-label">
-                                <i class="fas fa-briefcase text-primary"></i> Puesto
-                            </label>
-                            <select asp-for="IdPuesto" class="form-select rounded-pill shadow-sm" asp-items="puestos" style="height: 52px; border: 2px solid #ced4da;">
-                                <option value="">-- Seleccione un puesto --</option>
-                            </select>
-                            <span asp-validation-for="IdPuesto" class="text-danger"></span>
-                        </div>
-                    </div>
                     </div>
                 </div>
 
-                <!-- Botones de Acción -->
-                <div class="form-actions mt-5 pt-4 border-top d-flex flex-column flex-md-row justify-content-end align-items-center gap-3">
+                <!-- Sección: Información Organizacional -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-building"></i> Información Organizacional</h3>
+                        <span class="section-indicator">2</span>
+                    </div>
+                    
+                    <div class="row g-4">
+                        <div class="col-md-6 form-group">
+                            <label asp-for="IdTipoUsuario" class="form-label">Tipo de Usuario</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-user-tag input-icon"></i>
+                                <select asp-for="IdTipoUsuario" class="form-control-v2 form-select" asp-items="tiposUsuario">
+                                    <option value="">-- Seleccione un tipo --</option>
+                                </select>
+                            </div>
+                            <span asp-validation-for="IdTipoUsuario" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6 form-group">
+                            <label asp-for="IdArea" class="form-label">Área</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-map-marker-alt input-icon"></i>
+                                <select asp-for="IdArea" class="form-control-v2 form-select" asp-items="areas">
+                                    <option value="">-- Seleccione un área --</option>
+                                </select>
+                            </div>
+                            <span asp-validation-for="IdArea" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6 form-group">
+                            <label asp-for="IdDepartamento" class="form-label">Departamento</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-sitemap input-icon"></i>
+                                <select asp-for="IdDepartamento" class="form-control-v2 form-select" asp-items="departamentos">
+                                    <option value="">-- Seleccione un departamento --</option>
+                                </select>
+                            </div>
+                            <span asp-validation-for="IdDepartamento" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6 form-group">
+                            <label asp-for="IdPuesto" class="form-label">Puesto</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-briefcase input-icon"></i>
+                                <select asp-for="IdPuesto" class="form-control-v2 form-select" asp-items="puestos">
+                                    <option value="">-- Seleccione un puesto --</option>
+                                </select>
+                            </div>
+                            <span asp-validation-for="IdPuesto" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a asp-action="Index" class="btn btn-light rounded-pill px-4 fw-bold text-secondary border">
+                        <i class="fas fa-arrow-left me-2"></i> Volver
+                    </a>
                     <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill shadow-sm fw-bold">
                         <i class="fas fa-save me-2"></i> Crear Usuario
                     </button>

@@ -3,9 +3,13 @@
     ViewData["Title"] = "Iniciar Sesión";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/cssv2/views/Account/login.css" asp-append-version="true" />
+}
+
 <div class="index-container">
-    <!-- Page Header (Premium Style) -->
-    <div class="permission-header fade-in">
+    <!-- Page Header (Premium V2 / Cloudflare Style) -->
+    <div class="page-header-v2 fade-in">
         <div class="header-content">
             <h1 class="page-title text-gradient">
                 <i class="fas fa-shield-alt"></i>
@@ -18,17 +22,9 @@
     <!-- Formulario (Premium Layout) -->
     <div class="filters-section slide-in-left">
         <div class="card filter-card-premium shadow-lg border-0">
-            <div class="filter-header-premium d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2 overflow-hidden">
-                    <i class="fas fa-lock fa-lg"></i>
-                    <h5 class="m-0 fw-bold text-truncate" style="letter-spacing: 0.5px; text-transform: uppercase;">Autenticaci&oacute;n</h5>
-                </div>
-                <!-- Badge ajustado para movil para evitar desborde -->
-                <div class="status-glass rounded-pill d-flex align-items-center gap-2 px-2 px-sm-3 py-1 flex-shrink-0" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); min-width: fit-content;">
-                    <span class="status-dot dot-active" style="animation: icon-pulse-soft 2s infinite ease-in-out;"></span>
-                    <span class="small uppercase tracking-wide fw-bold d-none d-sm-inline" style="font-size: 0.7rem;">Certificado</span>
-                    <span class="small fw-bold d-inline d-sm-none" style="font-size: 0.65rem;">SSL</span>
-                </div>
+            <div class="filter-header-premium">
+                <i class="fas fa-lock fa-lg"></i>
+                <h5 class="m-0 fw-bold" style="letter-spacing: 0.5px; text-transform: uppercase;">Autenticaci&oacute;n</h5>
             </div>
 
             <div class="filter-body-premium p-3 p-sm-4">

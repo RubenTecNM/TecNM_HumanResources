@@ -47,20 +47,13 @@ namespace RecursosHumanosWeb.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(int page = 1, int? pageSize = null, int? idFilter = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? usuarioCreadorFilter = null, int? correoCreadorFilter = null, int? statusId = null)
+        public async Task<IActionResult> Index(int page = 1, int? pageSize = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, int? statusId = null)
         {
             int defaultPageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
             int maxPageSize = _configuration.GetValue<int>("BusinessRules:Pagination:MaxPageSize");
             
             int actualPageSize = pageSize ?? defaultPageSize;
             
-            // Mapeo categórico: Por defecto mostrar todos o filtrar por ID de estado
-            int? statusIdFilter = null;
-            if (statusId.HasValue)
-            {
-                statusIdFilter = statusId.Value;
-            }
-
             // Validar parámetros de paginación
             if (page < 1) page = 1;
             if (actualPageSize < 1 || actualPageSize > maxPageSize) actualPageSize = defaultPageSize;
@@ -75,15 +68,10 @@ namespace RecursosHumanosWeb.Controllers
                 .Include(c => c.IdUsuarioModificaNavigation)
                 .AsQueryable();
 
-            if (idFilter.HasValue)
-            {
-                cortesQuery = cortesQuery.Where(c => c.Id == idFilter.Value);
-            }
-
             // Cierre automático lazy
             await _corteService.AutoCloseCorteIfNeededAsync();
 
-            // Aplicar filtros
+            // Aplicar filtros de fecha (Vigencia)
             if (fechaDesde.HasValue || fechaHasta.HasValue)
             {
                 // Un corte toca el rango si su periodo (Inicia a Termina) se solapa con el rango buscado.
@@ -92,27 +80,16 @@ namespace RecursosHumanosWeb.Controllers
                 
                 cortesQuery = cortesQuery.Where(c => c.Inicia <= a && c.Termina >= d);
             }
-            if (usuarioCreadorFilter.HasValue)
-            {
-                cortesQuery = cortesQuery.Where(c => c.IdUsuarioCrea == usuarioCreadorFilter.Value);
-            }
-            if (correoCreadorFilter.HasValue)
-            {
-                cortesQuery = cortesQuery.Where(c => c.IdUsuarioCrea == correoCreadorFilter.Value);
-            }
-            if (statusIdFilter.HasValue)
-            {
-                cortesQuery = cortesQuery.Where(c => c.IdEstadoCorte == statusIdFilter.Value);
-            }
 
-            // Nota: ya no obtenemos la lista completa de usuarios aquí.
-            // El filtro de usuario en la vista utilizará un endpoint centralizado en UsuariosController (SearchUsers)
-            var usuarios = new List<UsuariosDTO>();
+            if (statusId.HasValue)
+            {
+                cortesQuery = cortesQuery.Where(c => c.IdEstadoCorte == statusId.Value);
+            }
 
             // Preparar la consulta filtrada usando AutoMapper ProjectTo a CortesDTO
             var cortesQueryFiltered = cortesQuery
                 .ProjectTo<CortesDTO>(_mapper.ConfigurationProvider)
-                .OrderByDescending(c => c.Id); // Ordenar por Id descendente
+                .OrderByDescending(c => c.Id);
 
             // Obtener resultados paginados
             var cortes = cortesQueryFiltered.ToPagedList(page, actualPageSize);
@@ -121,33 +98,18 @@ namespace RecursosHumanosWeb.Controllers
             var model = new SearchCorteViewModel
             {
                 Cortes = cortes,
-                Usuarios = usuarios,
+                Usuarios = new List<UsuariosDTO>(), // No longer needed for filters but keeping temporarily for DTO consistency if needed
                 FechaDesde = fechaDesde?.ToString("yyyy-MM-dd")!,
                 FechaHasta = fechaHasta?.ToString("yyyy-MM-dd")!,
-                UsuarioCreadorFilter = usuarioCreadorFilter?.ToString()!,
-                CorreoCreadorFilter = correoCreadorFilter?.ToString()!,
                 StatusId = statusId,
                 IsAdministrador = isAdministrador
             };
 
             // Pasar datos a la vista
-            ViewData["IsRH"] = isRecursosHumanos; // Añadido para que la vista lo use
+            ViewData["IsRH"] = isRecursosHumanos;
             ViewBag.FechaDesde = fechaDesde;
             ViewBag.FechaHasta = fechaHasta;
-            ViewBag.UsuarioCreadorFilter = usuarioCreadorFilter;
-            ViewBag.CorreoCreadorFilter = correoCreadorFilter;
             ViewBag.StatusId = statusId;
-
-            if (usuarioCreadorFilter.HasValue)
-            {
-                var u = await _context.Usuarios.FindAsync(usuarioCreadorFilter.Value);
-                ViewBag.SelectedNombreText = u?.Nombre;
-            }
-            if (correoCreadorFilter.HasValue)
-            {
-                var u = await _context.Usuarios.FindAsync(correoCreadorFilter.Value);
-                ViewBag.SelectedCorreoText = u?.Correo;
-            }
 
             return View(model);
         }

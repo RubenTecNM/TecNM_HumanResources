@@ -163,7 +163,7 @@ BEGIN
     
     -- 1. Capturar contexto de la aplicación
     DECLARE @IdUsuario INT = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdUsuario') AS INT), 1);
-    DECLARE @IdTipoOrigen INT = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdTipoOrigen') AS INT), 1);
+    DECLARE @IdTipoOrigen INT = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdTipoOrigen') AS INT), 3); -- 3 = Sistema Automático
     DECLARE @IdApiFunction INT = COALESCE(TRY_CAST(SESSION_CONTEXT(N'IdApiFunction') AS INT), 
         CASE 
             WHEN EXISTS(SELECT 1 FROM inserted) AND EXISTS(SELECT 1 FROM deleted) THEN 3 -- UPDATE

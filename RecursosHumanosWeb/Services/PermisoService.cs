@@ -131,7 +131,18 @@ namespace RecursosHumanosWeb.Services
             // Validación de fechas contra el periodo del corte
             if (permiso.Fecha1 < corteActivo.Inicia || (permiso.Fecha2.HasValue && permiso.Fecha2 > corteActivo.Termina))
             {
-                throw new InvalidOperationException($"Las fechas del permiso ({permiso.Fecha1:yyyy-MM-dd} - {permiso.Fecha2:yyyy-MM-dd}) deben estar dentro del periodo del corte activo ({corteActivo.Inicia:yyyy-MM-dd} - {corteActivo.Termina:yyyy-MM-dd}).");
+                // REGLA DE NEGOCIO (Auto-Revisado sin goce)
+                // Si excede el límite del corte actual, se aprueba automáticamente pero sin goce de sueldo
+                permiso.IdEstadoPermiso = (int)PermisoEstadoEnum.Aprobado;
+                permiso.Goce = false;
+                // El autorizador por sistema puede dejarse nulo o registrar el ID sistema/creador
+                permiso.FechaAutorizacion = DateTime.Now;
+            }
+            else
+            {
+                // Flujo normal para fechas dentro del corte
+                permiso.IdEstadoPermiso = (int)PermisoEstadoEnum.Pendiente;
+                // 'Goce' y otras banderas asumen los valores solicitados
             }
 
             permiso.IdCorte = corteActivo.Id;
@@ -139,7 +150,6 @@ namespace RecursosHumanosWeb.Services
             permiso.IdUsuarioModifica = idUsuarioCrea;
             permiso.FechaCreacion = DateTime.Now;
             permiso.FechaModificacion = DateTime.Now;
-            permiso.IdEstadoPermiso = (int)PermisoEstadoEnum.Pendiente;
 
             _context.Permisos.Add(permiso);
             await _context.SaveChangesAsync();
@@ -175,7 +185,18 @@ namespace RecursosHumanosWeb.Services
             existing.IdCorte = originalCorteId; // Preservar el periodo original
             existing.IdUsuarioModifica = idUsuarioModifica;
             existing.FechaModificacion = DateTime.Now;
-            existing.IdEstadoPermiso = (int)PermisoEstadoEnum.Pendiente; // Reset revision on update
+            
+            // Re-evaluar regla de negocio si está fuera del corte
+            if (existing.IdCorteNavigation != null && (existing.Fecha1 < existing.IdCorteNavigation.Inicia || (existing.Fecha2.HasValue && existing.Fecha2 > existing.IdCorteNavigation.Termina)))
+            {
+                existing.IdEstadoPermiso = (int)PermisoEstadoEnum.Aprobado;
+                existing.Goce = false;
+                existing.FechaAutorizacion = DateTime.Now;
+            }
+            else
+            {
+                existing.IdEstadoPermiso = (int)PermisoEstadoEnum.Pendiente; // Reset revision on update si está dentro del corte
+            }
 
             _context.Update(existing);
             return await _context.SaveChangesAsync() > 0;

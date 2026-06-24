@@ -195,7 +195,7 @@ function handleActionWithConfirmation(url, data = {}, options = {}) {
         })
         .catch(error => {
             console.error('❌ Error en handleActionWithConfirmation:', error);
-            
+
             let detailedMessage = 'Ocurrió un error al procesar la solicitud.';
             if (error.message && error.message.includes('HTTP:')) {
                 detailedMessage = `Error de servidor: ${error.message}. Por favor, contacte a soporte técnico.`;
@@ -399,6 +399,20 @@ $(document).ready(function () {
     })();
 });
 
+// ----------------------------------------------------------------------
+// 7. HEADER ORNAMENT INJECTION (PREMIUM V2)
+// ----------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', function () {
+    const headers = document.querySelectorAll('.page-header-v2');
+    headers.forEach(header => {
+        if (!header.querySelector('.header-ornament-2')) {
+            const ornament = document.createElement('div');
+            ornament.className = 'header-ornament-2';
+            header.prepend(ornament);
+        }
+    });
+});
+
 
 // ----------------------------------------------------------------------
 // 4. HEADER DINÁMICO Y MENÚ (DETECCIÓN DE OVERFLOW Y TRIGGERS)
@@ -481,23 +495,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // 5. FUNCIONALIDAD UI GLOBAL (Mobile Cards, etc.)
 // ----------------------------------------------------------------------
 
-// Mobile Card Expand/Collapse Logic (Accordion)
-// Definida globalmente para ser accesible desde atributos onclick
-window.toggleMobileCard = function (id) {
-    const selectedCard = document.getElementById('card-' + id);
-    if (!selectedCard) return;
-
-    // 1. Close ALL other open cards first (Auto-closing accordion behavior)
-    document.querySelectorAll('.premium-mobile-card.expanded').forEach(card => {
-        // Skip the one we just clicked if it was already open (so let it toggle normally)
-        if (card.id !== 'card-' + id) {
-            card.classList.remove('expanded');
-        }
-    });
-
-    // 2. Toggle the selected card
-    selectedCard.classList.toggle('expanded');
-};
 
 // ----------------------------------------------------------------------
 // 6. DATE PICKER PREMIUM (FLATPICKR)

@@ -14,218 +14,158 @@
     var permisosAsignados = ViewBag.PermisosAsignados as List<dynamic> ?? new List<dynamic>();
 }
 
-<div class="permission-request-container">
-    <!-- Header de la página -->
-    <div class="permission-header">
-        <div class="header-content">
-            <h1 class="page-title text-gradient">
-                <i class="fas fa-key"></i>
-                Detalles de API Key #@Model.Id
-            </h1>
-            <p class="page-subtitle">Información completa de la clave de acceso a la API</p>
-        </div>
-        <div class="header-decoration">
-            <div class="status-glass rounded-pill shadow-sm">
-                <span class="status-dot @(Model.Estatus ? "dot-active" : "dot-closed")"></span>
-                <span class="small text-uppercase">
-                    @(Model.Estatus ? "Clave Activa" : "Clave Inactiva")
-                </span>
+<div class="details-container">
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden">
+        
+        <div class="details-header-v2 text-white px-4 px-md-5 py-4">
+            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold shadow-sm">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div>
+                        <h2 class="h4 fw-bold mb-1">Detalles de API Key #@Model.Id</h2>
+                        <div class="ms-1 d-flex align-items-center gap-2 opacity-75 small">
+                             <i class="fas fa-shield-alt"></i> Información completa de la clave de acceso
+                        </div>
+                    </div>
+                </div>
+                <div class="status-glass rounded-pill shadow-sm px-4 py-2 d-flex align-items-center">
+                    <span class="status-dot @(Model.Estatus ? "dot-active" : "dot-closed")"></span>
+                    <span class="small text-uppercase fw-bold">
+                        @(Model.Estatus ? "Clave Activa" : "Clave Inactiva")
+                    </span>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="card details-card shadow-lg rounded-3 overflow-hidden mb-5">
         <div class="card-body p-4 p-md-5 bg-white">
-            <div class="permission-form">
-                <div class="form-sections">
-                    <!-- Sección 1: Información de la Clave -->
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h3 class="mb-0">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Información de la Clave
-                            </h3>
-                            <span class="section-indicator">1</span>
-                        </div>
+            <div class="row g-5">
+                
+                <!-- COLUMNA IZQUIERDA: INFORMACION DE LA CLAVE -->
+                <div class="col-12 col-lg-7">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                        <i class="fas fa-info-circle text-primary"></i>
+                        Información de la Clave
+                    </h3>
 
-                        <div class="datetime-grid">
-                            <div class="form-group" style="grid-column: 1 / -1;">
-                                <label class="form-label">
+                    <div class="mb-4">
+                        <div class="info-card p-4 rounded-4 shadow-sm border" style="background: var(--surface-alt);">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="icon-circle bg-primary-subtle text-primary">
                                     <i class="fas fa-key"></i>
-                                    Clave API
-                                </label>
-                                <div class="input-wrapper" style="display: flex; gap: 10px; align-items: center;">
-                                    <input type="text" id="apiKeyValue" class="form-control" value="@Model.Clave" readonly 
-                                           style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%); 
-                                                  font-family: 'Courier New', monospace; font-weight: 600; color: var(--primary-strong); 
-                                                  border: 2px solid rgba(59, 130, 246, 0.3);" />
-                                    <button type="button" class="btn btn-primary" onclick="copyApiKey()" title="Copiar clave">
-                                        <i class="fas fa-copy"></i> Copiar
-                                    </button>
                                 </div>
+                                <span class="small fw-bold text-dark text-uppercase">Clave API</span>
                             </div>
-
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-check-circle"></i>
-                                    Estado
-                                </label>
-                                <div class="input-wrapper">
-                                    @if (Model.Estatus)
-                                    {
-                                        <input type="text" class="form-control" value="✓ Activa" readonly 
-                                               style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%); 
-                                                      font-weight: 600; color: #059669; border-color: rgba(16, 185, 129, 0.3);" />
-                                    }
-                                    else
-                                    {
-                                        <input type="text" class="form-control" value="✗ Inactiva" readonly 
-                                               style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%); 
-                                                      font-weight: 600; color: #dc2626; border-color: rgba(239, 68, 68, 0.3);" />
-                                    }
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-calendar-plus"></i>
-                                    Fecha de Creación
-                                </label>
-                                <div class="input-wrapper">
-                                    <i class="input-icon fas fa-calendar"></i>
-                                    <input type="text" class="form-control" value="@FormatFechaCompleta(Model.FechaCreacion)" readonly 
-                                           style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
-                                </div>
+                            <div class="d-flex gap-2">
+                                <code id="apiKeyValue" class="flex-grow-1 p-3 rounded-3 text-break" style="background: var(--white); border: 1px solid var(--primary-200); color: var(--primary-800); font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 600; font-size: 0.9rem;">@Model.Clave</code>
+                                <button type="button" class="action-btn btn-view" onclick="copyApiKey()" title="Copiar clave" style="width: 45px; height: 45px; font-size: 1.2rem;">
+                                    <i class="fas fa-copy"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sección 2: Información de Usuarios -->
-                    <div class="form-section">
-                        <div class="section-header">
-                            <h3 class="mb-0">
-                                <i class="fas fa-users me-2"></i>
-                                Información de Usuarios
-                            </h3>
-                            <span class="section-indicator">2</span>
-                        </div>
-
-                        <div class="datetime-grid">
-                            @if (Model.IdUsuarioCreaNavigation != null)
-                            {
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-user-plus"></i>
-                                        Creado por
-                                    </label>
-                                    <div class="input-wrapper">
-                                        <i class="input-icon fas fa-user"></i>
-                                        <input type="text" class="form-control" value="@Model.IdUsuarioCreaNavigation.Nombre" readonly 
-                                               style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
-                                    </div>
-                                </div>
-                            }
-
-                            @if (Model.IdUsuarioModificaNavigation != null)
-                            {
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-user-edit"></i>
-                                        Modificado por
-                                    </label>
-                                    <div class="input-wrapper">
-                                        <i class="input-icon fas fa-user"></i>
-                                        <input type="text" class="form-control" value="@Model.IdUsuarioModificaNavigation.Nombre" readonly 
-                                               style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
-                                    </div>
-                                </div>
-                            }
-
-                            @if (Model.FechaModificacion != null)
-                            {
-                                <div class="form-group">
-                                    <label class="form-label">
-                                        <i class="fas fa-edit"></i>
-                                        Última Modificación
-                                    </label>
-                                    <div class="input-wrapper">
-                                        <i class="input-icon fas fa-calendar"></i>
-                                        <input type="text" class="form-control" value="@FormatFechaCompleta(Model.FechaModificacion.Value)" readonly 
-                                               style="background: var(--surface); font-weight: 600; padding-left: 45px;" />
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-
-                    <!-- Sección 3: Permisos Asignados -->
-                    @if (permisosAsignados.Any())
-                    {
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h3 class="mb-0">
-                                    <i class="fas fa-shield-alt me-2"></i>
-                                    Permisos Asignados
-                                </h3>
-                                <span class="section-indicator">3</span>
-                            </div>
-
-                            <div class="permissions-list">
+                    <div class="mb-4">
+                        <h3 class="h6 fw-bold text-dark text-uppercase mb-4 d-flex align-items-center gap-2 mt-5">
+                            <i class="fas fa-shield-alt text-primary"></i> Permisos Asignados
+                        </h3>
+                        
+                        @if (permisosAsignados.Any())
+                        {
+                            <div class="d-flex flex-column gap-3">
                                 @foreach (var grupo in permisosAsignados)
                                 {
-                                    <div class="permission-card mb-3 p-3 border rounded" 
-                                         style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid #e2e8f0 !important;">
-                                        <h5 class="mb-3" style="color: var(--primary-strong); font-weight: 700;">
-                                            <i class="fas fa-table me-2"></i> @grupo.Tabla
-                                        </h5>
-                                        <div class="d-flex flex-wrap gap-2">
+                                    <div class="info-card p-4 rounded-4 shadow-sm border">
+                                        <div class="d-flex align-items-center gap-3 mb-3">
+                                            <div class="icon-circle bg-gray-100 text-gray-500">
+                                                <i class="fas fa-table"></i>
+                                            </div>
+                                            <span class="small fw-bold text-dark text-uppercase">Tabla: @grupo.Tabla</span>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2 ms-5">
                                             @foreach (var permiso in grupo.Permisos)
                                             {
-                                                var badgeClass = permiso switch
-                                                {
-                                                    "Leer" => "bg-info",
-                                                    "Escribir" => "bg-success",
-                                                    "Actualizar" => "bg-warning",
-                                                    "Eliminar" => "bg-danger",
-                                                    _ => "bg-primary"
-                                                };
-
-                                                var iconClass = permiso switch
-                                                {
-                                                    "Leer" => "fa-eye",
-                                                    "Escribir" => "fa-pen",
-                                                    "Actualizar" => "fa-sync",
-                                                    "Eliminar" => "fa-trash",
-                                                    _ => "fa-wrench"
-                                                };
-
-                                                <span class="badge @badgeClass" style="padding: 8px 12px; font-size: 0.9rem; font-weight: 600;">
-                                                    <i class="fas @iconClass me-1"></i> @permiso
-                                                </span>
+                                                <div class="v2-badge v2-badge-primary">
+                                                    <span class="v2-badge-dot"></span>
+                                                    @permiso
+                                                </div>
                                             }
                                         </div>
                                     </div>
                                 }
                             </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="form-section">
-                            <div class="section-header">
-                                <h3>
-                                    <i class="fas fa-shield-alt"></i>
-                                    Permisos Asignados
-                                </h3>
-                                <span class="section-indicator">3</span>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info rounded-4 border-0 shadow-sm d-flex align-items-center gap-3 p-4">
+                                <i class="fas fa-info-circle fs-4 text-primary"></i>
+                                <div>
+                                    <p class="mb-0 fw-bold">Sin permisos asignados</p>
+                                    <p class="small mb-0 opacity-75">Esta API Key no tiene privilegios de acceso configurados.</p>
+                                </div>
                             </div>
-                            <div class="alert alert-info">
-                                <i class="fas fa-info-circle me-2"></i>
-                                No hay permisos asignados a esta API Key
-                            </div>
-                        </div>
-                    }
+                        }
+                    </div>
                 </div>
+
+                <!-- COLUMNA DERECHA: AUDITORIA -->
+                <div class="col-12 col-lg-5">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                        <i class="fas fa-history text-primary"></i>
+                        Bitácora de Registro
+                    </h3>
+
+                    <div class="detail-grid d-flex flex-column gap-3">
+                        <div class="p-4 border-start border-success border-4 bg-light rounded-4 shadow-sm">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle bg-success-subtle text-success">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <span class="small fw-bold text-dark text-uppercase">Creado por</span>
+                            </div>
+                            <p class="small fw-bold text-dark mb-0 ms-5">
+                                @(Model.IdUsuarioCreaNavigation?.Nombre ?? "Sistema")
+                            </p>
+                            <p class="small text-muted mb-0 ms-5 opacity-75">
+                                @FormatFechaCompleta(Model.FechaCreacion)
+                            </p>
+                        </div>
+
+                        @if (Model.IdUsuarioModificaNavigation != null)
+                        {
+                            <div class="p-4 border-start border-warning border-4 bg-light rounded-4 shadow-sm">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="icon-circle bg-warning-subtle text-warning">
+                                        <i class="fas fa-user-edit"></i>
+                                    </div>
+                                    <span class="small fw-bold text-dark text-uppercase">Última Modificación</span>
+                                </div>
+                                <p class="small fw-bold text-dark mb-0 ms-5">
+                                    @Model.IdUsuarioModificaNavigation.Nombre
+                                </p>
+                                <p class="small text-muted mb-0 ms-5 opacity-75">
+                                    @(Model.FechaModificacion.HasValue ? FormatFechaCompleta(Model.FechaModificacion.Value) : "N/A")
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer py-4 px-5 bg-light border-top d-flex justify-content-between align-items-center">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                <i class="fas fa-arrow-left me-2"></i> Volver al Listado
+            </a>
+            
+            <div class="d-flex gap-2">
+                @if (User.HasClaim("TipoUsuario", "1"))
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="v2-btn btn-primary shadow-sm">
+                        <i class="fas fa-edit"></i> Editar API Key
+                    </a>
+                }
             </div>
         </div>
     </div>
@@ -278,18 +218,5 @@
 }
 
 @section Styles {
-
-    <style>
-        .input-icon {
-            position: absolute;
-            left: 15px;
-            color: #3b82f6;
-            font-size: 1rem;
-            z-index: 10;
-        }
-
-        .input-wrapper .form-control {
-            padding-left: 15px;
-        }
-    </style>
+    <!-- ApiKey Details uses global components from v2-site.css -->
 }

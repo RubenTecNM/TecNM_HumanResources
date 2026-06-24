@@ -5,11 +5,10 @@
 }
 
 @section Styles {
-
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- ApiKey Create uses global components from v2-site.css -->
 }
 
-<div class="permission-request-container">
+<div class="index-container fade-in">
     <div class="permission-header">
         <div class="header-content">
             <h1 class="page-title text-gradient">
@@ -26,114 +25,101 @@
     </div>
 
     <div class="card details-card shadow-lg rounded-3 overflow-hidden mb-5">
-        <div class="card-body p-4 p-md-5 bg-white">
+        <div class="card-body p-0 bg-white">
             <form asp-action="Create" method="post" class="permission-form" id="apiKeyForm">
+                @Html.AntiForgeryToken()
                 
-                <div class="form-sections">
-                    @{
-                        bool isAdmin = ViewBag.IsAdministrador as bool? ?? false;
-                    }
-
-                    <!-- Sección 1: Usuario Titular -->
-                    <div class="form-section" id="user-section">
-                        <div class="section-header">
-                            <h3 class="mb-0"><i class="fas fa-user-shield me-2"></i> Usuario Titular de la API Key</h3>
-                            <span class="section-indicator">1</span>
-                        </div>
-                        <div class="form-group mb-4">
-                            <label asp-for="IdUsuarioTitular" class="form-label">
-                                Usuario al que se asociará la nueva clave
-                                <span class="required">*</span>
-                            </label>
-                            <select asp-for="IdUsuarioTitular" class="form-control user-select" id="idUsuarioTitular"
+                <!-- Sección 1: Usuario Titular -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-user-shield"></i> Usuario Titular</h3>
+                        <span class="section-indicator">1</span>
+                    </div>
+                    
+                    <div class="form-group mb-2">
+                        <label asp-for="IdUsuarioTitular" class="form-label">Usuario al que se asociará la nueva clave</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user input-icon"></i>
+                            <select asp-for="IdUsuarioTitular" class="form-control-v2 form-select select2-v2" id="idUsuarioTitular"
                                     asp-items="@(ViewData["Usuario"] as SelectList)">
                                 <option value="">Seleccione el usuario titular</option>
                             </select>
-                            <span asp-validation-for="IdUsuarioTitular" class="text-danger validation-message"></span>
-                            <small class="form-text text-muted mt-2">
-                                <i class="fas fa-info-circle"></i> La clave API se generará automáticamente al crear el registro
-                            </small>
                         </div>
-                    </div>
-
-                    <!-- Sección 2: Permisos de Acceso a Tablas -->
-                    <div class="form-section" id="permissions-section">
-                        <div class="section-header">
-                            <h3 class="mb-0"><i class="fas fa-database me-2"></i> Permisos de Acceso a Tablas</h3>
-                            <span class="section-indicator">2</span>
+                        <span asp-validation-for="IdUsuarioTitular" class="text-danger small"></span>
+                        <div class="mt-2 p-2 bg-light rounded-3 d-flex align-items-center gap-2 border-start border-primary border-3">
+                            <i class="fas fa-info-circle text-primary"></i>
+                            <small class="text-muted">La clave API se generará automáticamente al crear el registro.</small>
                         </div>
-
-                        @if (ViewBag.Tablas != null && ViewBag.ApiPermisos != null)
-                        {
-                            var tablas = ViewBag.Tablas as List<RecursosHumanosWeb.Models.Tabla> ?? new List<RecursosHumanosWeb.Models.Tabla>();
-                            var apiPermisos = ViewBag.ApiPermisos as List<RecursosHumanosWeb.Models.ApiPermiso> ?? new List<RecursosHumanosWeb.Models.ApiPermiso>();
-
-                            <p class="page-subtitle mb-4">Seleccione los permisos (operaciones) que tendrá la clave sobre cada tabla.</p>
-
-                            int tableIndex = 0;
-                            @foreach (var tabla in tablas)
-                            {
-                                <div class="permission-card mb-4 p-4 border rounded shadow-sm" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 2px solid #e2e8f0 !important;">
-                                    <div class="table-header d-flex justify-content-between align-items-center mb-3">
-                                        <h4 class="mb-0" style="color: var(--primary-strong); font-weight: 700;">
-                                            <i class="fas fa-table me-2"></i> @tabla.Descripcion
-                                        </h4>
-                                        <span class="badge" style="background: var(--gradient-primary); color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
-                                            Tabla #@tabla.Id
-                                        </span>
-                                    </div>
-
-                                    <input type="hidden" name="Assignments[@tableIndex].IdTabla" value="@tabla.Id" />
-
-                                    <div class="row row-cols-2 row-cols-md-4 g-3 permission-options">
-                                        @foreach (var permiso in apiPermisos)
-                                        {
-                                            var iconClass = permiso.Descripcion switch
-                                            {
-                                                "Leer" => "fa-eye",
-                                                "Escribir" => "fa-pen",
-                                                "Actualizar" => "fa-sync",
-                                                "Eliminar" => "fa-trash",
-                                                _ => "fa-wrench"
-                                            };
-
-                                            var colorClass = permiso.Descripcion switch
-                                            {
-                                                "Leer" => "text-info",
-                                                "Escribir" => "text-success",
-                                                "Actualizar" => "text-warning",
-                                                "Eliminar" => "text-danger",
-                                                _ => "text-primary"
-                                            };
-
-                                            <div class="col">
-                                                <div class="form-check permission-checkbox-item" style="background: white; padding: 12px; border-radius: 10px; border: 2px solid #e2e8f0; transition: all 0.3s ease;">
-                                                    <input class="form-check-input" type="checkbox"
-                                                           id="tabla_@tabla.Id@permiso.Id"
-                                                           name="Assignments[@tableIndex].IdsApiPermisosSeleccionados"
-                                                           value="@permiso.Id"
-                                                           style="width: 20px; height: 20px; cursor: pointer;">
-                                                    <label class="form-check-label ms-2" for="tabla_@tabla.Id@permiso.Id" style="cursor: pointer; font-weight: 600;">
-                                                        <i class="fas @iconClass @colorClass me-1"></i>
-                                                        @permiso.Descripcion
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                                tableIndex++;
-                            }
-                        }
-                        else
-                        {
-                            <p class="alert alert-warning">No se encontraron tablas o permisos para configurar.</p>
-                        }
                     </div>
                 </div>
 
-                <div class="form-actions mt-5 pt-4 border-top d-flex flex-column flex-md-row justify-content-end align-items-center gap-3">
-                    <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill shadow-sm fw-bold" id="submitBtn">
+                <!-- Sección 2: Permisos de Acceso -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-database"></i> Permisos de Acceso</h3>
+                        <span class="section-indicator">2</span>
+                    </div>
+
+                    @if (ViewBag.Tablas != null && ViewBag.ApiPermisos != null)
+                    {
+                        var tablas = ViewBag.Tablas as List<RecursosHumanosWeb.Models.Tabla> ?? new List<RecursosHumanosWeb.Models.Tabla>();
+                        var apiPermisos = ViewBag.ApiPermisos as List<RecursosHumanosWeb.Models.ApiPermiso> ?? new List<RecursosHumanosWeb.Models.ApiPermiso>();
+
+                        <p class="text-muted small mb-4">Seleccione las operaciones que tendrá la clave sobre cada entidad del sistema.</p>
+
+                        int tableIndex = 0;
+                        foreach (var tabla in tablas)
+                        {
+                            <div class="card p-3 mb-4 bg-light border-0 shadow-sm rounded-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="m-0 fw-bold text-dark">
+                                        <i class="fas fa-table text-primary me-2"></i> @tabla.Descripcion
+                                    </h5>
+                                    <span class="badge bg-white text-primary border px-3 py-2 rounded-pill small">ID #@tabla.Id</span>
+                                </div>
+
+                                <input type="hidden" name="Assignments[@tableIndex].IdTabla" value="@tabla.Id" />
+
+                                <div class="row g-3">
+                                    @foreach (var permiso in apiPermisos)
+                                    {
+                                        var iconClass = permiso.Descripcion switch
+                                        {
+                                            "Leer" => "fa-eye",
+                                            "Escribir" => "fa-plus",
+                                            "Actualizar" => "fa-edit",
+                                            "Eliminar" => "fa-trash-alt",
+                                            _ => "fa-cog"
+                                        };
+
+                                        <div class="col-md-3">
+                                            <div class="form-check p-0">
+                                                <label class="d-flex align-items-center gap-2 p-2 rounded-3 hover-bg-white border transition-all cursor-pointer w-100 mb-0" 
+                                                       style="background: white;">
+                                                    <input type="checkbox" 
+                                                           name="Assignments[@tableIndex].IdsApiPermisosSeleccionados" 
+                                                           value="@permiso.Id"
+                                                           class="form-check-input m-0"
+                                                           style="width: 18px; height: 18px;">
+                                                    <span class="small fw-semibold">
+                                                        <i class="fas @iconClass me-1 opacity-75"></i> @permiso.Descripcion
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            tableIndex++;
+                        }
+                    }
+                </div>
+
+                <div class="form-actions">
+                    <a asp-action="Index" class="btn btn-light rounded-pill px-4 fw-bold text-secondary border">
+                        <i class="fas fa-arrow-left me-2"></i> Volver
+                    </a>
+                    <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill shadow-sm fw-bold">
                         <i class="fas fa-magic me-2"></i> Generar API Key
                     </button>
                 </div>
