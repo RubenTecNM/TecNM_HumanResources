@@ -10,7 +10,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__RecursosHumanosContext=Server=nexsmart_central_db_sql;Database=DB_Production_HumanResources;User Id=sa;Password=Buss1ness.2026;Encrypt=False;TrustServerCertificate=True;
+      - ConnectionStrings__HumanResourcesContext=Server=nexsmart_central_db_sql;Database=DB_Production_HumanResources;User Id=sa;Password=Buss1ness.2026;Encrypt=False;TrustServerCertificate=True;
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
     volumes:
       - itsmrh_dataprotection_keys:/app/keys

@@ -4,57 +4,57 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace RecursosHumanosWeb.Models;
 
 /// <summary>
-/// Entidad de dominio que representa un token temporal para restablecer contraseñas.
+/// Domain entity representing a temporary password reset token.
 /// </summary>
 [Table("ResetPasswordToken")]
 public class ResetPasswordToken : BaseEntity
 {
     /// <summary>
-    /// Parte pública del token enviada en el URL (no secreta por sí sola).
-    /// Máximo 20 caracteres: identificador corto para la búsqueda eficiente.
+    /// Public part of the token sent in the URL (not secret by itself).
+    /// Up to 20 characters: short identifier for efficient lookup.
     /// </summary>
     [Required]
     [StringLength(20, ErrorMessage = "El selector no puede superar los 20 caracteres.")]
     public string Selector { get; set; } = string.Empty;
 
     /// <summary>
-    /// Hash SHA-256 de la parte secreta del token. Exactamente 64 caracteres hex.
+    /// SHA-256 hash of the secret part of the token. Exactly 64 hex characters.
     /// </summary>
     [Required]
     [StringLength(64, MinimumLength = 64, ErrorMessage = "El hash del token debe ser SHA-256 (64 caracteres).")]
     public string TokenHash { get; set; } = string.Empty;
 
     /// <summary>
-    /// Indica si el token ya fue utilizado (true) para prevenir reutilización.
+    /// Indicates whether the token was already used (true) to prevent reuse.
     /// </summary>
     [Required]
-    public bool Utilizado { get; set; } = false;
+    public bool Used { get; set; } = false;
 
     /// <summary>
-    /// FK → Usuario. Usuario que solicitó el restablecimiento de contraseña.
+    /// FK → User. User who requested the password reset.
     /// </summary>
     [Required]
-    public int IdUsuarioSolicita { get; set; }
+    public int RequestingUserId { get; set; }
 
     /// <summary>
-    /// Fecha y hora en que el token expira y deja de ser válido.
+    /// Date and time when the token expires and becomes invalid.
     /// </summary>
     [Required]
-    public DateTime FechaCaducidad { get; set; }
+    public DateTime ExpiresAt { get; set; }
 
     // ──────────────────────────────────────────────────────────────
-    // PROPIEDAD CALCULADA (no se mapea a columna)
+    // CALCULATED PROPERTIES (not mapped to columns)
     // ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Indica si el token ya ha vencido. Calculado en memoria.
+    /// Indicates whether the token has already expired. Calculated in memory.
     /// </summary>
     [NotMapped]
-    public bool EstaVencido => DateTime.Now > FechaCaducidad;
+    public bool IsExpired => DateTime.Now > ExpiresAt;
 
     /// <summary>
-    /// Indica si el token es válido: no usado, activo y no vencido. Calculado en memoria.
+    /// Indicates whether the token is valid: unused, active and not expired. Calculated in memory.
     /// </summary>
     [NotMapped]
-    public bool EsValido => !Utilizado && Estatus && !EstaVencido;
+    public bool IsValid => !Used && Status && !IsExpired;
 }

@@ -6,10 +6,10 @@ namespace RecursosHumanosWeb.Models.DTOs
     public class LoginDTO
     {
         public int Id { get; set; }
-        public string Nombre { get; set; }
-        public string Correo { get; set; }
-        public int IdArea { get; set; }
-        public string NombreArea { get; set; }
-        public int IdTipoUsuario { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public int AreaId { get; set; }
+        public string AreaName { get; set; }
+        public int UserTypeId { get; set; }
     }
 }

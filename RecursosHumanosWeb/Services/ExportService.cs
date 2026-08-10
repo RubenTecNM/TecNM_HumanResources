@@ -9,55 +9,55 @@ namespace RecursosHumanosWeb.Services
 {
     public class ExportService : IExportService
     {
-        private readonly RecursosHumanosContext _context;
+        private readonly HumanResourcesContext _context;
 
-        public ExportService(RecursosHumanosContext context)
+        public ExportService(HumanResourcesContext context)
         {
             _context = context;
         }
 
         public async Task<byte[]> GenerateCorteExcelAsync(int corteId)
         {
-            var corte = await _context.Cortes
-                .Include(c => c.IdUsuarioCreaNavigation)
+            var cutoff = await _context.Cutoffs
+                .Include(c => c.CreatedByUser)
                 .FirstOrDefaultAsync(c => c.Id == corteId);
 
-            if (corte == null) return null;
+            if (cutoff == null) return null;
 
             var areas = await _context.Areas
-                .OrderBy(a => a.Descripcion)
+                .OrderBy(a => a.Description)
                 .ToListAsync();
 
             using (var workbook = new XLWorkbook())
             {
                 foreach (var area in areas)
                 {
-                    var permisosGenerales = await _context.Permisos
-                        .Where(p => p.IdCorte == corteId &&
-                                    p.IdUsuarioSolicitaNavigation.IdArea == area.Id &&
-                                    p.IdTipoPermiso != 5 &&
-                                    p.IdEstadoPermiso != 3) // Excluyendo Invalidados
-                        .Include(p => p.IdUsuarioSolicitaNavigation)
-                        .Include(p => p.IdUsuarioAutorizaNavigation)
-                        .Include(p => p.IdTipoPermisoNavigation)
+                    var permisosGenerales = await _context.Permissions
+                        .Where(p => p.CutoffId == corteId &&
+                                    p.RequestingUser.AreaId == area.Id &&
+                                    p.PermissionTypeId != 5 &&
+                                    p.PermissionStatusTypeId != 3) // Excluyendo Invalidados
+                        .Include(p => p.RequestingUser)
+                        .Include(p => p.AuthorizingUser)
+                        .Include(p => p.PermissionType)
                         .Select(p => new
                         {
                             ID_SOLICITUD = p.Id,
-                            NOMBRE_DEL_SOLICITANTE = p.IdUsuarioSolicitaNavigation.Nombre,
-                            ID_TIPO_PERMISO = p.IdTipoPermiso,
-                            TIPO_PERMISO = p.IdTipoPermisoNavigation.Descripcion,
-                            DESCRIPCIÓN = p.Motivo ?? "",
-                            DÍAS_SOLICITADOS = p.Fecha1.HasValue && p.Fecha2.HasValue 
-                                ? (int)((p.Fecha2.Value - p.Fecha1.Value).TotalDays + 1)
-                                : (p.Dias ?? 0),
-                            CON_GOCE = p.Goce ? "Sí" : "No",
-                            EVIDENCIA = p.Evidencia ?? "",
-                            DESDE_EL_DÍA = p.Fecha1,
-                            HASTA_EL_DÍA = p.Fecha2,
-                            FECHA_DE_SOLICITUD = p.FechaCreacion,
-                            FECHA_DE_AUTORIZACIÓN = p.FechaAutorizacion,
-                            ID_SOLICITANTE = p.IdUsuarioSolicita,
-                            CORREO_DEL_SOLICITANTE = p.IdUsuarioSolicitaNavigation.Correo
+                            NOMBRE_DEL_SOLICITANTE = p.RequestingUser.Name,
+                            ID_TIPO_PERMISO = p.PermissionTypeId,
+                            TIPO_PERMISO = p.PermissionType.Description,
+                            DESCRIPCIÓN = p.Reason ?? "",
+                            DÍAS_SOLICITADOS = p.StartDate.HasValue && p.EndDate.HasValue 
+                                ? (int)((p.EndDate.Value - p.StartDate.Value).TotalDays + 1)
+                                : (p.Days ?? 0),
+                            CON_GOCE = p.WithPay ? "Sí" : "No",
+                            EVIDENCIA = p.Evidence ?? "",
+                            DESDE_EL_DÍA = p.StartDate,
+                            HASTA_EL_DÍA = p.EndDate,
+                            FECHA_DE_SOLICITUD = p.CreatedAt,
+                            FECHA_DE_AUTORIZACIÓN = p.AuthorizedAt,
+                            ID_SOLICITANTE = p.RequestingUserId,
+                            CORREO_DEL_SOLICITANTE = p.RequestingUser.Email
                         })
                         .ToListAsync();
 
@@ -80,52 +80,52 @@ namespace RecursosHumanosWeb.Services
                         }
 
                         int row = 2;
-                        foreach (var permiso in permisosGenerales)
+                        foreach (var permission in permisosGenerales)
                         {
-                            worksheetGeneral.Cell(row, 1).Value = permiso.ID_SOLICITUD;
-                            worksheetGeneral.Cell(row, 2).Value = permiso.NOMBRE_DEL_SOLICITANTE;
-                            worksheetGeneral.Cell(row, 3).Value = permiso.ID_TIPO_PERMISO;
-                            worksheetGeneral.Cell(row, 4).Value = permiso.TIPO_PERMISO;
-                            worksheetGeneral.Cell(row, 5).Value = permiso.DESCRIPCIÓN;
-                            worksheetGeneral.Cell(row, 6).Value = permiso.DÍAS_SOLICITADOS;
-                            worksheetGeneral.Cell(row, 7).Value = permiso.CON_GOCE;
-                            worksheetGeneral.Cell(row, 8).Value = permiso.EVIDENCIA;
-                            worksheetGeneral.Cell(row, 9).Value = permiso.DESDE_EL_DÍA;
-                            worksheetGeneral.Cell(row, 10).Value = permiso.HASTA_EL_DÍA;
-                            worksheetGeneral.Cell(row, 11).Value = permiso.FECHA_DE_SOLICITUD;
-                            worksheetGeneral.Cell(row, 12).Value = permiso.FECHA_DE_AUTORIZACIÓN;
-                            worksheetGeneral.Cell(row, 13).Value = permiso.ID_SOLICITANTE;
-                            worksheetGeneral.Cell(row, 14).Value = permiso.CORREO_DEL_SOLICITANTE;
+                            worksheetGeneral.Cell(row, 1).Value = permission.ID_SOLICITUD;
+                            worksheetGeneral.Cell(row, 2).Value = permission.NOMBRE_DEL_SOLICITANTE;
+                            worksheetGeneral.Cell(row, 3).Value = permission.ID_TIPO_PERMISO;
+                            worksheetGeneral.Cell(row, 4).Value = permission.TIPO_PERMISO;
+                            worksheetGeneral.Cell(row, 5).Value = permission.DESCRIPCIÓN;
+                            worksheetGeneral.Cell(row, 6).Value = permission.DÍAS_SOLICITADOS;
+                            worksheetGeneral.Cell(row, 7).Value = permission.CON_GOCE;
+                            worksheetGeneral.Cell(row, 8).Value = permission.EVIDENCIA;
+                            worksheetGeneral.Cell(row, 9).Value = permission.DESDE_EL_DÍA;
+                            worksheetGeneral.Cell(row, 10).Value = permission.HASTA_EL_DÍA;
+                            worksheetGeneral.Cell(row, 11).Value = permission.FECHA_DE_SOLICITUD;
+                            worksheetGeneral.Cell(row, 12).Value = permission.FECHA_DE_AUTORIZACIÓN;
+                            worksheetGeneral.Cell(row, 13).Value = permission.ID_SOLICITANTE;
+                            worksheetGeneral.Cell(row, 14).Value = permission.CORREO_DEL_SOLICITANTE;
                             row++;
                         }
                         worksheetGeneral.Style.Font.FontName = "Arial";
                         worksheetGeneral.Columns().AdjustToContents();
                     }
 
-                    var permisosTurno = await _context.Permisos
-                        .Where(p => p.IdCorte == corteId &&
-                                    p.IdUsuarioSolicitaNavigation.IdArea == area.Id &&
-                                    p.IdTipoPermiso == 5 &&
-                                    p.IdEstadoPermiso != 3)
-                        .Include(p => p.IdUsuarioSolicitaNavigation)
-                        .Include(p => p.IdUsuarioAutorizaNavigation)
-                        .Include(p => p.IdTipoPermisoNavigation)
+                    var permisosTurno = await _context.Permissions
+                        .Where(p => p.CutoffId == corteId &&
+                                    p.RequestingUser.AreaId == area.Id &&
+                                    p.PermissionTypeId == 5 &&
+                                    p.PermissionStatusTypeId != 3)
+                        .Include(p => p.RequestingUser)
+                        .Include(p => p.AuthorizingUser)
+                        .Include(p => p.PermissionType)
                         .Select(p => new
                         {
                             ID_SOLICITUD = p.Id,
-                            NOMBRE_DEL_SOLICITANTE = p.IdUsuarioSolicitaNavigation.Nombre,
-                            ID_TIPO_PERMISO = p.IdTipoPermiso,
-                            TIPO_PERMISO = p.IdTipoPermisoNavigation.Descripcion,
-                            DESCRIPCIÓN = p.Motivo ?? "",
-                            DÍAS_SOLICITADOS = p.Dias ?? 0,
-                            CON_GOCE = p.Goce ? "Sí" : "No",
-                            EVIDENCIA = p.Evidencia ?? "",
-                            DEL_DÍA = p.Fecha1,
-                            POR_EL_DÍA = p.Fecha2,
-                            FECHA_DE_SOLICITUD = p.FechaCreacion,
-                            FECHA_DE_AUTORIZACIÓN = p.FechaAutorizacion,
-                            ID_SOLICITANTE = p.IdUsuarioSolicita,
-                            CORREO_DEL_SOLICITANTE = p.IdUsuarioSolicitaNavigation.Correo
+                            NOMBRE_DEL_SOLICITANTE = p.RequestingUser.Name,
+                            ID_TIPO_PERMISO = p.PermissionTypeId,
+                            TIPO_PERMISO = p.PermissionType.Description,
+                            DESCRIPCIÓN = p.Reason ?? "",
+                            DÍAS_SOLICITADOS = p.Days ?? 0,
+                            CON_GOCE = p.WithPay ? "Sí" : "No",
+                            EVIDENCIA = p.Evidence ?? "",
+                            DEL_DÍA = p.StartDate,
+                            POR_EL_DÍA = p.EndDate,
+                            FECHA_DE_SOLICITUD = p.CreatedAt,
+                            FECHA_DE_AUTORIZACIÓN = p.AuthorizedAt,
+                            ID_SOLICITANTE = p.RequestingUserId,
+                            CORREO_DEL_SOLICITANTE = p.RequestingUser.Email
                         })
                         .ToListAsync();
 
@@ -148,22 +148,22 @@ namespace RecursosHumanosWeb.Services
                         }
 
                         int row = 2;
-                        foreach (var permiso in permisosTurno)
+                        foreach (var permission in permisosTurno)
                         {
-                            worksheetTurno.Cell(row, 1).Value = permiso.ID_SOLICITUD;
-                            worksheetTurno.Cell(row, 2).Value = permiso.NOMBRE_DEL_SOLICITANTE;
-                            worksheetTurno.Cell(row, 3).Value = permiso.ID_TIPO_PERMISO;
-                            worksheetTurno.Cell(row, 4).Value = permiso.TIPO_PERMISO;
-                            worksheetTurno.Cell(row, 5).Value = permiso.DESCRIPCIÓN;
-                            worksheetTurno.Cell(row, 6).Value = permiso.DÍAS_SOLICITADOS;
-                            worksheetTurno.Cell(row, 7).Value = permiso.CON_GOCE;
-                            worksheetTurno.Cell(row, 8).Value = permiso.EVIDENCIA;
-                            worksheetTurno.Cell(row, 9).Value = permiso.DEL_DÍA;
-                            worksheetTurno.Cell(row, 10).Value = permiso.POR_EL_DÍA;
-                            worksheetTurno.Cell(row, 11).Value = permiso.FECHA_DE_SOLICITUD;
-                            worksheetTurno.Cell(row, 12).Value = permiso.FECHA_DE_AUTORIZACIÓN;
-                            worksheetTurno.Cell(row, 13).Value = permiso.ID_SOLICITANTE;
-                            worksheetTurno.Cell(row, 14).Value = permiso.CORREO_DEL_SOLICITANTE;
+                            worksheetTurno.Cell(row, 1).Value = permission.ID_SOLICITUD;
+                            worksheetTurno.Cell(row, 2).Value = permission.NOMBRE_DEL_SOLICITANTE;
+                            worksheetTurno.Cell(row, 3).Value = permission.ID_TIPO_PERMISO;
+                            worksheetTurno.Cell(row, 4).Value = permission.TIPO_PERMISO;
+                            worksheetTurno.Cell(row, 5).Value = permission.DESCRIPCIÓN;
+                            worksheetTurno.Cell(row, 6).Value = permission.DÍAS_SOLICITADOS;
+                            worksheetTurno.Cell(row, 7).Value = permission.CON_GOCE;
+                            worksheetTurno.Cell(row, 8).Value = permission.EVIDENCIA;
+                            worksheetTurno.Cell(row, 9).Value = permission.DEL_DÍA;
+                            worksheetTurno.Cell(row, 10).Value = permission.POR_EL_DÍA;
+                            worksheetTurno.Cell(row, 11).Value = permission.FECHA_DE_SOLICITUD;
+                            worksheetTurno.Cell(row, 12).Value = permission.FECHA_DE_AUTORIZACIÓN;
+                            worksheetTurno.Cell(row, 13).Value = permission.ID_SOLICITANTE;
+                            worksheetTurno.Cell(row, 14).Value = permission.CORREO_DEL_SOLICITANTE;
                             row++;
                         }
                         worksheetTurno.Style.Font.FontName = "Arial";
@@ -171,14 +171,14 @@ namespace RecursosHumanosWeb.Services
                     }
                 }
 
-                // Tipos de Permisos
-                var tiposPermisos = await _context.TipoPermisos
-                    .Select(tp => new { ID_TIPO_PERMISO = tp.Id, DESCRIPCIÓN = tp.Descripcion })
+                // Tipos de Permissions
+                var tiposPermisos = await _context.PermissionTypes
+                    .Select(tp => new { ID_TIPO_PERMISO = tp.Id, DESCRIPCIÓN = tp.Description })
                     .ToListAsync();
 
                 if (tiposPermisos.Any())
                 {
-                    var worksheetTipos = workbook.Worksheets.Add("Tipos De Permisos");
+                    var worksheetTipos = workbook.Worksheets.Add("Tipos De Permissions");
                     worksheetTipos.Cell(1, 1).Value = "ID_TIPO_PERMISO";
                     worksheetTipos.Cell(1, 2).Value = "DESCRIPCIÓN";
                     worksheetTipos.Cell(1, 1).Style.Font.Bold = true;
@@ -200,7 +200,7 @@ namespace RecursosHumanosWeb.Services
 
                 // Areas
                 var areasData = await _context.Areas
-                    .Select(a => new { ID = a.Id, DESCRIPCIÓN = a.Descripcion })
+                    .Select(a => new { ID = a.Id, DESCRIPCIÓN = a.Description })
                     .ToListAsync();
 
                 if (areasData.Any())
@@ -235,37 +235,37 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<(byte[] Content, string FileName)> GenerateCorteCsvAsync(int corteId)
         {
-            var corte = await _context.Cortes
-                .Include(c => c.IdUsuarioCreaNavigation)
+            var cutoff = await _context.Cutoffs
+                .Include(c => c.CreatedByUser)
                 .FirstOrDefaultAsync(c => c.Id == corteId);
 
-            if (corte == null) return (null, null);
+            if (cutoff == null) return (null, null);
 
-            var permisos = await _context.Permisos
-                .Where(p => p.IdCorte == corteId && p.IdEstadoPermiso != 3)
-                .Include(p => p.IdUsuarioSolicitaNavigation)
-                    .ThenInclude(u => u.IdAreaNavigation)
-                .Include(p => p.IdUsuarioAutorizaNavigation)
-                .Include(p => p.IdTipoPermisoNavigation)
+            var permissions = await _context.Permissions
+                .Where(p => p.CutoffId == corteId && p.PermissionStatusTypeId != 3)
+                .Include(p => p.RequestingUser)
+                    .ThenInclude(u => u.Area)
+                .Include(p => p.AuthorizingUser)
+                .Include(p => p.PermissionType)
                 .ToListAsync();
 
             var csv = new StringBuilder();
-            csv.AppendLine("ID,Solicitante,Área,Tipo Permiso,Motivo,Días,Con Goce,Del Día,Al Día,Estado,Autorizado Por,Fecha Creación");
+            csv.AppendLine("ID,Solicitante,Área,Tipo Permission,Reason,Días,Con WithPay,Del Día,Al Día,Estado,Autorizado Por,Fecha Creación");
 
-            foreach (var p in permisos)
+            foreach (var p in permissions)
             {
                 csv.AppendLine($"{p.Id}," +
-                    $"\"{p.IdUsuarioSolicitaNavigation?.Nombre}\"," +
-                    $"\"{p.IdUsuarioSolicitaNavigation?.IdAreaNavigation?.Descripcion}\"," +
-                    $"\"{p.IdTipoPermisoNavigation?.Descripcion}\"," +
-                    $"\"{p.Motivo?.Replace("\"", "\"\"")}\"," +
-                    $"{p.Dias ?? 0}," +
-                    $"{(p.Goce ? "Sí" : "No")}," +
-                    $"{p.Fecha1?.ToString("yyyy-MM-dd")}," +
-                    $"{p.Fecha2?.ToString("yyyy-MM-dd")}," +
-                    $"{(p.IdEstadoPermiso == 2 ? "Sí" : "No")}," +
-                    $"\"{p.IdUsuarioAutorizaNavigation?.Nombre}\"," +
-                    $"{p.FechaCreacion.ToString("yyyy-MM-dd HH:mm")}");
+                    $"\"{p.RequestingUser?.Name}\"," +
+                    $"\"{p.RequestingUser?.Area?.Description}\"," +
+                    $"\"{p.PermissionType?.Description}\"," +
+                    $"\"{p.Reason?.Replace("\"", "\"\"")}\"," +
+                    $"{p.Days ?? 0}," +
+                    $"{(p.WithPay ? "Sí" : "No")}," +
+                    $"{p.StartDate?.ToString("yyyy-MM-dd")}," +
+                    $"{p.EndDate?.ToString("yyyy-MM-dd")}," +
+                    $"{(p.PermissionStatusTypeId == 2 ? "Sí" : "No")}," +
+                    $"\"{p.AuthorizingUser?.Name}\"," +
+                    $"{p.CreatedAt.ToString("yyyy-MM-dd HH:mm")}");
             }
 
             string fileName = $"CorteTEC - ID {corteId}.csv";
@@ -274,51 +274,51 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<(byte[] Content, string FileName)> GenerateCorteJsonAsync(int corteId)
         {
-            var corte = await _context.Cortes
-                .Include(c => c.IdUsuarioCreaNavigation)
+            var cutoff = await _context.Cutoffs
+                .Include(c => c.CreatedByUser)
                 .FirstOrDefaultAsync(c => c.Id == corteId);
 
-            if (corte == null) return (null, null);
+            if (cutoff == null) return (null, null);
 
-            var permisos = await _context.Permisos
-                .Where(p => p.IdCorte == corteId && p.IdEstadoPermiso != 3)
-                .Include(p => p.IdUsuarioSolicitaNavigation)
-                    .ThenInclude(u => u.IdAreaNavigation)
-                .Include(p => p.IdUsuarioAutorizaNavigation)
-                .Include(p => p.IdTipoPermisoNavigation)
+            var permissions = await _context.Permissions
+                .Where(p => p.CutoffId == corteId && p.PermissionStatusTypeId != 3)
+                .Include(p => p.RequestingUser)
+                    .ThenInclude(u => u.Area)
+                .Include(p => p.AuthorizingUser)
+                .Include(p => p.PermissionType)
                 .Select(p => new
                 {
                     Id = p.Id,
-                    Solicitante = p.IdUsuarioSolicitaNavigation != null ? (p.IdUsuarioSolicitaNavigation.Nombre ?? "") : "",
-                    Area = p.IdUsuarioSolicitaNavigation != null && p.IdUsuarioSolicitaNavigation.IdAreaNavigation != null ? (p.IdUsuarioSolicitaNavigation.IdAreaNavigation.Descripcion ?? "") : "",
-                    TipoPermiso = p.IdTipoPermisoNavigation != null ? (p.IdTipoPermisoNavigation.Descripcion ?? "") : "",
-                    Motivo = p.Motivo,
-                    Dias = p.Dias,
-                    ConGoce = p.Goce,
-                    DelDia = p.Fecha1,
-                    AlDia = p.Fecha2,
-                    IdEstadoPermiso = p.IdEstadoPermiso,
-                    AutorizadoPor = p.IdUsuarioAutorizaNavigation != null ? p.IdUsuarioAutorizaNavigation.Nombre : null,
-                    FechaCreacion = p.FechaCreacion
+                    Solicitante = p.RequestingUser != null ? (p.RequestingUser.Name ?? "") : "",
+                    Area = p.RequestingUser != null && p.RequestingUser.Area != null ? (p.RequestingUser.Area.Description ?? "") : "",
+                    PermissionType = p.PermissionType != null ? (p.PermissionType.Description ?? "") : "",
+                    Reason = p.Reason,
+                    Days = p.Days,
+                    WithPay = p.WithPay,
+                    FromDay = p.StartDate,
+                    ToDay = p.EndDate,
+                    PermissionStatusTypeId = p.PermissionStatusTypeId,
+                    AuthorizedBy = p.AuthorizingUser != null ? p.AuthorizingUser.Name : null,
+                    CreatedAt = p.CreatedAt
                 })
                 .ToListAsync();
 
             var data = new
             {
-                Corte = new
+                Cutoff = new
                 {
-                    Id = corte.Id,
-                    FechaInicio = corte.Inicia,
-                    FechaFin = corte.Termina,
-                    IdEstadoCorte = corte.IdEstadoCorte
+                    Id = cutoff.Id,
+                    FechaInicio = cutoff.StartDate,
+                    FechaFin = cutoff.EndDate,
+                    CutoffStatusTypeId = cutoff.CutoffStatusTypeId
                 },
-                Permisos = permisos,
+                Permissions = permissions,
                 Estadisticas = new
                 {
-                    Total = permisos.Count,
-                    Aprobados = permisos.Count(p => p.IdEstadoPermiso == 2),
-                    Pendientes = permisos.Count(p => p.IdEstadoPermiso == 1),
-                    DiasPromedio = permisos.Any() ? permisos.Average(p => p.Dias ?? 0) : 0
+                    Total = permissions.Count,
+                    Aprobados = permissions.Count(p => p.PermissionStatusTypeId == 2),
+                    Pendientes = permissions.Count(p => p.PermissionStatusTypeId == 1),
+                    DiasPromedio = permissions.Any() ? permissions.Average(p => p.Days ?? 0) : 0
                 }
             };
 
@@ -329,54 +329,54 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<(byte[] Content, string FileName)> GenerateCorteXmlAsync(int corteId)
         {
-            var corte = await _context.Cortes
-                .Include(c => c.IdUsuarioCreaNavigation)
+            var cutoff = await _context.Cutoffs
+                .Include(c => c.CreatedByUser)
                 .FirstOrDefaultAsync(c => c.Id == corteId);
 
-            if (corte == null) return (null, null);
+            if (cutoff == null) return (null, null);
 
-            var permisos = await _context.Permisos
-                .Where(p => p.IdCorte == corteId && p.IdEstadoPermiso != 3)
-                .Include(p => p.IdUsuarioSolicitaNavigation)
-                    .ThenInclude(u => u.IdAreaNavigation)
-                .Include(p => p.IdUsuarioAutorizaNavigation)
-                .Include(p => p.IdTipoPermisoNavigation)
+            var permissions = await _context.Permissions
+                .Where(p => p.CutoffId == corteId && p.PermissionStatusTypeId != 3)
+                .Include(p => p.RequestingUser)
+                    .ThenInclude(u => u.Area)
+                .Include(p => p.AuthorizingUser)
+                .Include(p => p.PermissionType)
                 .ToListAsync();
 
             using (var stringWriter = new StringWriter())
             using (var xmlWriter = XmlWriter.Create(stringWriter, new XmlWriterSettings { Indent = true }))
             {
                 xmlWriter.WriteStartDocument();
-                xmlWriter.WriteStartElement("Corte");
+                xmlWriter.WriteStartElement("Cutoff");
                 
-                xmlWriter.WriteElementString("Id", corte.Id.ToString());
-                xmlWriter.WriteElementString("FechaInicio", corte.Inicia.ToString("yyyy-MM-dd") ?? "");
-                xmlWriter.WriteElementString("FechaFin", corte.Termina.ToString("yyyy-MM-dd") ?? "");
-                xmlWriter.WriteElementString("IdEstadoCorte", corte.IdEstadoCorte.ToString());
+                xmlWriter.WriteElementString("Id", cutoff.Id.ToString());
+                xmlWriter.WriteElementString("FechaInicio", cutoff.StartDate.ToString("yyyy-MM-dd") ?? "");
+                xmlWriter.WriteElementString("FechaFin", cutoff.EndDate.ToString("yyyy-MM-dd") ?? "");
+                xmlWriter.WriteElementString("CutoffStatusTypeId", cutoff.CutoffStatusTypeId.ToString());
 
                 xmlWriter.WriteStartElement("Estadisticas");
-                xmlWriter.WriteElementString("Total", permisos.Count.ToString());
-                xmlWriter.WriteElementString("Aprobados", permisos.Count(p => p.IdEstadoPermiso == 2).ToString());
-                xmlWriter.WriteElementString("Pendientes", permisos.Count(p => p.IdEstadoPermiso == 1).ToString());
-                xmlWriter.WriteElementString("DiasPromedio", (permisos.Any() ? permisos.Average(p => p.Dias ?? 0) : 0).ToString("F2"));
+                xmlWriter.WriteElementString("Total", permissions.Count.ToString());
+                xmlWriter.WriteElementString("Aprobados", permissions.Count(p => p.PermissionStatusTypeId == 2).ToString());
+                xmlWriter.WriteElementString("Pendientes", permissions.Count(p => p.PermissionStatusTypeId == 1).ToString());
+                xmlWriter.WriteElementString("DiasPromedio", (permissions.Any() ? permissions.Average(p => p.Days ?? 0) : 0).ToString("F2"));
                 xmlWriter.WriteEndElement(); 
 
-                xmlWriter.WriteStartElement("Permisos");
-                foreach (var p in permisos)
+                xmlWriter.WriteStartElement("Permissions");
+                foreach (var p in permissions)
                 {
-                    xmlWriter.WriteStartElement("Permiso");
+                    xmlWriter.WriteStartElement("Permission");
                     xmlWriter.WriteElementString("Id", p.Id.ToString());
-                    xmlWriter.WriteElementString("Solicitante", p.IdUsuarioSolicitaNavigation?.Nombre ?? "");
-                    xmlWriter.WriteElementString("Area", p.IdUsuarioSolicitaNavigation?.IdAreaNavigation?.Descripcion ?? "");
-                    xmlWriter.WriteElementString("TipoPermiso", p.IdTipoPermisoNavigation?.Descripcion ?? "");
-                    xmlWriter.WriteElementString("Motivo", p.Motivo ?? "");
-                    xmlWriter.WriteElementString("Dias", (p.Dias ?? 0).ToString());
-                    xmlWriter.WriteElementString("ConGoce", p.Goce ? "Sí" : "No");
-                    xmlWriter.WriteElementString("DelDia", p.Fecha1?.ToString("yyyy-MM-dd") ?? "");
-                    xmlWriter.WriteElementString("AlDia", p.Fecha2?.ToString("yyyy-MM-dd") ?? "");
-                    xmlWriter.WriteElementString("Estado", p.IdEstadoPermiso == 2 ? "Sí" : "No");
-                    xmlWriter.WriteElementString("AutorizadoPor", p.IdUsuarioAutorizaNavigation?.Nombre ?? "");
-                    xmlWriter.WriteElementString("FechaCreacion", p.FechaCreacion.ToString("yyyy-MM-dd HH:mm") ?? "");
+                    xmlWriter.WriteElementString("Solicitante", p.RequestingUser?.Name ?? "");
+                    xmlWriter.WriteElementString("Area", p.RequestingUser?.Area?.Description ?? "");
+                    xmlWriter.WriteElementString("PermissionType", p.PermissionType?.Description ?? "");
+                    xmlWriter.WriteElementString("Reason", p.Reason ?? "");
+                    xmlWriter.WriteElementString("Days", (p.Days ?? 0).ToString());
+                    xmlWriter.WriteElementString("WithPay", p.WithPay ? "Sí" : "No");
+                    xmlWriter.WriteElementString("FromDay", p.StartDate?.ToString("yyyy-MM-dd") ?? "");
+                    xmlWriter.WriteElementString("ToDay", p.EndDate?.ToString("yyyy-MM-dd") ?? "");
+                    xmlWriter.WriteElementString("Estado", p.PermissionStatusTypeId == 2 ? "Sí" : "No");
+                    xmlWriter.WriteElementString("AuthorizedBy", p.AuthorizingUser?.Name ?? "");
+                    xmlWriter.WriteElementString("CreatedAt", p.CreatedAt.ToString("yyyy-MM-dd HH:mm") ?? "");
                     xmlWriter.WriteEndElement(); 
                 }
                 xmlWriter.WriteEndElement(); 

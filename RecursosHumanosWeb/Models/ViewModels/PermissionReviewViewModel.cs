@@ -4,33 +4,33 @@ namespace RecursosHumanosWeb.Models.ViewModels
 {
     public class PermissionReviewViewModel
     {
-        // Identificador del permiso
+        // Identificador del permission
         public int Id { get; set; }
 
-        // Informaci髇 del solicitante (solo lectura)
+        // Informaci贸n del solicitante (solo lectura)
         public string NombreSolicitante { get; set; } = string.Empty;
         public string CorreoSolicitante { get; set; } = string.Empty;
         public string AreaSolicitante { get; set; } = string.Empty;
 
-        // Informaci髇 del permiso (solo lectura)
-        public int IdTipoPermiso { get; set; }
+        // Informaci贸n del permission (solo lectura)
+        public int PermissionTypeId { get; set; }
         public string TipoPermisoDescripcion { get; set; } = string.Empty;
-        public DateTime? Fecha1 { get; set; }
-        public DateTime? Fecha2 { get; set; }
-        public int? Dias { get; set; }
-        public string? Motivo { get; set; }
-        public string? Evidencia { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public int? Days { get; set; }
+        public string? Reason { get; set; }
+        public string? Evidence { get; set; }
 
-        // Campo EDITABLE: Goce de sueldo
+        // Campo EDITABLE: WithPay de sueldo
         [Required(ErrorMessage = "Debe indicar si el permiso es con o sin goce de sueldo.")]
-        public bool Goce { get; set; }
+        public bool WithPay { get; set; }
 
-        // Informaci髇 adicional (solo lectura)
-        public DateTime FechaCreacion { get; set; }
-        public string? CreadoPor { get; set; }
-        public int IdCorte { get; set; }
+        // Informaci贸n adicional (solo lectura)
+        public DateTime CreatedAt { get; set; }
+        public string? CreatedBy { get; set; }
+        public int CutoffId { get; set; }
 
-        // Informaci髇 del corte (solo lectura)
+        // Informaci贸n del cutoff (solo lectura)
         public DateTime? CorteInicia { get; set; }
         public DateTime? CorteTermina { get; set; }
     }

@@ -18,7 +18,7 @@ namespace RecursosHumanosWeb.Controllers
 {
     public class ResetPasswordController : Controller
     {
-        private readonly RecursosHumanosContext _context;
+        private readonly HumanResourcesContext _context;
         private readonly IMemoryCache _cache;
         private readonly IEmailSender _emailSender;
         private readonly SmtpSettings _smtpSettings;
@@ -26,7 +26,7 @@ namespace RecursosHumanosWeb.Controllers
 
         private static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(20);
 
-        public ResetPasswordController(RecursosHumanosContext context, IMemoryCache cache, IEmailSender emailSender, IOptions<SmtpSettings> smtpOptions, ILogger<ResetPasswordController> logger)
+        public ResetPasswordController(HumanResourcesContext context, IMemoryCache cache, IEmailSender emailSender, IOptions<SmtpSettings> smtpOptions, ILogger<ResetPasswordController> logger)
         {
             _context = context;
             _cache = cache;
@@ -58,13 +58,13 @@ namespace RecursosHumanosWeb.Controllers
             // Validate
             if (string.IsNullOrWhiteSpace(dto.Email) || !new EmailAddressAttribute().IsValid(dto.Email))
             {
-                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Correo inv�lido.", Icon = "error" };
+                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Email inv�lido.", Icon = "error" };
                 return Json(bad);
             }
 
             var emailNormalized = dto.Email.Trim();
 
-            var user = await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == emailNormalized && u.Estatus);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == emailNormalized && u.Status);
             // Do not reveal whether email exists
 
             if (user == null)
@@ -82,10 +82,10 @@ namespace RecursosHumanosWeb.Controllers
             {
                 Selector = selector,
                 TokenHash = tokenHash,
-                Utilizado = false,
-                IdUsuarioSolicita = user.Id,
-                IdUsuarioCrea = user.Id,   // BaseEntity.IdUsuarioCrea es int (no nullable); el solicitante crea su propio token
-                FechaCaducidad = DateTime.Now.Add(TokenLifetime)
+                Used = false,
+                RequestingUserId = user.Id,
+                CreatedByUserId = user.Id,   // BaseEntity.CreatedByUserId es int (no nullable); el solicitante crea su propio token
+                ExpiresAt = DateTime.Now.Add(TokenLifetime)
             };
 
             _context.ResetPasswordTokens.Add(token);
@@ -133,8 +133,8 @@ namespace RecursosHumanosWeb.Controllers
 
             // Validate selector and token quickly to populate email and avoid ModelState invalid on POST
             var tokenEntry = _context.ResetPasswordTokens
-                .Where(t => t.Selector == sel && t.Utilizado == false && t.Estatus == true)
-                .OrderByDescending(t => t.FechaCreacion)
+                .Where(t => t.Selector == sel && t.Used == false && t.Status == true)
+                .OrderByDescending(t => t.CreatedAt)
                 .FirstOrDefault();
 
             if (tokenEntry == null)
@@ -143,7 +143,7 @@ namespace RecursosHumanosWeb.Controllers
                 return RedirectToAction(nameof(RequestToken));
             }
 
-            if (tokenEntry.FechaCaducidad < DateTime.Now)
+            if (tokenEntry.ExpiresAt < DateTime.Now)
             {
                 TempData["ResetPasswordMessage"] = "Token expirado.";
                 return RedirectToAction(nameof(RequestToken));
@@ -158,12 +158,12 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // Populate Email for the view model to satisfy validation and show user (non-sensitive)
-            var user = _context.Usuarios.Find(tokenEntry.IdUsuarioSolicita);
+            var user = _context.Users.Find(tokenEntry.RequestingUserId);
             var vm = new ResetPasswordViewModel
             {
                 Selector = sel,
                 Token = tok,
-                Email = user?.Correo ?? string.Empty
+                Email = user?.Email ?? string.Empty
             };
 
             return View(vm);
@@ -210,8 +210,8 @@ namespace RecursosHumanosWeb.Controllers
 
             // Find token by selector
             var tokenEntry = await _context.ResetPasswordTokens
-                .Where(t => t.Selector == model.Selector && t.Utilizado == false && t.Estatus == true)
-                .OrderByDescending(t => t.FechaCreacion)
+                .Where(t => t.Selector == model.Selector && t.Used == false && t.Status == true)
+                .OrderByDescending(t => t.CreatedAt)
                 .FirstOrDefaultAsync();
 
             if (tokenEntry == null)
@@ -220,7 +220,7 @@ namespace RecursosHumanosWeb.Controllers
                 return Json(bad);
             }
 
-            if (tokenEntry.FechaCaducidad < DateTime.Now)
+            if (tokenEntry.ExpiresAt < DateTime.Now)
             {
                 var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Token expirado.", Icon = "error" };
                 return Json(bad);
@@ -234,17 +234,17 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // Token valid -> update user password
-            var user = await _context.Usuarios.FindAsync(tokenEntry.IdUsuarioSolicita);
+            var user = await _context.Users.FindAsync(tokenEntry.RequestingUserId);
             if (user == null)
             {
-                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Usuario no encontrado.", Icon = "error" };
+                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "User no encontrado.", Icon = "error" };
                 return Json(bad);
             }
 
-            user.Clave = PasswordHasher.HashSha256(model.NewPassword);
-            tokenEntry.Utilizado = true;
-            tokenEntry.IdUsuarioModifica = user.Id;
-            tokenEntry.FechaModificacion = DateTime.Now;
+            user.PasswordHash = PasswordHasher.HashSha256(model.NewPassword);
+            tokenEntry.Used = true;
+            tokenEntry.UpdatedByUserId = user.Id;
+            tokenEntry.UpdatedAt = DateTime.Now;
 
             _context.Update(user);
             _context.Update(tokenEntry);

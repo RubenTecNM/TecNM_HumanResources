@@ -16,7 +16,7 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configurar CORS (Abierto para microservicios)
+// 1. Configurar CORS (Open para microservicios)
 
 builder.Services.AddCors(options =>
 {
@@ -54,7 +54,7 @@ builder.Services.AddControllersWithViews(options =>
 })
 .AddJsonOptions(options =>
 {
-    // Esto es vital para que el Usuario 1 (que se creó a sí mismo) no rompa la página
+    // Esto es vital para que el User 1 (que se creó a sí mismo) no rompa la página
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     options.JsonSerializerOptions.PropertyNamingPolicy = null; 
 });
@@ -84,9 +84,9 @@ builder.Services.AddDataProtection()
     .SetApplicationName("TecRHPermisosApp");
 
 
-builder.Services.AddDbContext<RecursosHumanosContext>(options =>
+builder.Services.AddDbContext<HumanResourcesContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("RecursosHumanosContext"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("HumanResourcesContext"));
 });
 
 // Registrar el Guardián de Integridad de Periodos
@@ -113,11 +113,11 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 // Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", policy => policy.RequireClaim("TipoUsuario", "1"));
-    options.AddPolicy("RHOnly", policy => policy.RequireClaim("TipoUsuario", "3"));
-    options.AddPolicy("AutorizadorOnly", policy => policy.RequireClaim("TipoUsuario", "2"));
-    options.AddPolicy("RHOrAdmin", policy => policy.RequireClaim("TipoUsuario", "1", "3"));
-    options.AddPolicy("AutorizadorOrAbove", policy => policy.RequireClaim("TipoUsuario", "1", "3", "2"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireClaim("UserType", "1"));
+    options.AddPolicy("RHOnly", policy => policy.RequireClaim("UserType", "3"));
+    options.AddPolicy("AutorizadorOnly", policy => policy.RequireClaim("UserType", "2"));
+    options.AddPolicy("RHOrAdmin", policy => policy.RequireClaim("UserType", "1", "3"));
+    options.AddPolicy("AutorizadorOrAbove", policy => policy.RequireClaim("UserType", "1", "3", "2"));
 });
 
 var app = builder.Build();
@@ -135,7 +135,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 app.UseCors("OpenCors");
 
 // Health Check para monitoreo del túnel
-app.MapGet("/health", () => Results.Ok(new { Message = "TecRH Permisos API is running", Environment = app.Environment.EnvironmentName }));
+app.MapGet("/health", () => Results.Ok(new { Message = "TecRH Permissions API is running", Environment = app.Environment.EnvironmentName }));
 
 
 
@@ -143,7 +143,7 @@ app.MapGet("/health", () => Results.Ok(new { Message = "TecRH Permisos API is ru
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<RecursosHumanosContext>();
+    var context = services.GetRequiredService<HumanResourcesContext>();
     var logger = services.GetRequiredService<ILogger<Program>>();
     
     int retries = 10;
@@ -183,12 +183,12 @@ using (var scope = app.Services.CreateScope())
                         while (reader.Read()) tables.Add(reader.GetString(0));
                     }
                 }
-                logger.LogInformation("Tablas encontradas en la DB: {Tables}", string.Join(", ", tables));
+                logger.LogInformation("DatabaseTables encontradas en la DB: {Tables}", string.Join(", ", tables));
             } catch (Exception ex) {
                 logger.LogWarning("No se pudo listar las tablas: {Message}", ex.Message);
             }
 
-            if (!context.Usuarios.Any())
+            if (!context.Users.Any())
 
             {
                 // 4.1 Inserción de Datos Básicos

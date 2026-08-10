@@ -24,11 +24,11 @@ namespace RecursosHumanosWeb.Services
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var context = scope.ServiceProvider.GetRequiredService<RecursosHumanosContext>();
+                        var context = scope.ServiceProvider.GetRequiredService<HumanResourcesContext>();
 
                         // 1. Buscar periodos vencidos que siguen abiertos
-                        var expiredPeriods = await context.Cortes
-                            .Where(c => c.IdEstadoCorte == 1 && c.Termina < DateTime.Now)
+                        var expiredPeriods = await context.Cutoffs
+                            .Where(c => c.CutoffStatusTypeId == 1 && c.EndDate < DateTime.Now)
                             .ToListAsync(stoppingToken);
 
                         if (expiredPeriods.Any())
@@ -37,15 +37,15 @@ namespace RecursosHumanosWeb.Services
 
                             foreach (var period in expiredPeriods)
                             {
-                                period.IdEstadoCorte = 2; // Cerrado
-                                period.FechaModificacion = DateTime.Now;
-                                period.IdUsuarioModifica = 1; // Sistema
+                                period.CutoffStatusTypeId = 2; // Closed
+                                period.UpdatedAt = DateTime.Now;
+                                period.UpdatedByUserId = 1; // Sistema
                             }
 
-                            // El contexto guardará los cambios y el trigger de SQL hará la cascada de los permisos
+                            // El contexto guardará los cambios y el trigger de SQL hará la cascada de los permissions
                             await context.SaveChangesAsync(stoppingToken);
                             
-                            _logger.LogInformation("Periodos cerrados y permisos sincronizados correctamente.");
+                            _logger.LogInformation("Periodos cerrados y permissions sincronizados correctamente.");
                         }
                     }
                 }

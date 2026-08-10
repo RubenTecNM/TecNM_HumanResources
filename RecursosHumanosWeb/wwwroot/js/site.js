@@ -292,7 +292,7 @@ $(document).ready(function () {
 
         const $btn = $(this);
         const action = $btn.data('action');
-        const controller = $btn.data('controller') || 'Permisos';
+        const controller = $btn.data('controller') || 'Permission';
         const id = $btn.data('id');
 
         // Soporte para URL dinámica (Url.Action) o construcción manual (compatibilidad)

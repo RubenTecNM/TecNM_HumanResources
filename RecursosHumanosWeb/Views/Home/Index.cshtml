@@ -1,4 +1,4 @@
-﻿@using RecursosHumanosWeb.Models.DTOs
+@using RecursosHumanosWeb.Models.DTOs
 @using RecursosHumanosWeb.Models.ViewModels
 @using X.PagedList
 @using X.PagedList.Mvc.Core
@@ -48,13 +48,13 @@
                         <div class="col-md-3">
                             <div class="filter-group">
                                 <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Desde el</label>
-                                <input type="date" id="delDia" name="delDia" class="form-control filter-input-pill" value="@ViewBag.DelDia" />
+                                <input type="date" id="toDay" name="toDay" class="form-control filter-input-pill" value="@ViewBag.ToDay" />
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="filter-group">
                                 <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Hasta el</label>
-                                <input type="date" id="alDia" name="alDia" class="form-control filter-input-pill" value="@ViewBag.AlDia" />
+                                <input type="date" id="fromDay" name="fromDay" class="form-control filter-input-pill" value="@ViewBag.FromDay" />
                             </div>
                         </div>
 
@@ -63,11 +63,11 @@
                             <div class="col-md-3" id="userFilterContainer">
                                 <div class="filter-group">
                                     <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Usuario</label>
-                                    <select id="nombreUsuario" name="nombreUsuario" class="form-control user-autocomplete w-100" data-user-value="text">
+                                    <select id="userName" name="userName" class="form-control user-autocomplete w-100" data-user-value="text">
                                         <option value="">-- Seleccionar Usuario --</option>
-                                        @foreach (var usuario in Model.Usuarios)
+                                        @foreach (var usuario in Model.Users)
                                         {
-                                            <option value="@(usuario.Nombre ?? "")" data-area-id="@usuario.IdArea" selected="@(usuario.Nombre == Model.SelectedUser ? "selected" : null)">@(usuario.Nombre ?? "")</option>
+                                            <option value="@(usuario.Name ?? "")" data-area-id="@usuario.AreaId" selected="@(usuario.Name == Model.SelectedUser ? "selected" : null)">@(usuario.Name ?? "")</option>
                                         }
                                     </select>
                                 </div>
@@ -83,7 +83,7 @@
                                         <option value="">-- Seleccionar Área --</option>
                                         @foreach (var area in Model.Areas)
                                         {
-                                            <option value="@area.Id" selected="@(area.Id == Model.SelectedArea ? "selected" : null)">@area.Descripcion</option>
+                                            <option value="@area.Id" selected="@(area.Id == Model.SelectedArea ? "selected" : null)">@area.Description</option>
                                         }
                                     </select>
                                 </div>
@@ -154,7 +154,7 @@
                 <i class="fas fa-file-alt"></i>
             </div>
             <div class="stat-content">
-                <h3 id="totalPermisos">@Model.Permisos?.Count()</h3>
+                <h3 id="totalPermisos">@Model.Permissions?.Count()</h3>
                 <p>Total</p>
             </div>
         </div>
@@ -163,7 +163,7 @@
                 <i class="fas fa-clock"></i>
             </div>
             <div class="stat-content">
-                <h3 id="pendingPermisos">@Model.Permisos?.Count(p => p.Estatus && p.FechaAutorizacion == null)</h3>
+                <h3 id="pendingPermisos">@Model.Permissions?.Count(p => p.Status && p.AuthorizedAt == null)</h3>
                 <p>Pendientes</p>
             </div>
         </div>
@@ -172,7 +172,7 @@
                 <i class="fas fa-check"></i>
             </div>
             <div class="stat-content">
-                <h3 id="approvedPermisos">@Model.Permisos?.Count(p => p.FechaAutorizacion != null)</h3>
+                <h3 id="approvedPermisos">@Model.Permissions?.Count(p => p.AuthorizedAt != null)</h3>
                 <p>Aprobados</p>
             </div>
         </div>
@@ -181,7 +181,7 @@
                 <i class="fas fa-times"></i>
             </div>
             <div class="stat-content">
-                <h3 id="rejectedPermisos">@Model.Permisos?.Count(p => !p.Estatus)</h3>
+                <h3 id="rejectedPermisos">@Model.Permissions?.Count(p => !p.Status)</h3>
                 <p>Rechazados</p>
             </div>
         </div>
@@ -189,9 +189,9 @@
 
     <!-- Permisos Grid -->
     <div class="permisos-grid" id="permisosGrid">
-        @foreach (var item in Model.Permisos ?? Enumerable.Empty<PermisosDTO>())
+        @foreach (var item in Model.Permissions ?? Enumerable.Empty<PermissionsDTO>())
         {
-            var status = item.Estatus ? (item.FechaAutorizacion == null ? "Pendiente" : "Aprobado") : "Rechazado";
+            var status = item.Status ? (item.AuthorizedAt == null ? "Pendiente" : "Aprobado") : "Rechazado";
             var statusClass = status switch
             {
                 "Pendiente" => "status-pending",
@@ -199,7 +199,7 @@
                 "Rechazado" => "status-rejected",
                 _ => ""
             };
-            var tipoPermiso = item.IdTipoPermiso switch
+            var tipoPermiso = item.PermissionTypeId switch
             {
                 2 => ("Falta", "fa-user-clock"),
                 3 => ("Retardo", "fa-clock"),
@@ -216,10 +216,10 @@
                 [5] = (true, "Del día", true, "Por el día", true, "Hora entrada", true, "Hora salida")
             };
 
-            var (showFecha1, labelFecha1, showFecha2, labelFecha2, showHora1, labelHora1, showHora2, labelHora2) = config[item.IdTipoPermiso];
+            var (showFecha1, labelFecha1, showFecha2, labelFecha2, showHora1, labelHora1, showHora2, labelHora2) = config[item.PermissionTypeId];
 
             // Cloudflare-inspired varied palette for avatars
-            var nameForAvatar = item.Nombre ?? "Usuario";
+            var nameForAvatar = item.Name ?? "Usuario";
             var colorIndex = item.Id % 5;
             var boxGradient = "";
             
@@ -230,7 +230,7 @@
                 case 3: boxGradient = "linear-gradient(135deg, #f43f5e, #e11d48)"; break; // Rose
                 case 4: boxGradient = "linear-gradient(135deg, #0ea5e9, #0284c7)"; break; // Sky
             }
-            <div class="permiso-card" data-status="@status" data-type="@item.IdTipoPermiso">
+            <div class="permiso-card" data-status="@status" data-type="@item.PermissionTypeId">
                 <!-- Card Header -->
                 <div class="card-header">
                     <div class="employee-info">
@@ -238,8 +238,8 @@
                             @(nameForAvatar.Length > 0 ? nameForAvatar.Substring(0, 1).ToUpper() : "U")
                         </div>
                         <div class="employee-details">
-                            <h3>@(item.Nombre ?? "Sin Nombre")</h3>
-                            <div class="employee-id">ID: @(item.IdUsuarioSolicita.ToString() ?? "Sin ID")</div>
+                            <h3>@(item.Name ?? "Sin Nombre")</h3>
+                            <div class="employee-id">ID: @(item.RequestingUserId.ToString() ?? "Sin ID")</div>
                         </div>
                     </div>
                     <div class="header-badges">
@@ -247,9 +247,9 @@
                             <i class="fas @(status == "Pendiente" ? "fa-clock" : status == "Aprobado" ? "fa-check-circle" : "fa-times-circle")"></i>
                             @status
                         </div>
-                        @if (!string.IsNullOrEmpty(item.Evidencia))
+                        @if (!string.IsNullOrEmpty(item.Evidence))
                         {
-                            <a href="#" class="pdf-attachment has-pdf" onclick="openPDF('@item.Evidencia')">
+                            <a href="#" class="pdf-attachment has-pdf" onclick="openPDF('@item.Evidence')">
                                 <i class="fas fa-file-pdf pdf-icon"></i>
                                 PDF
                             </a>
@@ -276,18 +276,18 @@
                     <div class="permission-details">
                         <!-- Fechas -->
                         <div class="detail-row">
-                            @if (showFecha1 && item.Fecha1.HasValue)
+                            @if (showFecha1 && item.StartDate.HasValue)
                             {
                                 <div class="detail-item">
                                     <label>@labelFecha1:</label>
-                                    <span class="date-value">@item.Fecha1.Value.ToString("dddd dd \\de MMMM \\del yyyy")</span>
-                                    @if (showHora1 && item.Fecha1.Value.TimeOfDay != TimeSpan.Zero)
+                                    <span class="date-value">@item.StartDate.Value.ToString("dddd dd \\de MMMM \\del yyyy")</span>
+                                    @if (showHora1 && item.StartDate.Value.TimeOfDay != TimeSpan.Zero)
                                     {
                                         <div class="time-display">
                                             @{
-                                                var horas = item.Fecha1.Value.Hour.ToString("D2");
-                                                var minutos = item.Fecha1.Value.Minute.ToString("D2");
-                                                var periodo = item.Fecha1.Value.Hour < 12 ? "AM" : "PM";
+                                                var horas = item.StartDate.Value.Hour.ToString("D2");
+                                                var minutos = item.StartDate.Value.Minute.ToString("D2");
+                                                var periodo = item.StartDate.Value.Hour < 12 ? "AM" : "PM";
                                             }
                                             <span class="time-digit">@horas[0]</span>
                                             <span class="time-digit">@horas[1]</span>
@@ -299,18 +299,18 @@
                                     }
                                 </div>
                             }
-                            @if (showFecha2 && item.Fecha2 != null)
+                            @if (showFecha2 && item.EndDate != null)
                             {
                                 <div class="detail-item">
                                     <label>@labelFecha2:</label>
-                                    <span class="date-value">@(item.Fecha2.Value.ToString("dddd dd \\de MMMM \\del yyyy"))</span>
-                                    @if (showHora2 && item.Fecha2.Value.TimeOfDay != TimeSpan.Zero)
+                                    <span class="date-value">@(item.EndDate.Value.ToString("dddd dd \\de MMMM \\del yyyy"))</span>
+                                    @if (showHora2 && item.EndDate.Value.TimeOfDay != TimeSpan.Zero)
                                     {
                                         <div class="time-display">
                                             @{
-                                                var horas2 = item.Fecha2.Value.Hour.ToString("D2");
-                                                var minutos2 = item.Fecha2.Value.Minute.ToString("D2");
-                                                var periodo2 = item.Fecha2.Value.Hour < 12 ? "AM" : "PM";
+                                                var horas2 = item.EndDate.Value.Hour.ToString("D2");
+                                                var minutos2 = item.EndDate.Value.Minute.ToString("D2");
+                                                var periodo2 = item.EndDate.Value.Hour < 12 ? "AM" : "PM";
                                             }
                                             <span class="time-digit">@horas2[0]</span>
                                             <span class="time-digit">@horas2[1]</span>
@@ -327,39 +327,39 @@
                         <div class="detail-row">
                             <div class="detail-item">
                                 <label>Días solicitados:</label>
-                                <span class="days-badge">@(item.Dias ?? 0)</span>
+                                <span class="days-badge">@(item.Days ?? 0)</span>
                             </div>
                             <div class="detail-item">
                                 <label>Goce de pago:</label>
-                                <span class="goce-badge goce-@(item.Goce ? "si" : "no")">
-                                    @(item.Goce ? "Con goce" : "Sin goce")
+                                <span class="goce-badge goce-@(item.WithPay ? "si" : "no")">
+                                    @(item.WithPay ? "Con goce" : "Sin goce")
                                 </span>
                             </div>
                         </div>
                         <!-- Motivo -->
-                        @if (!string.IsNullOrEmpty(item.Motivo))
+                        @if (!string.IsNullOrEmpty(item.Reason))
                         {
                             <div class="detail-row full-width">
                                 <div class="detail-item">
                                     <label>Motivo de incidencia:</label>
-                                    <p class="motivo-text">@item.Motivo</p>
+                                    <p class="motivo-text">@item.Reason</p>
                                 </div>
                             </div>
                         }
                         <!-- Fechas del Sistema -->
                         <div class="system-dates">
-                            <strong>Creado:</strong> @item.FechaCreacion.ToString("dddd dd \\de MMMM \\del yyyy \\a \\las HH:mm")
-                            @if (item.FechaAutorizacion != null)
+                            <strong>Creado:</strong> @item.CreatedAt.ToString("dddd dd \\de MMMM \\del yyyy \\a \\las HH:mm")
+                            @if (item.AuthorizedAt != null)
                             {
                                 <br>
                                 <strong>Autorizado:</strong>
-                                @item.FechaAutorizacion?.ToString("dddd dd \\de MMMM \\del yyyy \\a \\las HH:mm")
+                                @item.AuthorizedAt?.ToString("dddd dd \\de MMMM \\del yyyy \\a \\las HH:mm")
                             }
-                            @if (item.FechaModificacion != null)
+                            @if (item.UpdatedAt != null)
                             {
                                 <br>
                                 <strong>Modificado:</strong>
-                                @item.FechaModificacion?.ToString("dddd dd \\de MMMM \\del yyyy \\a \\las HH:mm")
+                                @item.UpdatedAt?.ToString("dddd dd \\de MMMM \\del yyyy \\a \\las HH:mm")
                             }
                         </div>
                     </div>
@@ -383,7 +383,7 @@
 
 
     <!-- Empty State -->
-    @if (!(Model.Permisos?.Any() ?? false))
+    @if (!(Model.Permissions?.Any() ?? false))
     {
         <div class="empty-state fade-in">
             <div class="empty-icon">
@@ -424,7 +424,7 @@
     <script>
         $(document).ready(function() {
             // Initialize Select2 for User Filter
-            $('#nombreUsuario').select2({
+            $('#userName').select2({
                 placeholder: '-- Seleccionar Usuario --',
                 minimumInputLength: 2,
                 allowClear: true,
@@ -448,12 +448,12 @@
 
             // Handle Clear Filters button
             $('#btnClear').on('click', function() {
-                $('#nombreUsuario').val(null).trigger('change');
+                $('#userName').val(null).trigger('change');
                 $('#idArea').val(null).trigger('change');
                 $('input[name="idTipoPermisos"]').prop('checked', false);
                 $('#rbNinguno').prop('checked', true);
-                $('#delDia').val('');
-                $('#alDia').val('');
+                $('#toDay').val('');
+                $('#fromDay').val('');
                 $('#searchForm').submit();
             });
         });

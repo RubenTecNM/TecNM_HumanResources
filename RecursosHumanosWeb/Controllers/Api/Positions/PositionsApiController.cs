@@ -1,0 +1,153 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RecursosHumanosWeb.Filters;
+using RecursosHumanosWeb.Models;
+using RecursosHumanosWeb.Models.ViewModels.Positions;
+
+namespace RecursosHumanosWeb.Controllers.Api.Positions
+{
+    [Route("api/Positions")]
+    [ApiController]
+    public class PuestosApiController : ControllerBase
+    {
+        private readonly HumanResourcesContext _context;
+        private readonly IMapper _mapper;
+        private readonly ILogger<PuestosApiController> _logger;
+
+        public PuestosApiController(HumanResourcesContext context, IMapper mapper, ILogger<PuestosApiController> logger)
+        {
+            _context = context;
+            _mapper = mapper;
+            _logger = logger;
+        }
+
+        // GET: api/Positions
+        [HttpGet]
+        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Leer")]
+        public async Task<IActionResult> GetPuestos()
+        {
+            var positions = await _context.Positions
+                .Where(p => p.Status == true)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.TabularCode,
+                    p.Description
+                })
+                .ToListAsync();
+
+            if (!positions.Any()) return NotFound("No se encontraron positions activos.");
+
+            return Ok(positions);
+        }
+
+        // GET: api/Positions/5
+        [HttpGet("{id}")]
+        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Leer")]
+        public async Task<IActionResult> GetPuesto(int id)
+        {
+            var position = await _context.Positions
+                .Where(p => p.Id == id)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.TabularCode,
+                    p.Description,
+                    p.Status,
+                    p.CreatedAt,
+                    p.UpdatedAt,
+                    CreatedBy = p.CreatedByUser.Name,
+                    UpdatedBy = p.UpdatedByUser.Name
+                })
+                .FirstOrDefaultAsync();
+
+            if (position == null) return NotFound($"Position con ID {id} no encontrado.");
+
+            return Ok(position);
+        }
+
+        // POST: api/Positions
+        [HttpPost]
+        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Escribir")]
+        public async Task<IActionResult> PostPuesto([FromBody] PositionCreateViewModel model)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? 1;
+
+            var position = _mapper.Map<Position>(model);
+            position.Status = true;
+            position.CreatedAt = DateTime.Now;
+            position.UpdatedAt = DateTime.Now;
+            position.CreatedByUserId = userId;
+            position.UpdatedByUserId = userId;
+
+            try
+            {
+                _context.Positions.Add(position);
+                await _context.SaveChangesAsync();
+
+                return CreatedAtAction(nameof(GetPuesto), new { id = position.Id }, new { position.Id, position.TabularCode, position.Description });
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? "No inner exception";
+                _logger.LogError(ex, "Error al crear position vía API. Detalle: {Inner}", inner);
+                return StatusCode(500, new { error = "Internal Server Error", message = ex.Message, detail = inner });
+            }
+        }
+
+        // PUT: api/Positions/5
+        [HttpPut("{id}")]
+        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Actualizar")]
+        public async Task<IActionResult> PutPuesto(int id, [FromBody] PositionUpdateViewModel model)
+        {
+            if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
+
+            var position = await _context.Positions.FindAsync(id);
+            if (position == null) return NotFound();
+
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? position.UpdatedByUserId;
+
+            _mapper.Map(model, position);
+            position.UpdatedAt = DateTime.Now;
+            position.UpdatedByUserId = userId;
+
+            try
+            {
+                _context.Update(position);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                var inner = ex.InnerException?.Message ?? "No inner exception";
+                _logger.LogError(ex, "Error al actualizar position {Id} vía API. Detalle: {Inner}", id, inner);
+                return StatusCode(500, new { error = "Internal Server Error", message = ex.Message, detail = inner });
+            }
+        }
+
+        // DELETE: api/Positions/5
+        [HttpDelete("{id}")]
+        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Eliminar")]
+        public async Task<IActionResult> DeletePuesto(int id)
+        {
+            var position = await _context.Positions.FindAsync(id);
+            if (position == null) return NotFound();
+
+            if (!position.Status) return BadRequest("El position ya está inactivo.");
+
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? position.UpdatedByUserId;
+
+            position.Status = false;
+            position.UpdatedAt = DateTime.Now;
+            position.UpdatedByUserId = userId;
+
+            _context.Update(position);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+    }
+}

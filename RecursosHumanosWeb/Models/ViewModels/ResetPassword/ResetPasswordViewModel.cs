@@ -6,7 +6,7 @@ namespace RecursosHumanosWeb.Models.ViewModels.ResetPassword
     {
         [Required(ErrorMessage = "El correo electr&oacute;nico es obligatorio.")]
         [EmailAddress(ErrorMessage = "El formato del correo no es v&aacute;lido.")]
-        [Display(Name = "Correo Electr&oacute;nico")]
+        [Display(Name = "Email Electr&oacute;nico")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La nueva contrase&ntilde;a es obligatoria.")]

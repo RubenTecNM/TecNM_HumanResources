@@ -41,7 +41,7 @@
     };
 
     // Event handler para cambio de tipo de permiso
-    $('input[name="IdTipoPermiso"]').on('change', function () {
+    $('input[name="PermissionTypeId"]').on('change', function () {
         const selectedType = $(this).val();
         console.log('Tipo seleccionado:', selectedType);
 
@@ -95,7 +95,7 @@
     }
 
     // --- 4. CONTADOR DE CARACTERES Y ARCHIVOS (LÓGICA EXISTENTE) ---
-    const motivoTextarea = $('textarea[name="Motivo"]');
+    const motivoTextarea = $('textarea[name="Reason"]');
     const charCount = $('#char-count');
 
     motivoTextarea.on('input keyup paste', function () {
@@ -178,7 +178,7 @@
         }
 
         // 5.2. Verificar que se haya seleccionado un tipo
-        const selectedType = $('input[name="IdTipoPermiso"]:checked').val();
+        const selectedType = $('input[name="PermissionTypeId"]:checked').val();
         if (!selectedType) {
             isValid = false;
         }
@@ -194,14 +194,14 @@
         if (config) {
 
             // Validar fechas y horas
-            if (config.fecha1.required && !$('input[name="Fecha1Date"]').val()) { isValid = false; }
-            if (config.fecha2.required && !$('input[name="Fecha2Date"]').val()) { isValid = false; }
-            if (config.hora1.required && !$('input[name="Hora1Time"]').val()) { isValid = false; }
-            if (config.hora2.required && !$('input[name="Hora2Time"]').val()) { isValid = false; }
+            if (config.fecha1.required && !$('input[name="StartDateOnly"]').val()) { isValid = false; }
+            if (config.fecha2.required && !$('input[name="EndDateOnly"]').val()) { isValid = false; }
+            if (config.hora1.required && !$('input[name="StartTime"]').val()) { isValid = false; }
+            if (config.hora2.required && !$('input[name="EndTime"]').val()) { isValid = false; }
 
             // Validación lógica de Fechas (Fecha1 no debe ser posterior a Fecha2)
-            const date1Val = $('input[name="Fecha1Date"]').val();
-            const date2Val = $('input[name="Fecha2Date"]').val();
+            const date1Val = $('input[name="StartDateOnly"]').val();
+            const date2Val = $('input[name="EndDateOnly"]').val();
             if (config.fecha1.show && config.fecha2.show && date1Val && date2Val) {
                 if (new Date(date1Val) > new Date(date2Val)) {
                     // Mostrar error visual aquí (p. ej., span de validación)
@@ -217,42 +217,42 @@
 
     // Combinar fecha y hora en campos ocultos (para el Model Binder de ASP.NET)
     function combineDateTime() {
-        const selectedType = $('input[name="IdTipoPermiso"]:checked').val();
+        const selectedType = $('input[name="PermissionTypeId"]:checked').val();
         if (!selectedType) return;
 
         const config = typeConfigurations[selectedType];
 
         // Fecha1
         if (config.fecha1.show) {
-            const date1 = $('input[name="Fecha1Date"]').val();
-            const time1 = $('input[name="Hora1Time"]').val() || '00:00'; // Valor por defecto si no se pide hora
+            const date1 = $('input[name="StartDateOnly"]').val();
+            const time1 = $('input[name="StartTime"]').val() || '00:00'; // Valor por defecto si no se pide hora
 
             let combined1 = date1;
             // Si la hora es requerida o visible, combinamos fecha y hora
-            if (config.hora1.show && $('input[name="Hora1Time"]').val()) {
+            if (config.hora1.show && $('input[name="StartTime"]').val()) {
                 combined1 = `${date1}T${time1}:00`;
             } else if (date1) {
                 combined1 = `${date1}T00:00:00`; // Solo fecha
             }
-            $('input[name="Fecha1"]').val(combined1);
+            $('input[name="StartDate"]').val(combined1);
         } else {
-            $('input[name="Fecha1"]').val('');
+            $('input[name="StartDate"]').val('');
         }
 
         // Fecha2
         if (config.fecha2.show) {
-            const date2 = $('input[name="Fecha2Date"]').val();
-            const time2 = $('input[name="Hora2Time"]').val() || '00:00';
+            const date2 = $('input[name="EndDateOnly"]').val();
+            const time2 = $('input[name="EndTime"]').val() || '00:00';
 
             let combined2 = date2;
-            if (config.hora2.show && $('input[name="Hora2Time"]').val()) {
+            if (config.hora2.show && $('input[name="EndTime"]').val()) {
                 combined2 = `${date2}T${time2}:00`;
             } else if (date2) {
                 combined2 = `${date2}T23:59:59`;
             }
-            $('input[name="Fecha2"]').val(combined2);
+            $('input[name="EndDate"]').val(combined2);
         } else {
-            $('input[name="Fecha2"]').val('');
+            $('input[name="EndDate"]').val('');
         }
     }
 
@@ -290,7 +290,7 @@
     validateForm();
 
     // Disparar el cambio inicial si hay un tipo seleccionado (para modo Edit)
-    $('input[name="IdTipoPermiso"]:checked').trigger('change');
+    $('input[name="PermissionTypeId"]:checked').trigger('change');
 
     console.log('Script de permisos inicializado correctamente');
 });

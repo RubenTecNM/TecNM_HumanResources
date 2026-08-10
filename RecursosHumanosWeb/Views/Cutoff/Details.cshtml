@@ -1,0 +1,263 @@
+@model RecursosHumanosWeb.Models.DTOs.CutoffDetailsDTO
+
+@{
+    ViewData["Title"] = "Detalles del Periodo";
+}
+
+@section Styles {
+    <!-- Corte Details uses global components from v2-site.css -->
+}
+
+<div class="details-container">
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden">
+        
+        <div class="details-header-v2 text-white px-4 px-md-5 py-4">
+            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold shadow-sm">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div>
+                        <h2 class="h4 fw-bold mb-1">Periodo y corte #@Model.Id</h2>
+                        <div class="ms-1 d-flex align-items-center gap-2 opacity-75 small">
+                             <i class="fas fa-calendar-alt"></i> Gestión de Periodo de Recursos Humanos
+                        </div>
+                    </div>
+                </div>
+                <div class="status-glass rounded-pill shadow-sm px-4 py-2 d-flex align-items-center">
+                    <span class="status-dot @(Model.CutoffStatusTypeId == 1 ? "dot-active" : "dot-closed")"></span>
+                    <span class="small text-uppercase fw-bold">
+                        @(Model.StatusDescription ?? "Sin Estado")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-md-5 bg-white">
+            <div class="row g-4">
+                <div class="col-12 col-lg-6">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2">
+                        <i class="fas fa-history text-primary"></i>
+                        Vigencia del Periodo
+                    </h3>
+
+                    <div class="mb-3">
+                        <div class="info-card info-card-purple p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle purple-circle">
+                                    <i class="fas fa-hourglass-start small"></i>
+                                </div>
+                                <span class="small fw-medium text-secondary text-uppercase">Inicio del Periodo</span>
+                            </div>
+                            <p class="h6 fw-semibold text-dark mb-0 ms-5">
+                                @Model.StartDate?.ToString("dd/MM/yyyy")
+                            </p>
+                        </div>
+                    </div>
+ 
+                    <div class="mb-3">
+                        <div class="info-card info-card-orange p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle orange-circle">
+                                    <i class="fas fa-hourglass-end small"></i>
+                                </div>
+                                <span class="small fw-medium text-secondary text-uppercase">Fin del Periodo</span>
+                            </div>
+                            <p class="h6 fw-semibold text-dark mb-0 ms-5">
+                                @(Model.EndDate?.ToString("dd/MM/yyyy") ?? "En Proceso")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2">
+                        <i class="fas fa-chart-line text-primary"></i>
+                        Resumen de Estadísticas
+                    </h3>
+
+                    <div class="mb-3">
+                        <div class="info-card info-card-indigo p-3 rounded-3">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle indigo-circle">
+                                    <i class="fas fa-clipboard-list small"></i>
+                                </div>
+                                <span class="small fw-medium text-secondary text-uppercase">Total de Permisos</span>
+                            </div>
+                            <p class="h6 fw-semibold text-dark mb-0 ms-5">
+                                @Model.TotalPermissions solicitudes procesadas
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="detail-grid mt-4">
+                        <div class="p-3 border-start border-success border-3 bg-light rounded-end">
+                            <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">Con Goce</p>
+                            <p class="small fw-bold text-dark mb-0">
+                                <i class="fas fa-coins text-success me-1"></i> @Model.WithPay
+                            </p>
+                        </div>
+                        <div class="p-3 border-start border-danger border-3 bg-light rounded-end">
+                            <p class="small text-secondary text-uppercase mb-1" style="font-size: 0.7rem;">Sin Goce</p>
+                            <p class="small fw-bold text-dark mb-0">
+                                <i class="fas fa-hand-holding-usd text-danger me-1"></i> @Model.WithoutPay
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-top">
+                <h3 class="h5 fw-semibold text-dark mb-4">Auditoría de Registro</h3>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="audit-card audit-created bg-light rounded-3 p-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="audit-icon bg-success text-white">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div>
+                                    <p class="small text-secondary mb-0">Generado por</p>
+                                    <p class="fw-bold text-dark mb-0">@(Model.CreatedBy ?? "Sistema")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="audit-card audit-modified bg-light rounded-3 p-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="audit-icon bg-warning text-white">
+                                    <i class="fas fa-user-edit"></i>
+                                </div>
+                                <div>
+                                    <p class="small text-secondary mb-0">Última Modificación por</p>
+                                    <p class="fw-bold text-dark mb-0">@(Model.UpdatedBy ?? "Sin cambios")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5 pt-5 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="h5 fw-semibold text-dark mb-0">
+                        <i class="fas fa-chart-pie me-2 text-primary"></i>Análisis Visual del Periodo
+                    </h3>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary rounded-pill px-4 shadow-sm dropdown-toggle d-flex align-items-center gap-2" 
+                                type="button" id="dropdownMenuExport" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-export"></i> Opciones de Exportación
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" aria-labelledby="dropdownMenuExport">
+                            <li><h6 class="dropdown-header">Reportes de Oficina</h6></li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" asp-action="ExportToExcel" asp-route-id="@Model.Id">
+                                    <i class="fas fa-file-excel text-success"></i> Exportar a Excel (.xlsx)
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" href="javascript:window.print()">
+                                    <i class="fas fa-file-pdf text-danger"></i> Generar Reporte PDF
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">Intercambio de Datos</h6></li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" asp-action="ExportToCsv" asp-route-id="@Model.Id">
+                                    <i class="fas fa-file-csv text-info"></i> Descargar CSV (.csv)
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" asp-action="ExportToJson" asp-route-id="@Model.Id">
+                                    <i class="fas fa-file-code text-warning"></i> Formato JSON (.json)
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" asp-action="ExportToXml" asp-route-id="@Model.Id">
+                                    <i class="fas fa-code text-secondary"></i> Formato XML (.xml)
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-12 col-xl-4">
+                        <div class="card border shadow-sm p-3 h-100">
+                            <p class="fw-bold text-secondary small text-uppercase">Distribución por Tipo</p>
+                            <div id="donut-chart" style="min-height: 280px;"></div>
+                            <div id="donut-legend" class="mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-8">
+                        <div class="card border shadow-sm p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="fw-bold text-secondary small text-uppercase mb-0">Tendencia Temporal</p>
+                                <select class="form-select form-select-sm w-auto" onchange="changeChartType(this.value)">
+                                    <option value="area">Área</option>
+                                    <option value="bar">Barras</option>
+                                    <option value="line">Línea</option>
+                                </select>
+                            </div>
+                            <div id="area-chart" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-12 col-lg-7">
+                        <div class="card border shadow-sm p-3 h-100">
+                            <p class="fw-bold text-secondary small text-uppercase">Permisos por Área</p>
+                            <div id="horizontal-bars" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-5">
+                        <div class="card border shadow-sm p-3 h-100">
+                            <p class="fw-bold text-secondary small text-uppercase">Proporción de Pago</p>
+                            <div id="radial-chart" style="min-height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border shadow-sm p-3">
+                            <p class="fw-bold text-secondary small text-uppercase">Mapa de Intensidad de Solicitudes</p>
+                            <div id="heatmap" style="overflow-x: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer py-4 px-5 bg-light border-top d-flex justify-content-between align-items-center">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                <i class="fas fa-arrow-left me-2"></i> Volver al Listado
+            </a>
+            
+            <div class="d-flex gap-2">
+                @if (Model.CutoffStatusTypeId == 1)
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="v2-btn btn-primary shadow-sm">
+                        <i class="fas fa-edit"></i> Editar Periodo
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<input type="hidden" id="permisosPorTipo" value="@Model.PermissionsByTypeJson" />
+<input type="hidden" id="permisosPorArea" value="@Model.PermissionsByAreaJson" />
+<input type="hidden" id="tendencia" value="@Model.TrendJson" />
+<input type="hidden" id="heatmapData" value="@Model.HeatmapDataJson" />
+<input type="hidden" id="kpiData" value="@Model.KpiDataJson" />
+<input type="hidden" id="conGoce" value="@Model.WithPay" />
+<input type="hidden" id="sinGoce" value="@Model.WithoutPay" />
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.44.0/apexcharts.min.js"></script>
+    <script src="~/js/Cortes/details.js" asp-append-version="true"></script>
+}

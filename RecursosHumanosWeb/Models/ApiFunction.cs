@@ -8,9 +8,9 @@ namespace RecursosHumanosWeb.Models;
 public partial class ApiFunction : BaseEntity
 {
     /// <summary>
-    /// Nombre del endpoint/función de la API. Máximo 50 caracteres.
+    /// Name of the API endpoint/function. Up to 50 characters.
     /// </summary>
     [Required(ErrorMessage = "La descripción de la función API es obligatoria.")]
     [StringLength(50, ErrorMessage = "La descripción no puede superar los 50 caracteres.")]
-    public string Descripcion { get; set; } = null!;
+    public string Description { get; set; } = null!;
 }

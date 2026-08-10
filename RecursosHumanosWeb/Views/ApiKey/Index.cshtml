@@ -1,4 +1,4 @@
-﻿@model List<RecursosHumanosWeb.Models.ApiKey>
+@model List<RecursosHumanosWeb.Models.ApiKey>
 @{
     ViewData["Title"] = "Gestión de API Keys";
 }
@@ -49,7 +49,7 @@
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Creado por</label>
-                                <select id="nombreUsuario" name="nombreUsuario" class="form-control user-autocomplete w-100">
+                                <select id="userName" name="userName" class="form-control user-autocomplete w-100">
                                     <option value="">Todos los usuarios</option>
                                 </select>
                             </div>
@@ -58,14 +58,14 @@
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Desde el</label>
-                                <input type="date" id="delDia" name="delDia" class="form-control filter-input-pill" value="@ViewBag.DelDia" />
+                                <input type="date" id="toDay" name="toDay" class="form-control filter-input-pill" value="@ViewBag.ToDay" />
                             </div>
                         </div>
 
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Hasta el</label>
-                                <input type="date" id="alDia" name="alDia" class="form-control filter-input-pill" value="@ViewBag.AlDia" />
+                                <input type="date" id="fromDay" name="fromDay" class="form-control filter-input-pill" value="@ViewBag.FromDay" />
                             </div>
                         </div>
                     </div>
@@ -95,7 +95,7 @@
                         <thead>
                             <tr>
                                 <th class="text-center">ID</th>
-                                <th class="text-center">Clave API</th>
+                                <th class="text-center">Key API</th>
                                 <th class="text-center">Creado por</th>
                                 <th class="text-center">Fecha Creación</th>
                                 <th class="text-center">Estatus</th>
@@ -105,15 +105,15 @@
                         <tbody>
                             @foreach (var item in Model)
                             {
-                                var usuarioCrea = item.IdUsuarioCreaNavigation?.Nombre ?? "-";
+                                var usuarioCrea = item.CreatedByUser?.Name ?? "-";
                                 <tr>
                                     <td class="text-center">@item.Id</td>
                                     <td>
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <code style="background: var(--surface); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--primary-strong); font-weight: 600;">
-                                                @(item.Clave.Length > 20 ? item.Clave.Substring(0, 20) + "..." : item.Clave)
+                                                @(item.Key.Length > 20 ? item.Key.Substring(0, 20) + "..." : item.Key)
                                             </code>
-                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('@item.Clave')" title="Copiar clave completa">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyToClipboard('@item.Key')" title="Copiar clave completa">
                                                 <i class="fas fa-copy"></i>
                                             </button>
                                         </div>
@@ -121,14 +121,14 @@
                                     <td><strong>@usuarioCrea</strong></td>
                                     <td>
                                         <div style="color: var(--text-medium); font-weight: 500;">
-                                            <div style="font-size: 0.875rem;">@item.FechaCreacion.ToString("dd/MM/yyyy")</div>
-                                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem;">@item.FechaCreacion.ToString("h:mm tt")</div>
+                                            <div style="font-size: 0.875rem;">@item.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem;">@item.CreatedAt.ToString("h:mm tt")</div>
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <div class="v2-badge v2-badge-@(item.Estatus ? "success" : "danger")">
+                                        <div class="v2-badge v2-badge-@(item.Status ? "success" : "danger")">
                                             <span class="v2-badge-dot"></span>
-                                            @(item.Estatus ? "Activa" : "Inactiva")
+                                            @(item.Status ? "Activa" : "Inactiva")
                                         </div>
                                     </td>
                                     <td class="text-center">
@@ -162,7 +162,7 @@
                         <tfoot>
                             <tr>
                                 <th class="text-center">ID</th>
-                                <th class="text-center">Clave API</th>
+                                <th class="text-center">Key API</th>
                                 <th class="text-center">Creado por</th>
                                 <th class="text-center">Fecha Creación</th>
                                 <th class="text-center">Estatus</th>
@@ -194,8 +194,8 @@
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(function() {
                 // Usar helper global
-                if (typeof showToast === 'function') showToast('✅ Clave copiada al portapapeles', 'success');
-                else showNotification('✅ Clave copiada al portapapeles', 'success');
+                if (typeof showToast === 'function') showToast('✅ Key copiada al portapapeles', 'success');
+                else showNotification('✅ Key copiada al portapapeles', 'success');
             }, function(err) {
                 if (typeof showToast === 'function') showToast('❌ Error al copiar', 'error');
                 else showNotification('❌ Error al copiar', 'error');
@@ -204,7 +204,7 @@
 
         // Inicializar select2 en el select de usuarios
         $(document).ready(function(){
-            $('#nombreUsuario').select2({
+            $('#userName').select2({
                 placeholder: '-- Seleccionar Usuario --',
                 minimumInputLength: 2,
                 allowClear: true,
@@ -222,20 +222,20 @@
                 }
             });
 
-            $('#nombreUsuario').on('focus', function () {
+            $('#userName').on('focus', function () {
                 $(this).select2('open');
             });
 
-            $('#nombreUsuario').on('select2:open', function () {
+            $('#userName').on('select2:open', function () {
                 const searchField = document.querySelector('.select2-container--open .select2-search__field');
                 if (searchField) searchField.focus();
             });
         });
 
         function clearAllFilters() {
-            document.getElementById('nombreUsuario').value = '';
-            document.getElementById('delDia').value = '';
-            document.getElementById('alDia').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('toDay').value = '';
+            document.getElementById('fromDay').value = '';
             document.getElementById('searchForm').submit();
             if (typeof showToast === 'function') showToast('✅ Todos los filtros han sido limpiados', 'success');
             else showNotification('✅ Todos los filtros han sido limpiados', 'success');

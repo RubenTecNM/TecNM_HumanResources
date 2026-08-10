@@ -1,0 +1,229 @@
+@model RecursosHumanosWeb.Models.ViewModels.PermissionsCreateViewModel
+@{
+    ViewData["Title"] = "Solicitud de Permiso";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/cssv2/views/permisos/create.css" asp-append-version="true" />
+}
+
+<div class="permission-request-container">
+    <div class="page-header-v2 fade-in">
+        <div class="header-content">
+            <h1 class="page-title text-gradient">
+                <i class="fas fa-plus-circle"></i>
+                Nueva Solicitud de Permiso
+            </h1>
+            <p class="page-subtitle">Complete el formulario para enviar su solicitud</p>
+        </div>
+    </div>
+    <form asp-action="Create" method="post" enctype="multipart/form-data" class="permission-form ajax-form" id="permissionForm"
+          data-is-rh="@(ViewBag.IsRH ?? false)"
+          data-is-administrador="@(ViewBag.IsAdministrador ?? false)"
+          data-is-empleado="@(ViewBag.IsEmpleado ?? false)">
+
+        <div class="form-sections">
+            @{
+                bool isRH = ViewBag.IsRH as bool? ?? false;
+                bool isAdministrador = ViewBag.IsAdministrador as bool? ?? false;
+            }
+            @if (isRH || isAdministrador)
+            {
+                <div class="form-section" id="user-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-user-circle"></i> Seleccionar Usuario</h3>
+                        <span class="section-indicator">1</span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="RequestingUserId" class="form-label">
+                            Busque el usuario que solicita el permiso
+                            <span class="required">*</span>
+                        </label>
+                            <select id="IdUsuarioSolicita" name="RequestingUserId" class="form-control user-autocomplete" data-user-value="id" style="width:100%">
+                                <option value="">Escriba para buscar...</option>
+                            </select>
+                        <span asp-validation-for="RequestingUserId" class="text-danger validation-message"></span>
+                    </div>
+                </div>
+            }
+
+            <div class="form-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-th-large"></i> Tipo de Permiso</h3>
+                    <span class="section-indicator">@((isRH || isAdministrador) ? "2" : "1")</span>
+                </div>
+                <div class="permission-types">
+                    <div class="permission-type-card" data-type="3">
+                        <input type="radio" id="falta" name="PermissionTypeId" value="3" asp-for="PermissionTypeId">
+                        <label for="falta" class="type-label">
+                            <div class="type-icon shadow-sm">
+                                <i class="fas fa-calendar-times"></i>
+                            </div>
+                            <h4>Falta</h4>
+                            <p>Ausencia por uno o varios días</p>
+                        </label>
+                    </div>
+                    <div class="permission-type-card" data-type="1">
+                        <input type="radio" id="retardo" name="PermissionTypeId" value="1" asp-for="PermissionTypeId">
+                        <label for="retardo" class="type-label">
+                            <div class="type-icon shadow-sm">
+                                <i class="fas fa-history"></i>
+                            </div>
+                            <h4>Retardo</h4>
+                            <p>Llegada tarde</p>
+                        </label>
+                    </div>
+                    <div class="permission-type-card" data-type="4">
+                        <input type="radio" id="cambioHorario" name="PermissionTypeId" value="4" asp-for="PermissionTypeId">
+                        <label for="cambioHorario" class="type-label">
+                            <div class="type-icon shadow-sm">
+                                <i class="fas fa-business-time"></i>
+                            </div>
+                            <h4>Horario</h4>
+                            <p>Modificar horario</p>
+                        </label>
+                    </div>
+                    <div class="permission-type-card" data-type="2">
+                        <input type="radio" id="turnoPorTurno" name="PermissionTypeId" value="2" asp-for="PermissionTypeId">
+                        <label for="turnoPorTurno" class="type-label">
+                            <div class="type-icon shadow-sm">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                            <h4>Turno</h4>
+                            <p>Intercambio de turno</p>
+                        </label>
+                    </div>
+                </div>
+                <span asp-validation-for="PermissionTypeId" class="text-danger validation-message"></span>
+            </div>
+
+            <div class="form-section" id="datetime-section" style="display: none;">
+                <div class="section-header">
+                    <h3><i class="fas fa-clock"></i> Fechas y Horarios</h3>
+                    <span class="section-indicator">@((isRH || isAdministrador) ? "3" : "2")</span>
+                </div>
+                <div class="datetime-grid">
+                    <div class="form-group" id="fecha1Date-group">
+                        <label asp-for="StartDateOnly" class="form-label">
+                            <span id="fecha1Date-label">Fecha de inicio</span>
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-calendar-day input-icon"></i>
+                            <input asp-for="StartDateOnly" type="date" class="form-control" placeholder="DD/MM/YYYY" asp-format="{0:yyyy-MM-dd}" />
+                        </div>
+                    </div>
+                    <div class="form-group" id="fecha2Date-group">
+                        <label asp-for="EndDateOnly" class="form-label">
+                            <span id="fecha2Date-label">Fecha de fin</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-calendar-check input-icon"></i>
+                            <input asp-for="EndDateOnly" type="date" class="form-control" placeholder="DD/MM/YYYY" asp-format="{0:yyyy-MM-dd}" />
+                        </div>
+                    </div>
+                    <div class="form-group" id="hora1Time-group">
+                        <label asp-for="StartTime" class="form-label">
+                            <span id="hora1Time-label">Hora de entrada</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-hourglass-start input-icon"></i>
+                            <input asp-for="StartTime" type="time" class="form-control" placeholder="HH:MM AM/PM" />
+                        </div>
+                    </div>
+                    <div class="form-group" id="hora2Time-group">
+                        <label asp-for="EndTime" class="form-label">
+                            <span id="hora2Time-label">Hora de salida</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-hourglass-end input-icon"></i>
+                            <input asp-for="EndTime" type="time" class="form-control" placeholder="HH:MM AM/PM" />
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" asp-for="StartDate" /><input type="hidden" asp-for="EndDate" />
+            </div>
+
+            <div class="form-section" id="reason-section" style="display: none;">
+                <div class="section-header">
+                    <h3><i class="fas fa-pen-nib"></i> Motivo del Permiso</h3>
+                    <span class="section-indicator">@((isRH || isAdministrador) ? "4" : "3")</span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Reason" class="form-label">Detalle su solicitud <span class="required">*</span></label>
+                    <div class="textarea-wrapper">
+                        <textarea asp-for="Reason" class="form-control-v2" rows="3" placeholder="Ej: Cita médica en el IMSS o Trámite personal..." maxlength="255"></textarea>
+                        <div class="char-counter"><span id="char-count">0</span>/255</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section" id="evidence-section" style="display: none;">
+                <div class="section-header">
+                    <h3><i class="fas fa-file-pdf"></i> Evidencia</h3>
+                    <span class="section-indicator">@((isRH || isAdministrador) ? "5" : "4")</span>
+                </div>
+                <div class="form-group">
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <input asp-for="EvidenceFile" type="file" accept=".pdf" class="file-input" id="evidenceFile">
+                        <div class="file-upload-content" id="fileUploadContent">
+                            <div class="file-upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                            <p class="file-upload-text">Subir PDF</p>
+                            <p class="file-upload-hint">Haz clic o arrastra un archivo PDF aquí</p>
+                        </div>
+                        <div class="file-preview" id="filePreview" style="display: none;">
+                            <div class="file-info">
+                                <i class="fas fa-file-pdf file-icon"></i>
+                                <span class="file-name" id="fileName"></span>
+                            </div>
+                            <button type="button" class="remove-file" id="removeFileBtn" title="Eliminar archivo">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <input asp-for="Evidence" type="hidden" />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <div class="actions-content justify-content-end">
+                <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" id="submitBtn" disabled>
+                    <i class="fas fa-paper-plane me-2"></i> Enviar Solicitud
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script src="~/js/Permisos/create.js" asp-append-version="true"></script>
+
+    <script>
+        $(document).ready(function(){
+            $('#IdUsuarioSolicita').select2({
+                placeholder: 'Buscar usuario...',
+                minimumInputLength: 2,
+                ajax: {
+                    url: '@Url.Action("SearchUsers", "User")',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) { return { term: params.term }; },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function(item) {
+                                return {
+                                    id: item.id,
+                                    text: item.text
+                                };
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
+        });
+    </script>
+}

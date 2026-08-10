@@ -1,4 +1,4 @@
-﻿@model RecursosHumanosWeb.Models.ApiKey
+@model RecursosHumanosWeb.Models.ApiKey
 @using System.Globalization
 @{
     ViewData["Title"] = "Detalles de API Key";
@@ -11,7 +11,7 @@
     }
 
     // Cargar permisos asignados
-    var permisosAsignados = ViewBag.PermisosAsignados as List<dynamic> ?? new List<dynamic>();
+    var permisosAsignados = ViewBag.AssignedPermissions as List<dynamic> ?? new List<dynamic>();
 }
 
 <div class="details-container">
@@ -31,9 +31,9 @@
                     </div>
                 </div>
                 <div class="status-glass rounded-pill shadow-sm px-4 py-2 d-flex align-items-center">
-                    <span class="status-dot @(Model.Estatus ? "dot-active" : "dot-closed")"></span>
+                    <span class="status-dot @(Model.Status ? "dot-active" : "dot-closed")"></span>
                     <span class="small text-uppercase fw-bold">
-                        @(Model.Estatus ? "Clave Activa" : "Clave Inactiva")
+                        @(Model.Status ? "Key Activa" : "Key Inactiva")
                     </span>
                 </div>
             </div>
@@ -46,7 +46,7 @@
                 <div class="col-12 col-lg-7">
                     <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
                         <i class="fas fa-info-circle text-primary"></i>
-                        Información de la Clave
+                        Información de la Key
                     </h3>
 
                     <div class="mb-4">
@@ -55,10 +55,10 @@
                                 <div class="icon-circle bg-primary-subtle text-primary">
                                     <i class="fas fa-key"></i>
                                 </div>
-                                <span class="small fw-bold text-dark text-uppercase">Clave API</span>
+                                <span class="small fw-bold text-dark text-uppercase">Key API</span>
                             </div>
                             <div class="d-flex gap-2">
-                                <code id="apiKeyValue" class="flex-grow-1 p-3 rounded-3 text-break" style="background: var(--white); border: 1px solid var(--primary-200); color: var(--primary-800); font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 600; font-size: 0.9rem;">@Model.Clave</code>
+                                <code id="apiKeyValue" class="flex-grow-1 p-3 rounded-3 text-break" style="background: var(--white); border: 1px solid var(--primary-200); color: var(--primary-800); font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 600; font-size: 0.9rem;">@Model.Key</code>
                                 <button type="button" class="action-btn btn-view" onclick="copyApiKey()" title="Copiar clave" style="width: 45px; height: 45px; font-size: 1.2rem;">
                                     <i class="fas fa-copy"></i>
                                 </button>
@@ -81,10 +81,10 @@
                                             <div class="icon-circle bg-gray-100 text-gray-500">
                                                 <i class="fas fa-table"></i>
                                             </div>
-                                            <span class="small fw-bold text-dark text-uppercase">Tabla: @grupo.Tabla</span>
+                                            <span class="small fw-bold text-dark text-uppercase">Tabla: @grupo.DatabaseTable</span>
                                         </div>
                                         <div class="d-flex flex-wrap gap-2 ms-5">
-                                            @foreach (var permiso in grupo.Permisos)
+                                            @foreach (var permiso in grupo.Permissions)
                                             {
                                                 <div class="v2-badge v2-badge-primary">
                                                     <span class="v2-badge-dot"></span>
@@ -125,14 +125,14 @@
                                 <span class="small fw-bold text-dark text-uppercase">Creado por</span>
                             </div>
                             <p class="small fw-bold text-dark mb-0 ms-5">
-                                @(Model.IdUsuarioCreaNavigation?.Nombre ?? "Sistema")
+                                @(Model.CreatedByUser?.Name ?? "Sistema")
                             </p>
                             <p class="small text-muted mb-0 ms-5 opacity-75">
-                                @FormatFechaCompleta(Model.FechaCreacion)
+                                @FormatFechaCompleta(Model.CreatedAt)
                             </p>
                         </div>
 
-                        @if (Model.IdUsuarioModificaNavigation != null)
+                        @if (Model.UpdatedByUser != null)
                         {
                             <div class="p-4 border-start border-warning border-4 bg-light rounded-4 shadow-sm">
                                 <div class="d-flex align-items-center gap-3 mb-2">
@@ -142,10 +142,10 @@
                                     <span class="small fw-bold text-dark text-uppercase">Última Modificación</span>
                                 </div>
                                 <p class="small fw-bold text-dark mb-0 ms-5">
-                                    @Model.IdUsuarioModificaNavigation.Nombre
+                                    @Model.UpdatedByUser.Name
                                 </p>
                                 <p class="small text-muted mb-0 ms-5 opacity-75">
-                                    @(Model.FechaModificacion.HasValue ? FormatFechaCompleta(Model.FechaModificacion.Value) : "N/A")
+                                    @(Model.UpdatedAt.HasValue ? FormatFechaCompleta(Model.UpdatedAt.Value) : "N/A")
                                 </p>
                             </div>
                         }
@@ -176,7 +176,7 @@
         function copyApiKey() {
             const apiKeyValue = document.getElementById('apiKeyValue').value;
             navigator.clipboard.writeText(apiKeyValue).then(function() {
-                if (typeof showToast === 'function') showToast('✅ Clave API copiada al portapapeles', 'success');
+                if (typeof showToast === 'function') showToast('✅ Key API copiada al portapapeles', 'success');
                 else {
                     Swal.fire({
                         icon: 'success',

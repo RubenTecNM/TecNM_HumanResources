@@ -1,4 +1,4 @@
-﻿@model RecursosHumanosWeb.Models.ViewModels.ApiKeyCreateViewModel
+@model RecursosHumanosWeb.Models.ViewModels.ApiKeyCreateViewModel
 @{
     ViewData["Title"] = "Editar API Key";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -29,22 +29,22 @@
             <form asp-action="Edit" method="post" class="permission-form" id="apiKeyForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="Clave" />
-                <input type="hidden" asp-for="FechaCreacion" />
+                <input type="hidden" asp-for="Key" />
+                <input type="hidden" asp-for="CreatedAt" />
 
-                <!-- Sección 1: Información de la Clave -->
+                <!-- Sección 1: Información de la Key -->
                 <div class="form-section">
                     <div class="section-header">
-                        <h3><i class="fas fa-info-circle"></i> Información de la Clave</h3>
+                        <h3><i class="fas fa-info-circle"></i> Información de la Key</h3>
                         <span class="section-indicator">1</span>
                     </div>
                     
                     <div class="form-group mb-4">
-                        <label class="form-label">Clave API (Solo lectura)</label>
+                        <label class="form-label">Key API (Solo lectura)</label>
                         <div class="input-wrapper d-flex gap-2">
                             <i class="fas fa-key input-icon"></i>
                             <input type="text" id="apiKeyValue" class="form-control-v2 border-primary-soft bg-light fw-bold text-primary flex-grow-1" 
-                                   value="@Model.Clave" readonly style="font-family: monospace;" />
+                                   value="@Model.Key" readonly style="font-family: monospace;" />
                             <button type="button" class="btn btn-primary rounded-pill px-3" onclick="copyApiKey()" title="Copiar clave">
                                 <i class="fas fa-copy"></i>
                             </button>
@@ -62,15 +62,15 @@
                         <span class="section-indicator">2</span>
                     </div>
                     <div class="form-group">
-                        <label asp-for="IdUsuarioTitular" class="form-label">Usuario asociado a la clave</label>
+                        <label asp-for="OwnerUserId" class="form-label">Usuario asociado a la clave</label>
                         <div class="input-wrapper">
                             <i class="fas fa-user input-icon"></i>
-                            <select asp-for="IdUsuarioTitular" class="form-control-v2 form-select select2-v2" id="idUsuarioTitular"
-                                    asp-items="@(ViewData["Usuario"] as SelectList)">
+                            <select asp-for="OwnerUserId" class="form-control-v2 form-select select2-v2" id="idUsuarioTitular"
+                                    asp-items="@(ViewData["User"] as SelectList)">
                                 <option value="">Seleccione el usuario titular</option>
                             </select>
                         </div>
-                        <span asp-validation-for="IdUsuarioTitular" class="text-danger small"></span>
+                        <span asp-validation-for="OwnerUserId" class="text-danger small"></span>
                     </div>
                 </div>
 
@@ -81,11 +81,11 @@
                         <span class="section-indicator">3</span>
                     </div>
 
-                    @if (ViewBag.Tablas != null && ViewBag.ApiPermisos != null)
+                    @if (ViewBag.DatabaseTables != null && ViewBag.ApiPermissions != null)
                     {
-                        var tablas = ViewBag.Tablas as List<RecursosHumanosWeb.Models.Tabla> ?? new List<RecursosHumanosWeb.Models.Tabla>();
-                        var apiPermisos = ViewBag.ApiPermisos as List<RecursosHumanosWeb.Models.ApiPermiso> ?? new List<RecursosHumanosWeb.Models.ApiPermiso>();
-                        var permisosActuales = ViewBag.PermisosActuales as Dictionary<int, List<int>> ?? new Dictionary<int, List<int>>();
+                        var tablas = ViewBag.DatabaseTables as List<RecursosHumanosWeb.Models.DatabaseTable> ?? new List<RecursosHumanosWeb.Models.DatabaseTable>();
+                        var apiPermisos = ViewBag.ApiPermissions as List<RecursosHumanosWeb.Models.ApiPermission> ?? new List<RecursosHumanosWeb.Models.ApiPermission>();
+                        var permisosActuales = ViewBag.CurrentPermissions as Dictionary<int, List<int>> ?? new Dictionary<int, List<int>>();
 
                         <p class="text-muted small mb-4">Actualice las operaciones permitidas para cada entidad.</p>
 
@@ -97,17 +97,17 @@
                             <div class="card p-3 mb-4 bg-light border-0 shadow-sm rounded-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <h5 class="m-0 fw-bold text-dark">
-                                        <i class="fas fa-table text-primary me-2"></i> @tabla.Descripcion
+                                        <i class="fas fa-table text-primary me-2"></i> @tabla.Description
                                     </h5>
                                     <span class="badge bg-white text-primary border px-3 py-2 rounded-pill small">ID #@tabla.Id</span>
                                 </div>
 
-                                <input type="hidden" name="Assignments[@tableIndex].IdTabla" value="@tabla.Id" />
+                                <input type="hidden" name="Assignments[@tableIndex].TableId" value="@tabla.Id" />
 
                                 <div class="row g-3">
                                     @foreach (var permiso in apiPermisos)
                                     {
-                                        var iconClass = permiso.Descripcion switch
+                                        var iconClass = permiso.Description switch
                                         {
                                             "Leer" => "fa-eye",
                                             "Escribir" => "fa-plus",
@@ -122,13 +122,13 @@
                                                 <label class="d-flex align-items-center gap-2 p-2 rounded-3 hover-bg-white border transition-all cursor-pointer w-100 mb-0" 
                                                        style="background: white;">
                                                     <input type="checkbox" 
-                                                           name="Assignments[@tableIndex].IdsApiPermisosSeleccionados" 
+                                                           name="Assignments[@tableIndex].IdsApiPermissionsSeleccionados" 
                                                            value="@permiso.Id"
                                                            class="form-check-input m-0"
                                                            @(isChecked ? "checked" : "")
                                                            style="width: 18px; height: 18px;">
                                                     <span class="small fw-semibold">
-                                                        <i class="fas @iconClass me-1 opacity-75"></i> @permiso.Descripcion
+                                                        <i class="fas @iconClass me-1 opacity-75"></i> @permiso.Description
                                                     </span>
                                                 </label>
                                             </div>
@@ -163,7 +163,7 @@
         function copyApiKey() {
             const apiKeyValue = document.getElementById('apiKeyValue').value;
             navigator.clipboard.writeText(apiKeyValue).then(function() {
-                if (typeof showToast === 'function') showToast('✅ Clave API copiada al portapapeles', 'success');
+                if (typeof showToast === 'function') showToast('✅ Key API copiada al portapapeles', 'success');
                 else {
                     Swal.fire({
                         icon: 'success',

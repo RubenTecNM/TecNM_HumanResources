@@ -1,4 +1,4 @@
-﻿// --- EN ApiKeyAuthorizeAttribute.cs ---
+// --- EN ApiKeyAuthorizeAttribute.cs ---
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -14,11 +14,11 @@ namespace RecursosHumanosWeb.Filters
         public string? PermisoRequerido { get; set; }
 
         private const string HeaderApiKeyName = "X-API-KEY";
-        private const string QueryStringApiKeyName = "api_key"; // Nombre del parámetro en la URL
+        private const string QueryStringApiKeyName = "api_key"; // Name del parámetro en la URL
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
         {
-            var dbContext = context.HttpContext.RequestServices.GetRequiredService<RecursosHumanosContext>();
+            var dbContext = context.HttpContext.RequestServices.GetRequiredService<HumanResourcesContext>();
             string? extractedApiKey = null;
 
             // 1. INTENTAR OBTENER LA CLAVE DEL ENCABEZADO (MÉTODO PREFERIDO Y SEGURO)
@@ -46,13 +46,13 @@ namespace RecursosHumanosWeb.Filters
 
             // 4. BÚSQUEDA Y VALIDACIÓN EN LA BASE DE DATOS (Misma lógica que antes)
             var apiKeyEntity = await dbContext.ApiKeys
-                // Incluimos las relaciones necesarias para la validación de permisos
-                .Include(k => k.ApiPermisosApiKeysTablas)
-                    .ThenInclude(pkt => pkt.IdTablaNavigation)
-                .Include(k => k.ApiPermisosApiKeysTablas)
-                    .ThenInclude(pkt => pkt.IdApiPermisoNavigation)
+                // Incluimos las relaciones necesarias para la validación de permissions
+                .Include(k => k.ApiKeyTablePermissions)
+                    .ThenInclude(pkt => pkt.Table)
+                .Include(k => k.ApiKeyTablePermissions)
+                    .ThenInclude(pkt => pkt.ApiPermission)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(k => k.Clave == extractedApiKey && k.Estatus == true);
+                .FirstOrDefaultAsync(k => k.Key == extractedApiKey && k.Status == true);
 
             if (apiKeyEntity == null)
             {
@@ -63,22 +63,22 @@ namespace RecursosHumanosWeb.Filters
             // 5. VALIDACIÓN DE PERMISOS GRANULARES (Sin cambios)
             if (!string.IsNullOrEmpty(TablaObjetivo) && !string.IsNullOrEmpty(PermisoRequerido))
             {
-                bool tienePermiso = apiKeyEntity.ApiPermisosApiKeysTablas.Any(pkt =>
-                    pkt.Estatus == true &&
-                    pkt.IdTablaNavigation.Descripcion.Equals(TablaObjetivo, StringComparison.OrdinalIgnoreCase) &&
-                    pkt.IdApiPermisoNavigation.Descripcion.Equals(PermisoRequerido, StringComparison.OrdinalIgnoreCase)
+                bool hasPermission = apiKeyEntity.ApiKeyTablePermissions.Any(pkt =>
+                    pkt.Status == true &&
+                    pkt.Table.Description.Equals(TablaObjetivo, StringComparison.OrdinalIgnoreCase) &&
+                    pkt.ApiPermission.Description.Equals(PermisoRequerido, StringComparison.OrdinalIgnoreCase)
                 );
 
-                if (!tienePermiso)
+                if (!hasPermission)
                 {
-                    context.Result = new ObjectResult(new { error = "Forbidden", message = $"La API Key no tiene permiso '{PermisoRequerido}' para la tabla '{TablaObjetivo}'." }) { StatusCode = 403 };
+                    context.Result = new ObjectResult(new { error = "Forbidden", message = $"La API Key no tiene permission '{PermisoRequerido}' para la tabla '{TablaObjetivo}'." }) { StatusCode = 403 };
                     return;
                 }
             }
 
             // 6. ÉXITO: Continuar
             context.HttpContext.Items["ApiKeyId"] = apiKeyEntity.Id;
-            context.HttpContext.Items["ApiUserId"] = apiKeyEntity.IdUsuarioCrea;
+            context.HttpContext.Items["ApiUserId"] = apiKeyEntity.CreatedByUserId;
         }
     }
 }

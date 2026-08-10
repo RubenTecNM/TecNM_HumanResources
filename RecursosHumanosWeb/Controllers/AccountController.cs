@@ -12,10 +12,10 @@ namespace RecursosHumanosWeb.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly RecursosHumanosContext _context;
+        private readonly HumanResourcesContext _context;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(RecursosHumanosContext context, ILogger<AccountController> logger)
+        public AccountController(HumanResourcesContext context, ILogger<AccountController> logger)
         {
             _context = context;
             _logger = logger;
@@ -25,7 +25,7 @@ namespace RecursosHumanosWeb.Controllers
         public async Task<IActionResult> Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToAction("Index", "Permiso");
+                return RedirectToAction("Index", "Permission");
 
 
             return View(new LoginViewModel { ReturnUrl = returnUrl });
@@ -41,26 +41,26 @@ namespace RecursosHumanosWeb.Controllers
             try
             {
                 // 1. Encriptar la clave recibida del formulario usando el Helper unificado
-                string claveEncriptada = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256(model.Clave);
+                string claveEncriptada = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256(model.Password);
 
-                // 2. Buscar usuario que coincida con correo Y clave encriptada
-                var usuario = await _context.Usuarios
-                    .Where(u => u.Correo == model.Correo && u.Clave == claveEncriptada && u.Estatus == true)
+                // 2. Buscar user que coincida con correo Y clave encriptada
+                var user = await _context.Users
+                    .Where(u => u.Email == model.Email && u.PasswordHash == claveEncriptada && u.Status == true)
                     .FirstOrDefaultAsync();
 
-                if (usuario == null)
+                if (user == null)
                 {
-                    ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos");
+                    ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos");
                     return View(model);
                 }
 
                 // 3. Crear los Claims para la sesión
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                    new Claim(ClaimTypes.Name, usuario.Nombre),
-                    new Claim(ClaimTypes.Email, usuario.Correo),
-                    new Claim("TipoUsuario", usuario.IdTipoUsuario.ToString())
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.Name),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim("UserType", user.UserTypeId.ToString())
                 };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -77,18 +77,18 @@ namespace RecursosHumanosWeb.Controllers
                     authProperties
                 );
 
-                _logger.LogInformation("Usuario {Correo} inició sesión correctamente.", model.Correo);
+                _logger.LogInformation("User {Email} inició sesión correctamente.", model.Email);
 
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 {
                     return Redirect(model.ReturnUrl);
                 }
 
-                return RedirectToAction("Index", "Permiso");
+                return RedirectToAction("Index", "Permission");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error crítico en el login para {Correo}", model.Correo);
+                _logger.LogError(ex, "Error crítico en el login para {Email}", model.Email);
                 ModelState.AddModelError(string.Empty, "Error interno al procesar el inicio de sesión");
                 return View(model);
             }

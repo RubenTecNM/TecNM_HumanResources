@@ -1,0 +1,281 @@
+@using X.PagedList.Mvc.Core
+@using X.PagedList
+@model IPagedList<RecursosHumanosWeb.Models.DTOs.AuditLogDTO>
+
+@{
+    ViewData["Title"] = "Bitácora de Auditoría";
+    var tablas = ViewBag.TableIdList as List<RecursosHumanosWeb.Models.DatabaseTable>;
+}
+
+@section Styles {
+    <link href="~/cssv2/views/auditoria/index.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="index-container">
+    <div class="page-header-v2 fade-in">
+        <div class="header-content">
+            <h1 class="page-title text-gradient">
+                <i class="fas fa-history"></i>
+                Auditoría del Sistema
+            </h1>
+            <p class="page-subtitle">Rastreo de cambios y operaciones en la base de datos</p>
+        </div>
+    </div>
+
+    <div class="filters-section slide-in-left">
+        <div class="card filter-card-premium">
+            <div class="filter-header-premium">
+                <i class="fas fa-filter fa-lg"></i>
+                <h5 class="m-0 fw-bold" style="letter-spacing: 0.5px;">Panel de Búsqueda</h5>
+            </div>
+            <div class="filter-body-premium">
+                <form id="searchForm" method="get" asp-action="Index">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Tabla o Entidad</label>
+                                <select id="tableId" name="tableId" class="form-control filter-input-pill form-select">
+                                    <option value="">Todas las tablas</option>
+                                    @foreach (var tabla in tablas)
+                                    {
+                                        <option value="@tabla.Id" selected="@(ViewBag.TableId == tabla.Id ? "selected" : null)">
+                                            @tabla.Description
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Desde el</label>
+                                <input type="date" id="dateFrom" name="dateFrom" class="form-control filter-input-pill" value="@(ViewBag.FechaDesde?.ToString("yyyy-MM-dd"))" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Hasta el</label>
+                                <input type="date" id="dateTo" name="dateTo" class="form-control filter-input-pill" value="@(ViewBag.FechaHasta?.ToString("yyyy-MM-dd"))" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-4 pt-3 border-top gap-3">
+                        <button type="button" onclick="clearAllFilters()" class="btn btn-light rounded-pill px-4 fw-bold text-secondary border hover-shadow" style="transition: all 0.2s;">
+                            <i class="fas fa-undo me-2"></i> Limpiar
+                        </button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" 
+                                style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); border: none;">
+                            <i class="fas fa-search me-2"></i> Aplicar Filtros
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+
+        <div class="table-container fade-in">
+            <div class="table-inner">
+                <div class="overflow-x-auto">
+                    <table class="data-table" style="width:100%; border: none; overflow: hidden; padding: 0;">
+                        <thead>
+                            <tr>
+                                <th class="text-center">ID</th>
+                                <th class="text-center">Fecha</th>
+                                <th class="text-center">Tabla</th>
+                                <th class="text-center">Acción</th>
+                                <th class="text-center">Origen</th>
+                                <th class="text-center">Usuario</th>
+                                <th class="text-center">Detalles</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var badgeClass = item.Accion.Contains("POST") ? "success" :
+                                                item.Accion.Contains("PUT") ? "warning" :
+                                                item.Accion.Contains("DELETE") ? "danger" : "info";
+                                
+                                var originClass = "origin-default";
+                                var originIcon = "fa-question";
+                                var originText = item.OriginTypeDescription ?? "Desconocido";
+
+                                if (originText.Contains("Web")) { originClass = "origin-web"; originIcon = "fa-user"; }
+                                else if (originText.Contains("API")) { originClass = "origin-api"; originIcon = "fa-key"; }
+                                else if (originText.Contains("Sistema")) { originClass = "origin-system"; originIcon = "fa-robot"; }
+                                else if (originText.Contains("Job")) { originClass = "origin-job"; originIcon = "fa-clock"; }
+                                else if (originText.Contains("LDAP")) { originClass = "origin-ldap"; originIcon = "fa-sync"; }
+
+                                <tr>
+                                    <td class="text-center">@item.RecordId</td>
+                                    <td class="text-center">
+                                        <div style="color: var(--text-medium); font-weight: 500;">
+                                            <div style="font-size: 0.875rem;">@item.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted);">@item.CreatedAt.ToString("h:mm tt")</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center"><strong>@item.DatabaseTable</strong></td>
+                                    <td class="text-center">
+                                        <div class="v2-badge v2-badge-@badgeClass">
+                                            <span class="v2-badge-dot"></span>
+                                            @item.Accion
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge-origin @originClass">
+                                            <i class="fas @originIcon"></i> @originText
+                                        </span>
+                                        @if(!string.IsNullOrEmpty(item.ApiKeyDescription) && item.ApiKeyDescription != "N/A" && item.ApiKeyDescription != "Directo/Interno")
+                                        {
+                                            <div class="mt-1"><small class="text-muted" style="font-size: 0.7rem;">@item.ApiKeyDescription</small></div>
+                                        }
+                                    </td>
+                                    <td>@item.User</td>
+                                    <td class="text-center">
+                                        <button type="button" class="action-btn btn-view" onclick="showAuditDetails(@item.Id)" title="Ver Datos Anteriores">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th class="text-center">ID</th>
+                                <th class="text-center">Fecha</th>
+                                <th class="text-center">Tabla</th>
+                                <th class="text-center">Acción</th>
+                                <th class="text-center">Origen</th>
+                                <th class="text-center">Usuario</th>
+                                <th class="text-center">Detalles</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="empty-state fade-in">
+            <div class="empty-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <h3>No hay registros de auditoría</h3>
+            <p class="text-muted">Intenta ajustar los filtros de búsqueda</p>
+        </div>
+    }
+    
+    @if (Model.Any())
+    {
+        <div class="pagination-container-v2 fade-in">
+            <div class="pagination-info-v2">
+                <i class="fas fa-history me-2 opacity-50"></i>
+                Página <span class="fw-bold">@Model.PageNumber</span> de <span class="fw-bold">@Model.PageCount</span> (<span class="fw-bold">@Model.TotalItemCount</span> registros)
+            </div>
+            <div class="v2-pagination">
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, dateFrom = ViewBag.FechaDesde, dateTo = ViewBag.FechaHasta, tableId = ViewBag.TableId }), 
+                new PagedListRenderOptions {
+                    DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                    DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                    DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                    DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                    MaximumPageNumbersToDisplay = 5,
+                    UlElementClasses = new[] { "pagination" },
+                    LiElementClasses = new[] { "page-item" },
+                    PageClasses = new[] { "page-link" }
+                })
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Custom Modal para Detalles -->
+<div class="audit-overlay" id="auditOverlay" onclick="closeOnBackdrop(event)">
+    <div class="audit-floating-card">
+        <div class="audit-card-header">
+            <h5 class="m-0 fw-bold d-flex align-items-center gap-2">
+                <i class="fas fa-history"></i> Detalle de Auditoría
+            </h5>
+            <button type="button" class="close-audit-btn" onclick="closeAuditDetails()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="auditDetailsContent" class="audit-card-body">
+            <!-- Content loaded via Ajax -->
+            <div class="text-center p-5">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 fw-medium text-muted">Cargando datos históricos...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showAuditDetails(id) {
+            const overlay = document.getElementById('auditOverlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
+            
+            $('#auditDetailsContent').html(`
+                <div class="text-center p-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 fw-medium text-muted">Cargando datos históricos...</p>
+                </div>
+            `);
+            
+            $('#auditDetailsContent').load('/AuditLog/Details/' + id);
+        }
+
+        function closeAuditDetails() {
+            const overlay = document.getElementById('auditOverlay');
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function closeOnBackdrop(event) {
+            if (event.target.id === 'auditOverlay') {
+                closeAuditDetails();
+            }
+        }
+
+        window.clearAllFilters = function () {
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('tableId').value = '';
+            document.getElementById('searchForm').submit();
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('.fade-in, .slide-in-left');
+            elements.forEach(element => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+            });
+
+            setTimeout(() => {
+                elements.forEach((element, index) => {
+                    setTimeout(() => {
+                        element.style.transition = 'all 0.6s ease-out';
+                        element.style.opacity = '1';
+                        element.style.transform = 'translate(0, 0)';
+                    }, index * 100);
+                });
+            }, 50);
+
+            // Initialize Select2 for Table Filter
+            $('#tableId').select2({
+                placeholder: 'Todas las tablas',
+                width: '100%',
+                allowClear: true
+            });
+        });
+    </script>
+}

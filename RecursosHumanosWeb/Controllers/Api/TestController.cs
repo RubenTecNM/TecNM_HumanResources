@@ -13,9 +13,9 @@ namespace RecursosHumanosWeb.Controllers.Api
     [Route("Test")]
     public class TestController : ControllerBase
     {
-        private readonly RecursosHumanosContext _context;
+        private readonly HumanResourcesContext _context;
 
-        public TestController(RecursosHumanosContext context)
+        public TestController(HumanResourcesContext context)
         {
             _context = context;
         }
@@ -24,34 +24,34 @@ namespace RecursosHumanosWeb.Controllers.Api
         [HttpGet("RunCase")]
         public async Task<IActionResult> RunCase(int @case = 1, bool confirmed = false)
         {
-            // Buscar corte activo
-            var corteActivo = await _context.Cortes.Where(c => c.IdEstadoCorte == 1).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
+            // Buscar cutoff activo
+            var corteActivo = await _context.Cutoffs.Where(c => c.CutoffStatusTypeId == 1).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
             if (corteActivo == null)
                 return BadRequest(new AlertResponseDTO { Success = false, Title = "Error de Corte", Message = "No se encontró un corte activo." });
 
-            // Usuario RH de pruebas (si existe)
-            var usuario = await _context.Usuarios.Where(u => u.IdTipoUsuario == 2 && u.Estatus).FirstOrDefaultAsync();
-            if (usuario == null)
+            // User RH de pruebas (si existe)
+            var user = await _context.Users.Where(u => u.UserTypeId == 2 && u.Status).FirstOrDefaultAsync();
+            if (user == null)
                 return BadRequest(new AlertResponseDTO { Success = false, Title = "Error de Usuario", Message = "No se encontró un usuario RH de prueba." });
 
             if (@case == 1)
             {
-                // Caso 1: Fecha1 anterior al inicio del corte
-                var fecha1 = corteActivo.Inicia.AddHours(-1);
-                if (fecha1 < corteActivo.Inicia)
+                // Caso 1: StartDate anterior al inicio del cutoff
+                var fecha1 = corteActivo.StartDate.AddHours(-1);
+                if (fecha1 < corteActivo.StartDate)
                 {
                     var dto = new AlertResponseDTO { Success = false, Title = "Error de Validación", Message = "La fecha y hora de inicio debe estar dentro del periodo del corte vigente." };
-                    dto.Errors = new System.Collections.Generic.Dictionary<string, string[]> { { "Fecha1", new[] { "La fecha y hora de inicio debe estar dentro del periodo del corte vigente." } } };
+                    dto.Errors = new System.Collections.Generic.Dictionary<string, string[]> { { "StartDate", new[] { "La fecha y hora de inicio debe estar dentro del periodo del corte vigente." } } };
                     return Ok(dto);
                 }
             }
 
             if (@case == 2)
             {
-                // Caso 2: Fecha2 posterior al término del corte
-                var fecha1 = corteActivo.Inicia.AddDays(1);
-                var fecha2 = corteActivo.Termina.AddDays(2);
-                if (fecha2 > corteActivo.Termina && !confirmed)
+                // Caso 2: EndDate posterior al término del cutoff
+                var fecha1 = corteActivo.StartDate.AddDays(1);
+                var fecha2 = corteActivo.EndDate.AddDays(2);
+                if (fecha2 > corteActivo.EndDate && !confirmed)
                 {
                     return Ok(new AlertResponseDTO
                     {
@@ -66,48 +66,48 @@ namespace RecursosHumanosWeb.Controllers.Api
 
                 if (confirmed)
                 {
-                    var permiso = new Permiso
+                    var permission = new Permission
                     {
-                        Motivo = "Test confirmado fuera de corte",
-                        Fecha1 = corteActivo.Inicia.AddDays(1),
-                        Fecha2 = corteActivo.Termina.AddDays(2),
-                        Dias = (int)((corteActivo.Termina.AddDays(2) - corteActivo.Inicia.AddDays(1)).TotalDays + 1),
-                        IdCorte = corteActivo.Id,
-                        IdTipoPermiso = 2,
-                        IdUsuarioSolicita = usuario.Id,
-                        IdUsuarioCrea = usuario.Id,
-                        FechaCreacion = DateTime.Now,
-                        IdEstadoPermiso = 1,
-                        Goce = false
+                        Reason = "Test confirmado fuera de cutoff",
+                        StartDate = corteActivo.StartDate.AddDays(1),
+                        EndDate = corteActivo.EndDate.AddDays(2),
+                        Days = (int)((corteActivo.EndDate.AddDays(2) - corteActivo.StartDate.AddDays(1)).TotalDays + 1),
+                        CutoffId = corteActivo.Id,
+                        PermissionTypeId = 2,
+                        RequestingUserId = user.Id,
+                        CreatedByUserId = user.Id,
+                        CreatedAt = DateTime.Now,
+                        PermissionStatusTypeId = 1,
+                        WithPay = false
                     };
-                    _context.Permisos.Add(permiso);
+                    _context.Permissions.Add(permission);
                     await _context.SaveChangesAsync();
-                    return Ok(new AlertResponseDTO("Permiso", $"Permiso creado (ID: {permiso.Id})"));
+                    return Ok(new AlertResponseDTO("Permission", $"Permission creado (ID: {permission.Id})"));
                 }
             }
 
             if (@case == 3)
             {
-                // Caso 3: Fechas dentro del corte
-                var fecha1 = corteActivo.Inicia.AddDays(1).Date;
-                var fecha2 = corteActivo.Inicia.AddDays(2).Date;
-                var permiso = new Permiso
+                // Caso 3: Fechas dentro del cutoff
+                var fecha1 = corteActivo.StartDate.AddDays(1).Date;
+                var fecha2 = corteActivo.StartDate.AddDays(2).Date;
+                var permission = new Permission
                 {
-                    Motivo = "Test dentro del corte",
-                    Fecha1 = fecha1,
-                    Fecha2 = fecha2,
-                    Dias = (int)((fecha2 - fecha1).TotalDays + 1),
-                    IdCorte = corteActivo.Id,
-                    IdTipoPermiso = 2,
-                    IdUsuarioSolicita = usuario.Id,
-                    IdUsuarioCrea = usuario.Id,
-                    FechaCreacion = DateTime.Now,
-                    IdEstadoPermiso = 1,
-                    Goce = false
+                    Reason = "Test dentro del cutoff",
+                    StartDate = fecha1,
+                    EndDate = fecha2,
+                    Days = (int)((fecha2 - fecha1).TotalDays + 1),
+                    CutoffId = corteActivo.Id,
+                    PermissionTypeId = 2,
+                    RequestingUserId = user.Id,
+                    CreatedByUserId = user.Id,
+                    CreatedAt = DateTime.Now,
+                    PermissionStatusTypeId = 1,
+                    WithPay = false
                 };
-                _context.Permisos.Add(permiso);
+                _context.Permissions.Add(permission);
                 await _context.SaveChangesAsync();
-                return Ok(new AlertResponseDTO("Permiso", $"Permiso creado (ID: {permiso.Id})"));
+                return Ok(new AlertResponseDTO("Permission", $"Permission creado (ID: {permission.Id})"));
             }
 
             return Ok(new AlertResponseDTO { Success = false, Title = "No Test", Message = "Caso no reconocido." });

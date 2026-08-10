@@ -10,7 +10,7 @@ namespace RecursosHumanosWeb.Controllers
             if (User.Identity?.IsAuthenticated == true)
             {
                 // Buscamos el valor de forma segura
-                var tipo = User.Claims.FirstOrDefault(c => c.Type == "TipoUsuario")?.Value;
+                var tipo = User.Claims.FirstOrDefault(c => c.Type == "UserType")?.Value;
 
                 ViewData["IsAuthenticated"] = true;
                 ViewData["IsAdministrador"] = tipo == "1"; // Compara strings directamente

@@ -37,20 +37,20 @@
                         <div class="col-12 col-md-6">
                             <div class="filter-group">
                                 <!-- Solo un emoji, sin FontAwesome en label -->
-                                <label asp-for="Correo" class="fw-bold text-muted small text-uppercase mb-2 ms-1 d-block">
+                                <label asp-for="Email" class="fw-bold text-muted small text-uppercase mb-2 ms-1 d-block">
                                     &#128231; Correo Electr&oacute;nico
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-end-0 rounded-start-pill ps-3" style="border: 2px solid #ced4da; border-right: none;">
                                         <i class="fas fa-at text-primary"></i>
                                     </span>
-                                    <input asp-for="Correo" 
+                                    <input asp-for="Email" 
                                            class="form-control border-start-0 rounded-end-pill py-2 shadow-sm" 
                                            placeholder="usuario@@monclova.tecnm.mx" 
                                            required 
                                            style="height: 52px; border: 2px solid #ced4da; border-left: none;" />
                                 </div>
-                                <span asp-validation-for="Correo" class="text-danger small ms-1 fw-semibold"></span>
+                                <span asp-validation-for="Email" class="text-danger small ms-1 fw-semibold"></span>
                             </div>
                         </div>
 
@@ -58,11 +58,11 @@
                         <div class="col-12 col-md-6">
                             <div class="filter-group">
                                 <!-- Solo un emoji, sin FontAwesome en label -->
-                                <label asp-for="Clave" class="fw-bold text-muted small text-uppercase mb-2 ms-1 d-block">
+                                <label asp-for="Password" class="fw-bold text-muted small text-uppercase mb-2 ms-1 d-block">
                                     &#128274; Contrase&ntilde;a
                                 </label>
                                 <div class="position-relative">
-                                    <input asp-for="Clave" 
+                                    <input asp-for="Password" 
                                            type="password" 
                                            class="form-control rounded-pill pe-5 shadow-sm" 
                                            id="password-input" 
@@ -73,7 +73,7 @@
                                         <i class="fas fa-eye"></i>
                                     </button>
                                 </div>
-                                <span asp-validation-for="Clave" class="text-danger small ms-1 fw-semibold"></span>
+                                <span asp-validation-for="Password" class="text-danger small ms-1 fw-semibold"></span>
                             </div>
                         </div>
                     </div>

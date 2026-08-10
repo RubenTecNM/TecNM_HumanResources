@@ -103,6 +103,7 @@ IF COL_LENGTH(N'dbo.OriginType', N'IdUsuarioCrea') IS NOT NULL EXEC sp_rename N'
 IF COL_LENGTH(N'dbo.OriginType', N'FechaModificacion') IS NOT NULL EXEC sp_rename N'[dbo].[OriginType].[FechaModificacion]', N'UpdatedAt', N'COLUMN';
 IF COL_LENGTH(N'dbo.OriginType', N'IdUsuarioModifica') IS NOT NULL EXEC sp_rename N'[dbo].[OriginType].[IdUsuarioModifica]', N'UpdatedByUserId', N'COLUMN';
 
+IF COL_LENGTH(N'dbo.ApiKey', N'Clave') IS NOT NULL EXEC sp_rename N'[dbo].[ApiKey].[Clave]', N'Key', N'COLUMN';
 IF COL_LENGTH(N'dbo.ApiKey', N'Estatus') IS NOT NULL EXEC sp_rename N'[dbo].[ApiKey].[Estatus]', N'Status', N'COLUMN';
 IF COL_LENGTH(N'dbo.ApiKey', N'FechaCreacion') IS NOT NULL EXEC sp_rename N'[dbo].[ApiKey].[FechaCreacion]', N'CreatedAt', N'COLUMN';
 IF COL_LENGTH(N'dbo.ApiKey', N'IdUsuarioCrea') IS NOT NULL EXEC sp_rename N'[dbo].[ApiKey].[IdUsuarioCrea]', N'CreatedByUserId', N'COLUMN';
