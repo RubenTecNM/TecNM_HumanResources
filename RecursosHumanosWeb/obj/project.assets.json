@@ -6936,11 +6936,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
+      "projectUniqueName": "/home/axel/Projects/itsmRH_GestionPermisos-develop/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
       "projectName": "RecursosHumanosWeb",
-      "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
+      "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos-develop/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
       "packagesPath": "/home/axel/.nuget/packages/",
-      "outputPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb/obj/",
+      "outputPath": "/home/axel/Projects/itsmRH_GestionPermisos-develop/RecursosHumanosWeb/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/axel/.nuget/NuGet/NuGet.Config"
@@ -7026,7 +7026,7 @@
         "downloadDependencies": [
           {
             "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[10.0.8, 10.0.8]"
+            "version": "[10.0.10, 10.0.10]"
           }
         ],
         "frameworkReferences": {
@@ -7037,7 +7037,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.108/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.110/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

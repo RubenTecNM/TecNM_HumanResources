@@ -18,14 +18,14 @@
 
     const elements = {
         form: form,
-        tipoPermisoRadios: document.querySelectorAll('input[name="IdTipoPermiso"]'),
-        fecha1Date: document.getElementById('Fecha1Date'),
-        hora1Time: document.getElementById('Hora1Time'),
-        fecha2Date: document.getElementById('Fecha2Date'),
-        hora2Time: document.getElementById('Hora2Time'),
-        fecha1Hidden: document.querySelector('input[name="Fecha1"]'),
-        fecha2Hidden: document.querySelector('input[name="Fecha2"]'),
-        motivo: document.getElementById('Motivo'),
+        tipoPermisoRadios: document.querySelectorAll('input[name="PermissionTypeId"]'),
+        fecha1Date: document.getElementById('StartDateOnly'),
+        hora1Time: document.getElementById('StartTime'),
+        fecha2Date: document.getElementById('EndDateOnly'),
+        hora2Time: document.getElementById('EndTime'),
+        fecha1Hidden: document.querySelector('input[name="StartDate"]'),
+        fecha2Hidden: document.querySelector('input[name="EndDate"]'),
+        motivo: document.getElementById('Reason'),
         charCount: document.getElementById('char-count'),
         submitBtn: document.getElementById('submitBtn'),
         // File upload elements
@@ -35,7 +35,7 @@
         filePreview: document.getElementById('filePreview'),
         fileName: document.getElementById('fileName'),
         removeFile: document.getElementById('removeFile'),
-        evidenciaHidden: document.querySelector('input[name="Evidencia"]')
+        evidenceHidden: document.querySelector('input[name="Evidence"]')
     };
 
     // --- CONFIGURACIÓN DE CAMPOS SEGÚN TIPO DE PERMISO ---
@@ -198,7 +198,7 @@
 
     function removeFileHandler() {
         elements.evidenceFile.value = '';
-        elements.evidenciaHidden.value = '';
+        elements.evidenceHidden.value = '';
         elements.fileName.textContent = '';
         elements.filePreview.style.display = 'none';
         elements.fileUploadContent.style.display = 'block';
@@ -268,7 +268,7 @@
         configurarCamposSegunTipo(tipoPermisoActual);
 
         // Marcar la tarjeta activa inicial
-        const radioChecked = document.querySelector(`input[name="IdTipoPermiso"]:checked`);
+        const radioChecked = document.querySelector(`input[name="PermissionTypeId"]:checked`);
         if (radioChecked) {
             radioChecked.closest('.permission-type-card').classList.add('selected', 'active');
         }
