@@ -5,7 +5,7 @@
     const formElement = $('#permissionForm');
     const isRH = formElement.data('is-rh') === true || formElement.data('is-rh') === 'True';
     const isAdministrator = formElement.data('is-administrator') === true || formElement.data('is-administrator') === 'True';
-    // const isEmpleado = formElement.data('is-empleado') === true || formElement.data('is-empleado') === 'True'; // No necesario para esta lógica
+    // const isEmployee = formElement.data('is-employee') === true || formElement.data('is-employee') === 'True'; // No necesario para esta lógica
 
     console.log('Roles:', { isRH, isAdministrator });
 

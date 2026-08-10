@@ -26,7 +26,7 @@ namespace RecursosHumanosWeb.Services
             _logger = logger;
         }
 
-        public async Task<IPagedList<PermissionsDTO>> GetPermissionsPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, bool? revisado, int page, int pageSize)
+        public async Task<IPagedList<PermissionsDTO>> GetPermissionsPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, bool? reviewed, int page, int pageSize)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return new List<PermissionsDTO>().ToPagedList(1, pageSize);
@@ -44,7 +44,7 @@ namespace RecursosHumanosWeb.Services
             }
             else if (user.UserTypeId == (int)UserTypeEnum.Authorizer)
             {
-                var currentCourtId = await _context.Cutoffs
+                var currentCutoffId = await _context.Cutoffs
                     .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open)
                     .OrderByDescending(c => c.Id)
                     .Select(c => c.Id)
@@ -52,7 +52,7 @@ namespace RecursosHumanosWeb.Services
 
                 // Regla: Propios de cualquier cutoff O (De su área EN cutoff activo Y que aún no estén revisados)
                 query = query.Where(p => p.RequestingUserId == userId || 
-                                       (p.RequestingUser.AreaId == user.AreaId && p.CutoffId == currentCourtId && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending));
+                                       (p.RequestingUser.AreaId == user.AreaId && p.CutoffId == currentCutoffId && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending));
             }
             else
             {
@@ -61,9 +61,9 @@ namespace RecursosHumanosWeb.Services
             }
 
             // Filtros manuales del panel de búsqueda
-            if (revisado.HasValue)
+            if (reviewed.HasValue)
             {
-                if (revisado.Value)
+                if (reviewed.Value)
                     query = query.Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending);
                 else
                     query = query.Where(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending);

@@ -25,7 +25,7 @@
 
     bool isRHOrAdmin = (ViewBag.CurrentUserType ?? 0) == (int)UserTypeEnum.Administrator;
     bool isApprover = ViewBag.IsApprover ?? false;
-    bool canReview = (Model.PermissionStatusTypeId == 1) && (isRHOrAdmin || (isApprover && Model.CutoffId == (int?)ViewBag.CurrentCourtId));
+    bool canReview = (Model.PermissionStatusTypeId == 1) && (isRHOrAdmin || (isApprover && Model.CutoffId == (int?)ViewBag.CurrentCutoffId));
 
     string requesterName = Model.RequestingUser?.Name ?? "Usuario";
     string initial = !string.IsNullOrEmpty(requesterName) ? requesterName.Substring(0, 1).ToUpper() : "U";

@@ -65,9 +65,9 @@
                                     <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Usuario</label>
                                     <select id="userName" name="userName" class="form-control user-autocomplete w-100" data-user-value="text">
                                         <option value="">-- Seleccionar Usuario --</option>
-                                        @foreach (var usuario in Model.Users)
+                                        @foreach (var user in Model.Users)
                                         {
-                                            <option value="@(usuario.Name ?? "")" data-area-id="@usuario.AreaId" selected="@(usuario.Name == Model.SelectedUser ? "selected" : null)">@(usuario.Name ?? "")</option>
+                                            <option value="@(user.Name ?? "")" data-area-id="@user.AreaId" selected="@(user.Name == Model.SelectedUser ? "selected" : null)">@(user.Name ?? "")</option>
                                         }
                                     </select>
                                 </div>
@@ -199,7 +199,7 @@
                 "Rechazado" => "status-rejected",
                 _ => ""
             };
-            var tipoPermiso = item.PermissionTypeId switch
+            var permissionType = item.PermissionTypeId switch
             {
                 2 => ("Falta", "fa-user-clock"),
                 3 => ("Retardo", "fa-clock"),
@@ -267,10 +267,10 @@
                 <div class="card-body">
                     <div class="permission-type-header">
                         <div class="type-icon">
-                            <i class="fas @tipoPermiso.Item2"></i>
+                            <i class="fas @permissionType.Item2"></i>
                         </div>
                         <div class="type-details">
-                            <h4>@tipoPermiso.Item1</h4>
+                            <h4>@permissionType.Item1</h4>
                         </div>
                     </div>
                     <div class="permission-details">
@@ -285,12 +285,12 @@
                                     {
                                         <div class="time-display">
                                             @{
-                                                var horas = item.StartDate.Value.Hour.ToString("D2");
+                                                var hours = item.StartDate.Value.Hour.ToString("D2");
                                                 var minutos = item.StartDate.Value.Minute.ToString("D2");
                                                 var periodo = item.StartDate.Value.Hour < 12 ? "AM" : "PM";
                                             }
-                                            <span class="time-digit">@horas[0]</span>
-                                            <span class="time-digit">@horas[1]</span>
+                                            <span class="time-digit">@hours[0]</span>
+                                            <span class="time-digit">@hours[1]</span>
                                             <span class="time-separator">:</span>
                                             <span class="time-digit">@minutos[0]</span>
                                             <span class="time-digit">@minutos[1]</span>
@@ -308,12 +308,12 @@
                                     {
                                         <div class="time-display">
                                             @{
-                                                var horas2 = item.EndDate.Value.Hour.ToString("D2");
+                                                var endHours = item.EndDate.Value.Hour.ToString("D2");
                                                 var minutos2 = item.EndDate.Value.Minute.ToString("D2");
                                                 var periodo2 = item.EndDate.Value.Hour < 12 ? "AM" : "PM";
                                             }
-                                            <span class="time-digit">@horas2[0]</span>
-                                            <span class="time-digit">@horas2[1]</span>
+                                            <span class="time-digit">@endHours[0]</span>
+                                            <span class="time-digit">@endHours[1]</span>
                                             <span class="time-separator">:</span>
                                             <span class="time-digit">@minutos2[0]</span>
                                             <span class="time-digit">@minutos2[1]</span>

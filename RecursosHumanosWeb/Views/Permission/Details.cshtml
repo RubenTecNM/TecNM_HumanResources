@@ -79,7 +79,7 @@
     bool isApprover = ViewBag.IsApprover ?? false;
     
     // RH/Admin can review any pending, Approvers only current court
-    bool canReview = (Model.PermissionStatusTypeId == 1) && (isRHOrAdmin || (isApprover && Model.CutoffId == (int?)ViewBag.CurrentCourtId));
+    bool canReview = (Model.PermissionStatusTypeId == 1) && (isRHOrAdmin || (isApprover && Model.CutoffId == (int?)ViewBag.CurrentCutoffId));
     
     string requesterName = Model.RequestingUser?.Name ?? "Usuario";
     string initial = !string.IsNullOrEmpty(requesterName) ? requesterName.Substring(0, 1).ToUpper() : "U";
@@ -358,7 +358,7 @@
             </a>
             
             <div class="d-flex gap-3">
-                @if (canReview == false && Model.CutoffId == (int?)ViewBag.CurrentCourtId && (Model.PermissionStatusTypeId == 1) && (int?)ViewBag.CurrentUserId == Model.RequestingUserId)
+                @if (canReview == false && Model.CutoffId == (int?)ViewBag.CurrentCutoffId && (Model.PermissionStatusTypeId == 1) && (int?)ViewBag.CurrentUserId == Model.RequestingUserId)
                 {
                     <a asp-action="Edit" asp-route-id="@Model.Id" class="v2-btn btn-primary shadow-sm">
                         <i class="fas fa-edit"></i> Editar Solicitud

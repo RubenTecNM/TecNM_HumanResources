@@ -66,10 +66,10 @@
                                 <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Departamento</label>
                                 <select id="departmentFilter" name="departmentFilter" class="form-control filter-input-pill form-select">
                                     <option value="">Todos los departamentos</option>
-                                    @foreach (var departamento in Model.Departments)
+                                    @foreach (var department in Model.Departments)
                                     {
-                                        <option value="@departamento.Id" selected="@(ViewBag.DepartmentFilter?.ToString() == departamento.Id.ToString() ? "selected" : null)">
-                                            @departamento.Description
+                                        <option value="@department.Id" selected="@(ViewBag.DepartmentFilter?.ToString() == department.Id.ToString() ? "selected" : null)">
+                                            @department.Description
                                         </option>
                                     }
                                 </select>

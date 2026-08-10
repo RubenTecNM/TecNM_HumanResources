@@ -6,8 +6,8 @@
     int currentUserId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
     bool isRH = User.HasClaim("UserType", "3");
     bool isAdministrator = User.HasClaim("UserType", "1");
-    bool isAutorizador = User.HasClaim("UserType", "2");
-    int currentCourtId = ViewBag.CurrentCourtId ?? 0;
+    bool isAuthorizer = User.HasClaim("UserType", "2");
+    int currentCutoffId = ViewBag.CurrentCutoffId ?? 0;
 }
 
 @section Styles {
@@ -58,10 +58,10 @@
                         <div class="col-md-2">
                             <div class="filter-group">
                                 <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Estado</label>
-                                <select id="revisado" name="revisado" class="form-control filter-input-pill select2-simple">
+                                <select id="reviewed" name="reviewed" class="form-control filter-input-pill select2-simple">
                                     <option value="">Cualquiera</option>
-                                    <option value="false" selected="@(ViewBag.Revisado != null && !(bool)ViewBag.Revisado ? "selected" : null)">Pendientes</option>
-                                    <option value="true" selected="@(ViewBag.Revisado != null && (bool)ViewBag.Revisado ? "selected" : null)">Revisados</option>
+                                    <option value="false" selected="@(ViewBag.Reviewed != null && !(bool)ViewBag.Reviewed ? "selected" : null)">Pendientes</option>
+                                    <option value="true" selected="@(ViewBag.Reviewed != null && (bool)ViewBag.Reviewed ? "selected" : null)">Revisados</option>
                                 </select>
                             </div>
                         </div>
@@ -177,10 +177,10 @@
                                                  <authorize-section policy="!AutorizadorOnly">
                                                     @{
                                                          bool isOwnerDesktop = item.RequestingUserId == currentUserId;
-                                                         bool inActiveCourtDesktop = item.CutoffId == currentCourtId;
+                                                         bool inActiveCutoffDesktop = item.CutoffId == currentCutoffId;
                                                          bool isPendingDesktop = item.PermissionStatusTypeId == 1;
-                                                         bool canEditDesktop = (isAdministrator || isRH || isOwnerDesktop) && inActiveCourtDesktop && isPendingDesktop && !isAutorizador;
-                                                         bool canDeleteDesktop = (isAdministrator || isRH || isOwnerDesktop) && inActiveCourtDesktop && !isAutorizador;
+                                                         bool canEditDesktop = (isAdministrator || isRH || isOwnerDesktop) && inActiveCutoffDesktop && isPendingDesktop && !isAuthorizer;
+                                                         bool canDeleteDesktop = (isAdministrator || isRH || isOwnerDesktop) && inActiveCutoffDesktop && !isAuthorizer;
                                                      }
 
                                                     @if (canEditDesktop)
@@ -247,7 +247,7 @@
             </div>
             <div class="v2-pagination">
                 @Html.PagedListPager(Model.Permissions, page => Url.Action("Index", 
-                    new { page, pageSize = Model.Permissions.PageSize, userName = ViewBag.UserName, areaId = Model.SelectedArea, revisado = ViewBag.Revisado, toDay = ViewBag.Today, fromDay = ViewBag.FromDay }), 
+                    new { page, pageSize = Model.Permissions.PageSize, userName = ViewBag.UserName, areaId = Model.SelectedArea, reviewed = ViewBag.Reviewed, toDay = ViewBag.Today, fromDay = ViewBag.FromDay }), 
                     new PagedListRenderOptions {
                         DisplayLinkToFirstPage = PagedListDisplayMode.Always,
                         DisplayLinkToLastPage = PagedListDisplayMode.Always,

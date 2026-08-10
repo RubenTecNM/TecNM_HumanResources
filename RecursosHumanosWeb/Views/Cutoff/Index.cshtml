@@ -109,8 +109,8 @@
                         <tbody>
                             @foreach (var item in Model.Cutoffs)
                             {
-                                var usuarioCrea = Model.Users.FirstOrDefault(u => u.Id == item.CreatedByUserId)?.Name ?? "-";
-                                var usuarioModifica = Model.Users.FirstOrDefault(u => u.Id == item.UpdatedByUserId)?.Name ?? "-";
+                                var createdBy = Model.Users.FirstOrDefault(u => u.Id == item.CreatedByUserId)?.Name ?? "-";
+                                var updatedBy = Model.Users.FirstOrDefault(u => u.Id == item.UpdatedByUserId)?.Name ?? "-";
                                 <tr>
                                     <td class="text-center">@item.Id</td>
                                     <td class="text-center"><strong>@(item.StartDate.ToString("dd/MM/yyyy") ?? "-")</strong></td>
@@ -204,8 +204,8 @@
                 page => Url.Action("Index", new
                 {
                     page,
-                    fechaDesde = Context.Request.Query["dateFrom"],
-                    fechaHasta = Context.Request.Query["dateTo"],
+                    dateFrom = Context.Request.Query["dateFrom"],
+                    dateTo = Context.Request.Query["dateTo"],
                     statusId = Context.Request.Query["statusId"],
                     pageSize = Context.Request.Query["pageSize"]
                 }),

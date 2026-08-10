@@ -65,7 +65,7 @@
                         <label asp-for="OwnerUserId" class="form-label">Usuario asociado a la clave</label>
                         <div class="input-wrapper">
                             <i class="fas fa-user input-icon"></i>
-                            <select asp-for="OwnerUserId" class="form-control-v2 form-select select2-v2" id="idUsuarioTitular"
+                            <select asp-for="OwnerUserId" class="form-control-v2 form-select select2-v2" id="ownerUserId"
                                     asp-items="@(ViewData["User"] as SelectList)">
                                 <option value="">Seleccione el usuario titular</option>
                             </select>
@@ -85,14 +85,14 @@
                     {
                         var tablas = ViewBag.DatabaseTables as List<RecursosHumanosWeb.Models.DatabaseTable> ?? new List<RecursosHumanosWeb.Models.DatabaseTable>();
                         var apiPermisos = ViewBag.ApiPermissions as List<RecursosHumanosWeb.Models.ApiPermission> ?? new List<RecursosHumanosWeb.Models.ApiPermission>();
-                        var permisosActuales = ViewBag.CurrentPermissions as Dictionary<int, List<int>> ?? new Dictionary<int, List<int>>();
+                        var currentPermissions = ViewBag.CurrentPermissions as Dictionary<int, List<int>> ?? new Dictionary<int, List<int>>();
 
                         <p class="text-muted small mb-4">Actualice las operaciones permitidas para cada entidad.</p>
 
                         int tableIndex = 0;
                         foreach (var tabla in tablas)
                         {
-                            var permisosTabla = permisosActuales.ContainsKey(tabla.Id) ? permisosActuales[tabla.Id] : new List<int>();
+                            var tablePermissions = currentPermissions.ContainsKey(tabla.Id) ? currentPermissions[tabla.Id] : new List<int>();
 
                             <div class="card p-3 mb-4 bg-light border-0 shadow-sm rounded-4">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -105,9 +105,9 @@
                                 <input type="hidden" name="Assignments[@tableIndex].TableId" value="@tabla.Id" />
 
                                 <div class="row g-3">
-                                    @foreach (var permiso in apiPermisos)
+                                    @foreach (var permission in apiPermisos)
                                     {
-                                        var iconClass = permiso.Description switch
+                                        var iconClass = permission.Description switch
                                         {
                                             "Leer" => "fa-eye",
                                             "Escribir" => "fa-plus",
@@ -115,7 +115,7 @@
                                             "Eliminar" => "fa-trash-alt",
                                             _ => "fa-cog"
                                         };
-                                        var isChecked = permisosTabla.Contains(permiso.Id);
+                                        var isChecked = tablePermissions.Contains(permission.Id);
 
                                         <div class="col-md-3">
                                             <div class="form-check p-0">
@@ -123,12 +123,12 @@
                                                        style="background: white;">
                                                     <input type="checkbox" 
                                                            name="Assignments[@tableIndex].IdsApiPermissionsSeleccionados" 
-                                                           value="@permiso.Id"
+                                                           value="@permission.Id"
                                                            class="form-check-input m-0"
                                                            @(isChecked ? "checked" : "")
                                                            style="width: 18px; height: 18px;">
                                                     <span class="small fw-semibold">
-                                                        <i class="fas @iconClass me-1 opacity-75"></i> @permiso.Description
+                                                        <i class="fas @iconClass me-1 opacity-75"></i> @permission.Description
                                                     </span>
                                                 </label>
                                             </div>

@@ -5,13 +5,13 @@
     
     var culture = new CultureInfo("es-MX");
     
-    string FormatFechaCompleta(DateTime fecha)
+    string FormatFullDate(DateTime date)
     {
-        return fecha.ToString("dd 'de' MMMM 'del' yyyy, hh:mm tt", culture).ToUpper();
+        return date.ToString("dd 'de' MMMM 'del' yyyy, hh:mm tt", culture).ToUpper();
     }
 
     // Cargar permisos asignados
-    var permisosAsignados = ViewBag.AssignedPermissions as List<dynamic> ?? new List<dynamic>();
+    var assignedPermissions = ViewBag.AssignedPermissions as List<dynamic> ?? new List<dynamic>();
 }
 
 <div class="details-container">
@@ -71,10 +71,10 @@
                             <i class="fas fa-shield-alt text-primary"></i> Permisos Asignados
                         </h3>
                         
-                        @if (permisosAsignados.Any())
+                        @if (assignedPermissions.Any())
                         {
                             <div class="d-flex flex-column gap-3">
-                                @foreach (var grupo in permisosAsignados)
+                                @foreach (var grupo in assignedPermissions)
                                 {
                                     <div class="info-card p-4 rounded-4 shadow-sm border">
                                         <div class="d-flex align-items-center gap-3 mb-3">
@@ -84,11 +84,11 @@
                                             <span class="small fw-bold text-dark text-uppercase">Tabla: @grupo.DatabaseTable</span>
                                         </div>
                                         <div class="d-flex flex-wrap gap-2 ms-5">
-                                            @foreach (var permiso in grupo.Permissions)
+                                            @foreach (var permission in grupo.Permissions)
                                             {
                                                 <div class="v2-badge v2-badge-primary">
                                                     <span class="v2-badge-dot"></span>
-                                                    @permiso
+                                                    @permission
                                                 </div>
                                             }
                                         </div>
@@ -128,7 +128,7 @@
                                 @(Model.CreatedByUser?.Name ?? "Sistema")
                             </p>
                             <p class="small text-muted mb-0 ms-5 opacity-75">
-                                @FormatFechaCompleta(Model.CreatedAt)
+                                @FormatFullDate(Model.CreatedAt)
                             </p>
                         </div>
 
@@ -145,7 +145,7 @@
                                     @Model.UpdatedByUser.Name
                                 </p>
                                 <p class="small text-muted mb-0 ms-5 opacity-75">
-                                    @(Model.UpdatedAt.HasValue ? FormatFechaCompleta(Model.UpdatedAt.Value) : "N/A")
+                                    @(Model.UpdatedAt.HasValue ? FormatFullDate(Model.UpdatedAt.Value) : "N/A")
                                 </p>
                             </div>
                         }

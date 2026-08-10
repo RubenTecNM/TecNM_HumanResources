@@ -50,7 +50,7 @@ namespace RecursosHumanosWeb.Controllers
         #region VISTAS Y FILTROS
 
         [HttpGet]
-        public async Task<IActionResult> Index(string? userName = null, int? areaId = null, DateTime? fromDay = null, DateTime? toDay = null, bool? revisado = null, int? page = 1)
+        public async Task<IActionResult> Index(string? userName = null, int? areaId = null, DateTime? fromDay = null, DateTime? toDay = null, bool? reviewed = null, int? page = 1)
         {
             await _cutoffService.AutoCloseCutoffIfNeededAsync();
             
@@ -58,7 +58,7 @@ namespace RecursosHumanosWeb.Controllers
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
             int pageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
-            var permissions = await _permissionService.GetPermissionsPagedAsync(userId, areaId, userName, fromDay, toDay, revisado, page ?? 1, pageSize);
+            var permissions = await _permissionService.GetPermissionsPagedAsync(userId, areaId, userName, fromDay, toDay, reviewed, page ?? 1, pageSize);
 
             var areas = (userType == (int)UserTypeEnum.HumanResources || userType == (int)UserTypeEnum.Administrator)
                 ? await _context.Areas.Where(a => a.Status).Select(a => new AreasDTO { Id = a.Id, Description = a.Description }).OrderBy(a => a.Description).ToListAsync()
@@ -70,18 +70,18 @@ namespace RecursosHumanosWeb.Controllers
                 Areas = areas,
                 SelectedUser = userName,
                 SelectedArea = areaId,
-                Revisado = revisado
+                Reviewed = reviewed
             };
 
             ViewBag.FromDay = fromDay?.ToString("yyyy-MM-dd");
             ViewBag.Today = toDay?.ToString("yyyy-MM-dd");
-            ViewBag.Revisado = revisado;
-            ViewBag.IsAutorizador = userType == (int)UserTypeEnum.Authorizer;
+            ViewBag.Reviewed = reviewed;
+            ViewBag.IsAuthorizer = userType == (int)UserTypeEnum.Authorizer;
             ViewBag.IsRH = userType == (int)UserTypeEnum.HumanResources;
             ViewBag.IsAdministrator = userType == (int)UserTypeEnum.Administrator;
 
             var activeCutoff = await _cutoffService.GetActiveCutoffAsync();
-            ViewBag.CurrentCourtId = activeCutoff?.Id ?? 0;
+            ViewBag.CurrentCutoffId = activeCutoff?.Id ?? 0;
 
             return View(model);
         }
@@ -421,7 +421,7 @@ namespace RecursosHumanosWeb.Controllers
             
             // Pass user info for review authorization check in view
             var currentCourt = await _cutoffService.GetActiveCutoffAsync();
-            ViewBag.CurrentCourtId = currentCourt?.Id ?? 0;
+            ViewBag.CurrentCutoffId = currentCourt?.Id ?? 0;
             
             ViewBag.CurrentUserId = userId;
             ViewBag.CurrentUserType = userType;
@@ -464,7 +464,7 @@ namespace RecursosHumanosWeb.Controllers
             if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
             
             var currentCourt = await _cutoffService.GetActiveCutoffAsync();
-            ViewBag.CurrentCourtId = currentCourt?.Id ?? 0;
+            ViewBag.CurrentCutoffId = currentCourt?.Id ?? 0;
             ViewBag.CurrentUserId = userId;
             ViewBag.CurrentUserType = userType;
             

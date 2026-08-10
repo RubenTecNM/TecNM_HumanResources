@@ -105,7 +105,7 @@
                         <tbody>
                             @foreach (var item in Model)
                             {
-                                var usuarioCrea = item.CreatedByUser?.Name ?? "-";
+                                var createdBy = item.CreatedByUser?.Name ?? "-";
                                 <tr>
                                     <td class="text-center">@item.Id</td>
                                     <td>
@@ -118,7 +118,7 @@
                                             </button>
                                         </div>
                                     </td>
-                                    <td><strong>@usuarioCrea</strong></td>
+                                    <td><strong>@createdBy</strong></td>
                                     <td>
                                         <div style="color: var(--text-medium); font-weight: 500;">
                                             <div style="font-size: 0.875rem;">@item.CreatedAt.ToString("dd/MM/yyyy")</div>
@@ -209,7 +209,7 @@
                 minimumInputLength: 2,
                 allowClear: true,
                 ajax: {
-                    url: '/Usuarios/SearchUsers',
+                    url: '/User/SearchUsers',
                     dataType: 'json',
                     delay: 250,
                     data: function (params) {

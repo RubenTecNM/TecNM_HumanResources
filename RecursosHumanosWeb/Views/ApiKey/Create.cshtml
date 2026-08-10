@@ -40,7 +40,7 @@
                         <label asp-for="OwnerUserId" class="form-label">Usuario al que se asociará la nueva clave</label>
                         <div class="input-wrapper">
                             <i class="fas fa-user input-icon"></i>
-                            <select asp-for="OwnerUserId" class="form-control-v2 form-select select2-v2" id="idUsuarioTitular"
+                            <select asp-for="OwnerUserId" class="form-control-v2 form-select select2-v2" id="ownerUserId"
                                     asp-items="@(ViewData["User"] as SelectList)">
                                 <option value="">Seleccione el usuario titular</option>
                             </select>
@@ -81,9 +81,9 @@
                                 <input type="hidden" name="Assignments[@tableIndex].TableId" value="@tabla.Id" />
 
                                 <div class="row g-3">
-                                    @foreach (var permiso in apiPermisos)
+                                    @foreach (var permission in apiPermisos)
                                     {
-                                        var iconClass = permiso.Description switch
+                                        var iconClass = permission.Description switch
                                         {
                                             "Leer" => "fa-eye",
                                             "Escribir" => "fa-plus",
@@ -98,11 +98,11 @@
                                                        style="background: white;">
                                                     <input type="checkbox" 
                                                            name="Assignments[@tableIndex].IdsApiPermissionsSeleccionados" 
-                                                           value="@permiso.Id"
+                                                           value="@permission.Id"
                                                            class="form-check-input m-0"
                                                            style="width: 18px; height: 18px;">
                                                     <span class="small fw-semibold">
-                                                        <i class="fas @iconClass me-1 opacity-75"></i> @permiso.Description
+                                                        <i class="fas @iconClass me-1 opacity-75"></i> @permission.Description
                                                     </span>
                                                 </label>
                                             </div>

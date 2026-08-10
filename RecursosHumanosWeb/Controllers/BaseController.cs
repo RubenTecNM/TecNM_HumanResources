@@ -14,7 +14,7 @@ namespace RecursosHumanosWeb.Controllers
 
                 ViewData["IsAuthenticated"] = true;
                 ViewData["IsAdministrator"] = userType == "1"; // Compara strings directamente
-                ViewData["IsAutorizador"]   = userType == "2";
+                ViewData["IsAuthorizer"]   = userType == "2";
                 ViewData["IsRH"]            = userType == "3";
                 ViewData["UserName"]        = User.Identity.Name;
             }
