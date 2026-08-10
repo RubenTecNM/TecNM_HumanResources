@@ -27,7 +27,7 @@ INSERT INTO PermissionStatusType (Description, Color, CreatedAt, Status, Created
 ('Pendiente por Revisar', 'warning', GETDATE(), 1, 1),
 ('Revisado / Aprobado', 'success', GETDATE(), 1, 1),
 ('Invalidado por Periodo', 'danger', GETDATE(), 1, 1),
-('Rechazado', 'dark', GETDATE(), 1, 1);
+('Revisado / Rechazado', 'dark', GETDATE(), 1, 1);
 
 -- Area
 INSERT INTO Area (Description, CreatedAt, Status, CreatedByUserId) VALUES 

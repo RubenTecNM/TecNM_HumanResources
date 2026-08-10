@@ -109,6 +109,31 @@
     @if (Model.Permissions.Any())
     {
 
+        <div class="legend-bar fade-in d-flex align-items-center flex-wrap gap-3"
+             style="margin-top: calc(1.25rem - var(--section-gap)); margin-bottom: 1.25rem; padding: 0.7rem 1.25rem; background: var(--surface-alt); border: 1px solid var(--border-soft); border-radius: var(--radius-lg);">
+            <div class="d-flex align-items-center gap-2 fw-bold text-secondary" style="font-size: 0.8rem; letter-spacing: 0.02em;">
+                <i class="fas fa-info-circle text-primary"></i>
+                <span>Estados del permiso</span>
+            </div>
+            <div class="vr d-none d-lg-block align-self-stretch" style="opacity: 0.2;"></div>
+            <div class="d-flex align-items-center gap-2" title="El permiso aún está en espera de la autorización del jefe de área">
+                <span class="v2-badge v2-badge-warning"><span class="v2-badge-dot"></span>Pendiente por Revisar</span>
+                <span class="text-muted" style="font-size: 0.75rem;">En espera de autorización</span>
+            </div>
+            <div class="d-flex align-items-center gap-2" title="El permiso fue autorizado con goce de sueldo">
+                <span class="v2-badge v2-badge-success"><span class="v2-badge-dot"></span>Revisado / Aprobado</span>
+                <span class="text-muted" style="font-size: 0.75rem;">Autorizado con goce de sueldo</span>
+            </div>
+            <div class="d-flex align-items-center gap-2" title="El permiso fue revisado pero no autorizado">
+                <span class="v2-badge v2-badge-dark"><span class="v2-badge-dot"></span>Revisado / Rechazado</span>
+                <span class="text-muted" style="font-size: 0.75rem;">No autorizado</span>
+            </div>
+            <div class="d-flex align-items-center gap-2" title="El permiso fue anulado porque el periodo de corte se cerró">
+                <span class="v2-badge v2-badge-danger"><span class="v2-badge-dot"></span>Invalidado por Periodo</span>
+                <span class="text-muted" style="font-size: 0.75rem;">Anulado al cerrar el periodo</span>
+            </div>
+        </div>
+
         <div class="table-container fade-in">
             <div class="table-inner">
                 <div class="overflow-x-auto">
