@@ -160,7 +160,7 @@
             </a>
             
             <div class="d-flex gap-2">
-                @if (User.HasClaim("TipoUsuario", "1"))
+                @if (User.HasClaim("UserType", "1"))
                 {
                     <a asp-action="Edit" asp-route-id="@Model.Id" class="v2-btn btn-primary shadow-sm">
                         <i class="fas fa-edit"></i> Editar API Key

@@ -4,39 +4,39 @@
     // --- 1. CONFIGURACIÓN INICIAL DE ROLES Y ELEMENTOS ---
     const formElement = $('#permissionForm');
     const isRH = formElement.data('is-rh') === true || formElement.data('is-rh') === 'True';
-    const isAdministrador = formElement.data('is-administrador') === true || formElement.data('is-administrador') === 'True';
+    const isAdministrator = formElement.data('is-administrator') === true || formElement.data('is-administrator') === 'True';
     // const isEmpleado = formElement.data('is-empleado') === true || formElement.data('is-empleado') === 'True'; // No necesario para esta lógica
 
-    console.log('Roles:', { isRH, isAdministrador });
+    console.log('Roles:', { isRH, isAdministrator });
 
     // Elemento select (Select2) para usuario solicitante — el select2 se inicializa en la vista Create.cshtml
-    const $idUsuarioSolicita = $("#IdUsuarioSolicita");
+    const $requestingUserId = $("#requestingUserId");
 
     // --- 3. CONFIGURACIÓN DE TIPOS DE PERMISO (LÓGICA EXISTENTE) ---
     const typeConfigurations = {
         3: { // Falta
-            fecha1: { show: true, label: "Del día", required: true },
-            fecha2: { show: true, label: "Al día", required: true },
-            hora1: { show: false, label: "Hora entrada", required: false },
-            hora2: { show: false, label: "Hora salida", required: false }
+            date1: { show: true, label: "Del día", required: true },
+            date2: { show: true, label: "Al día", required: true },
+            time1: { show: false, label: "Hora entrada", required: false },
+            time2: { show: false, label: "Hora salida", required: false }
         },
         1: { // Retardo
-            fecha1: { show: true, label: "En el día", required: true },
-            fecha2: { show: false, label: "Al día", required: false },
-            hora1: { show: true, label: "Hora de llegada", required: true },
-            hora2: { show: false, label: "Hora salida", required: false }
+            date1: { show: true, label: "En el día", required: true },
+            date2: { show: false, label: "Al día", required: false },
+            time1: { show: true, label: "Hora de llegada", required: true },
+            time2: { show: false, label: "Hora salida", required: false }
         },
         4: { // Cambio de Horario
-            fecha1: { show: true, label: "Del día", required: true },
-            fecha2: { show: true, label: "Al día", required: true },
-            hora1: { show: true, label: "Hora entrada", required: true },
-            hora2: { show: true, label: "Hora salida", required: true }
+            date1: { show: true, label: "Del día", required: true },
+            date2: { show: true, label: "Al día", required: true },
+            time1: { show: true, label: "Hora entrada", required: true },
+            time2: { show: true, label: "Hora salida", required: true }
         },
         2: { // Turno por Turno
-            fecha1: { show: true, label: "Del día", required: true },
-            fecha2: { show: true, label: "Por el día", required: true },
-            hora1: { show: true, label: "Hora entrada", required: true },
-            hora2: { show: true, label: "Hora salida", required: true }
+            date1: { show: true, label: "Del día", required: true },
+            date2: { show: true, label: "Por el día", required: true },
+            time1: { show: true, label: "Hora entrada", required: true },
+            time2: { show: true, label: "Hora salida", required: true }
         }
     };
 
@@ -57,10 +57,10 @@
             $('#evidence-section').slideDown(300);
 
             // Configurar campos según el tipo
-            updateFieldVisibility('fecha1Date', config.fecha1);
-            updateFieldVisibility('fecha2Date', config.fecha2);
-            updateFieldVisibility('hora1Time', config.hora1);
-            updateFieldVisibility('hora2Time', config.hora2);
+            updateFieldVisibility('date1', config.date1);
+            updateFieldVisibility('date2', config.date2);
+            updateFieldVisibility('time1', config.time1);
+            updateFieldVisibility('time2', config.time2);
         }
 
         // Actualizar estilos visuales
@@ -95,10 +95,10 @@
     }
 
     // --- 4. CONTADOR DE CARACTERES Y ARCHIVOS (LÓGICA EXISTENTE) ---
-    const motivoTextarea = $('textarea[name="Reason"]');
+    const reasonTextarea = $('textarea[name="Reason"]');
     const charCount = $('#char-count');
 
-    motivoTextarea.on('input keyup paste', function () {
+    reasonTextarea.on('input keyup paste', function () {
         const currentLength = $(this).val().length;
         const maxLength = 255;
 
@@ -171,8 +171,8 @@
         let isValid = true;
 
         // 5.1. Verificar Usuario Solicitante (solo para RH/Admin)
-        if (isRH || isAdministrador) {
-            if (!$idUsuarioSolicita.val() || $idUsuarioSolicita.val().length === 0) {
+        if (isRH || isAdministrator) {
+            if (!$requestingUserId.val() || $requestingUserId.val().length === 0) {
                 isValid = false;
             }
         }
@@ -184,8 +184,8 @@
         }
 
         // 5.3. Verificar motivo
-        const motivo = motivoTextarea.val() ? motivoTextarea.val().trim() : '';
-        if (!motivo || motivo.length > 255) {
+        const reason = reasonTextarea.val() ? reasonTextarea.val().trim() : '';
+        if (!reason || reason.length > 255) {
             isValid = false;
         }
 
@@ -194,15 +194,15 @@
         if (config) {
 
             // Validar fechas y horas
-            if (config.fecha1.required && !$('input[name="StartDateOnly"]').val()) { isValid = false; }
-            if (config.fecha2.required && !$('input[name="EndDateOnly"]').val()) { isValid = false; }
-            if (config.hora1.required && !$('input[name="StartTime"]').val()) { isValid = false; }
-            if (config.hora2.required && !$('input[name="EndTime"]').val()) { isValid = false; }
+            if (config.date1.required && !$('input[name="StartDateOnly"]').val()) { isValid = false; }
+            if (config.date2.required && !$('input[name="EndDateOnly"]').val()) { isValid = false; }
+            if (config.time1.required && !$('input[name="StartTime"]').val()) { isValid = false; }
+            if (config.time2.required && !$('input[name="EndTime"]').val()) { isValid = false; }
 
             // Validación lógica de Fechas (Fecha1 no debe ser posterior a Fecha2)
             const date1Val = $('input[name="StartDateOnly"]').val();
             const date2Val = $('input[name="EndDateOnly"]').val();
-            if (config.fecha1.show && config.fecha2.show && date1Val && date2Val) {
+            if (config.date1.show && config.date2.show && date1Val && date2Val) {
                 if (new Date(date1Val) > new Date(date2Val)) {
                     // Mostrar error visual aquí (p. ej., span de validación)
                     isValid = false;
@@ -223,13 +223,13 @@
         const config = typeConfigurations[selectedType];
 
         // Fecha1
-        if (config.fecha1.show) {
+        if (config.date1.show) {
             const date1 = $('input[name="StartDateOnly"]').val();
             const time1 = $('input[name="StartTime"]').val() || '00:00'; // Valor por defecto si no se pide hora
 
             let combined1 = date1;
             // Si la hora es requerida o visible, combinamos fecha y hora
-            if (config.hora1.show && $('input[name="StartTime"]').val()) {
+            if (config.time1.show && $('input[name="StartTime"]').val()) {
                 combined1 = `${date1}T${time1}:00`;
             } else if (date1) {
                 combined1 = `${date1}T00:00:00`; // Solo fecha
@@ -240,12 +240,12 @@
         }
 
         // Fecha2
-        if (config.fecha2.show) {
+        if (config.date2.show) {
             const date2 = $('input[name="EndDateOnly"]').val();
             const time2 = $('input[name="EndTime"]').val() || '00:00';
 
             let combined2 = date2;
-            if (config.hora2.show && $('input[name="EndTime"]').val()) {
+            if (config.time2.show && $('input[name="EndTime"]').val()) {
                 combined2 = `${date2}T${time2}:00`;
             } else if (date2) {
                 combined2 = `${date2}T23:59:59`;

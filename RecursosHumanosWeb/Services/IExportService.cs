@@ -4,9 +4,9 @@ namespace RecursosHumanosWeb.Services
 {
     public interface IExportService
     {
-        Task<byte[]> GenerateCorteExcelAsync(int corteId);
-        Task<(byte[] Content, string FileName)> GenerateCorteCsvAsync(int corteId);
-        Task<(byte[] Content, string FileName)> GenerateCorteJsonAsync(int corteId);
-        Task<(byte[] Content, string FileName)> GenerateCorteXmlAsync(int corteId);
+        Task<byte[]> GenerateCutoffExcelAsync(int cutoffId);
+        Task<(byte[] Content, string FileName)> GenerateCutoffCsvAsync(int cutoffId);
+        Task<(byte[] Content, string FileName)> GenerateCutoffJsonAsync(int cutoffId);
+        Task<(byte[] Content, string FileName)> GenerateCutoffXmlAsync(int cutoffId);
     }
 }

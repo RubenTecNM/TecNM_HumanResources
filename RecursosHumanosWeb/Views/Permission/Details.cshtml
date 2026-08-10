@@ -7,14 +7,14 @@
 
     var culture = new CultureInfo("es-MX");
 
-    string FormatHora12(DateTime fecha)
+    string FormatHour12(DateTime date)
     {
-        return fecha.ToString("hh:mm tt", culture).ToUpper();
+        return date.ToString("hh:mm tt", culture).ToUpper();
     }
 
-    string FormatFechaCompleta(DateTime fecha)
+    string FormatFullDate(DateTime date)
     {
-        return fecha.ToString("dd 'de' MMMM 'del' yyyy", culture);
+        return date.ToString("dd 'de' MMMM 'del' yyyy", culture);
     }
 
     // Mapeo corregido segun base de datos: 1: Retardo, 2: Turno, 3: Falta, 4: Horario
@@ -22,39 +22,39 @@
     {
         [1] = new Dictionary<string, (bool, string)> // Retardo
         {
-            ["Fecha1"] = (true, "En el d&iacute;a"),
-            ["Fecha2"] = (false, "Al d&iacute;a"),
-            ["Hora1"] = (true, "Hora de llegada"),
-            ["Hora2"] = (false, "Hora salida")
+            ["Date1"] = (true, "En el d&iacute;a"),
+            ["Date2"] = (false, "Al d&iacute;a"),
+            ["Time1"] = (true, "Hora de llegada"),
+            ["Time2"] = (false, "Hora salida")
         },
         [2] = new Dictionary<string, (bool, string)> // Turno por Turno
         {
-            ["Fecha1"] = (true, "Del d&iacute;a"),
-            ["Fecha2"] = (true, "Por el d&iacute;a"),
-            ["Hora1"] = (true, "Hora entrada"),
-            ["Hora2"] = (true, "Hora salida")
+            ["Date1"] = (true, "Del d&iacute;a"),
+            ["Date2"] = (true, "Por el d&iacute;a"),
+            ["Time1"] = (true, "Hora entrada"),
+            ["Time2"] = (true, "Hora salida")
         },
         [3] = new Dictionary<string, (bool, string)> // Falta
         {
-            ["Fecha1"] = (true, "Del d&iacute;a"),
-            ["Fecha2"] = (true, "Al d&iacute;a"),
-            ["Hora1"] = (false, "Hora entrada"),
-            ["Hora2"] = (false, "Hora salida")
+            ["Date1"] = (true, "Del d&iacute;a"),
+            ["Date2"] = (true, "Al d&iacute;a"),
+            ["Time1"] = (false, "Hora entrada"),
+            ["Time2"] = (false, "Hora salida")
         },
         [4] = new Dictionary<string, (bool, string)> // Cambio de Horario
         {
-            ["Fecha1"] = (true, "Del d&iacute;a"),
-            ["Fecha2"] = (true, "Al d&iacute;a"),
-            ["Hora1"] = (true, "Hora entrada"),
-            ["Hora2"] = (true, "Hora salida")
+            ["Date1"] = (true, "Del d&iacute;a"),
+            ["Date2"] = (true, "Al d&iacute;a"),
+            ["Time1"] = (true, "Hora entrada"),
+            ["Time2"] = (true, "Hora salida")
         }
     };
 
     var config = typeConfigurations.ContainsKey(Model.PermissionTypeId) ? typeConfigurations[Model.PermissionTypeId] : null;
-    bool showDias = config != null && config["Fecha2"].show && Model.EndDate.HasValue && Model.Days.HasValue && Model.Days.Value > 1;
+    bool showDays = config != null && config["Date2"].show && Model.EndDate.HasValue && Model.Days.HasValue && Model.Days.Value > 1;
 
-    string hora1 = config != null && config["Hora1"].show && Model.StartDate != null ? FormatHora12(Model.StartDate.Value) : null!;
-    string hora2 = config != null && config["Hora2"].show && Model.EndDate.HasValue ? FormatHora12(Model.EndDate.Value) : null!;
+    string time1 = config != null && config["Time1"].show && Model.StartDate != null ? FormatHour12(Model.StartDate.Value) : null!;
+    string time2 = config != null && config["Time2"].show && Model.EndDate.HasValue ? FormatHour12(Model.EndDate.Value) : null!;
 
     // Normalize evidence path
     string? evidenceUrl = null;
@@ -81,8 +81,8 @@
     // RH/Admin can review any pending, Approvers only current court
     bool canReview = (Model.PermissionStatusTypeId == 1) && (isRHOrAdmin || (isApprover && Model.CutoffId == (int?)ViewBag.CurrentCourtId));
     
-    string solicitanteNombre = Model.RequestingUser?.Name ?? "Usuario";
-    string inicial = !string.IsNullOrEmpty(solicitanteNombre) ? solicitanteNombre.Substring(0, 1).ToUpper() : "U";
+    string requesterName = Model.RequestingUser?.Name ?? "Usuario";
+    string initial = !string.IsNullOrEmpty(requesterName) ? requesterName.Substring(0, 1).ToUpper() : "U";
 }
 
 @section Styles {
@@ -103,7 +103,7 @@
                         <div class="ms-1 d-flex align-items-center gap-2 opacity-90 text-white small">
                              <i class="fas fa-user-circle"></i> 
                              <span class="opacity-75">Solicitante:</span> 
-                             <span class="fw-bold">@solicitanteNombre</span>
+                             <span class="fw-bold">@requesterName</span>
                         </div>
                     </div>
                 </div>
@@ -189,52 +189,52 @@
                     
                     <div class="detail-grid d-flex flex-column gap-3 mb-5">
                         <div class="row g-3">
-                            @if (config != null && config["Fecha1"].show && Model.StartDate != null)
+                            @if (config != null && config["Date1"].show && Model.StartDate != null)
                             {
                                 <div class="col-md-6">
                                     <div class="p-3 border-start border-primary border-4 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Fecha1"].label)</p>
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Date1"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
-                                            @FormatFechaCompleta(Model.StartDate.Value)
+                                            @FormatFullDate(Model.StartDate.Value)
                                         </p>
                                     </div>
                                 </div>
                             }
-                            @if (config != null && config["Hora1"].show && !string.IsNullOrEmpty(hora1))
+                            @if (config != null && config["Time1"].show && !string.IsNullOrEmpty(time1))
                             {
                                 <div class="col-md-6">
                                     <div class="p-3 border-start border-info border-4 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Hora1"].label)</p>
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Time1"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
-                                            <i class="fas fa-clock text-info me-2"></i> @hora1
+                                            <i class="fas fa-clock text-info me-2"></i> @time1
                                         </p>
                                     </div>
                                 </div>
                             }
-                            @if (config != null && config["Fecha2"].show && Model.EndDate.HasValue)
+                            @if (config != null && config["Date2"].show && Model.EndDate.HasValue)
                             {
                                 <div class="col-md-6">
                                     <div class="p-3 border-start border-primary border-4 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Fecha2"].label)</p>
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Date2"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
-                                            @FormatFechaCompleta(Model.EndDate.Value)
+                                            @FormatFullDate(Model.EndDate.Value)
                                         </p>
                                     </div>
                                 </div>
                             }
-                            @if (config != null && config["Hora2"].show && !string.IsNullOrEmpty(hora2))
+                            @if (config != null && config["Time2"].show && !string.IsNullOrEmpty(time2))
                             {
                                 <div class="col-md-6">
                                     <div class="p-3 border-start border-info border-4 bg-light rounded-end h-100 shadow-sm">
-                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Hora2"].label)</p>
+                                        <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">@Html.Raw(config["Time2"].label)</p>
                                         <p class="small fw-bold text-dark mb-0">
-                                            <i class="fas fa-clock text-info me-2"></i> @hora2
+                                            <i class="fas fa-clock text-info me-2"></i> @time2
                                         </p>
                                     </div>
                                 </div>
                             }
                         </div>
-                        @if (showDias)
+                        @if (showDays)
                         {
                             <div class="p-3 border-start border-success border-4 bg-light rounded-end shadow-sm">
                                 <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">D&iacute;as Totales</p>

@@ -9,12 +9,12 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
 {
     [Route("api/Permissions")]
     [ApiController]
-    public class PermisosApiController : ControllerBase
+    public class PermissionsApiController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
 
-        public PermisosApiController(HumanResourcesContext context, IMapper mapper)
+        public PermissionsApiController(HumanResourcesContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -22,8 +22,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
 
         // GET: api/Permissions
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "Permission", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetPermisos(int page = 1, int pageSize = 10)
+        [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetPermissions(int page = 1, int pageSize = 10)
         {
             var permissions = await _context.Permissions
                 .Include(p => p.RequestingUser)
@@ -35,8 +35,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 .Select(p => new
                 {
                     p.Id,
-                    Solicitante = p.RequestingUser.Name,
-                    Tipo = p.PermissionType.Description,
+                    Requester = p.RequestingUser.Name,
+                    Type = p.PermissionType.Description,
                     p.StartDate,
                     p.EndDate,
                     p.Reason,
@@ -50,8 +50,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
 
         // GET: api/Permissions/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Permission", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetPermiso(int id)
+        [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetPermission(int id)
         {
             var permission = await _context.Permissions
                 .Include(p => p.RequestingUser)
@@ -65,13 +65,13 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             var result = new
             {
                 permission.Id,
-                Solicitante = permission.RequestingUser.Name,
-                Tipo = permission.PermissionType.Description,
+                Requester = permission.RequestingUser.Name,
+                Type = permission.PermissionType.Description,
                 permission.StartDate,
                 permission.EndDate,
                 permission.Reason,
                 permission.Evidence, // URL relativa
-                Estado = permission.PermissionStatusTypeId,
+                Status = permission.PermissionStatusTypeId,
                 permission.WithPay,
                 permission.CreatedAt,
                 Cutoff = permission.Cutoff.StartDate.ToString("yyyy-MM-dd") + " - " + permission.Cutoff.EndDate.ToString("yyyy-MM-dd")
@@ -82,8 +82,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
 
         // POST: api/Permissions
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "Permission", PermisoRequerido = "Escribir")]
-        public async Task<IActionResult> PostPermiso([FromBody] PermissionApiCreateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Escribir")]
+        public async Task<IActionResult> PostPermission([FromBody] PermissionApiCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -92,21 +92,21 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             // Asignar solicitante: si viene en el modelo y es válido, usarlo. Si no, usar el user de la API Key (si hace sentido, o error)
             // Aquí asumiremos que el user de la API Key puede solicitar para sí mismo, o si es Admin, para otros.
             // Para simplificar: si RequestingUserId es null, usamos userId.
-            int solicitanteId = model.RequestingUserId ?? userId;
+            int requesterId = model.RequestingUserId ?? userId;
 
             // Encontrar Cutoff activo
-            var corteActivo = await _context.Cutoffs
+            var activeCutoff = await _context.Cutoffs
                 .Where(c => c.CutoffStatusTypeId == 1)
                 .OrderByDescending(c => c.Id)
                 .FirstOrDefaultAsync();
 
-            if (corteActivo == null) return BadRequest("No hay un corte activo para registrar el permiso.");
+            if (activeCutoff == null) return BadRequest("No hay un corte activo para registrar el permiso.");
 
             // Calcular días (lógica simple)
-            int? dias = null;
+            int? days = null;
             if (model.StartDate != default && model.EndDate.HasValue)
             {
-                dias = (int)((model.EndDate.Value - model.StartDate).TotalDays + 1);
+                days = (int)((model.EndDate.Value - model.StartDate).TotalDays + 1);
             }
 
             var permission = new Permission
@@ -115,11 +115,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 StartDate = model.StartDate,
                 EndDate = model.EndDate,
                 PermissionTypeId = model.PermissionTypeId,
-                RequestingUserId = solicitanteId,
-                CutoffId = corteActivo.Id,
+                RequestingUserId = requesterId,
+                CutoffId = activeCutoff.Id,
                 WithPay = model.WithPay,
                 PermissionStatusTypeId = 1,
-                Days = dias,
+                Days = days,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 CreatedByUserId = userId,
@@ -129,13 +129,13 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             _context.Permissions.Add(permission);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetPermiso), new { id = permission.Id }, new { permission.Id });
+            return CreatedAtAction(nameof(GetPermission), new { id = permission.Id }, new { permission.Id });
         }
 
         // PUT: api/Permissions/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Permission", PermisoRequerido = "Actualizar")]
-        public async Task<IActionResult> PutPermiso(int id, [FromBody] PermissionApiUpdateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> PutPermission(int id, [FromBody] PermissionApiUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
 
@@ -170,8 +170,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
 
         // DELETE: api/Permissions/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Permission", PermisoRequerido = "Eliminar")]
-        public async Task<IActionResult> DeletePermiso(int id)
+        [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> DeletePermission(int id)
         {
             var permission = await _context.Permissions.FindAsync(id);
             if (permission == null) return NotFound();

@@ -24,8 +24,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
         // GET: api/Departments
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "Department", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetDepartamentos()
+        [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetDepartments()
         {
             var departments = await _context.Departments
                 .Where(d => d.Status == true)
@@ -43,8 +43,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
         // GET: api/Departments/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Department", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetDepartamento(int id)
+        [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetDepartment(int id)
         {
             var department = await _context.Departments
                 .Where(d => d.Id == id)
@@ -67,8 +67,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
         // POST: api/Departments
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "Department", PermisoRequerido = "Escribir")]
-        public async Task<IActionResult> PostDepartamento([FromBody] DepartmentCreateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Escribir")]
+        public async Task<IActionResult> PostDepartment([FromBody] DepartmentCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -86,7 +86,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
                 _context.Departments.Add(department);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetDepartamento), new { id = department.Id }, new { department.Id, department.Description });
+                return CreatedAtAction(nameof(GetDepartment), new { id = department.Id }, new { department.Id, department.Description });
             }
             catch (Exception ex)
             {
@@ -98,8 +98,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
         // PUT: api/Departments/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Department", PermisoRequerido = "Actualizar")]
-        public async Task<IActionResult> PutDepartamento(int id, [FromBody] DepartmentUpdateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> PutDepartment(int id, [FromBody] DepartmentUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
 
@@ -128,8 +128,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
         // DELETE: api/Departments/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Department", PermisoRequerido = "Eliminar")]
-        public async Task<IActionResult> DeleteDepartamento(int id)
+        [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> DeleteDepartment(int id)
         {
             var department = await _context.Departments.FindAsync(id);
             if (department == null) return NotFound();

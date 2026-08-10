@@ -48,13 +48,13 @@
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Desde el</label>
-                                <input type="date" id="dateFrom" name="dateFrom" class="form-control filter-input-pill" value="@(ViewBag.FechaDesde?.ToString("yyyy-MM-dd"))" />
+                                <input type="date" id="dateFrom" name="dateFrom" class="form-control filter-input-pill" value="@(ViewBag.DateFrom?.ToString("yyyy-MM-dd"))" />
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Hasta el</label>
-                                <input type="date" id="dateTo" name="dateTo" class="form-control filter-input-pill" value="@(ViewBag.FechaHasta?.ToString("yyyy-MM-dd"))" />
+                                <input type="date" id="dateTo" name="dateTo" class="form-control filter-input-pill" value="@(ViewBag.DateTo?.ToString("yyyy-MM-dd"))" />
                             </div>
                         </div>
                     </div>
@@ -176,7 +176,7 @@
                 Página <span class="fw-bold">@Model.PageNumber</span> de <span class="fw-bold">@Model.PageCount</span> (<span class="fw-bold">@Model.TotalItemCount</span> registros)
             </div>
             <div class="v2-pagination">
-                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, dateFrom = ViewBag.FechaDesde, dateTo = ViewBag.FechaHasta, tableId = ViewBag.TableId }), 
+                @Html.PagedListPager(Model, page => Url.Action("Index", new { page, dateFrom = ViewBag.DateFrom, dateTo = ViewBag.DateTo, tableId = ViewBag.TableId }), 
                 new PagedListRenderOptions {
                     DisplayLinkToFirstPage = PagedListDisplayMode.Always,
                     DisplayLinkToLastPage = PagedListDisplayMode.Always,

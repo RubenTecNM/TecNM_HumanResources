@@ -7,37 +7,37 @@ using X.PagedList;
 
 namespace RecursosHumanosWeb.Services
 {
-    public interface IUsuarioService
+    public interface IUserService
     {
-        Task<IPagedList<User>> GetUsuariosPagedAsync(
-            string nombreFilter,
-            string correoFilter,
-            int? departamentoFilter,
-            bool? estadoFilter,
+        Task<IPagedList<User>> GetUsersPagedAsync(
+            string nameFilter,
+            string emailFilter,
+            int? departmentFilter,
+            bool? statusFilter,
             int page,
             int pageSize,
             string sortOrder);
 
-        Task<User> GetUsuarioByIdAsync(int id);
+        Task<User> GetUserByIdAsync(int id);
 
-        Task<UserDetailsViewModel> GetUsuarioDetailsWithStatsAsync(int id);
+        Task<UserDetailsViewModel> GetUserDetailsWithStatsAsync(int id);
 
-        Task<int> CreateUsuarioAsync(User user, int idUsuarioCrea, string claveTextoPlano);
+        Task<int> CreateUserAsync(User user, int createdByUserId, string plainPassword);
 
-        Task<bool> UpdateUsuarioAsync(User user, int idUsuarioModifica, string? claveTextoPlano = null);
+        Task<bool> UpdateUserAsync(User user, int updatedByUserId, string? plainPassword = null);
 
-        Task<bool> DeleteUsuarioAsync(int id, int idUsuarioModifica);
+        Task<bool> DeleteUserAsync(int id, int updatedByUserId);
 
-        Task<List<UsersDTO>> SearchUsuariosAsync(string term);
+        Task<List<UsersDTO>> SearchUsersAsync(string term);
 
         Task<List<Area>> GetAreasAsync();
-        Task<List<Department>> GetDepartamentosAsync();
-        Task<List<Position>> GetPuestosAsync();
-        Task<List<UserType>> GetTipoUsuariosAsync();
-        Task<List<User>> GetActiveUsuariosAsync();
+        Task<List<Department>> GetDepartmentsAsync();
+        Task<List<Position>> GetPositionsAsync();
+        Task<List<UserType>> GetUserTypesAsync();
+        Task<List<User>> GetActiveUsersAsync();
 
-        bool CanUserManageUsuarios(int userType);
+        bool CanUserManageUsers(int userType);
 
-        bool UsuarioExists(int id);
+        bool UserExists(int id);
     }
 }

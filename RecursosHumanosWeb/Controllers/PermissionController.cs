@@ -25,8 +25,8 @@ namespace RecursosHumanosWeb.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly IMapper _mapper;
         private readonly ILogger<PermissionController> _logger;
-        private readonly IPermisoService _permisoService;
-        private readonly ICorteService _corteService;
+        private readonly IPermissionService _permissionService;
+        private readonly ICutoffService _cutoffService;
         private readonly IConfiguration _configuration;
 
         public PermissionController(
@@ -34,16 +34,16 @@ namespace RecursosHumanosWeb.Controllers
             IWebHostEnvironment environment,
             IMapper mapper,
             ILogger<PermissionController> logger,
-            IPermisoService permisoService,
-            ICorteService corteService,
+            IPermissionService permissionService,
+            ICutoffService cutoffService,
             IConfiguration configuration)
         {
             _context = context;
             _environment = environment;
             _mapper = mapper;
             _logger = logger;
-            _permisoService = permisoService;
-            _corteService = corteService;
+            _permissionService = permissionService;
+            _cutoffService = cutoffService;
             _configuration = configuration;
         }
 
@@ -52,13 +52,13 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string? userName = null, int? areaId = null, DateTime? fromDay = null, DateTime? toDay = null, bool? revisado = null, int? page = 1)
         {
-            await _corteService.AutoCloseCorteIfNeededAsync();
+            await _cutoffService.AutoCloseCutoffIfNeededAsync();
             
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
             int pageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
-            var permissions = await _permisoService.GetPermisosPagedAsync(userId, areaId, userName, fromDay, toDay, revisado, page ?? 1, pageSize);
+            var permissions = await _permissionService.GetPermissionsPagedAsync(userId, areaId, userName, fromDay, toDay, revisado, page ?? 1, pageSize);
 
             var areas = (userType == (int)UserTypeEnum.HumanResources || userType == (int)UserTypeEnum.Administrator)
                 ? await _context.Areas.Where(a => a.Status).Select(a => new AreasDTO { Id = a.Id, Description = a.Description }).OrderBy(a => a.Description).ToListAsync()
@@ -74,14 +74,14 @@ namespace RecursosHumanosWeb.Controllers
             };
 
             ViewBag.FromDay = fromDay?.ToString("yyyy-MM-dd");
-            ViewBag.ToDay = toDay?.ToString("yyyy-MM-dd");
+            ViewBag.Today = toDay?.ToString("yyyy-MM-dd");
             ViewBag.Revisado = revisado;
             ViewBag.IsAutorizador = userType == (int)UserTypeEnum.Authorizer;
             ViewBag.IsRH = userType == (int)UserTypeEnum.HumanResources;
-            ViewBag.IsAdministrador = userType == (int)UserTypeEnum.Administrator;
+            ViewBag.IsAdministrator = userType == (int)UserTypeEnum.Administrator;
 
-            var corteActivo = await _corteService.GetActiveCorteAsync();
-            ViewBag.CurrentCourtId = corteActivo?.Id ?? 0;
+            var activeCutoff = await _cutoffService.GetActiveCutoffAsync();
+            ViewBag.CurrentCourtId = activeCutoff?.Id ?? 0;
 
             return View(model);
         }
@@ -92,7 +92,7 @@ namespace RecursosHumanosWeb.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
-            var stats = await _permisoService.GetStatsAsync(userId, userType);
+            var stats = await _permissionService.GetStatsAsync(userId, userType);
             return Json(stats);
         }
 
@@ -129,7 +129,7 @@ namespace RecursosHumanosWeb.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
-            if (!_permisoService.CanUserAccessPermiso(userId, userType, permission))
+            if (!_permissionService.CanUserAccessPermiso(userId, userType, permission))
             {
                 TempData["ErrorAlert"] = GetAlertJson("Acceso Denegado", "No tiene permisos para modificar esta solicitud.");
                 return RedirectToAction("Index");
@@ -179,7 +179,7 @@ namespace RecursosHumanosWeb.Controllers
                 if (!ModelState.IsValid)
                     return Json(new AlertResponseDTO { Success = false, Title = "Validación", Message = "Corrija los errores.", Errors = GetModelStateErrors() });
 
-                var cutoff = await _corteService.GetActiveCorteAsync();
+                var cutoff = await _cutoffService.GetActiveCutoffAsync();
                 if (cutoff == null) return Json(new AlertResponseDTO { Success = false, Message = "No hay corte activo." });
 
                 if (model.StartDate!.Value.Date < cutoff.StartDate.Date)
@@ -207,7 +207,7 @@ namespace RecursosHumanosWeb.Controllers
                 var permission = _mapper.Map<Permission>(model);
                 permission.Evidence = evidenciaPath;
                 permission.PermissionStatusTypeId = 1; // Pending por defecto
-                await _permisoService.CreatePermisoAsync(permission, userId);
+                await _permissionService.CreatePermissionAsync(permission, userId);
 
                 return Json(new AlertResponseDTO(controllerName: "Permission", message: "Permiso creado con éxito."));
             }
@@ -232,13 +232,13 @@ namespace RecursosHumanosWeb.Controllers
                 var original = await _context.Permissions.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
                 if (original == null) return NotFound();
 
-                if (!_permisoService.CanUserAccessPermiso(userId, userType, original))
+                if (!_permissionService.CanUserAccessPermiso(userId, userType, original))
                     return Json(new AlertResponseDTO { Success = false, Message = "Acceso Denegado" });
 
                 if (!ModelState.IsValid)
                     return Json(new AlertResponseDTO { Success = false, Errors = GetModelStateErrors() });
 
-                var cutoff = await _corteService.GetActiveCorteAsync();
+                var cutoff = await _cutoffService.GetActiveCutoffAsync();
                 if (cutoff != null && model.EndDate != null && model.EndDate.Value.Date > cutoff.EndDate.Date && !(Request.Form["confirmed"] == "true"))
                 {
                     string endDateStr = cutoff.EndDate.ToString("dd/MM/yyyy");
@@ -273,7 +273,7 @@ namespace RecursosHumanosWeb.Controllers
                     edited.Evidence = newPath;
                 }
 
-                bool success = await _permisoService.UpdatePermisoAsync(edited, userId);
+                bool success = await _permissionService.UpdatePermissionAsync(edited, userId);
                 if (!success) 
                 {
                     if (newPath != oldPath) DeleteFile(newPath!); // Borrar el nuevo si falló el guardado
@@ -304,7 +304,7 @@ namespace RecursosHumanosWeb.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
-            if (!_permisoService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
+            if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
 
             return View(permission);
         }
@@ -317,7 +317,7 @@ namespace RecursosHumanosWeb.Controllers
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
             var permission = await _context.Permissions.Include(p => p.Cutoff).FirstOrDefaultAsync(p => p.Id == id);
-            if (permission != null && _permisoService.CanUserAccessPermiso(userId, userType, permission))
+            if (permission != null && _permissionService.CanUserAccessPermiso(userId, userType, permission))
             {
                 bool isPending = permission.PermissionStatusTypeId == 1;
                 var cutoff = permission.Cutoff;
@@ -326,7 +326,7 @@ namespace RecursosHumanosWeb.Controllers
                     TempData["ErrorAlert"] = GetAlertJson("Error", "No se puede borrar un permiso ya revisado de un corte cerrado.");
                     return RedirectToAction("Index");
                 }
-                await _permisoService.DeletePermisoAsync(id, userId);
+                await _permissionService.DeletePermissionAsync(id, userId);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -346,7 +346,7 @@ namespace RecursosHumanosWeb.Controllers
                 if (permission == null || permission.PermissionStatusTypeId == 4) // 4 = Rejected/Eliminado? No, usually 4 is Rejected.
                     return Json(new AlertResponseDTO { Success = false, Message = "No encontrado o ya procesado." });
 
-                if (!_permisoService.CanUserAccessPermiso(userId, userType, permission)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
+                if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
 
                 var cutoff = permission.Cutoff;
                 if (cutoff == null || cutoff.CutoffStatusTypeId != 1)
@@ -357,7 +357,7 @@ namespace RecursosHumanosWeb.Controllers
                     return Json(new AlertResponseDTO { ShowConfirmation = true, Title = "¿Eliminar?", Message = $"¿Borrar solicitud de **{permission.RequestingUser.Name}**?", Icon = "question", ConfirmButtonText = "Sí, eliminar" });
                 }
 
-                bool success = await _permisoService.DeletePermisoAsync(request.Id, userId);
+                bool success = await _permissionService.DeletePermissionAsync(request.Id, userId);
                 if (!success) return Json(new AlertResponseDTO { Success = false, Message = "Error al intentar eliminar el registro." });
 
                 return Json(new AlertResponseDTO { Success = true, Title = "Eliminado", RedirectUrl = Url.Action("Index", "Permission") });
@@ -391,7 +391,7 @@ namespace RecursosHumanosWeb.Controllers
 
             int authId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-            bool success = await _permisoService.AutorizarPermisoAsync(id, authId, model.WithPay, "Revisado");
+            bool success = await _permissionService.AuthorizePermissionAsync(id, authId, model.WithPay, "Revisado");
             if (!success) return Json(new AlertResponseDTO { Success = false, Message = "Error al revisar" });
 
             return Json(new AlertResponseDTO { Success = true, RedirectUrl = Url.Action("Index", "Permission") });
@@ -417,10 +417,10 @@ namespace RecursosHumanosWeb.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
-            if (!_permisoService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
+            if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
             
             // Pass user info for review authorization check in view
-            var currentCourt = await _corteService.GetActiveCorteAsync();
+            var currentCourt = await _cutoffService.GetActiveCutoffAsync();
             ViewBag.CurrentCourtId = currentCourt?.Id ?? 0;
             
             ViewBag.CurrentUserId = userId;
@@ -461,9 +461,9 @@ namespace RecursosHumanosWeb.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
-            if (!_permisoService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
+            if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
             
-            var currentCourt = await _corteService.GetActiveCorteAsync();
+            var currentCourt = await _cutoffService.GetActiveCutoffAsync();
             ViewBag.CurrentCourtId = currentCourt?.Id ?? 0;
             ViewBag.CurrentUserId = userId;
             ViewBag.CurrentUserType = userType;
@@ -488,7 +488,7 @@ namespace RecursosHumanosWeb.Controllers
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
-            if (!_permisoService.CanUserAccessPermiso(userId, userType, permission)) return Json(new { exists = true, hasAccess = false });
+            if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Json(new { exists = true, hasAccess = false });
             
             // Si es autorizador y esta pendiente, mandar a Authorize
             bool isApprover = userType == (int)UserTypeEnum.Administrator || userType == (int)UserTypeEnum.HumanResources;
@@ -514,7 +514,7 @@ namespace RecursosHumanosWeb.Controllers
             if (!User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString())) return Forbid();
 
             // Simplified: logic remains largely same but cleaned up
-            var cutoff = await _corteService.GetActiveCorteAsync();
+            var cutoff = await _cutoffService.GetActiveCutoffAsync();
             if (cutoff == null) return Json(new AlertResponseDTO { Success = false, Message = "No hay corte activo." });
 
             var users = await _context.Users.Where(u => u.Status).Take(10).ToListAsync();

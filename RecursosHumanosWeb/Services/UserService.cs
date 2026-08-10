@@ -13,22 +13,22 @@ using X.PagedList.Extensions;
 
 namespace RecursosHumanosWeb.Services
 {
-    public class UsuarioService : IUsuarioService
+    public class UserService : IUserService
     {
         private readonly HumanResourcesContext _context;
-        private readonly ILogger<UsuarioService> _logger;
+        private readonly ILogger<UserService> _logger;
 
-        public UsuarioService(HumanResourcesContext context, ILogger<UsuarioService> logger)
+        public UserService(HumanResourcesContext context, ILogger<UserService> logger)
         {
             _context = context;
             _logger = logger;
         }
 
-        public async Task<IPagedList<User>> GetUsuariosPagedAsync(
-            string nombreFilter,
-            string correoFilter,
-            int? departamentoFilter,
-            bool? estadoFilter,
+        public async Task<IPagedList<User>> GetUsersPagedAsync(
+            string nameFilter,
+            string emailFilter,
+            int? departmentFilter,
+            bool? statusFilter,
             int page,
             int pageSize,
             string sortOrder)
@@ -43,17 +43,17 @@ namespace RecursosHumanosWeb.Services
                 .AsQueryable();
 
             // Aplicar filtros
-            if (!string.IsNullOrEmpty(nombreFilter))
-                query = query.Where(u => u.Name.Contains(nombreFilter));
+            if (!string.IsNullOrEmpty(nameFilter))
+                query = query.Where(u => u.Name.Contains(nameFilter));
 
-            if (!string.IsNullOrEmpty(correoFilter))
-                query = query.Where(u => u.Email.Contains(correoFilter));
+            if (!string.IsNullOrEmpty(emailFilter))
+                query = query.Where(u => u.Email.Contains(emailFilter));
 
-            if (departamentoFilter.HasValue)
-                query = query.Where(u => u.DepartmentId == departamentoFilter.Value);
+            if (departmentFilter.HasValue)
+                query = query.Where(u => u.DepartmentId == departmentFilter.Value);
 
-            if (estadoFilter.HasValue)
-                query = query.Where(u => u.Status == estadoFilter.Value);
+            if (statusFilter.HasValue)
+                query = query.Where(u => u.Status == statusFilter.Value);
 
             // Aplicar ordenamiento
             query = sortOrder switch
@@ -71,7 +71,7 @@ namespace RecursosHumanosWeb.Services
             return query.ToPagedList(page, pageSize);
         }
 
-        public async Task<User> GetUsuarioByIdAsync(int id)
+        public async Task<User> GetUserByIdAsync(int id)
         {
             return await _context.Users
                 .Include(u => u.Area)
@@ -83,9 +83,9 @@ namespace RecursosHumanosWeb.Services
                 .FirstOrDefaultAsync(u => u.Id == id);
         }
 
-        public async Task<UserDetailsViewModel> GetUsuarioDetailsWithStatsAsync(int id)
+        public async Task<UserDetailsViewModel> GetUserDetailsWithStatsAsync(int id)
         {
-            var usuarioBasico = await _context.Users
+            var basicUser = await _context.Users
                 .AsNoTracking()
                 .Where(u => u.Id == id)
                 .Select(u => new
@@ -111,65 +111,65 @@ namespace RecursosHumanosWeb.Services
                 })
                 .FirstOrDefaultAsync();
 
-            if (usuarioBasico == null) return null;
+            if (basicUser == null) return null;
 
             // Obtener contadores de permissions
-            var permisosStats = await _context.Permissions
+            var permissionStats = await _context.Permissions
                 .Where(p => p.RequestingUserId == id && p.PermissionStatusTypeId != 3)
                 .GroupBy(p => 1)
                 .Select(g => new
                 {
-                    TotalPermisos = g.Count(),
-                    PermisosRevisados = g.Count(p => p.PermissionStatusTypeId != 1),
+                    TotalPermissions = g.Count(),
+                    ReviewedPermissions = g.Count(p => p.PermissionStatusTypeId != 1),
                     WithPay = g.Count(p => p.WithPay),
-                    SinGoce = g.Count(p => !p.WithPay)
+                    WithoutPay = g.Count(p => !p.WithPay)
                 })
                 .FirstOrDefaultAsync();
 
             return new UserDetailsViewModel
             {
-                Id = usuarioBasico.Id,
-                Name = usuarioBasico.Name,
-                Email = usuarioBasico.Email,
-                Status = usuarioBasico.Status,
-                CreatedAt = usuarioBasico.CreatedAt,
-                UpdatedAt = usuarioBasico.UpdatedAt,
-                UserType = usuarioBasico.UserType,
-                TipoUsuarioNombre = usuarioBasico.UserType, // Fix: Asignar a la propiedad usada en la vista
-                Area = usuarioBasico.Area,
-                AreaDescripcion = usuarioBasico.Area, // Fix: Asignar a la propiedad usada en la vista (si se usara)
-                Department = usuarioBasico.Department,
-                DepartamentoDescripcion = usuarioBasico.Department, // Fix: Asignar a la propiedad usada en la vista
-                Position = usuarioBasico.Position,
-                PuestoDescripcion = usuarioBasico.Position, // Fix: Asignar a la propiedad usada en la vista
-                CreatedBy = usuarioBasico.CreatedBy,
-                UsuarioCreaNombre = usuarioBasico.CreatedBy, // Fix: Asignar a la propiedad usada en la vista
-                UpdatedBy = usuarioBasico.UpdatedBy,
-                UsuarioModificaNombre = usuarioBasico.UpdatedBy, // Fix: Asignar a la propiedad usada en la vista
-                TotalPermisos = permisosStats?.TotalPermisos ?? 0,
-                PermisosRevisados = permisosStats?.PermisosRevisados ?? 0,
-                WithPay = permisosStats?.WithPay ?? 0,
-                SinGoce = permisosStats?.SinGoce ?? 0
+                Id = basicUser.Id,
+                Name = basicUser.Name,
+                Email = basicUser.Email,
+                Status = basicUser.Status,
+                CreatedAt = basicUser.CreatedAt,
+                UpdatedAt = basicUser.UpdatedAt,
+                UserType = basicUser.UserType,
+                UserTypeName = basicUser.UserType, // Fix: Asignar a la propiedad usada en la vista
+                Area = basicUser.Area,
+                AreaDescription = basicUser.Area, // Fix: Asignar a la propiedad usada en la vista (si se usara)
+                Department = basicUser.Department,
+                DepartmentDescription = basicUser.Department, // Fix: Asignar a la propiedad usada en la vista
+                Position = basicUser.Position,
+                PositionDescription = basicUser.Position, // Fix: Asignar a la propiedad usada en la vista
+                CreatedBy = basicUser.CreatedBy,
+                CreatedByName = basicUser.CreatedBy, // Fix: Asignar a la propiedad usada en la vista
+                UpdatedBy = basicUser.UpdatedBy,
+                UpdatedByName = basicUser.UpdatedBy, // Fix: Asignar a la propiedad usada en la vista
+                TotalPermissions = permissionStats?.TotalPermissions ?? 0,
+                ReviewedPermissions = permissionStats?.ReviewedPermissions ?? 0,
+                WithPay = permissionStats?.WithPay ?? 0,
+                WithoutPay = permissionStats?.WithoutPay ?? 0
             };
         }
 
-        public async Task<int> CreateUsuarioAsync(User user, int idUsuarioCrea, string claveTextoPlano)
+        public async Task<int> CreateUserAsync(User user, int createdByUserId, string plainPassword)
         {
             user.Status = true;
             user.CreatedAt = DateTime.Now;
-            user.CreatedByUserId = idUsuarioCrea;
-            user.UpdatedByUserId = idUsuarioCrea;
+            user.CreatedByUserId = createdByUserId;
+            user.UpdatedByUserId = createdByUserId;
             user.ApiKeyId = null;
-            user.PasswordHash = string.IsNullOrWhiteSpace(claveTextoPlano) 
+            user.PasswordHash = string.IsNullOrWhiteSpace(plainPassword) 
                 ? string.Empty 
-                : PasswordHasher.HashSha256(claveTextoPlano);
+                : PasswordHasher.HashSha256(plainPassword);
 
             _context.Add(user);
             await _context.SaveChangesAsync();
             return user.Id;
         }
 
-        public async Task<bool> UpdateUsuarioAsync(User user, int idUsuarioModifica, string? claveTextoPlano = null)
+        public async Task<bool> UpdateUserAsync(User user, int updatedByUserId, string? plainPassword = null)
         {
             var existing = await _context.Users.FindAsync(user.Id);
             if (existing == null) return false;
@@ -182,23 +182,23 @@ namespace RecursosHumanosWeb.Services
             existing.DepartmentId = user.DepartmentId;
             existing.PositionId = user.PositionId;
             existing.Status = user.Status;
-            existing.UpdatedByUserId = idUsuarioModifica;
+            existing.UpdatedByUserId = updatedByUserId;
             existing.UpdatedAt = DateTime.Now;
 
             // Solo actualizar clave si se proporciona
-            if (!string.IsNullOrWhiteSpace(claveTextoPlano))
+            if (!string.IsNullOrWhiteSpace(plainPassword))
             {
-                existing.PasswordHash = PasswordHasher.HashSha256(claveTextoPlano);
+                existing.PasswordHash = PasswordHasher.HashSha256(plainPassword);
             }
 
             _context.Update(existing);
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<bool> DeleteUsuarioAsync(int id, int idUsuarioModifica)
+        public async Task<bool> DeleteUserAsync(int id, int updatedByUserId)
         {
             // Validar que el user no se esté eliminando a sí mismo
-            if (id == idUsuarioModifica)
+            if (id == updatedByUserId)
             {
                 _logger.LogWarning("User {Id} intentó eliminarse a sí mismo", id);
                 return false;
@@ -208,14 +208,14 @@ namespace RecursosHumanosWeb.Services
             if (user == null) return false;
 
             user.Status = false;
-            user.UpdatedByUserId = idUsuarioModifica;
+            user.UpdatedByUserId = updatedByUserId;
             user.UpdatedAt = DateTime.Now;
 
             _context.Update(user);
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<List<UsersDTO>> SearchUsuariosAsync(string term)
+        public async Task<List<UsersDTO>> SearchUsersAsync(string term)
         {
             if (string.IsNullOrWhiteSpace(term))
                 return new List<UsersDTO>();
@@ -244,7 +244,7 @@ namespace RecursosHumanosWeb.Services
                 .ToListAsync();
         }
 
-        public async Task<List<Department>> GetDepartamentosAsync()
+        public async Task<List<Department>> GetDepartmentsAsync()
         {
             return await _context.Departments
                 .Where(d => d.Status)
@@ -252,7 +252,7 @@ namespace RecursosHumanosWeb.Services
                 .ToListAsync();
         }
 
-        public async Task<List<Position>> GetPuestosAsync()
+        public async Task<List<Position>> GetPositionsAsync()
         {
             return await _context.Positions
                 .Where(p => p.Status)
@@ -260,14 +260,14 @@ namespace RecursosHumanosWeb.Services
                 .ToListAsync();
         }
 
-        public async Task<List<UserType>> GetTipoUsuariosAsync()
+        public async Task<List<UserType>> GetUserTypesAsync()
         {
             return await _context.UserTypes
                 .OrderBy(t => t.Description)
                 .ToListAsync();
         }
 
-        public async Task<List<User>> GetActiveUsuariosAsync()
+        public async Task<List<User>> GetActiveUsersAsync()
         {
             return await _context.Users
                 .Where(u => u.Status)
@@ -275,13 +275,13 @@ namespace RecursosHumanosWeb.Services
                 .ToListAsync();
         }
 
-        public bool CanUserManageUsuarios(int userType)
+        public bool CanUserManageUsers(int userType)
         {
             return userType == (int)UserTypeEnum.Administrator || 
                    userType == (int)UserTypeEnum.HumanResources;
         }
 
-        public bool UsuarioExists(int id)
+        public bool UserExists(int id)
         {
             return _context.Users.Any(e => e.Id == id);
         }

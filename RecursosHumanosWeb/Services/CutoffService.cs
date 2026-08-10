@@ -4,18 +4,18 @@ using RecursosHumanosWeb.Models.Enums;
 
 namespace RecursosHumanosWeb.Services
 {
-    public class CorteService : ICorteService
+    public class CutoffService : ICutoffService
     {
         private readonly HumanResourcesContext _context;
-        private readonly ILogger<CorteService> _logger;
+        private readonly ILogger<CutoffService> _logger;
 
-        public CorteService(HumanResourcesContext context, ILogger<CorteService> logger)
+        public CutoffService(HumanResourcesContext context, ILogger<CutoffService> logger)
         {
             _context = context;
             _logger = logger;
         }
 
-        public async Task<Cutoff> GetActiveCorteAsync()
+        public async Task<Cutoff> GetActiveCutoffAsync()
         {
             return await _context.Cutoffs
                 .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open)
@@ -23,19 +23,19 @@ namespace RecursosHumanosWeb.Services
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<Cutoff> GetLastCorteAsync()
+        public async Task<Cutoff> GetLastCutoffAsync()
         {
             return await _context.Cutoffs
                 .OrderByDescending(c => c.EndDate)
                 .FirstOrDefaultAsync();
         }
 
-        public async Task<bool> HasPendingPermissionsAsync(int corteId)
+        public async Task<bool> HasPendingPermissionsAsync(int cutoffId)
         {
-            return await _context.Permissions.AnyAsync(p => p.CutoffId == corteId && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending && p.Status);
+            return await _context.Permissions.AnyAsync(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending && p.Status);
         }
 
-        public async Task AutoCloseCorteIfNeededAsync()
+        public async Task AutoCloseCutoffIfNeededAsync()
         {
             try
             {
@@ -43,7 +43,7 @@ namespace RecursosHumanosWeb.Services
                     .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open && c.EndDate.Date < DateTime.Now.Date)
                     .ToListAsync();
 
-                foreach (var corteActivo in cortesExpirados)
+                foreach (var activeCutoff in cortesExpirados)
                 {
                     // Usar contexto para activar auditoría de sistema
                     _context._auditOriginOverride = (int)OriginTypeEnum.AutomaticSystem;
@@ -51,7 +51,7 @@ namespace RecursosHumanosWeb.Services
 
                     // 1. Rechazar permissions pendientes
                     var pendientes = await _context.Permissions
-                        .Where(p => p.CutoffId == corteActivo.Id && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending)
+                        .Where(p => p.CutoffId == activeCutoff.Id && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending)
                         .ToListAsync();
 
                     if (pendientes.Any())
@@ -69,13 +69,13 @@ namespace RecursosHumanosWeb.Services
                     }
 
                     // 2. Cerrar Cutoff
-                    corteActivo.CutoffStatusTypeId = (int)CutoffStatusEnum.Closed;
-                    corteActivo.UpdatedAt = DateTime.Now;
-                    corteActivo.UpdatedByUserId = rootId;
+                    activeCutoff.CutoffStatusTypeId = (int)CutoffStatusEnum.Closed;
+                    activeCutoff.UpdatedAt = DateTime.Now;
+                    activeCutoff.UpdatedByUserId = rootId;
                         
-                    _context.Update(corteActivo);
+                    _context.Update(activeCutoff);
                     await _context.SaveChangesAsync();
-                    _logger.LogInformation("Cutoff {Id} cerrado automáticamente por expiración.", corteActivo.Id);
+                    _logger.LogInformation("Cutoff {Id} cerrado automáticamente por expiración.", activeCutoff.Id);
                 }
             }
             catch (Exception ex)
@@ -84,9 +84,9 @@ namespace RecursosHumanosWeb.Services
             }
         }
 
-        public async Task<bool> CreateCorteAsync(Cutoff newCutoff, int userId)
+        public async Task<bool> CreateCutoffAsync(Cutoff newCutoff, int userId)
         {
-            var corteActivo = await GetActiveCorteAsync();
+            var activeCutoff = await GetActiveCutoffAsync();
             DateTime ahora = DateTime.Now;
 
             // Transacción para asegurar consistencia
@@ -94,17 +94,17 @@ namespace RecursosHumanosWeb.Services
             {
                 try
                 {
-                    if (corteActivo != null)
+                    if (activeCutoff != null)
                     {
-                        if (await HasPendingPermissionsAsync(corteActivo.Id))
+                        if (await HasPendingPermissionsAsync(activeCutoff.Id))
                         {
                             return false; // No se puede crear si hay pendientes
                         }
 
-                        corteActivo.CutoffStatusTypeId = (int)CutoffStatusEnum.Closed;
-                        corteActivo.UpdatedAt = ahora;
-                        corteActivo.UpdatedByUserId = userId;
-                        _context.Update(corteActivo);
+                        activeCutoff.CutoffStatusTypeId = (int)CutoffStatusEnum.Closed;
+                        activeCutoff.UpdatedAt = ahora;
+                        activeCutoff.UpdatedByUserId = userId;
+                        _context.Update(activeCutoff);
                     }
 
                     // Validación de traslape con cualquier cutoff existente
@@ -140,7 +140,7 @@ namespace RecursosHumanosWeb.Services
             }
         }
 
-        public async Task<bool> InactivateCorteAsync(int id, int userId)
+        public async Task<bool> InactivateCutoffAsync(int id, int userId)
         {
             var cutoff = await _context.Cutoffs.FindAsync(id);
             if (cutoff == null) return false;
@@ -185,7 +185,7 @@ namespace RecursosHumanosWeb.Services
             }
         }
 
-        public async Task<bool> CloseCorteAsync(int id, int userId)
+        public async Task<bool> CloseCutoffAsync(int id, int userId)
         {
             var cutoff = await _context.Cutoffs.FindAsync(id);
             if (cutoff == null || cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open) return false;

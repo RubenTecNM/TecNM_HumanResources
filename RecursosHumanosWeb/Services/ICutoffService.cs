@@ -3,14 +3,14 @@ using RecursosHumanosWeb.Models;
 
 namespace RecursosHumanosWeb.Services
 {
-    public interface ICorteService
+    public interface ICutoffService
     {
-        Task<Cutoff> GetActiveCorteAsync();
-        Task<Cutoff> GetLastCorteAsync();
-        Task<bool> HasPendingPermissionsAsync(int corteId);
-        Task AutoCloseCorteIfNeededAsync();
-        Task<bool> CreateCorteAsync(Cutoff cutoff, int userId);
-        Task<bool> InactivateCorteAsync(int id, int userId);
-        Task<bool> CloseCorteAsync(int id, int userId);
+        Task<Cutoff> GetActiveCutoffAsync();
+        Task<Cutoff> GetLastCutoffAsync();
+        Task<bool> HasPendingPermissionsAsync(int cutoffId);
+        Task AutoCloseCutoffIfNeededAsync();
+        Task<bool> CreateCutoffAsync(Cutoff cutoff, int userId);
+        Task<bool> InactivateCutoffAsync(int id, int userId);
+        Task<bool> CloseCutoffAsync(int id, int userId);
     }
 }

@@ -9,12 +9,12 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
 {
     [Route("api/Cutoffs")]
     [ApiController]
-    public class CortesApiController : ControllerBase
+    public class CutoffsApiController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
 
-        public CortesApiController(HumanResourcesContext context, IMapper mapper)
+        public CutoffsApiController(HumanResourcesContext context, IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -22,9 +22,9 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
 
         // GET: api/Cutoffs
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "Cutoff", PermisoRequerido = "Leer")]
-        // public async Task<IActionResult> GetCortes() --> Se sugiere paginación para cutoffs, pero por ahora lista simple
-        public async Task<IActionResult> GetCortes()
+        [ApiKeyAuthorize(TargetTable = "Cutoff", RequiredPermission = "Leer")]
+        // public async Task<IActionResult> GetCutoffs() --> Se sugiere paginación para cutoffs, pero por ahora lista simple
+        public async Task<IActionResult> GetCutoffs()
         {
             var cutoffs = await _context.Cutoffs
                 .OrderByDescending(c => c.Id)
@@ -44,8 +44,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
 
         // GET: api/Cutoffs/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Cutoff", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetCorte(int id)
+        [ApiKeyAuthorize(TargetTable = "Cutoff", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetCutoff(int id)
         {
             var cutoff = await _context.Cutoffs
                 .Where(c => c.Id == id)
@@ -69,8 +69,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
 
         // POST: api/Cutoffs
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "Cutoff", PermisoRequerido = "Escribir")]
-        public async Task<IActionResult> PostCorte([FromBody] CutoffApiCreateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Cutoff", RequiredPermission = "Escribir")]
+        public async Task<IActionResult> PostCutoff([FromBody] CutoffApiCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -87,13 +87,13 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
             // Nota: Aquí se podría validar solapamiento de fechas, etc.
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCorte), new { id = cutoff.Id }, new { cutoff.Id, cutoff.StartDate, cutoff.EndDate });
+            return CreatedAtAction(nameof(GetCutoff), new { id = cutoff.Id }, new { cutoff.Id, cutoff.StartDate, cutoff.EndDate });
         }
 
         // PUT: api/Cutoffs/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Cutoff", PermisoRequerido = "Actualizar")]
-        public async Task<IActionResult> PutCorte(int id, [FromBody] CutoffApiUpdateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Cutoff", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> PutCutoff(int id, [FromBody] CutoffApiUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
 
@@ -114,8 +114,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
 
         // DELETE: api/Cutoffs/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Cutoff", PermisoRequerido = "Eliminar")]
-        public async Task<IActionResult> DeleteCorte(int id)
+        [ApiKeyAuthorize(TargetTable = "Cutoff", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> DeleteCutoff(int id)
         {
             var cutoff = await _context.Cutoffs.FindAsync(id);
             if (cutoff == null) return NotFound();

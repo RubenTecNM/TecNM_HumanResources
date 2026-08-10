@@ -53,7 +53,7 @@
                                 <span class="small fw-medium text-secondary text-uppercase">Puesto</span>
                             </div>
                             <p class="h6 fw-semibold text-dark mb-0 ms-5">
-                                @(Model.PuestoDescripcion ?? "No asignado")
+                                @(Model.PositionDescription ?? "No asignado")
                             </p>
                         </div>
                     </div>
@@ -67,7 +67,7 @@
                                 <span class="small fw-medium text-secondary text-uppercase">Departamento</span>
                             </div>
                             <p class="h6 fw-semibold text-dark mb-0 ms-5">
-                                @(Model.DepartamentoDescripcion ?? "No asignado")
+                                @(Model.DepartmentDescription ?? "No asignado")
                             </p>
                         </div>
                     </div>
@@ -88,7 +88,7 @@
                                 <span class="small fw-medium text-secondary text-uppercase">Rol de Acceso</span>
                             </div>
                             <p class="h6 fw-semibold text-dark mb-0 ms-5">
-                                @(Model.TipoUsuarioNombre ?? "Usuario Estándar")
+                                @(Model.UserTypeName ?? "Usuario Estándar")
                             </p>
                         </div>
                     </div>
@@ -121,7 +121,7 @@
                                 </div>
                                 <div>
                                     <p class="small text-secondary mb-0">Creado por</p>
-                                    <p class="fw-bold text-dark mb-0">@(Model.UsuarioCreaNombre ?? "Sistema")</p>
+                                    <p class="fw-bold text-dark mb-0">@(Model.CreatedByName ?? "Sistema")</p>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +134,7 @@
                                 </div>
                                 <div>
                                     <p class="small text-secondary mb-0">Modificado por</p>
-                                    <p class="fw-bold text-dark mb-0">@(Model.UsuarioModificaNombre ?? "N/A")</p>
+                                    <p class="fw-bold text-dark mb-0">@(Model.UpdatedByName ?? "N/A")</p>
                                 </div>
                             </div>
                         </div>

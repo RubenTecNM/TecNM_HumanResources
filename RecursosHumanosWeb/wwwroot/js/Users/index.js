@@ -42,8 +42,8 @@
 });
 
 function clearAllFilters() {
-    document.getElementById('nombreUsuario') && (document.getElementById('nombreUsuario').value = '');
-    document.getElementById('idArea') && (document.getElementById('idArea').value = '');
+    document.getElementById('userName') && (document.getElementById('userName').value = '');
+    document.getElementById('areaId') && (document.getElementById('areaId').value = '');
     document.getElementById('searchForm').submit();
     if (typeof showToast === 'function') showToast('✅ Todos los filtros han sido limpiados', 'success');
     else showNotification('✅ Todos los filtros han sido limpiados', 'success');

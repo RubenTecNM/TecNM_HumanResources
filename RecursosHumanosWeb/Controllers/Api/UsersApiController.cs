@@ -11,12 +11,12 @@ namespace RecursosHumanosWeb.Controllers.Api
     // Heredamos de ControllerBase para API
     [Route("api/Users")]
     [ApiController]
-    public class UsuariosApiController : ControllerBase
+    public class UsersApiController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
         private readonly AutoMapper.IMapper _mapper;
 
-        public UsuariosApiController(HumanResourcesContext context, AutoMapper.IMapper mapper)
+        public UsersApiController(HumanResourcesContext context, AutoMapper.IMapper mapper)
         {
             _context = context;
             _mapper = mapper;
@@ -26,8 +26,8 @@ namespace RecursosHumanosWeb.Controllers.Api
 
         // Simula la obtención de la lista (Similar a Index de tu MVC Controller)
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "User", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetUsuarios()
+        [ApiKeyAuthorize(TargetTable = "User", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetUsers()
         {
             // Usar AutoMapper ProjectTo para proyectar eficientemente desde la BD
             var users = await _context.Users
@@ -42,8 +42,8 @@ namespace RecursosHumanosWeb.Controllers.Api
 
         // Obtiene detalles de un user (Similar a Details de tu MVC Controller)
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "User", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetUsuario(int id)
+        [ApiKeyAuthorize(TargetTable = "User", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetUser(int id)
         {
             // Proyectar a un DTO de detalle si necesitas más campos o usar el ViewModel
             var user = await _context.Users
@@ -60,8 +60,8 @@ namespace RecursosHumanosWeb.Controllers.Api
 
         // Crea un nuevo user (Similar a POST Create de tu MVC Controller)
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "User", PermisoRequerido = "Escribir")]
-        public async Task<IActionResult> PostUsuario([FromBody] UserCreateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "User", RequiredPermission = "Escribir")]
+        public async Task<IActionResult> PostUser([FromBody] UserCreateViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -98,23 +98,23 @@ namespace RecursosHumanosWeb.Controllers.Api
 
             if (created != null)
             {
-                return CreatedAtAction(nameof(GetUsuario), new { id = newUser.Id }, created);
+                return CreatedAtAction(nameof(GetUser), new { id = newUser.Id }, created);
             }
 
             // Fallback: map the entity we just saved to the details VM
             var fallback = _mapper.Map<RecursosHumanosWeb.Models.ViewModels.User.UserDetailsViewModel>(newUser);
-            return CreatedAtAction(nameof(GetUsuario), new { id = newUser.Id }, fallback);
+            return CreatedAtAction(nameof(GetUser), new { id = newUser.Id }, fallback);
         }
 
         // --- ACCIONES DE ACTUALIZACIÓN (PUT) ---
 
         // Actualiza un user existente (Similar a POST Edit de tu MVC Controller)
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "User", PermisoRequerido = "Actualizar")]
-        public async Task<IActionResult> PutUsuario(int id, [FromBody] UserUpdateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "User", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> PutUser(int id, [FromBody] UserUpdateViewModel model)
         {
-            // CORRECCIÓN: Usar IdUsuario en lugar de Id
-            if (id != model.IdUsuario || !ModelState.IsValid)
+            // CORRECCIÓN: Usar Id en lugar de IdUsuario
+            if (id != model.Id || !ModelState.IsValid)
             {
                 return BadRequest("El ID de la URL no coincide con el ID del modelo o el modelo no es válido.");
             }
@@ -162,8 +162,8 @@ namespace RecursosHumanosWeb.Controllers.Api
 
         // Elimina un user (Simula el POST Delete de tu MVC Controller, pero con Baja Lógica)
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "User", PermisoRequerido = "Eliminar")]
-        public async Task<IActionResult> DeleteUsuario(int id)
+        [ApiKeyAuthorize(TargetTable = "User", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)

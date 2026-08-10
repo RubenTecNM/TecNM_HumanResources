@@ -21,18 +21,18 @@ namespace RecursosHumanosWeb.Controllers
     {
         private readonly IMapper _mapper;
         private readonly ILogger<UserController> _logger;
-        private readonly IUsuarioService _usuarioService;
+        private readonly IUserService _userService;
         private readonly IConfiguration _configuration;
 
         public UserController(
             IMapper mapper,
             ILogger<UserController> logger,
-            IUsuarioService usuarioService,
+            IUserService userService,
             IConfiguration configuration)
         {
             _mapper = mapper;
             _logger = logger;
-            _usuarioService = usuarioService;
+            _userService = userService;
             _configuration = configuration;
         }
 
@@ -41,30 +41,30 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> Index(
-            string nombreFilter,
-            string correoFilter,
-            int? departamentoFilter,
-            bool? estadoFilter,
+            string nameFilter,
+            string emailFilter,
+            int? departmentFilter,
+            bool? statusFilter,
             int? page,
             string sortOrder,
             string currentFilter)
         {
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
             
-            if (!_usuarioService.CanUserManageUsuarios(userType))
+            if (!_userService.CanUserManageUsers(userType))
                 return Forbid();
 
-            ViewData["IsAdministrador"] = userType == (int)UserTypeEnum.Administrator;
+            ViewData["IsAdministrator"] = userType == (int)UserTypeEnum.Administrator;
 
             // Parámetros de ordenamiento
             ViewBag.CurrentSort = sortOrder;
-            ViewBag.NombreSortParm = string.IsNullOrEmpty(sortOrder) ? "nombre_desc" : "";
-            ViewBag.CorreoSortParm = sortOrder == "correo" ? "correo_desc" : "correo";
-            ViewBag.DepartamentoSortParm = sortOrder == "department" ? "departamento_desc" : "department";
-            ViewBag.FechaSortParm = sortOrder == "fecha" ? "fecha_desc" : "fecha";
+            ViewBag.NameSortParm = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
+            ViewBag.EmailSortParm = sortOrder == "email" ? "email_desc" : "email";
+            ViewBag.DepartmentSortParm = sortOrder == "department" ? "department_desc" : "department";
+            ViewBag.DateSortParm = sortOrder == "date" ? "date_desc" : "date";
 
             // Lógica de filtrado y paginación corregida
-            if (nombreFilter != null || correoFilter != null || departamentoFilter != null || estadoFilter != null)
+            if (nameFilter != null || emailFilter != null || departmentFilter != null || statusFilter != null)
             {
                 // Si es una nueva búsqueda (sin parámetro de página), empezamos en 1
                 if (!page.HasValue) page = 1;
@@ -72,37 +72,37 @@ namespace RecursosHumanosWeb.Controllers
             else
             {
                 // Si no hay parámetros nuevos, recuperamos el filtro actual
-                nombreFilter = currentFilter;
+                nameFilter = currentFilter;
             }
 
-            ViewBag.CurrentFilter = nombreFilter;
+            ViewBag.CurrentFilter = nameFilter;
             
             int pageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
             int pageNumber = page ?? 1;
 
-            var paginatedUsers = await _usuarioService.GetUsuariosPagedAsync(
-                nombreFilter,
-                correoFilter,
-                departamentoFilter,
-                estadoFilter,
+            var paginatedUsers = await _userService.GetUsersPagedAsync(
+                nameFilter,
+                emailFilter,
+                departmentFilter,
+                statusFilter,
                 pageNumber,
                 pageSize,
                 sortOrder ?? "");
 
-            var areas = await _usuarioService.GetAreasAsync();
-            var departments = await _usuarioService.GetDepartamentosAsync();
+            var areas = await _userService.GetAreasAsync();
+            var departments = await _userService.GetDepartmentsAsync();
 
             var model = new UserSearchViewModel
             {
-                UsuariosPaginados = paginatedUsers,
+                PagedUsers = paginatedUsers,
                 Areas = areas,
                 Departments = departments
             };
 
-            ViewBag.NombreFilter = nombreFilter;
-            ViewBag.CorreoFilter = correoFilter;
-            ViewBag.DepartamentoFilter = departamentoFilter;
-            ViewBag.EstadoFilter = estadoFilter;
+            ViewBag.NameFilter = nameFilter;
+            ViewBag.EmailFilter = emailFilter;
+            ViewBag.DepartmentFilter = departmentFilter;
+            ViewBag.StatusFilter = statusFilter;
 
             return View(model);
         }
@@ -111,7 +111,7 @@ namespace RecursosHumanosWeb.Controllers
         [Authorize(Policy = "RHOrAdmin")]
         public async Task<IActionResult> SearchUsers(string term)
         {
-            var results = await _usuarioService.SearchUsuariosAsync(term ?? "");
+            var results = await _userService.SearchUsersAsync(term ?? "");
             // Mapear a un formato que Select2 entienda por defecto (id, text) y agregar metadatos necesarios
             var select2Results = results.Select(u => new
             {
@@ -140,7 +140,7 @@ namespace RecursosHumanosWeb.Controllers
                 return Forbid();
             }
 
-            var vm = await _usuarioService.GetUsuarioDetailsWithStatsAsync(id.Value);
+            var vm = await _userService.GetUserDetailsWithStatsAsync(id.Value);
             if (vm == null) return NotFound();
 
             return View(vm);
@@ -174,7 +174,7 @@ namespace RecursosHumanosWeb.Controllers
             try
             {
                 var user = _mapper.Map<User>(model);
-                await _usuarioService.CreateUsuarioAsync(user, currentUserId, model.Password);
+                await _userService.CreateUserAsync(user, currentUserId, model.Password);
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -198,7 +198,7 @@ namespace RecursosHumanosWeb.Controllers
         {
             if (id == null) return NotFound();
 
-            var user = await _usuarioService.GetUsuarioByIdAsync(id.Value);
+            var user = await _userService.GetUserByIdAsync(id.Value);
             if (user == null) return NotFound();
 
             var vm = _mapper.Map<UserUpdateViewModel>(user);
@@ -226,7 +226,7 @@ namespace RecursosHumanosWeb.Controllers
             try
             {
                 var user = _mapper.Map<User>(model);
-                var success = await _usuarioService.UpdateUsuarioAsync(user, currentUserId, model.Password);
+                var success = await _userService.UpdateUserAsync(user, currentUserId, model.Password);
 
                 if (!success)
                 {
@@ -258,7 +258,7 @@ namespace RecursosHumanosWeb.Controllers
         {
             if (id == null) return NotFound();
 
-            var user = await _usuarioService.GetUsuarioByIdAsync(id.Value);
+            var user = await _userService.GetUserByIdAsync(id.Value);
             if (user == null) return NotFound();
 
             return View(user);
@@ -271,7 +271,7 @@ namespace RecursosHumanosWeb.Controllers
         {
             int currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "1");
 
-            var success = await _usuarioService.DeleteUsuarioAsync(id, currentUserId);
+            var success = await _userService.DeleteUserAsync(id, currentUserId);
             
             if (!success)
             {
@@ -298,7 +298,7 @@ namespace RecursosHumanosWeb.Controllers
                 });
             }
 
-            var user = await _usuarioService.GetUsuarioByIdAsync(request.Id);
+            var user = await _userService.GetUserByIdAsync(request.Id);
 
             if (user == null || !user.Status)
             {
@@ -327,7 +327,7 @@ namespace RecursosHumanosWeb.Controllers
 
             try
             {
-                var success = await _usuarioService.DeleteUsuarioAsync(request.Id, currentUserId);
+                var success = await _userService.DeleteUserAsync(request.Id, currentUserId);
 
                 if (!success)
                 {
@@ -367,10 +367,10 @@ namespace RecursosHumanosWeb.Controllers
 
         private async Task PrepareUserSelectListsAsync(int? creaId = null, int? modId = null)
         {
-            var areas = await _usuarioService.GetAreasAsync();
-            var departments = await _usuarioService.GetDepartamentosAsync();
-            var positions = await _usuarioService.GetPuestosAsync();
-            var userTypes = await _usuarioService.GetTipoUsuariosAsync();
+            var areas = await _userService.GetAreasAsync();
+            var departments = await _userService.GetDepartmentsAsync();
+            var positions = await _userService.GetPositionsAsync();
+            var userTypes = await _userService.GetUserTypesAsync();
 
             ViewData["AreaId"] = new SelectList(areas, "Id", "Description");
             ViewData["DepartmentId"] = new SelectList(departments, "Id", "Description");
@@ -379,7 +379,7 @@ namespace RecursosHumanosWeb.Controllers
             
             if (creaId.HasValue || modId.HasValue)
             {
-                var users = await _usuarioService.GetActiveUsuariosAsync();
+                var users = await _userService.GetActiveUsersAsync();
                 ViewData["CreatedByUserId"] = new SelectList(users, "Id", "Name", creaId);
                 ViewData["UpdatedByUserId"] = new SelectList(users, "Id", "Name", modId);
             }

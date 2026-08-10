@@ -14,27 +14,27 @@ namespace RecursosHumanosWeb.Mapping
             CreateMap<User, UserDetailsViewModel>()
                 // AutoMapper maneja automáticamente el nulo: si UserType es nulo, devuelve null.
                 // Usamos Null-coalescing para asignar el valor por defecto.
-                .ForMember(dest => dest.TipoUsuarioNombre, opt => opt.MapFrom(src => src.UserType.Description ?? "N/A"))
-                .ForMember(dest => dest.AreaDescripcion, opt => opt.MapFrom(src => src.Area.Description ?? "N/A"))
-                .ForMember(dest => dest.DepartamentoDescripcion, opt => opt.MapFrom(src => src.Department.Description ?? "N/A"))
-                .ForMember(dest => dest.PuestoDescripcion, opt => opt.MapFrom(src => src.Position.Description ?? "N/A"))
+                .ForMember(dest => dest.UserTypeName, opt => opt.MapFrom(src => src.UserType.Description ?? "N/A"))
+                .ForMember(dest => dest.AreaDescription, opt => opt.MapFrom(src => src.Area.Description ?? "N/A"))
+                .ForMember(dest => dest.DepartmentDescription, opt => opt.MapFrom(src => src.Department.Description ?? "N/A"))
+                .ForMember(dest => dest.PositionDescription, opt => opt.MapFrom(src => src.Position.Description ?? "N/A"))
                 
                 // Lógica para auditoría: Al usar ProjectTo, esto se traduce a un LEFT JOIN en SQL
-                .ForMember(dest => dest.UsuarioCreaNombre, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => 
                     src.CreatedByUser.Name ?? "Sistema/Auto-creado"))
-                .ForMember(dest => dest.UsuarioModificaNombre, opt => opt.MapFrom(src => 
+                .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => 
                     src.UpdatedByUser.Name ?? "Sin cambios"));
 
             // 2. Mapeos de Creación y Edición
             CreateMap<UserCreateViewModel, User>();
             
             CreateMap<UserUpdateViewModel, User>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.IdUsuario))
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 // Solo mapea la clave si el user escribió algo en el campo
                 .ForMember(dest => dest.PasswordHash, opt => opt.Condition(src => !string.IsNullOrWhiteSpace(src.Password)));
 
             CreateMap<User, UserUpdateViewModel>()
-                .ForMember(dest => dest.IdUsuario, opt => opt.MapFrom(src => src.Id));
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id));
 
             CreateMap<Permission, PermissionsDTO>()
                 .ForMember(d => d.Name, o => o.MapFrom(s => s.RequestingUser.Name ?? "N/A"))

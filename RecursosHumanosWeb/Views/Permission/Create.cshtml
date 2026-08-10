@@ -20,15 +20,15 @@
     </div>
     <form asp-action="Create" method="post" enctype="multipart/form-data" class="permission-form ajax-form" id="permissionForm"
           data-is-rh="@(ViewBag.IsRH ?? false)"
-          data-is-administrador="@(ViewBag.IsAdministrador ?? false)"
+          data-is-administrator="@(ViewBag.IsAdministrator ?? false)"
           data-is-empleado="@(ViewBag.IsEmpleado ?? false)">
 
         <div class="form-sections">
             @{
                 bool isRH = ViewBag.IsRH as bool? ?? false;
-                bool isAdministrador = ViewBag.IsAdministrador as bool? ?? false;
+                bool isAdministrator = ViewBag.IsAdministrator as bool? ?? false;
             }
-            @if (isRH || isAdministrador)
+            @if (isRH || isAdministrator)
             {
                 <div class="form-section" id="user-section">
                     <div class="section-header">
@@ -40,7 +40,7 @@
                             Busque el usuario que solicita el permiso
                             <span class="required">*</span>
                         </label>
-                            <select id="IdUsuarioSolicita" name="RequestingUserId" class="form-control user-autocomplete" data-user-value="id" style="width:100%">
+                            <select id="requestingUserId" name="RequestingUserId" class="form-control user-autocomplete" data-user-value="id" style="width:100%">
                                 <option value="">Escriba para buscar...</option>
                             </select>
                         <span asp-validation-for="RequestingUserId" class="text-danger validation-message"></span>
@@ -51,7 +51,7 @@
             <div class="form-section">
                 <div class="section-header">
                     <h3><i class="fas fa-th-large"></i> Tipo de Permiso</h3>
-                    <span class="section-indicator">@((isRH || isAdministrador) ? "2" : "1")</span>
+                    <span class="section-indicator">@((isRH || isAdministrator) ? "2" : "1")</span>
                 </div>
                 <div class="permission-types">
                     <div class="permission-type-card" data-type="3">
@@ -101,12 +101,12 @@
             <div class="form-section" id="datetime-section" style="display: none;">
                 <div class="section-header">
                     <h3><i class="fas fa-clock"></i> Fechas y Horarios</h3>
-                    <span class="section-indicator">@((isRH || isAdministrador) ? "3" : "2")</span>
+                    <span class="section-indicator">@((isRH || isAdministrator) ? "3" : "2")</span>
                 </div>
                 <div class="datetime-grid">
-                    <div class="form-group" id="fecha1Date-group">
+                    <div class="form-group" id="date1-group">
                         <label asp-for="StartDateOnly" class="form-label">
-                            <span id="fecha1Date-label">Fecha de inicio</span>
+                            <span id="date1-label">Fecha de inicio</span>
                             <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
@@ -114,27 +114,27 @@
                             <input asp-for="StartDateOnly" type="date" class="form-control" placeholder="DD/MM/YYYY" asp-format="{0:yyyy-MM-dd}" />
                         </div>
                     </div>
-                    <div class="form-group" id="fecha2Date-group">
+                    <div class="form-group" id="date2-group">
                         <label asp-for="EndDateOnly" class="form-label">
-                            <span id="fecha2Date-label">Fecha de fin</span>
+                            <span id="date2-label">Fecha de fin</span>
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-calendar-check input-icon"></i>
                             <input asp-for="EndDateOnly" type="date" class="form-control" placeholder="DD/MM/YYYY" asp-format="{0:yyyy-MM-dd}" />
                         </div>
                     </div>
-                    <div class="form-group" id="hora1Time-group">
+                    <div class="form-group" id="time1-group">
                         <label asp-for="StartTime" class="form-label">
-                            <span id="hora1Time-label">Hora de entrada</span>
+                            <span id="time1-label">Hora de entrada</span>
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-hourglass-start input-icon"></i>
                             <input asp-for="StartTime" type="time" class="form-control" placeholder="HH:MM AM/PM" />
                         </div>
                     </div>
-                    <div class="form-group" id="hora2Time-group">
+                    <div class="form-group" id="time2-group">
                         <label asp-for="EndTime" class="form-label">
-                            <span id="hora2Time-label">Hora de salida</span>
+                            <span id="time2-label">Hora de salida</span>
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-hourglass-end input-icon"></i>
@@ -148,7 +148,7 @@
             <div class="form-section" id="reason-section" style="display: none;">
                 <div class="section-header">
                     <h3><i class="fas fa-pen-nib"></i> Motivo del Permiso</h3>
-                    <span class="section-indicator">@((isRH || isAdministrador) ? "4" : "3")</span>
+                    <span class="section-indicator">@((isRH || isAdministrator) ? "4" : "3")</span>
                 </div>
                 <div class="form-group">
                     <label asp-for="Reason" class="form-label">Detalle su solicitud <span class="required">*</span></label>
@@ -162,7 +162,7 @@
             <div class="form-section" id="evidence-section" style="display: none;">
                 <div class="section-header">
                     <h3><i class="fas fa-file-pdf"></i> Evidencia</h3>
-                    <span class="section-indicator">@((isRH || isAdministrador) ? "5" : "4")</span>
+                    <span class="section-indicator">@((isRH || isAdministrator) ? "5" : "4")</span>
                 </div>
                 <div class="form-group">
                     <div class="file-upload-area" id="fileUploadArea">
@@ -199,11 +199,11 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script src="~/js/Permisos/create.js" asp-append-version="true"></script>
+    <script src="~/js/Permissions/create.js" asp-append-version="true"></script>
 
     <script>
         $(document).ready(function(){
-            $('#IdUsuarioSolicita').select2({
+            $('#requestingUserId').select2({
                 placeholder: 'Buscar usuario...',
                 minimumInputLength: 2,
                 ajax: {

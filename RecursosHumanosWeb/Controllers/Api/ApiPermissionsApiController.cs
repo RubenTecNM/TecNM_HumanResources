@@ -7,11 +7,11 @@ namespace RecursosHumanosWeb.Controllers.Api
 {
     [Route("api/ApiPermissions")]
     [ApiController]
-    public class ApiPermisosApiController : ControllerBase
+    public class ApiPermissionsApiController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
 
-        public ApiPermisosApiController(HumanResourcesContext context)
+        public ApiPermissionsApiController(HumanResourcesContext context)
         {
             _context = context;
         }
@@ -22,8 +22,8 @@ namespace RecursosHumanosWeb.Controllers.Api
         // pero como "ApiPermission" no es una tabla de negocio per se, podríamos dejarlo abierto o con un permission básico.
         // Asumiremos que requiere permission de Leer sobre "ApiPermission" si existiera en DatabaseTable, o simplemente "DatabaseTable".
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "DatabaseTable", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetApiPermisos()
+        [ApiKeyAuthorize(TargetTable = "DatabaseTable", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetApiPermissions()
         {
             var permissions = await _context.ApiPermissions
                 .Where(p => p.Status == true)

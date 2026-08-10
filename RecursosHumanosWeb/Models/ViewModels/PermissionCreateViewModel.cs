@@ -23,10 +23,10 @@ namespace RecursosHumanosWeb.Models.ViewModels
         [Required]
         public bool WithPay { get; set; }
 
-        public IEnumerable<TipoPermisoViewModel> TiposPermiso { get; set; }
+        public IEnumerable<PermissionTypeViewModel> PermissionTypes { get; set; }
     }
 
-    public class TipoPermisoViewModel
+    public class PermissionTypeViewModel
     {
         public int Id { get; set; }
         public string Description { get; set; }

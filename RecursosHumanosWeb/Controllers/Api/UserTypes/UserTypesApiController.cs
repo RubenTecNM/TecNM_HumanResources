@@ -9,13 +9,13 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
 {
     [Route("api/UserTypes")]
     [ApiController]
-    public class TipoUsuariosApiController : ControllerBase
+    public class UserTypesApiController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
-        private readonly ILogger<TipoUsuariosApiController> _logger;
+        private readonly ILogger<UserTypesApiController> _logger;
 
-        public TipoUsuariosApiController(HumanResourcesContext context, IMapper mapper, ILogger<TipoUsuariosApiController> logger)
+        public UserTypesApiController(HumanResourcesContext context, IMapper mapper, ILogger<UserTypesApiController> logger)
         {
             _context = context;
             _mapper = mapper;
@@ -24,8 +24,8 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
 
         // GET: api/UserTypes
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "UserType", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetTipoUsuarios()
+        [ApiKeyAuthorize(TargetTable = "UserType", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetUserTypes()
         {
             var userTypes = await _context.UserTypes
                 .Where(t => t.Status == true)
@@ -43,8 +43,8 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
 
         // GET: api/UserTypes/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "UserType", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetTipoUsuario(int id)
+        [ApiKeyAuthorize(TargetTable = "UserType", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetUserType(int id)
         {
             var userType = await _context.UserTypes
                 .Where(t => t.Id == id)
@@ -67,8 +67,8 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
 
         // POST: api/UserTypes
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "UserType", PermisoRequerido = "Escribir")]
-        public async Task<IActionResult> PostTipoUsuario([FromBody] UserTypeCreateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "UserType", RequiredPermission = "Escribir")]
+        public async Task<IActionResult> PostUserType([FromBody] UserTypeCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -86,7 +86,7 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
                 _context.UserTypes.Add(userType);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetTipoUsuario), new { id = userType.Id }, new { userType.Id, userType.Description });
+                return CreatedAtAction(nameof(GetUserType), new { id = userType.Id }, new { userType.Id, userType.Description });
             }
             catch (Exception ex)
             {
@@ -98,8 +98,8 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
 
         // PUT: api/UserTypes/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "UserType", PermisoRequerido = "Actualizar")]
-        public async Task<IActionResult> PutTipoUsuario(int id, [FromBody] UserTypeUpdateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "UserType", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> PutUserType(int id, [FromBody] UserTypeUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
 
@@ -128,8 +128,8 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
 
         // DELETE: api/UserTypes/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "UserType", PermisoRequerido = "Eliminar")]
-        public async Task<IActionResult> DeleteTipoUsuario(int id)
+        [ApiKeyAuthorize(TargetTable = "UserType", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> DeleteUserType(int id)
         {
             var userType = await _context.UserTypes.FindAsync(id);
             if (userType == null) return NotFound();

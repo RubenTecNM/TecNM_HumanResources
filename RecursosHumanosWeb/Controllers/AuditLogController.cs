@@ -54,8 +54,8 @@ namespace RecursosHumanosWeb.Controllers
                     .OrderBy(t => t.Description)
                     .ToListAsync();
                 
-                ViewBag.FechaDesde = dateFrom;
-                ViewBag.FechaHasta = dateTo;
+                ViewBag.DateFrom = dateFrom;
+                ViewBag.DateTo = dateTo;
                 ViewBag.TableId = tableId;
 
                 return View(pagedList);

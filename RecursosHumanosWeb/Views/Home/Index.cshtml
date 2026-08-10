@@ -48,7 +48,7 @@
                         <div class="col-md-3">
                             <div class="filter-group">
                                 <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Desde el</label>
-                                <input type="date" id="toDay" name="toDay" class="form-control filter-input-pill" value="@ViewBag.ToDay" />
+                                <input type="date" id="toDay" name="toDay" class="form-control filter-input-pill" value="@ViewBag.Today" />
                             </div>
                         </div>
                         <div class="col-md-3">
@@ -79,7 +79,7 @@
                             <div class="col-md-3" id="areaFilterContainer">
                                 <div class="filter-group">
                                     <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Área</label>
-                                    <select id="idArea" name="idArea" class="form-control filter-input-pill form-select">
+                                    <select id="areaId" name="areaId" class="form-control filter-input-pill form-select">
                                         <option value="">-- Seleccionar Área --</option>
                                         @foreach (var area in Model.Areas)
                                         {
@@ -98,23 +98,23 @@
                                 <label class="fw-bold text-muted small text-uppercase mb-3 ms-2 d-block">Tipo de Permiso</label>
                                 <div class="d-flex flex-wrap gap-2">
                                     <div class="form-check-premium">
-                                        <input type="radio" id="rbNinguno" name="idTipoPermisos" value="" @(string.IsNullOrEmpty(ViewBag.SelectedTipo) ? "checked" : "") class="btn-check" />
+                                        <input type="radio" id="rbNone" name="permissionTypeId" value="" @(string.IsNullOrEmpty(ViewBag.SelectedType) ? "checked" : "") class="btn-check" />
                                         <label class="btn btn-outline-primary rounded-pill px-3" for="rbNinguno">Todos</label>
                                     </div>
                                     <div class="form-check-premium">
-                                        <input type="radio" id="rbFalta" name="idTipoPermisos" value="2" @(ViewBag.SelectedTipo == "2" ? "checked" : "") class="btn-check" />
+                                        <input type="radio" id="rbAbsence" name="permissionTypeId" value="2" @(ViewBag.SelectedType == "2" ? "checked" : "") class="btn-check" />
                                         <label class="btn btn-outline-primary rounded-pill px-3" for="rbFalta">Falta</label>
                                     </div>
                                     <div class="form-check-premium">
-                                        <input type="radio" id="rbRetardo" name="idTipoPermisos" value="3" @(ViewBag.SelectedTipo == "3" ? "checked" : "") class="btn-check" />
+                                        <input type="radio" id="rbLate" name="permissionTypeId" value="3" @(ViewBag.SelectedType == "3" ? "checked" : "") class="btn-check" />
                                         <label class="btn btn-outline-primary rounded-pill px-3" for="rbRetardo">Retardo</label>
                                     </div>
                                     <div class="form-check-premium">
-                                        <input type="radio" id="rbCambioDeTurno" name="idTipoPermisos" value="4" @(ViewBag.SelectedTipo == "4" ? "checked" : "") class="btn-check" />
+                                        <input type="radio" id="rbScheduleChange" name="permissionTypeId" value="4" @(ViewBag.SelectedType == "4" ? "checked" : "") class="btn-check" />
                                         <label class="btn btn-outline-primary rounded-pill px-3" for="rbCambioDeTurno">Cambio de Turno</label>
                                     </div>
                                     <div class="form-check-premium">
-                                        <input type="radio" id="rbTurnoPorTurno" name="idTipoPermisos" value="5" @(ViewBag.SelectedTipo == "5" ? "checked" : "") class="btn-check" />
+                                        <input type="radio" id="rbShiftByShift" name="permissionTypeId" value="5" @(ViewBag.SelectedType == "5" ? "checked" : "") class="btn-check" />
                                         <label class="btn btn-outline-primary rounded-pill px-3" for="rbTurnoPorTurno">Turno por Turno</label>
                                     </div>
                                 </div>
@@ -420,7 +420,7 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/Permisos/index.js" asp-append-version="true"></script>
+    <script src="~/js/Permissions/index.js" asp-append-version="true"></script>
     <script>
         $(document).ready(function() {
             // Initialize Select2 for User Filter
@@ -429,7 +429,7 @@
                 minimumInputLength: 2,
                 allowClear: true,
                 ajax: {
-                    url: '/Permisos/SearchUsers',
+                    url: '/User/SearchUsers',
                     dataType: 'json',
                     delay: 250,
                     data: function (params) { return { term: params.term }; },
@@ -439,7 +439,7 @@
             });
 
             // Initialize Select2 for Area Filter
-            $('#idArea').select2({
+            $('#areaId').select2({
                 placeholder: '-- Seleccionar Área --',
                 width: '100%',
                 allowClear: true,
@@ -449,9 +449,9 @@
             // Handle Clear Filters button
             $('#btnClear').on('click', function() {
                 $('#userName').val(null).trigger('change');
-                $('#idArea').val(null).trigger('change');
-                $('input[name="idTipoPermisos"]').prop('checked', false);
-                $('#rbNinguno').prop('checked', true);
+                $('#areaId').val(null).trigger('change');
+                $('input[name="permissionTypeId"]').prop('checked', false);
+                $('#rbNone').prop('checked', true);
                 $('#toDay').val('');
                 $('#fromDay').val('');
                 $('#searchForm').submit();

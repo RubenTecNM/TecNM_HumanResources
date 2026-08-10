@@ -25,7 +25,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // GET: api/Areas
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Leer")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Leer")]
         public async Task<IActionResult> GetAreas()
         {
             var areas = await _context.Areas
@@ -44,7 +44,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // GET: api/Areas/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Leer")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Leer")]
         public async Task<IActionResult> GetArea(int id)
         {
             var area = await _context.Areas
@@ -68,7 +68,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // POST: api/Areas
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Escribir")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Escribir")]
         public async Task<IActionResult> PostArea([FromBody] AreaCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -99,7 +99,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // PUT: api/Areas/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Actualizar")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Actualizar")]
         public async Task<IActionResult> PutArea(int id, [FromBody] AreaUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
@@ -129,7 +129,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // DELETE: api/Areas/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Eliminar")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Eliminar")]
         public async Task<IActionResult> DeleteArea(int id)
         {
             var area = await _context.Areas.FindAsync(id);

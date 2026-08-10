@@ -13,20 +13,20 @@ using X.PagedList.Extensions;
 
 namespace RecursosHumanosWeb.Services
 {
-    public class PermisoService : IPermisoService
+    public class PermissionService : IPermissionService
     {
         private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
-        private readonly ILogger<PermisoService> _logger;
+        private readonly ILogger<PermissionService> _logger;
 
-        public PermisoService(HumanResourcesContext context, IMapper mapper, ILogger<PermisoService> logger)
+        public PermissionService(HumanResourcesContext context, IMapper mapper, ILogger<PermissionService> logger)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
         }
 
-        public async Task<IPagedList<PermissionsDTO>> GetPermisosPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, bool? revisado, int page, int pageSize)
+        public async Task<IPagedList<PermissionsDTO>> GetPermissionsPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, bool? revisado, int page, int pageSize)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return new List<PermissionsDTO>().ToPagedList(1, pageSize);
@@ -104,32 +104,32 @@ namespace RecursosHumanosWeb.Services
               .Select(g => new
               {
                   Total = g.Count(),
-                  Pendientes = g.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending),
-                  Aprobados = g.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved),
+                  Pending = g.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending),
+                  Approved = g.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved),
                   WithPay = g.Count(p => p.WithPay),
-                  SinGoce = g.Count(p => !p.WithPay),
-                  EsteMes = g.Count(p => p.CreatedAt.Month == DateTime.Now.Month && p.CreatedAt.Year == DateTime.Now.Year)
+                  WithoutPay = g.Count(p => !p.WithPay),
+                  ThisMonth = g.Count(p => p.CreatedAt.Month == DateTime.Now.Month && p.CreatedAt.Year == DateTime.Now.Year)
               })
               .FirstOrDefaultAsync();
 
-            return stats ?? new { Total = 0, Pendientes = 0, Aprobados = 0, WithPay = 0, SinGoce = 0, EsteMes = 0 };
+            return stats ?? new { Total = 0, Pending = 0, Approved = 0, WithPay = 0, WithoutPay = 0, ThisMonth = 0 };
         }
 
-        public async Task<int> CreatePermisoAsync(Permission permission, int idUsuarioCrea)
+        public async Task<int> CreatePermissionAsync(Permission permission, int createdByUserId)
         {
-            var createdBy = await _context.Users.FindAsync(idUsuarioCrea);
+            var createdBy = await _context.Users.FindAsync(createdByUserId);
             if (createdBy?.UserTypeId == (int)UserTypeEnum.Authorizer)
                 throw new InvalidOperationException("Los jefes de área no pueden crear solicitudes de permiso para asegurar la imparcialidad del proceso.");
 
-            var corteActivo = await _context.Cutoffs
+            var activeCutoff = await _context.Cutoffs
                 .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open)
                 .OrderByDescending(c => c.Id)
                 .FirstOrDefaultAsync();
 
-            if (corteActivo == null) throw new InvalidOperationException("No se encontró un corte activo.");
+            if (activeCutoff == null) throw new InvalidOperationException("No se encontró un corte activo.");
 
             // Validación de fechas contra el periodo del cutoff
-            if (permission.StartDate < corteActivo.StartDate || (permission.EndDate.HasValue && permission.EndDate > corteActivo.EndDate))
+            if (permission.StartDate < activeCutoff.StartDate || (permission.EndDate.HasValue && permission.EndDate > activeCutoff.EndDate))
             {
                 // REGLA DE NEGOCIO (Auto-Revisado sin goce)
                 // Si excede el límite del cutoff actual, se aprueba automáticamente pero sin goce de sueldo
@@ -145,9 +145,9 @@ namespace RecursosHumanosWeb.Services
                 // 'WithPay' y otras banderas asumen los valores solicitados
             }
 
-            permission.CutoffId = corteActivo.Id;
-            permission.CreatedByUserId = idUsuarioCrea;
-            permission.UpdatedByUserId = idUsuarioCrea;
+            permission.CutoffId = activeCutoff.Id;
+            permission.CreatedByUserId = createdByUserId;
+            permission.UpdatedByUserId = createdByUserId;
             permission.CreatedAt = DateTime.Now;
             permission.UpdatedAt = DateTime.Now;
 
@@ -156,9 +156,9 @@ namespace RecursosHumanosWeb.Services
             return permission.Id;
         }
 
-        public async Task<bool> UpdatePermisoAsync(Permission permission, int idUsuarioModifica)
+        public async Task<bool> UpdatePermissionAsync(Permission permission, int updatedByUserId)
         {
-            var updatedBy = await _context.Users.FindAsync(idUsuarioModifica);
+            var updatedBy = await _context.Users.FindAsync(updatedByUserId);
             if (updatedBy?.UserTypeId == (int)UserTypeEnum.Authorizer)
                 return false; // Jefes de área no pueden editar según reglas de negocio
 
@@ -183,7 +183,7 @@ namespace RecursosHumanosWeb.Services
             existing.WithPay = permission.WithPay;
             
             existing.CutoffId = originalCutoffId; // Preservar el periodo original
-            existing.UpdatedByUserId = idUsuarioModifica;
+            existing.UpdatedByUserId = updatedByUserId;
             existing.UpdatedAt = DateTime.Now;
             
             // Re-evaluar regla de negocio si está fuera del cutoff
@@ -202,29 +202,29 @@ namespace RecursosHumanosWeb.Services
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<bool> DeletePermisoAsync(int id, int idUsuarioModifica)
+        public async Task<bool> DeletePermissionAsync(int id, int updatedByUserId)
         {
             var permission = await _context.Permissions.FindAsync(id);
             if (permission == null) return false;
 
             permission.PermissionStatusTypeId = (int)PermissionStatusEnum.InvalidatedByPeriod;
-            permission.UpdatedByUserId = idUsuarioModifica;
+            permission.UpdatedByUserId = updatedByUserId;
             permission.UpdatedAt = DateTime.Now;
 
             _context.Update(permission);
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<bool> AutorizarPermisoAsync(int id, int idUsuarioAutoriza, bool aprobado, string comentario)
+        public async Task<bool> AuthorizePermissionAsync(int id, int authorizingUserId, bool aprobado, string comment)
         {
             var permission = await _context.Permissions.FindAsync(id);
             if (permission == null) return false;
 
             permission.PermissionStatusTypeId = aprobado ? (int)PermissionStatusEnum.Approved : (int)PermissionStatusEnum.Rejected;
             permission.WithPay = aprobado;
-            permission.AuthorizingUserId = idUsuarioAutoriza;
+            permission.AuthorizingUserId = authorizingUserId;
             permission.AuthorizedAt = DateTime.Now;
-            permission.UpdatedByUserId = idUsuarioAutoriza;
+            permission.UpdatedByUserId = authorizingUserId;
             permission.UpdatedAt = DateTime.Now;
 
             _context.Update(permission);

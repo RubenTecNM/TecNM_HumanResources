@@ -24,8 +24,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Positions
 
         // GET: api/Positions
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetPuestos()
+        [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetPositions()
         {
             var positions = await _context.Positions
                 .Where(p => p.Status == true)
@@ -44,8 +44,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Positions
 
         // GET: api/Positions/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetPuesto(int id)
+        [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetPosition(int id)
         {
             var position = await _context.Positions
                 .Where(p => p.Id == id)
@@ -69,8 +69,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Positions
 
         // POST: api/Positions
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Escribir")]
-        public async Task<IActionResult> PostPuesto([FromBody] PositionCreateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Escribir")]
+        public async Task<IActionResult> PostPosition([FromBody] PositionCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -88,7 +88,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Positions
                 _context.Positions.Add(position);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetPuesto), new { id = position.Id }, new { position.Id, position.TabularCode, position.Description });
+                return CreatedAtAction(nameof(GetPosition), new { id = position.Id }, new { position.Id, position.TabularCode, position.Description });
             }
             catch (Exception ex)
             {
@@ -100,8 +100,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Positions
 
         // PUT: api/Positions/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Actualizar")]
-        public async Task<IActionResult> PutPuesto(int id, [FromBody] PositionUpdateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> PutPosition(int id, [FromBody] PositionUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
 
@@ -130,8 +130,8 @@ namespace RecursosHumanosWeb.Controllers.Api.Positions
 
         // DELETE: api/Positions/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Position", PermisoRequerido = "Eliminar")]
-        public async Task<IActionResult> DeletePuesto(int id)
+        [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> DeletePosition(int id)
         {
             var position = await _context.Positions.FindAsync(id);
             if (position == null) return NotFound();

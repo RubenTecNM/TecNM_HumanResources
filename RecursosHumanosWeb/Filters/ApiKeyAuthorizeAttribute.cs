@@ -10,8 +10,8 @@ namespace RecursosHumanosWeb.Filters
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class ApiKeyAuthorizeAttribute : Attribute, IAsyncAuthorizationFilter
     {
-        public string? TablaObjetivo { get; set; }
-        public string? PermisoRequerido { get; set; }
+        public string? TargetTable { get; set; }
+        public string? RequiredPermission { get; set; }
 
         private const string HeaderApiKeyName = "X-API-KEY";
         private const string QueryStringApiKeyName = "api_key"; // Name del parámetro en la URL
@@ -61,17 +61,17 @@ namespace RecursosHumanosWeb.Filters
             }
 
             // 5. VALIDACIÓN DE PERMISOS GRANULARES (Sin cambios)
-            if (!string.IsNullOrEmpty(TablaObjetivo) && !string.IsNullOrEmpty(PermisoRequerido))
+            if (!string.IsNullOrEmpty(TargetTable) && !string.IsNullOrEmpty(RequiredPermission))
             {
                 bool hasPermission = apiKeyEntity.ApiKeyTablePermissions.Any(pkt =>
                     pkt.Status == true &&
-                    pkt.Table.Description.Equals(TablaObjetivo, StringComparison.OrdinalIgnoreCase) &&
-                    pkt.ApiPermission.Description.Equals(PermisoRequerido, StringComparison.OrdinalIgnoreCase)
+                    pkt.Table.Description.Equals(TargetTable, StringComparison.OrdinalIgnoreCase) &&
+                    pkt.ApiPermission.Description.Equals(RequiredPermission, StringComparison.OrdinalIgnoreCase)
                 );
 
                 if (!hasPermission)
                 {
-                    context.Result = new ObjectResult(new { error = "Forbidden", message = $"La API Key no tiene permission '{PermisoRequerido}' para la tabla '{TablaObjetivo}'." }) { StatusCode = 403 };
+                    context.Result = new ObjectResult(new { error = "Forbidden", message = $"La API Key no tiene permission '{RequiredPermission}' para la tabla '{TargetTable}'." }) { StatusCode = 403 };
                     return;
                 }
             }

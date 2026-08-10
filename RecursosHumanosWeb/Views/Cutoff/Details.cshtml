@@ -248,16 +248,16 @@
     </div>
 </div>
 
-<input type="hidden" id="permisosPorTipo" value="@Model.PermissionsByTypeJson" />
-<input type="hidden" id="permisosPorArea" value="@Model.PermissionsByAreaJson" />
-<input type="hidden" id="tendencia" value="@Model.TrendJson" />
+<input type="hidden" id="permissionsByType" value="@Model.PermissionsByTypeJson" />
+<input type="hidden" id="permissionsByArea" value="@Model.PermissionsByAreaJson" />
+<input type="hidden" id="trend" value="@Model.TrendJson" />
 <input type="hidden" id="heatmapData" value="@Model.HeatmapDataJson" />
 <input type="hidden" id="kpiData" value="@Model.KpiDataJson" />
-<input type="hidden" id="conGoce" value="@Model.WithPay" />
-<input type="hidden" id="sinGoce" value="@Model.WithoutPay" />
+<input type="hidden" id="withPay" value="@Model.WithPay" />
+<input type="hidden" id="withoutPay" value="@Model.WithoutPay" />
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.44.0/apexcharts.min.js"></script>
-    <script src="~/js/Cortes/details.js" asp-append-version="true"></script>
+    <script src="~/js/Cutoffs/details.js" asp-append-version="true"></script>
 }

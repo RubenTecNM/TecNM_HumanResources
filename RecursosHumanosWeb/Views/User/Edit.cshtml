@@ -35,7 +35,7 @@
         <div class="card-body p-0 bg-white">
             <form asp-action="Edit" method="post" class="edit-usuario-form">
                 @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="IdUsuario" />
+                <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="Status" />
 
                 <!-- Sección: Información Personal -->
@@ -153,5 +153,5 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <script src="~/js/Usuarios/edit.js" asp-append-version="true"></script>
+    <script src="~/js/Users/edit.js" asp-append-version="true"></script>
 }

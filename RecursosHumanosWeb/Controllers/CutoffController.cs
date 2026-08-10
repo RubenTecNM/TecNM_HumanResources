@@ -26,7 +26,7 @@ namespace RecursosHumanosWeb.Controllers
         private readonly HumanResourcesContext _context;
         private readonly AutoMapper.IMapper _mapper;
         private readonly ILogger<CutoffController> _logger;
-        private readonly ICorteService _corteService;
+        private readonly ICutoffService _cutoffService;
         private readonly IExportService _exportService;
         private readonly IConfiguration _configuration;
 
@@ -34,14 +34,14 @@ namespace RecursosHumanosWeb.Controllers
             HumanResourcesContext context, 
             AutoMapper.IMapper mapper, 
             ILogger<CutoffController> logger,
-            ICorteService corteService,
+            ICutoffService cutoffService,
             IExportService exportService,
             IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
-            _corteService = corteService;
+            _cutoffService = cutoffService;
             _exportService = exportService;
             _configuration = configuration;
         }
@@ -59,17 +59,17 @@ namespace RecursosHumanosWeb.Controllers
             if (actualPageSize < 1 || actualPageSize > maxPageSize) actualPageSize = defaultPageSize;
 
             // Obtener información del user autenticado
-            bool isAdministrador = User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString());
-            bool isRecursosHumanos = User.HasClaim("UserType", ((int)UserTypeEnum.HumanResources).ToString());
+            bool isAdministrator = User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString());
+            bool isHumanResources = User.HasClaim("UserType", ((int)UserTypeEnum.HumanResources).ToString());
 
             // Construir la consulta base
-            var cortesQuery = _context.Cutoffs
+            var cutoffsQuery = _context.Cutoffs
                 .Include(c => c.CreatedByUser)
                 .Include(c => c.UpdatedByUser)
                 .AsQueryable();
 
             // Cierre automático lazy
-            await _corteService.AutoCloseCorteIfNeededAsync();
+            await _cutoffService.AutoCloseCutoffIfNeededAsync();
 
             // Aplicar filtros de fecha (Vigencia)
             if (dateFrom.HasValue || dateTo.HasValue)
@@ -78,37 +78,37 @@ namespace RecursosHumanosWeb.Controllers
                 var d = dateFrom ?? new DateTime(1900, 1, 1);
                 var a = dateTo?.Date.AddDays(1).AddTicks(-1) ?? new DateTime(2100, 12, 31);
                 
-                cortesQuery = cortesQuery.Where(c => c.StartDate <= a && c.EndDate >= d);
+                cutoffsQuery = cutoffsQuery.Where(c => c.StartDate <= a && c.EndDate >= d);
             }
 
             if (statusId.HasValue)
             {
-                cortesQuery = cortesQuery.Where(c => c.CutoffStatusTypeId == statusId.Value);
+                cutoffsQuery = cutoffsQuery.Where(c => c.CutoffStatusTypeId == statusId.Value);
             }
 
             // Preparar la consulta filtrada usando AutoMapper ProjectTo a CutoffsDTO
-            var cortesQueryFiltered = cortesQuery
+            var cutoffsQueryFiltered = cutoffsQuery
                 .ProjectTo<CutoffsDTO>(_mapper.ConfigurationProvider)
                 .OrderByDescending(c => c.Id);
 
             // Obtener resultados paginados
-            var cutoffs = cortesQueryFiltered.ToPagedList(page, actualPageSize);
+            var cutoffs = cutoffsQueryFiltered.ToPagedList(page, actualPageSize);
 
             // Preparar el ViewModel
             var model = new SearchCutoffViewModel
             {
                 Cutoffs = cutoffs,
                 Users = new List<UsersDTO>(), // No longer needed for filters but keeping temporarily for DTO consistency if needed
-                FechaDesde = dateFrom?.ToString("yyyy-MM-dd")!,
-                FechaHasta = dateTo?.ToString("yyyy-MM-dd")!,
+                DateFrom = dateFrom?.ToString("yyyy-MM-dd")!,
+                DateTo = dateTo?.ToString("yyyy-MM-dd")!,
                 StatusId = statusId,
-                IsAdministrador = isAdministrador
+                IsAdministrator = isAdministrator
             };
 
             // Pasar datos a la vista
-            ViewData["IsRH"] = isRecursosHumanos;
-            ViewBag.FechaDesde = dateFrom;
-            ViewBag.FechaHasta = dateTo;
+            ViewData["IsRH"] = isHumanResources;
+            ViewBag.DateFrom = dateFrom;
+            ViewBag.DateTo = dateTo;
             ViewBag.StatusId = statusId;
 
             return View(model);
@@ -118,7 +118,7 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToExcel(int id)
         {
-            var content = await _exportService.GenerateCorteExcelAsync(id);
+            var content = await _exportService.GenerateCutoffExcelAsync(id);
             if (content == null) return NotFound("Cutoff no encontrado");
 
             var cutoff = await _context.Cutoffs.FindAsync(id);
@@ -130,7 +130,7 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToCsv(int id)
         {
-            var result = await _exportService.GenerateCorteCsvAsync(id);
+            var result = await _exportService.GenerateCutoffCsvAsync(id);
             if (result.Content == null) return NotFound("Cutoff no encontrado");
 
             return File(result.Content, "text/csv", result.FileName);
@@ -139,7 +139,7 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToJson(int id)
         {
-            var result = await _exportService.GenerateCorteJsonAsync(id);
+            var result = await _exportService.GenerateCutoffJsonAsync(id);
             if (result.Content == null) return NotFound("Cutoff no encontrado");
 
             return File(result.Content, "application/json", result.FileName);
@@ -148,7 +148,7 @@ namespace RecursosHumanosWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportToXml(int id)
         {
-            var result = await _exportService.GenerateCorteXmlAsync(id);
+            var result = await _exportService.GenerateCutoffXmlAsync(id);
             if (result.Content == null) return NotFound("Cutoff no encontrado");
 
             return File(result.Content, "application/xml", result.FileName);
@@ -160,16 +160,16 @@ namespace RecursosHumanosWeb.Controllers
             ViewData["IsAuthenticated"] = User.Identity?.IsAuthenticated ?? false;
             ViewData["UserName"] = User.Identity?.Name ?? string.Empty;
             ViewBag.IsRH = User.HasClaim("UserType", ((int)UserTypeEnum.HumanResources).ToString());
-            ViewBag.IsAdministrador = User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString());
-            ViewData["IdUsuario"] = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            ViewBag.IsAdministrator = User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString());
+            ViewData["UserId"] = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
 
             // Cierre automático lazy
-            await _corteService.AutoCloseCorteIfNeededAsync();
+            await _cutoffService.AutoCloseCutoffIfNeededAsync();
 
             var viewModel = new CutoffCreateViewModel();
 
             // Buscar el último cutoff (activo o no) para basar la fecha de inicio
-            var lastCutoff = await _corteService.GetLastCorteAsync();
+            var lastCutoff = await _cutoffService.GetLastCutoffAsync();
             
             if (lastCutoff != null)
             {
@@ -203,7 +203,7 @@ namespace RecursosHumanosWeb.Controllers
             if (viewModel.EndDate <= viewModel.StartDate)
                 ModelState.AddModelError("EndDate", "La fecha de fin no puede ser anterior a la fecha de inicio.");
             
-            var corteActivo = await _corteService.GetActiveCorteAsync();
+            var corteActivo = await _cutoffService.GetActiveCutoffAsync();
             if (corteActivo != null && viewModel.EndDate <= corteActivo.EndDate)
                 ModelState.AddModelError("EndDate", "La fecha de fin debe ser posterior al fin del corte actual.");
 
@@ -218,7 +218,7 @@ namespace RecursosHumanosWeb.Controllers
                     CutoffStatusTypeId = 1 // Open por defecto
                 };
 
-                var success = await _corteService.CreateCorteAsync(newCutoff, userId);
+                var success = await _cutoffService.CreateCutoffAsync(newCutoff, userId);
                 if (!success)
                 {
                     ModelState.AddModelError("", "No se puede crear un nuevo corte porque el corte actual tiene permisos pendientes de revisión.");
@@ -322,7 +322,7 @@ namespace RecursosHumanosWeb.Controllers
         {
             int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
             
-            var success = await _corteService.InactivateCorteAsync(id, userId);
+            var success = await _cutoffService.InactivateCutoffAsync(id, userId);
             if (!success)
             {
                 TempData["ErrorAlert"] = JsonConvert.SerializeObject(new { icon = "error", title = "Error", text = "No se puede cerrar el corte o no existe." });
@@ -359,7 +359,7 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var success = await _corteService.InactivateCorteAsync(request.Id, userId);
+            var success = await _cutoffService.InactivateCutoffAsync(request.Id, userId);
 
             if (success)
             {
@@ -396,8 +396,8 @@ namespace RecursosHumanosWeb.Controllers
             if (!request.Confirmed)
             {
                 // Verificar si hay permissions pendientes para advertir
-                bool tienePendientes = await _corteService.HasPendingPermissionsAsync(request.Id);
-                string extraWarning = tienePendientes 
+                bool hasPending = await _cutoffService.HasPendingPermissionsAsync(request.Id);
+                string extraWarning = hasPending 
                     ? "<br><br><div class='alert alert-danger py-2 small'><i class='fas fa-exclamation-triangle me-1'></i> <strong>¡Atención!</strong> Hay permisos pendientes que serán <strong>RECHAZADOS</strong> automáticamente al cerrar.</div>" 
                     : "";
 
@@ -413,11 +413,11 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var success = await _corteService.CloseCorteAsync(request.Id, userId);
+            var success = await _cutoffService.CloseCutoffAsync(request.Id, userId);
 
             if (success)
             {
-                _logger.LogInformation("User {IdUsuario} cerró manualmente el periodo {CorteId}", userId, request.Id);
+                _logger.LogInformation("User {UserId} cerró manualmente el periodo {CutoffId}", userId, request.Id);
                 return Json(new AlertResponseDTO { Success = true, Title = "Periodo Finalizado", Message = "El periodo ha sido cerrado y los permisos pendientes han sido procesados.", Icon = "success", RedirectUrl = "/Cutoff/Index" });
             }
             else
@@ -469,14 +469,14 @@ namespace RecursosHumanosWeb.Controllers
                     Color = palette[(index + 2) % palette.Length]
                 }).ToList();
 
-            var tendencia = permissions
+            var trend = permissions
                 .OrderBy(p => p.CreatedAt)
                 .GroupBy(p => p.CreatedAt.ToString("dd MMM"))
                 .Select(g => new {
                     Month = g.Key ?? "S/F",
                     Total = g.Count(),
-                    Aprobados = g.Count(x => x.PermissionStatusTypeId == 2),
-                    Pendientes = g.Count(x => x.PermissionStatusTypeId == 1)
+                    Approved = g.Count(x => x.PermissionStatusTypeId == 2),
+                    Pending = g.Count(x => x.PermissionStatusTypeId == 1)
                 }).ToList();
 
             var heatmap = permissions
@@ -506,7 +506,7 @@ namespace RecursosHumanosWeb.Controllers
                 // Serialización
                 PermissionsByTypeJson = JsonConvert.SerializeObject(permissionsByType),
                 PermissionsByAreaJson = JsonConvert.SerializeObject(permissionsByArea),
-                TrendJson = JsonConvert.SerializeObject(tendencia),
+                TrendJson = JsonConvert.SerializeObject(trend),
                 HeatmapDataJson = JsonConvert.SerializeObject(heatmap),
                 KpiDataJson = JsonConvert.SerializeObject(new { total = permissions.Count })
             };

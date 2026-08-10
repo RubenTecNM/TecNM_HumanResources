@@ -18,7 +18,7 @@
             <p class="page-subtitle">Administra las claves de acceso a la API del sistema</p>
         </div>
         <div class="header-actions">
-            @if (User.HasClaim("TipoUsuario", "1"))
+            @if (User.HasClaim("UserType", "1"))
             {
                 <a asp-action="Create" class="btn btn-create" aria-label="Crear nueva API Key">
                     <i class="fas fa-plus"></i>
@@ -58,7 +58,7 @@
                         <div class="col-md-4">
                             <div class="filter-group">
                                 <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Desde el</label>
-                                <input type="date" id="toDay" name="toDay" class="form-control filter-input-pill" value="@ViewBag.ToDay" />
+                                <input type="date" id="toDay" name="toDay" class="form-control filter-input-pill" value="@ViewBag.Today" />
                             </div>
                         </div>
 
@@ -133,7 +133,7 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="flex justify-center gap-2">
-                                            @if (User.HasClaim("TipoUsuario", "1"))
+                                            @if (User.HasClaim("UserType", "1"))
                                             {
                                                 <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn btn-edit" title="Editar" aria-label="Editar API Key">
                                                     <i class="fas fa-edit"></i>

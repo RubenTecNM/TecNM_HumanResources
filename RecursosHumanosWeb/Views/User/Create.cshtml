@@ -2,10 +2,10 @@
 
 @{
     ViewData["Title"] = "Crear Usuario";
-    var tiposUsuario = ViewData["IdTipoUsuario"] as SelectList;
-    var areas = ViewData["IdArea"] as SelectList;
-    var departamentos = ViewData["IdDepartamento"] as SelectList;
-    var puestos = ViewData["IdPuesto"] as SelectList;
+    var userTypes = ViewData["UserTypeId"] as SelectList;
+    var areas = ViewData["AreaId"] as SelectList;
+    var departments = ViewData["DepartmentId"] as SelectList;
+    var positions = ViewData["PositionId"] as SelectList;
 }
 
 @section Styles {
@@ -90,7 +90,7 @@
                             <label asp-for="UserTypeId" class="form-label">Tipo de Usuario</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-user-tag input-icon"></i>
-                                <select asp-for="UserTypeId" class="form-control-v2 form-select" asp-items="tiposUsuario">
+                                <select asp-for="UserTypeId" class="form-control-v2 form-select" asp-items="userTypes">
                                     <option value="">-- Seleccione un tipo --</option>
                                 </select>
                             </div>
@@ -112,7 +112,7 @@
                             <label asp-for="DepartmentId" class="form-label">Departamento</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-sitemap input-icon"></i>
-                                <select asp-for="DepartmentId" class="form-control-v2 form-select" asp-items="departamentos">
+                                <select asp-for="DepartmentId" class="form-control-v2 form-select" asp-items="departments">
                                     <option value="">-- Seleccione un departamento --</option>
                                 </select>
                             </div>
@@ -123,7 +123,7 @@
                             <label asp-for="PositionId" class="form-label">Puesto</label>
                             <div class="input-wrapper">
                                 <i class="fas fa-briefcase input-icon"></i>
-                                <select asp-for="PositionId" class="form-control-v2 form-select" asp-items="puestos">
+                                <select asp-for="PositionId" class="form-control-v2 form-select" asp-items="positions">
                                     <option value="">-- Seleccione un puesto --</option>
                                 </select>
                             </div>
@@ -149,5 +149,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="~/js/Usuarios/create.js" asp-append-version="true"></script>
+    <script src="~/js/Users/create.js" asp-append-version="true"></script>
 }

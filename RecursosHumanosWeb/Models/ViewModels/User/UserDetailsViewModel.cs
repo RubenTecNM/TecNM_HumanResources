@@ -12,30 +12,30 @@ namespace RecursosHumanosWeb.Models.ViewModels.User
         public DateTime? UpdatedAt { get; set; }
 
         public int UserTypeId { get; set; }
-        public string TipoUsuarioNombre { get; set; } = string.Empty;
+        public string UserTypeName { get; set; } = string.Empty;
 
         public int AreaId { get; set; }
-        public string AreaDescripcion { get; set; } = string.Empty;
+        public string AreaDescription { get; set; } = string.Empty;
 
         public int DepartmentId { get; set; }
-        public string DepartamentoDescripcion { get; set; } = string.Empty;
+        public string DepartmentDescription { get; set; } = string.Empty;
 
         public int PositionId { get; set; }
-        public string PuestoDescripcion { get; set; } = string.Empty;
+        public string PositionDescription { get; set; } = string.Empty;
 
         public int? CreatedByUserId { get; set; }
-        public string? UsuarioCreaNombre { get; set; }
+        public string? CreatedByName { get; set; }
 
         public int? UpdatedByUserId { get; set; }
-        public string? UsuarioModificaNombre { get; set; }
+        public string? UpdatedByName { get; set; }
 
         public int? ApiKeyId { get; set; }
 
         // Estadísticas de permissions
-        public int TotalPermisos { get; set; }
-        public int PermisosRevisados { get; set; }
+        public int TotalPermissions { get; set; }
+        public int ReviewedPermissions { get; set; }
         public int WithPay { get; set; }
-        public int SinGoce { get; set; }
+        public int WithoutPay { get; set; }
         
         // Campos compatibles con el servicio
         public string UserType { get; set; } = string.Empty;

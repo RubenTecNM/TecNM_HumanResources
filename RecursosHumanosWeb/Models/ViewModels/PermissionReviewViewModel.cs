@@ -14,7 +14,7 @@ namespace RecursosHumanosWeb.Models.ViewModels
 
         // Información del permission (solo lectura)
         public int PermissionTypeId { get; set; }
-        public string TipoPermisoDescripcion { get; set; } = string.Empty;
+        public string PermissionTypeDescription { get; set; } = string.Empty;
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public int? Days { get; set; }

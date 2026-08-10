@@ -46,7 +46,7 @@
                                 <label class="fw-bold text-success small text-uppercase mb-2 ms-2">Vigencia Desde</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-calendar-alt"></i>
-                                    <input type="date" id="fechaDesde" name="fechaDesde" class="form-control filter-input-pill" value="@(ViewBag.FechaDesde != null ? ((DateTime)ViewBag.FechaDesde).ToString("yyyy-MM-dd") : "")" />
+                                    <input type="date" id="dateFrom" name="dateFrom" class="form-control filter-input-pill" value="@(ViewBag.DateFrom != null ? ((DateTime)ViewBag.DateFrom).ToString("yyyy-MM-dd") : "")" />
                                 </div>
                             </div>
                         </div>
@@ -56,7 +56,7 @@
                                 <label class="fw-bold text-danger small text-uppercase mb-2 ms-2">Vigencia Hasta</label>
                                 <div class="input-with-icon">
                                     <i class="fas fa-calendar-check"></i>
-                                    <input type="date" id="fechaHasta" name="fechaHasta" class="form-control filter-input-pill" value="@(ViewBag.FechaHasta != null ? ((DateTime)ViewBag.FechaHasta).ToString("yyyy-MM-dd") : "")" />
+                                    <input type="date" id="dateTo" name="dateTo" class="form-control filter-input-pill" value="@(ViewBag.DateTo != null ? ((DateTime)ViewBag.DateTo).ToString("yyyy-MM-dd") : "")" />
                                 </div>
                             </div>
                         </div>
@@ -94,7 +94,7 @@
         <div class="table-container fade-in">
             <div class="table-inner">
                 <div class="overflow-x-auto">
-                    <table id="cortesTable" class="data-table" style="width:100%; border: none; overflow: hidden; padding: 0;" aria-label="Tabla de periodos">
+                    <table id="cutoffsTable" class="data-table" style="width:100%; border: none; overflow: hidden; padding: 0;" aria-label="Tabla de periodos">
                         <thead>
                             <tr>
                                 <th class="text-center">ID</th>
@@ -143,7 +143,7 @@
                             
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-2">
-                                            @if (User.HasClaim("TipoUsuario", "1"))
+                                            @if (User.HasClaim("UserType", "1"))
                                             {
                                                 if (item.CutoffStatusTypeId == 1)
                                                 {
@@ -204,8 +204,8 @@
                 page => Url.Action("Index", new
                 {
                     page,
-                    fechaDesde = Context.Request.Query["fechaDesde"],
-                    fechaHasta = Context.Request.Query["fechaHasta"],
+                    fechaDesde = Context.Request.Query["dateFrom"],
+                    fechaHasta = Context.Request.Query["dateTo"],
                     statusId = Context.Request.Query["statusId"],
                     pageSize = Context.Request.Query["pageSize"]
                 }),
@@ -254,8 +254,8 @@
         })();
         function clearAllFilters() {
             // Limpiar inputs estándar
-            $('#fechaDesde').val('');
-            $('#fechaHasta').val('');
+            $('#dateFrom').val('');
+            $('#dateTo').val('');
             
             // Limpiar Select2 (requiere val(null) y trigger('change'))
             $('#statusId').val(null).trigger('change');

@@ -6,40 +6,40 @@ function decodeHtml(str) {
 }
 
 // Parsear datos del DTO con manejo de errores
-let permisosPorTipo, permisosPorArea, tendencia, heatmapData, kpiData, conGoce, sinGoce;
+let permissionsByType, permissionsByArea, trend, heatmapData, kpiData, withPay, withoutPay;
 try {
-    const permisosPorTipoRaw = document.getElementById('permisosPorTipo')?.value || '[]';
-    const permisosPorAreaRaw = document.getElementById('permisosPorArea')?.value || '[]';
-    const tendenciaRaw = document.getElementById('tendencia')?.value || '[]';
+    const permissionsByTypeRaw = document.getElementById('permissionsByType')?.value || '[]';
+    const permissionsByAreaRaw = document.getElementById('permissionsByArea')?.value || '[]';
+    const trendRaw = document.getElementById('trend')?.value || '[]';
     const heatmapDataRaw = document.getElementById('heatmapData')?.value || '[]';
     const kpiDataRaw = document.getElementById('kpiData')?.value || '{}';
-    const conGoceRaw = document.getElementById('conGoce')?.value || '0';
-    const sinGoceRaw = document.getElementById('sinGoce')?.value || '0';
+    const withPayRaw = document.getElementById('withPay')?.value || '0';
+    const withoutPayRaw = document.getElementById('withoutPay')?.value || '0';
 
     // Decodificar valores HTML antes de parsear
-    permisosPorTipo = JSON.parse(decodeHtml(permisosPorTipoRaw));
-    permisosPorArea = JSON.parse(decodeHtml(permisosPorAreaRaw));
-    tendencia = JSON.parse(decodeHtml(tendenciaRaw));
+    permissionsByType = JSON.parse(decodeHtml(permissionsByTypeRaw));
+    permissionsByArea = JSON.parse(decodeHtml(permissionsByAreaRaw));
+    trend = JSON.parse(decodeHtml(trendRaw));
     heatmapData = JSON.parse(decodeHtml(heatmapDataRaw));
     kpiData = JSON.parse(decodeHtml(kpiDataRaw));
-    conGoce = parseInt(conGoceRaw);
-    sinGoce = parseInt(sinGoceRaw);
+    withPay = parseInt(withPayRaw);
+    withoutPay = parseInt(withoutPayRaw);
 
-    console.log('Datos cargados:', { permisosPorTipo, permisosPorArea, tendencia, kpiData, conGoce, sinGoce });
+    console.log('Datos cargados:', { permissionsByType, permissionsByArea, trend, kpiData, withPay, withoutPay });
 } catch (e) {
     console.error('Error parseando datos:', e);
-    permisosPorTipo = [];
-    permisosPorArea = [];
-    tendencia = [];
+    permissionsByType = [];
+    permissionsByArea = [];
+    trend = [];
     heatmapData = [];
     kpiData = { total: 0, aprobados: 0, pendientes: 0, diasPromedio: 0 };
-    conGoce = 0;
-    sinGoce = 0;
+    withPay = 0;
+    withoutPay = 0;
 }
 
 // Crear gráfico de dona con D3.js
 function createDonutChart() {
-    if (!permisosPorTipo.length) {
+    if (!permissionsByType.length) {
         document.getElementById('donut-chart').innerHTML = '<p class="text-gray-500 text-center py-8">No hay datos disponibles</p>';
         document.getElementById('donut-legend').innerHTML = '';
         return;
@@ -65,7 +65,7 @@ function createDonutChart() {
     const hoverArc = d3.arc().innerRadius(innerRadius).outerRadius(radius + 10).cornerRadius(8);
 
     const arcs = svg.selectAll(".arc")
-        .data(pie(permisosPorTipo))
+        .data(pie(permissionsByType))
         .enter().append("g")
         .attr("class", "arc");
 
@@ -85,7 +85,7 @@ function createDonutChart() {
                 .style("filter", "drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1))");
         });
 
-    const total = permisosPorTipo.reduce((sum, d) => sum + d.Value, 0);
+    const total = permissionsByType.reduce((sum, d) => sum + d.Value, 0);
     
     svg.append("text")
         .attr("text-anchor", "middle")
@@ -105,7 +105,7 @@ function createDonutChart() {
     // Crear leyenda
     const legend = d3.select("#donut-legend")
         .selectAll(".legend-item")
-        .data(permisosPorTipo)
+        .data(permissionsByType)
         .enter().append("div")
         .attr("class", "flex items-center justify-between p-3 rounded-xl")
         .style("background-color", d => `rgba(${parseInt(d.Color.slice(1, 3), 16)}, ${parseInt(d.Color.slice(3, 5), 16)}, ${parseInt(d.Color.slice(5, 7), 16)}, 0.1)`);
@@ -121,7 +121,7 @@ function createDonutChart() {
 }
 
 function animateDonut() {
-    if (!permisosPorTipo.length) return;
+    if (!permissionsByType.length) return;
     d3.select("#donut-chart svg").remove();
     createDonutChart();
 }
@@ -129,7 +129,7 @@ function animateDonut() {
 // Crear gráfico de área con ApexCharts
 let areaChart;
 function createAreaChart() {
-    if (!tendencia.length) {
+    if (!trend.length) {
         document.getElementById('area-chart').innerHTML = '<p class="text-gray-500 text-center py-8">No hay datos disponibles</p>';
         return;
     }
@@ -143,12 +143,12 @@ function createAreaChart() {
             background: 'transparent'
         },
         series: [
-            { name: 'Con Goce', data: tendencia.map(t => t.Aprobados || 0), color: '#10b981' },
-            { name: 'Sin Goce', data: tendencia.map(t => t.Pendientes || 0), color: '#f59e0b' },
-            { name: 'Total', data: tendencia.map(t => t.Total || 0), color: '#3b82f6' }
+            { name: 'Con Goce', data: trend.map(t => t.Approved || 0), color: '#10b981' },
+            { name: 'Sin Goce', data: trend.map(t => t.Pending || 0), color: '#f59e0b' },
+            { name: 'Total', data: trend.map(t => t.Total || 0), color: '#3b82f6' }
         ],
         xaxis: {
-            categories: tendencia.map(t => t.Month || ''),
+            categories: trend.map(t => t.Month || ''),
             axisBorder: { show: false },
             axisTicks: { show: false },
             labels: { style: { colors: '#6b7280', fontSize: '12px', fontWeight: 500 } }
@@ -187,7 +187,7 @@ function createAreaChart() {
 }
 
 function changeChartType(type) {
-    if (areaChart && tendencia.length) {
+    if (areaChart && trend.length) {
         areaChart.updateOptions({ chart: { type: type } });
     }
 }
@@ -212,7 +212,7 @@ function getContrastColor(hexcolor) {
 }
 
 function createHorizontalBars() {
-    if (!permisosPorArea.length) {
+    if (!permissionsByArea.length) {
         document.getElementById('horizontal-bars').innerHTML = '<div class="flex-center h-full text-muted">No hay datos disponibles</div>';
         return;
     }
@@ -223,7 +223,7 @@ function createHorizontalBars() {
     const containerWidth = container.offsetWidth;
     const width = containerWidth - margin.left - margin.right;
     // Altura dinámica: mínimo 300px, o crece si hay muchas áreas
-    const height = Math.max(300, permisosPorArea.length * 40);
+    const height = Math.max(300, permissionsByArea.length * 40);
 
     d3.select("#horizontal-bars").html("");
 
@@ -236,12 +236,12 @@ function createHorizontalBars() {
 
     // Escala X (Valores)
     const x = d3.scaleLinear()
-        .domain([0, d3.max(permisosPorArea, d => d.Value) * 1.1]) // 10% extra para espacio
+        .domain([0, d3.max(permissionsByArea, d => d.Value) * 1.1]) // 10% extra para espacio
         .range([0, width]);
 
     // Escala Y (IDs de Área)
     const y = d3.scaleBand()
-        .domain(permisosPorArea.map(d => d.Id)) // Usamos ID en lugar de Name
+        .domain(permissionsByArea.map(d => d.Id)) // Usamos ID en lugar de Name
         .range([0, height])
         .padding(0.25); // Un poco más de espacio entre barras
 
@@ -258,7 +258,7 @@ function createHorizontalBars() {
 
     // GRUPO DE BARRAS
     const bars = svg.selectAll(".bar-group")
-        .data(permisosPorArea)
+        .data(permissionsByArea)
         .enter().append("g")
         .attr("class", "bar-group");
 
@@ -336,8 +336,8 @@ function createRadialChart() {
         return;
     }
     
-    const porcentajeConGoce = total > 0 ? parseFloat(((conGoce / total) * 100).toFixed(1)) : 0;
-    const porcentajePendientes = total > 0 ? parseFloat(((sinGoce / total) * 100).toFixed(1)) : 0;
+    const withPayPercentage = total > 0 ? parseFloat(((withPay / total) * 100).toFixed(1)) : 0;
+    const pendingPercentage = total > 0 ? parseFloat(((withoutPay / total) * 100).toFixed(1)) : 0;
     
     const options = {
         chart: {
@@ -392,7 +392,7 @@ function createRadialChart() {
             }
         },
         colors: ['#10b981', '#f59e0b'],
-        series: [porcentajeConGoce, porcentajePendientes],
+        series: [withPayPercentage, pendingPercentage],
         labels: ['Con Goce de Pago', 'Pendientes por Revisar'],
         legend: { 
             show: true, 
@@ -404,7 +404,7 @@ function createRadialChart() {
             itemMargin: { horizontal: 10, vertical: 5 },
             formatter: function(seriesName, opts) {
                 const value = opts.w.globals.series[opts.seriesIndex];
-                const count = opts.seriesIndex === 0 ? conGoce : sinGoce;
+                const count = opts.seriesIndex === 0 ? withPay : withoutPay;
                 return seriesName + ': ' + value.toFixed(1) + '% (' + count + ')';
             }
         },
@@ -415,7 +415,7 @@ function createRadialChart() {
             enabled: true,
             y: {
                 formatter: function(value, { seriesIndex }) {
-                    const count = seriesIndex === 0 ? conGoce : sinGoce;
+                    const count = seriesIndex === 0 ? withPay : withoutPay;
                     return count + ' permisos (' + value.toFixed(1) + '%)';
                 }
             }

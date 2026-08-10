@@ -55,7 +55,7 @@ namespace RecursosHumanosWeb.Controllers
 
             ViewBag.UserName = userName;
             ViewBag.FromDay = fromDay?.ToString("yyyy-MM-dd");
-            ViewBag.ToDay = toDay?.ToString("yyyy-MM-dd");
+            ViewBag.Today = toDay?.ToString("yyyy-MM-dd");
 
             return View(await query.OrderByDescending(a => a.CreatedAt).ToListAsync());
         }
@@ -104,20 +104,20 @@ namespace RecursosHumanosWeb.Controllers
         public IActionResult Create()
         {
             // CORRECCIÓN: Usamos proyección segura para evitar nulos en el SelectList
-            var usuariosActivos = _context.Users
+            var activeUsers = _context.Users
                 .Where(u => u.Status)
                 .Select(u => new { u.Id, u.Name }) // Solo traemos lo necesario
                 .OrderBy(u => u.Name)
                 .ToList();
 
             // Usamos "Name" que es la propiedad anónima definida arriba
-            ViewData["User"] = new SelectList(usuariosActivos, "Id", "Name");
+            ViewData["User"] = new SelectList(activeUsers, "Id", "Name");
 
             ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
             ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
 
             // Lógica de roles (ajusta según tus necesidades reales)
-            ViewBag.IsAdministrador = User.HasClaim("UserType", "1");
+            ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
             return View(new ApiKeyCreateViewModel());
         }
@@ -148,16 +148,16 @@ namespace RecursosHumanosWeb.Controllers
             if (!ModelState.IsValid || viewModel.OwnerUserId == null || userId == 0)
             {
                 // Recargar listas en caso de error (con la misma lógica segura del GET)
-                var usuariosList = _context.Users
+                var usersList = _context.Users
                                         .Where(u => u.Status)
                                         .Select(u => new { u.Id, u.Name })
                                         .OrderBy(u => u.Name)
                                         .ToList();
 
-                ViewData["User"] = new SelectList(usuariosList, "Id", "Name", viewModel.OwnerUserId);
+                ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
                 ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
                 ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
-                ViewBag.IsAdministrador = User.HasClaim("UserType", "1");
+                ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                 return View(viewModel);
             }
@@ -232,15 +232,15 @@ namespace RecursosHumanosWeb.Controllers
                     ModelState.AddModelError("", "Error al generar la API Key: " + ex.Message);
 
                     // Recargar datos para la vista (Copy-paste de la lógica de arriba)
-                    var usuariosList = _context.Users
+                    var usersList = _context.Users
                                             .Where(u => u.Status)
                                             .Select(u => new { u.Id, u.Name })
                                             .OrderBy(u => u.Name)
                                             .ToList();
-                    ViewData["User"] = new SelectList(usuariosList, "Id", "Name", viewModel.OwnerUserId);
+                    ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
                     ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
                     ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
-                    ViewBag.IsAdministrador = User.HasClaim("UserType", "1");
+                    ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                     return View(viewModel);
                 }
@@ -281,17 +281,17 @@ namespace RecursosHumanosWeb.Controllers
             };
 
             // Preparar listas para la vista
-            var usuariosActivos = _context.Users
+            var activeUsers = _context.Users
                 .Where(u => u.Status)
                 .Select(u => new { u.Id, u.Name })
                 .OrderBy(u => u.Name)
                 .ToList();
 
-            ViewData["User"] = new SelectList(usuariosActivos, "Id", "Name", viewModel.OwnerUserId);
+            ViewData["User"] = new SelectList(activeUsers, "Id", "Name", viewModel.OwnerUserId);
             ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
             ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
             ViewBag.CurrentPermissions = currentPermissions;
-            ViewBag.IsAdministrador = User.HasClaim("UserType", "1");
+            ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
             return View(viewModel);
         }
@@ -316,16 +316,16 @@ namespace RecursosHumanosWeb.Controllers
             if (!ModelState.IsValid || userId == 0)
             {
                 // Recargar listas en caso de error
-                var usuariosList = _context.Users
+                var usersList = _context.Users
                     .Where(u => u.Status)
                     .Select(u => new { u.Id, u.Name })
                     .OrderBy(u => u.Name)
                     .ToList();
 
-                ViewData["User"] = new SelectList(usuariosList, "Id", "Name", viewModel.OwnerUserId);
+                ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
                 ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
                 ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
-                ViewBag.IsAdministrador = User.HasClaim("UserType", "1");
+                ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                 return View(viewModel);
             }
@@ -349,11 +349,11 @@ namespace RecursosHumanosWeb.Controllers
                     await _context.SaveChangesAsync();
 
                     // Eliminar permissions anteriores (soft delete)
-                    var permisosAnteriores = await _context.ApiKeyTablePermissions
+                    var previousPermissions = await _context.ApiKeyTablePermissions
                         .Where(p => p.ApiKeyId == id)
                         .ToListAsync();
 
-                    foreach (var permission in permisosAnteriores)
+                    foreach (var permission in previousPermissions)
                     {
                         permission.Status = false;
                         permission.UpdatedAt = currentDateTime;
@@ -399,16 +399,16 @@ namespace RecursosHumanosWeb.Controllers
                     ModelState.AddModelError("", $"Error al actualizar la API Key: {ex.Message}");
 
                     // Recargar listas
-                    var usuariosList = _context.Users
+                    var usersList = _context.Users
                         .Where(u => u.Status)
                         .Select(u => new { u.Id, u.Name })
                         .OrderBy(u => u.Name)
                         .ToList();
 
-                    ViewData["User"] = new SelectList(usuariosList, "Id", "Name", viewModel.OwnerUserId);
+                    ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
                     ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
                     ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
-                    ViewBag.IsAdministrador = User.HasClaim("UserType", "1");
+                    ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                     return View(viewModel);
                 }
@@ -516,7 +516,7 @@ namespace RecursosHumanosWeb.Controllers
 
         #region AJAX & HELPERS
         [HttpGet]
-        public async Task<JsonResult> GetUsuariosParaBusqueda(string term)
+        public async Task<JsonResult> GetUsersForSearch(string term)
         {
             // Si no hay término de búsqueda, devolvemos una lista vacía o los primeros 10.
             if (string.IsNullOrWhiteSpace(term))

@@ -33,9 +33,9 @@ function isDateInRange(dateStr, fromDate, toDate) {
 // Filter functionality
 function filterTable() {
     const statusFilter = document.getElementById('statusFilter').value;
-    const fechaDesde = document.getElementById('fechaDesde').value;
-    const fechaHasta = document.getElementById('fechaHasta').value;
-    const usuarioCreadorFilter = document.getElementById('usuarioCreadorFilter').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const createdByFilter = document.getElementById('createdByFilter').value;
 
     const tableBody = document.getElementById('tableBody');
     const rows = tableBody.getElementsByTagName('tr');
@@ -54,28 +54,28 @@ function filterTable() {
         }
 
         // Date range filter
-        if (showRow && (fechaDesde || fechaHasta)) {
-            const fechaInicio = cells[0].textContent.trim();
-            const fechaFin = cells[1].textContent.trim();
+        if (showRow && (dateFrom || dateTo)) {
+            const startDate = cells[0].textContent.trim();
+            const endDate = cells[1].textContent.trim();
 
             let dateInRange = false;
 
-            if (isDateInRange(fechaInicio, fechaDesde, fechaHasta)) {
+            if (isDateInRange(startDate, dateFrom, dateTo)) {
                 dateInRange = true;
             }
 
-            if (isDateInRange(fechaFin, fechaDesde, fechaHasta)) {
+            if (isDateInRange(endDate, dateFrom, dateTo)) {
                 dateInRange = true;
             }
 
-            if (fechaDesde && fechaHasta) {
-                const inicioDate = parseDate(fechaInicio);
-                const finDate = parseDate(fechaFin);
-                const filterDesde = new Date(fechaDesde);
-                const filterHasta = new Date(fechaHasta);
+            if (dateFrom && dateTo) {
+                const inicioDate = parseDate(startDate);
+                const finDate = parseDate(endDate);
+                const filterFrom = new Date(dateFrom);
+                const filterTo = new Date(dateTo);
 
                 if (inicioDate && finDate) {
-                    if (inicioDate <= filterHasta && finDate >= filterDesde) {
+                    if (inicioDate <= filterTo && finDate >= filterFrom) {
                         dateInRange = true;
                     }
                 }
@@ -85,25 +85,25 @@ function filterTable() {
         }
 
         // User filter
-        if (showRow && usuarioCreadorFilter) {
-            const usuarioCrea = cells[5].textContent.trim();
-            showRow = usuarioCrea.includes(usuarioCreadorFilter);
+        if (showRow && createdByFilter) {
+            const createdBy = cells[5].textContent.trim();
+            showRow = createdBy.includes(createdByFilter);
         }
 
         row.style.display = showRow ? '' : 'none';
         if (showRow) visibleRows++;
     }
 
-    document.getElementById('cortesTable').parentElement.parentElement.style.display = visibleRows > 0 ? '' : 'none';
+    document.getElementById('cutoffsTable').parentElement.parentElement.style.display = visibleRows > 0 ? '' : 'none';
     emptyState.style.display = visibleRows > 0 ? 'none' : 'block';
 }
 
 // Clear all filters
 function clearAllFilters() {
     document.getElementById('statusFilter').value = '';
-    document.getElementById('usuarioCreadorFilter').value = '';
-    document.getElementById('fechaDesde').value = '';
-    document.getElementById('fechaHasta').value = '';
+    document.getElementById('createdByFilter').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
 
     filterTable();
 

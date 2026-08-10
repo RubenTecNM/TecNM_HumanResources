@@ -23,7 +23,7 @@ namespace RecursosHumanosWeb.Controllers.Api
         // Permission requerido: Leer sobre la tabla "DatabaseTable"
         // -----------------------------------------------------------------
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "DatabaseTable", PermisoRequerido = "Leer")]
+        [ApiKeyAuthorize(TargetTable = "DatabaseTable", RequiredPermission = "Leer")]
         public async Task<IActionResult> GetTablas()
         {
             // Solo devolvemos las tablas activas y campos relevantes para la API
@@ -50,7 +50,7 @@ namespace RecursosHumanosWeb.Controllers.Api
         // Permission requerido: Leer sobre la tabla "DatabaseTable"
         // -----------------------------------------------------------------
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "DatabaseTable", PermisoRequerido = "Leer")]
+        [ApiKeyAuthorize(TargetTable = "DatabaseTable", RequiredPermission = "Leer")]
         public async Task<IActionResult> GetTabla(int id)
         {
             var tabla = await _context.DatabaseTables

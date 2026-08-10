@@ -20,7 +20,7 @@
     </div>
 
     <form asp-action="Edit" method="post" enctype="multipart/form-data" class="permission-form ajax-form" id="editPermissionForm"
-          data-tipo-permiso="@Model.PermissionTypeId">
+          data-permission-type="@Model.PermissionTypeId">
 
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
@@ -100,9 +100,9 @@
                     <span class="section-indicator">2</span>
                 </div>
                 <div class="datetime-grid">
-                    <div class="form-group" id="fecha1Date-group">
+                    <div class="form-group" id="date1-group">
                         <label asp-for="StartDateOnly" class="form-label">
-                            <span id="fecha1Date-label">Fecha de inicio</span>
+                            <span id="date1-label">Fecha de inicio</span>
                             <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
@@ -111,9 +111,9 @@
                         </div>
                         <span asp-validation-for="StartDateOnly" class="text-danger validation-message"></span>
                     </div>
-                    <div class="form-group" id="fecha2Date-group">
+                    <div class="form-group" id="date2-group">
                         <label asp-for="EndDateOnly" class="form-label">
-                            <span id="fecha2Date-label">Fecha de fin</span>
+                            <span id="date2-label">Fecha de fin</span>
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-calendar input-icon"></i>
@@ -121,9 +121,9 @@
                         </div>
                         <span asp-validation-for="EndDateOnly" class="text-danger validation-message"></span>
                     </div>
-                    <div class="form-group" id="hora1Time-group">
+                    <div class="form-group" id="time1-group">
                         <label asp-for="StartTime" class="form-label">
-                            <span id="hora1Time-label">Hora de entrada</span>
+                            <span id="time1-label">Hora de entrada</span>
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-clock input-icon"></i>
@@ -131,9 +131,9 @@
                         </div>
                         <span asp-validation-for="StartTime" class="text-danger validation-message"></span>
                     </div>
-                    <div class="form-group" id="hora2Time-group">
+                    <div class="form-group" id="time2-group">
                         <label asp-for="EndTime" class="form-label">
-                            <span id="hora2Time-label">Hora de salida</span>
+                            <span id="time2-label">Hora de salida</span>
                         </label>
                         <div class="input-wrapper">
                             <i class="fas fa-clock input-icon"></i>
@@ -226,5 +226,5 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script src="~/js/Permisos/edit.js" asp-append-version="true"></script>
+    <script src="~/js/Permissions/edit.js" asp-append-version="true"></script>
 }

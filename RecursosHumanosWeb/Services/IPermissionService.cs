@@ -7,14 +7,14 @@ using X.PagedList;
 
 namespace RecursosHumanosWeb.Services
 {
-    public interface IPermisoService
+    public interface IPermissionService
     {
-        Task<IPagedList<PermissionsDTO>> GetPermisosPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, bool? revisado, int page, int pageSize);
+        Task<IPagedList<PermissionsDTO>> GetPermissionsPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, bool? revisado, int page, int pageSize);
         Task<object> GetStatsAsync(int userId, int userType);
-        Task<int> CreatePermisoAsync(Permission permission, int idUsuarioCrea);
-        Task<bool> UpdatePermisoAsync(Permission permission, int idUsuarioModifica);
-        Task<bool> DeletePermisoAsync(int id, int idUsuarioModifica);
-        Task<bool> AutorizarPermisoAsync(int id, int idUsuarioAutoriza, bool aprobado, string comentario);
+        Task<int> CreatePermissionAsync(Permission permission, int createdByUserId);
+        Task<bool> UpdatePermissionAsync(Permission permission, int updatedByUserId);
+        Task<bool> DeletePermissionAsync(int id, int updatedByUserId);
+        Task<bool> AuthorizePermissionAsync(int id, int authorizingUserId, bool aprobado, string comment);
         bool CanUserAccessPermiso(int userId, int userType, Permission permission);
     }
 }

@@ -293,9 +293,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Función para contar días hasta fechas importantes
     function addCountdownTimers() {
-        const fechaItems = document.querySelectorAll('.fecha .detail-value');
+        const dateItems = document.querySelectorAll('.date .detail-value');
 
-        fechaItems.forEach(item => {
+        dateItems.forEach(item => {
             const dateText = item.textContent.trim();
             const dateMatch = dateText.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
 

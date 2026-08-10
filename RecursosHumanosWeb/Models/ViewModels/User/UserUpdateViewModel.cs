@@ -8,14 +8,7 @@ namespace RecursosHumanosWeb.Models.ViewModels.User
         // --- 1. ID (Clave Primaria) ---
 
         [Required(ErrorMessage = "El ID del usuario es obligatorio para la actualización.")]
-        public int IdUsuario { get; set; }
-
-        // Alias para compatibilidad con controlador
-        public int Id 
-        {
-            get => IdUsuario;
-            set => IdUsuario = value;
-        }
+        public int Id { get; set; }
 
         // --- 2. Propiedades a modificar ---
 

@@ -6,19 +6,19 @@
     ViewData["Title"] = "Autorizar Permiso";
     var culture = new CultureInfo("es-MX");
 
-    string FormatHora12(DateTime fecha) => fecha.ToString("hh:mm tt", culture).ToUpper();
-    string FormatFechaCompleta(DateTime fecha) => fecha.ToString("dd 'de' MMMM 'del' yyyy", culture);
+    string FormatHour12(DateTime date) => date.ToString("hh:mm tt", culture).ToUpper();
+    string FormatFullDate(DateTime date) => date.ToString("dd 'de' MMMM 'del' yyyy", culture);
 
     var typeConfigurations = new Dictionary<int, Dictionary<string, (bool show, string label)>>
     {
-        [1] = new Dictionary<string, (bool, string)> { ["Fecha1"] = (true, "En el día"), ["Fecha2"] = (false, "Al día"), ["Hora1"] = (true, "Hora de llegada"), ["Hora2"] = (false, "Hora salida") },
-        [2] = new Dictionary<string, (bool, string)> { ["Fecha1"] = (true, "Del día"), ["Fecha2"] = (true, "Por el día"), ["Hora1"] = (true, "Hora entrada"), ["Hora2"] = (true, "Hora salida") },
-        [3] = new Dictionary<string, (bool, string)> { ["Fecha1"] = (true, "Del día"), ["Fecha2"] = (true, "Al día"), ["Hora1"] = (false, "Hora entrada"), ["Hora2"] = (false, "Hora salida") },
-        [4] = new Dictionary<string, (bool, string)> { ["Fecha1"] = (true, "Del día"), ["Fecha2"] = (true, "Al día"), ["Hora1"] = (true, "Hora entrada"), ["Hora2"] = (true, "Hora salida") }
+        [1] = new Dictionary<string, (bool, string)> { ["Date1"] = (true, "En el día"), ["Date2"] = (false, "Al día"), ["Time1"] = (true, "Hora de llegada"), ["Time2"] = (false, "Hora salida") },
+        [2] = new Dictionary<string, (bool, string)> { ["Date1"] = (true, "Del día"), ["Date2"] = (true, "Por el día"), ["Time1"] = (true, "Hora entrada"), ["Time2"] = (true, "Hora salida") },
+        [3] = new Dictionary<string, (bool, string)> { ["Date1"] = (true, "Del día"), ["Date2"] = (true, "Al día"), ["Time1"] = (false, "Hora entrada"), ["Time2"] = (false, "Hora salida") },
+        [4] = new Dictionary<string, (bool, string)> { ["Date1"] = (true, "Del día"), ["Date2"] = (true, "Al día"), ["Time1"] = (true, "Hora entrada"), ["Time2"] = (true, "Hora salida") }
     };
 
     var config = typeConfigurations.ContainsKey(Model.PermissionTypeId) ? typeConfigurations[Model.PermissionTypeId] : null;
-    bool showDias = config != null && config["Fecha2"].show && Model.EndDate.HasValue && Model.Days.HasValue && Model.Days.Value > 1;
+    bool showDays = config != null && config["Date2"].show && Model.EndDate.HasValue && Model.Days.HasValue && Model.Days.Value > 1;
 
     string? evidenceUrl = !string.IsNullOrEmpty(Model.Evidence) ? Model.Evidence.Replace('\\', '/').Trim() : null;
     if (evidenceUrl != null && !evidenceUrl.StartsWith("/") && !evidenceUrl.Contains("/")) evidenceUrl = "/Evidences/" + evidenceUrl;
@@ -27,8 +27,8 @@
     bool isApprover = ViewBag.IsApprover ?? false;
     bool canReview = (Model.PermissionStatusTypeId == 1) && (isRHOrAdmin || (isApprover && Model.CutoffId == (int?)ViewBag.CurrentCourtId));
 
-    string solicitanteNombre = Model.RequestingUser?.Name ?? "Usuario";
-    string inicial = !string.IsNullOrEmpty(solicitanteNombre) ? solicitanteNombre.Substring(0, 1).ToUpper() : "U";
+    string requesterName = Model.RequestingUser?.Name ?? "Usuario";
+    string initial = !string.IsNullOrEmpty(requesterName) ? requesterName.Substring(0, 1).ToUpper() : "U";
 }
 
 @section Styles {
@@ -39,12 +39,12 @@
             <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-4">
                 <div class="d-flex align-items-center gap-4">
                     <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-2 fw-bold shadow-sm">
-                        @inicial
+                        @initial
                     </div>
                     <div>
                         <h2 class="h3 fw-bold mb-1">Autorizaci&oacute;n de Permiso #@Model.Id</h2>
                         <div class="ms-1 d-flex align-items-center gap-2 opacity-75 small">
-                             <i class="fas fa-user-check"></i> Revisando solicitud de: @solicitanteNombre
+                             <i class="fas fa-user-check"></i> Revisando solicitud de: @requesterName
                         </div>
                     </div>
                 </div>
@@ -89,13 +89,13 @@
                     <div class="detail-grid d-flex flex-column gap-3">
                         <div class="p-3 border-start border-primary border-4 bg-light rounded-end shadow-sm">
                             <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">Desde</p>
-                            <p class="fw-bold text-dark mb-0 small">@FormatFechaCompleta(Model.StartDate.Value) @(config != null && config["Hora1"].show ? "- " + FormatHora12(Model.StartDate.Value) : "")</p>
+                            <p class="fw-bold text-dark mb-0 small">@FormatFullDate(Model.StartDate.Value) @(config != null && config["Time1"].show ? "- " + FormatHour12(Model.StartDate.Value) : "")</p>
                         </div>
                         @if (Model.EndDate.HasValue)
                         {
                             <div class="p-3 border-start border-primary border-4 bg-light rounded-end shadow-sm">
                                 <p class="small text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.65rem;">Hasta</p>
-                                <p class="fw-bold text-dark mb-0 small">@FormatFechaCompleta(Model.EndDate.Value) @(config != null && config["Hora2"].show ? "- " + FormatHora12(Model.EndDate.Value) : "")</p>
+                                <p class="fw-bold text-dark mb-0 small">@FormatFullDate(Model.EndDate.Value) @(config != null && config["Time2"].show ? "- " + FormatHour12(Model.EndDate.Value) : "")</p>
                             </div>
                         }
                     </div>

@@ -16,7 +16,7 @@ namespace RecursosHumanosWeb.Models.ViewModels
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public string? UserName { get; set; }
-        public int? IdUsuario { get; set; }
+        public int? UserId { get; set; }
         public int? AreaId { get; set; }
         public int? PermissionTypeId { get; set; }
 

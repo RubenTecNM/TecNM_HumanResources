@@ -9,13 +9,13 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
 {
     [Route("api/PermissionTypes")]
     [ApiController]
-    public class TipoPermisosApiController : ControllerBase
+    public class PermissionTypesApiController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
-        private readonly ILogger<TipoPermisosApiController> _logger;
+        private readonly ILogger<PermissionTypesApiController> _logger;
 
-        public TipoPermisosApiController(HumanResourcesContext context, IMapper mapper, ILogger<TipoPermisosApiController> logger)
+        public PermissionTypesApiController(HumanResourcesContext context, IMapper mapper, ILogger<PermissionTypesApiController> logger)
         {
             _context = context;
             _mapper = mapper;
@@ -24,8 +24,8 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
 
         // GET: api/PermissionTypes
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "PermissionType", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetTipoPermisos()
+        [ApiKeyAuthorize(TargetTable = "PermissionType", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetPermissionTypes()
         {
             var permissionTypes = await _context.PermissionTypes
                 .Where(t => t.Status == true)
@@ -43,8 +43,8 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
 
         // GET: api/PermissionTypes/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "PermissionType", PermisoRequerido = "Leer")]
-        public async Task<IActionResult> GetTipoPermiso(int id)
+        [ApiKeyAuthorize(TargetTable = "PermissionType", RequiredPermission = "Leer")]
+        public async Task<IActionResult> GetPermissionType(int id)
         {
             var permissionType = await _context.PermissionTypes
                 .Where(t => t.Id == id)
@@ -67,8 +67,8 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
 
         // POST: api/PermissionTypes
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "PermissionType", PermisoRequerido = "Escribir")]
-        public async Task<IActionResult> PostTipoPermiso([FromBody] PermissionTypeCreateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "PermissionType", RequiredPermission = "Escribir")]
+        public async Task<IActionResult> PostPermissionType([FromBody] PermissionTypeCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
@@ -86,7 +86,7 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
                 _context.PermissionTypes.Add(permissionType);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetTipoPermiso), new { id = permissionType.Id }, new { permissionType.Id, permissionType.Description });
+                return CreatedAtAction(nameof(GetPermissionType), new { id = permissionType.Id }, new { permissionType.Id, permissionType.Description });
             }
             catch (Exception ex)
             {
@@ -98,8 +98,8 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
 
         // PUT: api/PermissionTypes/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "PermissionType", PermisoRequerido = "Actualizar")]
-        public async Task<IActionResult> PutTipoPermiso(int id, [FromBody] PermissionTypeUpdateViewModel model)
+        [ApiKeyAuthorize(TargetTable = "PermissionType", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> PutPermissionType(int id, [FromBody] PermissionTypeUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
 
@@ -128,8 +128,8 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
 
         // DELETE: api/PermissionTypes/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "PermissionType", PermisoRequerido = "Eliminar")]
-        public async Task<IActionResult> DeleteTipoPermiso(int id)
+        [ApiKeyAuthorize(TargetTable = "PermissionType", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> DeletePermissionType(int id)
         {
             var permissionType = await _context.PermissionTypes.FindAsync(id);
             if (permissionType == null) return NotFound();

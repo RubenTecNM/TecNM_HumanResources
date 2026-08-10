@@ -25,8 +25,8 @@ namespace RecursosHumanosWeb.Controllers.Api
         public async Task<IActionResult> RunCase(int @case = 1, bool confirmed = false)
         {
             // Buscar cutoff activo
-            var corteActivo = await _context.Cutoffs.Where(c => c.CutoffStatusTypeId == 1).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
-            if (corteActivo == null)
+            var activeCutoff = await _context.Cutoffs.Where(c => c.CutoffStatusTypeId == 1).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
+            if (activeCutoff == null)
                 return BadRequest(new AlertResponseDTO { Success = false, Title = "Error de Corte", Message = "No se encontró un corte activo." });
 
             // User RH de pruebas (si existe)
@@ -37,8 +37,8 @@ namespace RecursosHumanosWeb.Controllers.Api
             if (@case == 1)
             {
                 // Caso 1: StartDate anterior al inicio del cutoff
-                var fecha1 = corteActivo.StartDate.AddHours(-1);
-                if (fecha1 < corteActivo.StartDate)
+                var date1 = activeCutoff.StartDate.AddHours(-1);
+                if (date1 < activeCutoff.StartDate)
                 {
                     var dto = new AlertResponseDTO { Success = false, Title = "Error de Validación", Message = "La fecha y hora de inicio debe estar dentro del periodo del corte vigente." };
                     dto.Errors = new System.Collections.Generic.Dictionary<string, string[]> { { "StartDate", new[] { "La fecha y hora de inicio debe estar dentro del periodo del corte vigente." } } };
@@ -49,9 +49,9 @@ namespace RecursosHumanosWeb.Controllers.Api
             if (@case == 2)
             {
                 // Caso 2: EndDate posterior al término del cutoff
-                var fecha1 = corteActivo.StartDate.AddDays(1);
-                var fecha2 = corteActivo.EndDate.AddDays(2);
-                if (fecha2 > corteActivo.EndDate && !confirmed)
+                var date1 = activeCutoff.StartDate.AddDays(1);
+                var date2 = activeCutoff.EndDate.AddDays(2);
+                if (date2 > activeCutoff.EndDate && !confirmed)
                 {
                     return Ok(new AlertResponseDTO
                     {
@@ -69,10 +69,10 @@ namespace RecursosHumanosWeb.Controllers.Api
                     var permission = new Permission
                     {
                         Reason = "Test confirmado fuera de cutoff",
-                        StartDate = corteActivo.StartDate.AddDays(1),
-                        EndDate = corteActivo.EndDate.AddDays(2),
-                        Days = (int)((corteActivo.EndDate.AddDays(2) - corteActivo.StartDate.AddDays(1)).TotalDays + 1),
-                        CutoffId = corteActivo.Id,
+                        StartDate = activeCutoff.StartDate.AddDays(1),
+                        EndDate = activeCutoff.EndDate.AddDays(2),
+                        Days = (int)((activeCutoff.EndDate.AddDays(2) - activeCutoff.StartDate.AddDays(1)).TotalDays + 1),
+                        CutoffId = activeCutoff.Id,
                         PermissionTypeId = 2,
                         RequestingUserId = user.Id,
                         CreatedByUserId = user.Id,
@@ -89,15 +89,15 @@ namespace RecursosHumanosWeb.Controllers.Api
             if (@case == 3)
             {
                 // Caso 3: Fechas dentro del cutoff
-                var fecha1 = corteActivo.StartDate.AddDays(1).Date;
-                var fecha2 = corteActivo.StartDate.AddDays(2).Date;
+                var date1 = activeCutoff.StartDate.AddDays(1).Date;
+                var date2 = activeCutoff.StartDate.AddDays(2).Date;
                 var permission = new Permission
                 {
                     Reason = "Test dentro del cutoff",
-                    StartDate = fecha1,
-                    EndDate = fecha2,
-                    Days = (int)((fecha2 - fecha1).TotalDays + 1),
-                    CutoffId = corteActivo.Id,
+                    StartDate = date1,
+                    EndDate = date2,
+                    Days = (int)((date2 - date1).TotalDays + 1),
+                    CutoffId = activeCutoff.Id,
                     PermissionTypeId = 2,
                     RequestingUserId = user.Id,
                     CreatedByUserId = user.Id,

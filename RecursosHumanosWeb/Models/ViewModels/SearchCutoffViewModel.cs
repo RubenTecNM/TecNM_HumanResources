@@ -7,9 +7,9 @@ namespace RecursosHumanosWeb.Models.ViewModels
     {
         public IPagedList<CutoffsDTO> Cutoffs { get; set; }
         public List<UsersDTO> Users { get; set; }
-        public string FechaDesde { get; set; }
-        public string FechaHasta { get; set; }
+        public string DateFrom { get; set; }
+        public string DateTo { get; set; }
         public int? StatusId { get; set; }
-        public bool IsAdministrador { get; set; }
+        public bool IsAdministrator { get; set; }
     }
 }

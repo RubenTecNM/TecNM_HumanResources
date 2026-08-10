@@ -16,11 +16,11 @@ namespace RecursosHumanosWeb.Services
             _context = context;
         }
 
-        public async Task<byte[]> GenerateCorteExcelAsync(int corteId)
+        public async Task<byte[]> GenerateCutoffExcelAsync(int cutoffId)
         {
             var cutoff = await _context.Cutoffs
                 .Include(c => c.CreatedByUser)
-                .FirstOrDefaultAsync(c => c.Id == corteId);
+                .FirstOrDefaultAsync(c => c.Id == cutoffId);
 
             if (cutoff == null) return null;
 
@@ -32,8 +32,8 @@ namespace RecursosHumanosWeb.Services
             {
                 foreach (var area in areas)
                 {
-                    var permisosGenerales = await _context.Permissions
-                        .Where(p => p.CutoffId == corteId &&
+                    var generalPermissions = await _context.Permissions
+                        .Where(p => p.CutoffId == cutoffId &&
                                     p.RequestingUser.AreaId == area.Id &&
                                     p.PermissionTypeId != 5 &&
                                     p.PermissionStatusTypeId != 3) // Excluyendo Invalidados
@@ -61,7 +61,7 @@ namespace RecursosHumanosWeb.Services
                         })
                         .ToListAsync();
 
-                    if (permisosGenerales.Any())
+                    if (generalPermissions.Any())
                     {
                         var worksheetGeneral = workbook.Worksheets.Add($"Área - {area.Id}");
                         var headers = new[] {
@@ -80,7 +80,7 @@ namespace RecursosHumanosWeb.Services
                         }
 
                         int row = 2;
-                        foreach (var permission in permisosGenerales)
+                        foreach (var permission in generalPermissions)
                         {
                             worksheetGeneral.Cell(row, 1).Value = permission.ID_SOLICITUD;
                             worksheetGeneral.Cell(row, 2).Value = permission.NOMBRE_DEL_SOLICITANTE;
@@ -102,8 +102,8 @@ namespace RecursosHumanosWeb.Services
                         worksheetGeneral.Columns().AdjustToContents();
                     }
 
-                    var permisosTurno = await _context.Permissions
-                        .Where(p => p.CutoffId == corteId &&
+                    var shiftPermissions = await _context.Permissions
+                        .Where(p => p.CutoffId == cutoffId &&
                                     p.RequestingUser.AreaId == area.Id &&
                                     p.PermissionTypeId == 5 &&
                                     p.PermissionStatusTypeId != 3)
@@ -129,9 +129,9 @@ namespace RecursosHumanosWeb.Services
                         })
                         .ToListAsync();
 
-                    if (permisosTurno.Any())
+                    if (shiftPermissions.Any())
                     {
-                        var worksheetTurno = workbook.Worksheets.Add($"{area.Id} - Turno por Turno");
+                        var worksheetShift = workbook.Worksheets.Add($"{area.Id} - Turno por Turno");
                         var headersTurno = new[] {
                             "ID_SOLICITUD", "NOMBRE_DEL_SOLICITANTE", "ID_TIPO_PERMISO",
                             "TIPO_PERMISO", "DESCRIPCIÓN", "DÍAS_SOLICITADOS", "CON_GOCE",
@@ -142,60 +142,60 @@ namespace RecursosHumanosWeb.Services
 
                         for (int i = 0; i < headersTurno.Length; i++)
                         {
-                            worksheetTurno.Cell(1, i + 1).Value = headersTurno[i];
-                            worksheetTurno.Cell(1, i + 1).Style.Font.Bold = true;
-                            worksheetTurno.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGreen;
+                            worksheetShift.Cell(1, i + 1).Value = headersTurno[i];
+                            worksheetShift.Cell(1, i + 1).Style.Font.Bold = true;
+                            worksheetShift.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.LightGreen;
                         }
 
                         int row = 2;
-                        foreach (var permission in permisosTurno)
+                        foreach (var permission in shiftPermissions)
                         {
-                            worksheetTurno.Cell(row, 1).Value = permission.ID_SOLICITUD;
-                            worksheetTurno.Cell(row, 2).Value = permission.NOMBRE_DEL_SOLICITANTE;
-                            worksheetTurno.Cell(row, 3).Value = permission.ID_TIPO_PERMISO;
-                            worksheetTurno.Cell(row, 4).Value = permission.TIPO_PERMISO;
-                            worksheetTurno.Cell(row, 5).Value = permission.DESCRIPCIÓN;
-                            worksheetTurno.Cell(row, 6).Value = permission.DÍAS_SOLICITADOS;
-                            worksheetTurno.Cell(row, 7).Value = permission.CON_GOCE;
-                            worksheetTurno.Cell(row, 8).Value = permission.EVIDENCIA;
-                            worksheetTurno.Cell(row, 9).Value = permission.DEL_DÍA;
-                            worksheetTurno.Cell(row, 10).Value = permission.POR_EL_DÍA;
-                            worksheetTurno.Cell(row, 11).Value = permission.FECHA_DE_SOLICITUD;
-                            worksheetTurno.Cell(row, 12).Value = permission.FECHA_DE_AUTORIZACIÓN;
-                            worksheetTurno.Cell(row, 13).Value = permission.ID_SOLICITANTE;
-                            worksheetTurno.Cell(row, 14).Value = permission.CORREO_DEL_SOLICITANTE;
+                            worksheetShift.Cell(row, 1).Value = permission.ID_SOLICITUD;
+                            worksheetShift.Cell(row, 2).Value = permission.NOMBRE_DEL_SOLICITANTE;
+                            worksheetShift.Cell(row, 3).Value = permission.ID_TIPO_PERMISO;
+                            worksheetShift.Cell(row, 4).Value = permission.TIPO_PERMISO;
+                            worksheetShift.Cell(row, 5).Value = permission.DESCRIPCIÓN;
+                            worksheetShift.Cell(row, 6).Value = permission.DÍAS_SOLICITADOS;
+                            worksheetShift.Cell(row, 7).Value = permission.CON_GOCE;
+                            worksheetShift.Cell(row, 8).Value = permission.EVIDENCIA;
+                            worksheetShift.Cell(row, 9).Value = permission.DEL_DÍA;
+                            worksheetShift.Cell(row, 10).Value = permission.POR_EL_DÍA;
+                            worksheetShift.Cell(row, 11).Value = permission.FECHA_DE_SOLICITUD;
+                            worksheetShift.Cell(row, 12).Value = permission.FECHA_DE_AUTORIZACIÓN;
+                            worksheetShift.Cell(row, 13).Value = permission.ID_SOLICITANTE;
+                            worksheetShift.Cell(row, 14).Value = permission.CORREO_DEL_SOLICITANTE;
                             row++;
                         }
-                        worksheetTurno.Style.Font.FontName = "Arial";
-                        worksheetTurno.Columns().AdjustToContents();
+                        worksheetShift.Style.Font.FontName = "Arial";
+                        worksheetShift.Columns().AdjustToContents();
                     }
                 }
 
                 // Tipos de Permissions
-                var tiposPermisos = await _context.PermissionTypes
+                var permissionTypes = await _context.PermissionTypes
                     .Select(tp => new { ID_TIPO_PERMISO = tp.Id, DESCRIPCIÓN = tp.Description })
                     .ToListAsync();
 
-                if (tiposPermisos.Any())
+                if (permissionTypes.Any())
                 {
-                    var worksheetTipos = workbook.Worksheets.Add("Tipos De Permissions");
-                    worksheetTipos.Cell(1, 1).Value = "ID_TIPO_PERMISO";
-                    worksheetTipos.Cell(1, 2).Value = "DESCRIPCIÓN";
-                    worksheetTipos.Cell(1, 1).Style.Font.Bold = true;
-                    worksheetTipos.Cell(1, 2).Style.Font.Bold = true;
-                    worksheetTipos.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.LightYellow;
-                    worksheetTipos.Cell(1, 2).Style.Fill.BackgroundColor = XLColor.LightYellow;
+                    var worksheetTypes = workbook.Worksheets.Add("Tipos De Permissions");
+                    worksheetTypes.Cell(1, 1).Value = "ID_TIPO_PERMISO";
+                    worksheetTypes.Cell(1, 2).Value = "DESCRIPCIÓN";
+                    worksheetTypes.Cell(1, 1).Style.Font.Bold = true;
+                    worksheetTypes.Cell(1, 2).Style.Font.Bold = true;
+                    worksheetTypes.Cell(1, 1).Style.Fill.BackgroundColor = XLColor.LightYellow;
+                    worksheetTypes.Cell(1, 2).Style.Fill.BackgroundColor = XLColor.LightYellow;
 
                     int row = 2;
-                    foreach (var tipo in tiposPermisos)
+                    foreach (var tipo in permissionTypes)
                     {
-                        worksheetTipos.Cell(row, 1).Value = tipo.ID_TIPO_PERMISO;
-                        worksheetTipos.Cell(row, 2).Value = tipo.DESCRIPCIÓN;
+                        worksheetTypes.Cell(row, 1).Value = tipo.ID_TIPO_PERMISO;
+                        worksheetTypes.Cell(row, 2).Value = tipo.DESCRIPCIÓN;
                         row++;
                     }
-                    worksheetTipos.Style.Font.FontName = "Arial";
-                    worksheetTipos.Style.Font.FontSize = 16;
-                    worksheetTipos.Columns().AdjustToContents();
+                    worksheetTypes.Style.Font.FontName = "Arial";
+                    worksheetTypes.Style.Font.FontSize = 16;
+                    worksheetTypes.Columns().AdjustToContents();
                 }
 
                 // Areas
@@ -233,16 +233,16 @@ namespace RecursosHumanosWeb.Services
             }
         }
 
-        public async Task<(byte[] Content, string FileName)> GenerateCorteCsvAsync(int corteId)
+        public async Task<(byte[] Content, string FileName)> GenerateCutoffCsvAsync(int cutoffId)
         {
             var cutoff = await _context.Cutoffs
                 .Include(c => c.CreatedByUser)
-                .FirstOrDefaultAsync(c => c.Id == corteId);
+                .FirstOrDefaultAsync(c => c.Id == cutoffId);
 
             if (cutoff == null) return (null, null);
 
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == corteId && p.PermissionStatusTypeId != 3)
+                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != 3)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
                 .Include(p => p.AuthorizingUser)
@@ -268,20 +268,20 @@ namespace RecursosHumanosWeb.Services
                     $"{p.CreatedAt.ToString("yyyy-MM-dd HH:mm")}");
             }
 
-            string fileName = $"CorteTEC - ID {corteId}.csv";
+            string fileName = $"CorteTEC - ID {cutoffId}.csv";
             return (Encoding.UTF8.GetBytes(csv.ToString()), fileName);
         }
 
-        public async Task<(byte[] Content, string FileName)> GenerateCorteJsonAsync(int corteId)
+        public async Task<(byte[] Content, string FileName)> GenerateCutoffJsonAsync(int cutoffId)
         {
             var cutoff = await _context.Cutoffs
                 .Include(c => c.CreatedByUser)
-                .FirstOrDefaultAsync(c => c.Id == corteId);
+                .FirstOrDefaultAsync(c => c.Id == cutoffId);
 
             if (cutoff == null) return (null, null);
 
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == corteId && p.PermissionStatusTypeId != 3)
+                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != 3)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
                 .Include(p => p.AuthorizingUser)
@@ -323,20 +323,20 @@ namespace RecursosHumanosWeb.Services
             };
 
             var json = JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
-            string fileName = $"CorteTEC - ID {corteId}.json";
+            string fileName = $"CorteTEC - ID {cutoffId}.json";
             return (Encoding.UTF8.GetBytes(json), fileName);
         }
 
-        public async Task<(byte[] Content, string FileName)> GenerateCorteXmlAsync(int corteId)
+        public async Task<(byte[] Content, string FileName)> GenerateCutoffXmlAsync(int cutoffId)
         {
             var cutoff = await _context.Cutoffs
                 .Include(c => c.CreatedByUser)
-                .FirstOrDefaultAsync(c => c.Id == corteId);
+                .FirstOrDefaultAsync(c => c.Id == cutoffId);
 
             if (cutoff == null) return (null, null);
 
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == corteId && p.PermissionStatusTypeId != 3)
+                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != 3)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
                 .Include(p => p.AuthorizingUser)
@@ -384,7 +384,7 @@ namespace RecursosHumanosWeb.Services
                 xmlWriter.WriteEndElement(); 
                 xmlWriter.WriteEndDocument();
 
-                string fileName = $"CorteTEC - ID {corteId}.xml";
+                string fileName = $"CorteTEC - ID {cutoffId}.xml";
                 return (Encoding.UTF8.GetBytes(stringWriter.ToString()), fileName);
             }
         }
