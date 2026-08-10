@@ -1,0 +1,12 @@
+# Override de entorno para TESTING. Uso:
+#   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.testing.yml up -d --build
+services:
+  api_permisos:
+    container_name: itsmrh_gestion_permisos_api_testing
+    restart: unless-stopped
+    ports:
+      - "5012:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Testing
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__RecursosHumanosContext=Server=nexsmart_central_db_sql;Database=RecursosHumanosDB_Testing;User Id=sa;Password=Buss1ness.2026;Encrypt=False;TrustServerCertificate=True;

@@ -408,6 +408,7 @@ copilot-snapshots/
 **/appsettings.Development.json
 **/appsettings.*.json
 !**/appsettings.json
+!**/appsettings.Testing.json
 
 # Connection strings and sensitive configuration
 secrets.json
