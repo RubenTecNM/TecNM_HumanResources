@@ -283,7 +283,7 @@ namespace RecursosHumanosWeb.Controllers
                 // Solo si el guardado fue exitoso y subimos uno nuevo, borramos el viejo
                 if (newPath != oldPath && oldPath != null) DeleteFile(oldPath);
 
-                return Json(new AlertResponseDTO(controllerName: "Permission", message: "Permission actualizado correctamente."));
+                return Json(new AlertResponseDTO(controllerName: "Permission", message: "Permiso actualizado correctamente."));
             }
             catch (Exception ex)
             {
