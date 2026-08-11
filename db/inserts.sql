@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Initial Seeding Script - TecRHPermisos
 -- This script is executed by Program.cs when it detects an empty database.
 -- It contains base catalogs, Areas, Departments, Positions and test users.

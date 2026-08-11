@@ -181,7 +181,7 @@ namespace RecursosHumanosWeb.Controllers
             {
                 var inner = ex.InnerException?.Message ?? "No inner exception";
                 _logger.LogError(ex, "Error al crear user. Detalle: {Inner}", inner);
-                ModelState.AddModelError("", $"Error al guardar: {ex.Message}. Detalle: {inner}");
+                ModelState.AddModelError("", "Error al guardar el usuario. Inténtelo nuevamente.");
             }
 
             await PrepareUserSelectListsAsync();
@@ -241,7 +241,7 @@ namespace RecursosHumanosWeb.Controllers
             {
                 var inner = ex.InnerException?.Message ?? "No inner exception";
                 _logger.LogError(ex, "Error al actualizar user {Id}. Detalle: {Inner}", id, inner);
-                ModelState.AddModelError("", $"Error al actualizar: {ex.Message}. Detalle: {inner}");
+                ModelState.AddModelError("", "Error al actualizar el usuario. Inténtelo nuevamente.");
             }
 
             await PrepareUserSelectListsAsync();
@@ -351,11 +351,12 @@ namespace RecursosHumanosWeb.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error al eliminar user {Id}.", request.Id);
                 return Json(new AlertResponseDTO
                 {
                     Success = false,
                     Title = "Error del Servidor",
-                    Message = $"Ocurrió un error: {ex.Message}",
+                    Message = "Ocurrió un error inesperado al eliminar el usuario. Inténtelo nuevamente.",
                     Icon = "error"
                 });
             }

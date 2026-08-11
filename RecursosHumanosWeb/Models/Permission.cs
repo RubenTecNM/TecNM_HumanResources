@@ -61,6 +61,12 @@ public partial class Permission : BaseEntity
     /// </summary>
     public DateTime? AuthorizedAt { get; set; }
 
+    /// <summary>
+    /// Optional comment left by the reviewer when authorizing or rejecting the permission.
+    /// </summary>
+    [StringLength(500, ErrorMessage = "El comentario de autorización no puede superar los 500 caracteres.")]
+    public string? AuthorizationComment { get; set; }
+
     // ──────────────────────────────────────────────────────────────
     // PERMISSION-SPECIFIC FOREIGN KEYS
     // ──────────────────────────────────────────────────────────────

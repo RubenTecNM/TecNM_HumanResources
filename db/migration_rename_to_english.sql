@@ -1,4 +1,4 @@
--- =============================================================================
+﻿-- =============================================================================
 -- Migration: Rename schema objects from Spanish to English (data-preserving)
 -- =============================================================================
 -- Runs against databases created with the Spanish schema (e.g. DB_Development_

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Filters;
 using RecursosHumanosWeb.Models;
+using RecursosHumanosWeb.Models.Enums;
 using RecursosHumanosWeb.Models.ViewModels.Permissions;
 
 namespace RecursosHumanosWeb.Controllers.Api.Permissions
@@ -28,7 +29,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             var permissions = await _context.Permissions
                 .Include(p => p.RequestingUser)
                 .Include(p => p.PermissionType)
-                .Where(p => p.PermissionStatusTypeId != 3)
+                .Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .OrderByDescending(p => p.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -96,7 +97,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
 
             // Encontrar Cutoff activo
             var activeCutoff = await _context.Cutoffs
-                .Where(c => c.CutoffStatusTypeId == 1)
+                .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open)
                 .OrderByDescending(c => c.Id)
                 .FirstOrDefaultAsync();
 
@@ -118,7 +119,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 RequestingUserId = requesterId,
                 CutoffId = activeCutoff.Id,
                 WithPay = model.WithPay,
-                PermissionStatusTypeId = 1,
+                PermissionStatusTypeId = (int)PermissionStatusEnum.Pending,
                 Days = days,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
@@ -142,7 +143,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             var permission = await _context.Permissions.FindAsync(id);
             if (permission == null) return NotFound();
 
-            if (permission.PermissionStatusTypeId != 1) return BadRequest("No se puede modificar un permiso ya revisado o invalidado.");
+            if (permission.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending) return BadRequest("No se puede modificar un permiso ya revisado o invalidado.");
 
             var userId = HttpContext.Items["ApiUserId"] as int? ?? permission.UpdatedByUserId;
 
@@ -176,11 +177,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             var permission = await _context.Permissions.FindAsync(id);
             if (permission == null) return NotFound();
 
-            if (permission.PermissionStatusTypeId == 3) return BadRequest("El permiso ya está invalidado.");
+            if (permission.PermissionStatusTypeId == (int)PermissionStatusEnum.InvalidatedByPeriod) return BadRequest("El permiso ya está invalidado.");
 
             var userId = HttpContext.Items["ApiUserId"] as int? ?? permission.UpdatedByUserId;
 
-            permission.PermissionStatusTypeId = 3; // Invalidated
+            permission.PermissionStatusTypeId = (int)PermissionStatusEnum.InvalidatedByPeriod; // Invalidated
             permission.UpdatedAt = DateTime.Now;
             permission.UpdatedByUserId = userId;
 

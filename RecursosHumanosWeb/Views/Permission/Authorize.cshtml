@@ -20,8 +20,8 @@
     var config = typeConfigurations.ContainsKey(Model.PermissionTypeId) ? typeConfigurations[Model.PermissionTypeId] : null;
     bool showDays = config != null && config["Date2"].show && Model.EndDate.HasValue && Model.Days.HasValue && Model.Days.Value > 1;
 
-    string? evidenceUrl = !string.IsNullOrEmpty(Model.Evidence) ? Model.Evidence.Replace('\\', '/').Trim() : null;
-    if (evidenceUrl != null && !evidenceUrl.StartsWith("/") && !evidenceUrl.Contains("/")) evidenceUrl = "/Evidences/" + evidenceUrl;
+    // Evidencia: se sirve únicamente mediante la acción autorizada GetEvidence
+    string? evidenceUrl = !string.IsNullOrEmpty(Model.Evidence) ? Url.Action("GetEvidence", "Permission", new { id = Model.Id }) : null;
 
     bool isRHOrAdmin = (ViewBag.CurrentUserType ?? 0) == (int)UserTypeEnum.Administrator;
     bool isApprover = ViewBag.IsApprover ?? false;
@@ -109,7 +109,7 @@
                         </h3>
                         <div class="audit-card bg-light rounded-4 overflow-hidden border shadow-sm">
                             <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
-                                <span class="small fw-bold text-dark"><i class="fas fa-file-pdf me-2 text-danger"></i> @System.IO.Path.GetFileName(evidenceUrl)</span>
+                                <span class="small fw-bold text-dark"><i class="fas fa-file-pdf me-2 text-danger"></i> @System.IO.Path.GetFileName(Model.Evidence.Replace('\\', '/'))</span>
                                 <a href="@evidenceUrl" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
                                     <i class="fas fa-external-link-alt me-1"></i> Abrir
                                 </a>
@@ -155,6 +155,11 @@
                                 </div>
                             </div>
 
+                            <div class="mt-4">
+                                <label for="AuthorizationComment" class="form-label fw-bold text-dark">Comentario (opcional)</label>
+                                <textarea id="AuthorizationComment" name="AuthorizationComment" class="form-control" rows="2" maxlength="500" placeholder="Comentario de la revisión (visible para el solicitante)..."></textarea>
+                            </div>
+
                             <div class="text-center mt-5">
                                 <button type="submit" id="submitReviewBtn" class="btn btn-success btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg">
                                     <i class="fas fa-check-double me-2"></i> Finalizar y Autorizar Permiso
@@ -184,7 +189,7 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {

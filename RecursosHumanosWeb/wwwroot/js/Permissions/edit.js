@@ -126,25 +126,20 @@
     }
 
     // --- COMBINAR FECHA Y HORA EN CAMPOS HIDDEN ---
+    // Usa combineDateTimeLocal() de site.js: envía hora local sin zona horaria
+    // (evita el corrimiento UTC que provocaba toISOString()).
     function combineDateTime() {
+        const time1Visible = elements.time1 && elements.time1.offsetParent !== null;
+        const time2Visible = elements.time2 && elements.time2.offsetParent !== null;
+
         if (elements.date1.value) {
-            const date1 = new Date(elements.date1.value + 'T00:00:00');
-            if (elements.time1 && elements.time1.value && elements.time1.offsetParent !== null) {
-                const [hours, minutes] = elements.time1.value.split(':');
-                date1.setHours(parseInt(hours), parseInt(minutes), 0);
-            }
-            elements.date1Hidden.value = date1.toISOString();
+            const time1 = time1Visible ? elements.time1.value : null;
+            elements.date1Hidden.value = combineDateTimeLocal(elements.date1.value, time1);
         }
 
-        if (currentPermissionType !== 1 && elements.date2 && elements.date2.value) { // Cambiado 3 por 1 (Retardo)
-            const date2 = new Date(elements.date2.value + 'T00:00:00');
-            if (elements.time2 && elements.time2.value && elements.time2.offsetParent !== null) {
-                const [hours, minutes] = elements.time2.value.split(':');
-                date2.setHours(parseInt(hours), parseInt(minutes), 0);
-            } else {
-                date2.setHours(23, 59, 59);
-            }
-            elements.date2Hidden.value = date2.toISOString();
+        if (currentPermissionType !== 1 && elements.date2 && elements.date2.value) {
+            const time2 = time2Visible ? elements.time2.value : null;
+            elements.date2Hidden.value = combineDateTimeLocal(elements.date2.value, time2, true);
         }
     }
 
@@ -178,13 +173,13 @@
             return;
         }
 
-        // Validar tipo
-        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+        // Validar tipo (solo PDF, coherente con el servidor)
+        const allowedTypes = ['application/pdf'];
         if (!allowedTypes.includes(file.type)) {
             Swal.fire({
                 icon: 'error',
                 title: 'Tipo de archivo no válido',
-                text: 'Solo se permiten archivos PDF, JPG y PNG'
+                text: 'Solo se permiten archivos PDF'
             });
             e.target.value = '';
             return;

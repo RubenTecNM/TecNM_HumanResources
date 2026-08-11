@@ -1,6 +1,7 @@
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Models.DTOs;
 using RecursosHumanosWeb.Models.Enums;
@@ -15,18 +16,24 @@ namespace RecursosHumanosWeb.Services
 {
     public class PermissionService : IPermissionService
     {
+        private const string StatsVersionKey = "permission:stats:version";
+        private const string StatsCachePrefix = "permission:stats:";
+        private static readonly TimeSpan StatsCacheDuration = TimeSpan.FromSeconds(30);
+
         private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<PermissionService> _logger;
+        private readonly IMemoryCache _cache;
 
-        public PermissionService(HumanResourcesContext context, IMapper mapper, ILogger<PermissionService> logger)
+        public PermissionService(HumanResourcesContext context, IMapper mapper, ILogger<PermissionService> logger, IMemoryCache cache)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
+            _cache = cache;
         }
 
-        public async Task<IPagedList<PermissionsDTO>> GetPermissionsPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, bool? reviewed, int page, int pageSize)
+        public async Task<IPagedList<PermissionsDTO>> GetPermissionsPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, int? statusId, int page, int pageSize)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null) return new List<PermissionsDTO>().ToPagedList(1, pageSize);
@@ -34,7 +41,7 @@ namespace RecursosHumanosWeb.Services
             var query = _context.Permissions
                 .Include(p => p.RequestingUser)
                 .Include(p => p.PermissionType)
-                .Where(p => p.PermissionStatusTypeId != 3)
+                .Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .AsQueryable();
 
             // Restricciones por tipo de user (Seguridad y Reglas de Negocio)
@@ -61,13 +68,8 @@ namespace RecursosHumanosWeb.Services
             }
 
             // Filtros manuales del panel de búsqueda
-            if (reviewed.HasValue)
-            {
-                if (reviewed.Value)
-                    query = query.Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending);
-                else
-                    query = query.Where(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending);
-            }
+            if (statusId.HasValue)
+                query = query.Where(p => p.PermissionStatusTypeId == statusId.Value);
             if (!string.IsNullOrEmpty(userName))
                 query = query.Where(p => p.RequestingUser.Name.Contains(userName));
 
@@ -92,7 +94,13 @@ namespace RecursosHumanosWeb.Services
 
         public async Task<object> GetStatsAsync(int userId, int userType)
         {
-            IQueryable<Permission> query = _context.Permissions.Where(p => p.PermissionStatusTypeId != 3);
+            var version = _cache.Get<int>(StatsVersionKey);
+            var cacheKey = $"{StatsCachePrefix}{userType}:{userId}:v{version}";
+
+            if (_cache.TryGetValue(cacheKey, out object? cached) && cached != null)
+                return cached;
+
+            IQueryable<Permission> query = _context.Permissions.Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod);
 
             if (userType != (int)UserTypeEnum.Administrator && userType != (int)UserTypeEnum.HumanResources)
             {
@@ -112,7 +120,11 @@ namespace RecursosHumanosWeb.Services
               })
               .FirstOrDefaultAsync();
 
-            return stats ?? new { Total = 0, Pending = 0, Approved = 0, WithPay = 0, WithoutPay = 0, ThisMonth = 0 };
+            var result = stats ?? new { Total = 0, Pending = 0, Approved = 0, WithPay = 0, WithoutPay = 0, ThisMonth = 0 };
+
+            _cache.Set(cacheKey, result, StatsCacheDuration);
+
+            return result;
         }
 
         public async Task<int> CreatePermissionAsync(Permission permission, int createdByUserId)
@@ -153,6 +165,7 @@ namespace RecursosHumanosWeb.Services
 
             _context.Permissions.Add(permission);
             await _context.SaveChangesAsync();
+            BumpStatsVersion();
             return permission.Id;
         }
 
@@ -199,7 +212,9 @@ namespace RecursosHumanosWeb.Services
             }
 
             _context.Update(existing);
-            return await _context.SaveChangesAsync() > 0;
+            var saved = await _context.SaveChangesAsync() > 0;
+            if (saved) BumpStatsVersion();
+            return saved;
         }
 
         public async Task<bool> DeletePermissionAsync(int id, int updatedByUserId)
@@ -212,23 +227,28 @@ namespace RecursosHumanosWeb.Services
             permission.UpdatedAt = DateTime.Now;
 
             _context.Update(permission);
-            return await _context.SaveChangesAsync() > 0;
+            var saved = await _context.SaveChangesAsync() > 0;
+            if (saved) BumpStatsVersion();
+            return saved;
         }
 
-        public async Task<bool> AuthorizePermissionAsync(int id, int authorizingUserId, bool aprobado, string comment)
+        public async Task<bool> AuthorizePermissionAsync(int id, int authorizingUserId, bool aprobado, bool withPay, string? comment)
         {
             var permission = await _context.Permissions.FindAsync(id);
             if (permission == null) return false;
 
             permission.PermissionStatusTypeId = aprobado ? (int)PermissionStatusEnum.Approved : (int)PermissionStatusEnum.Rejected;
-            permission.WithPay = aprobado;
+            permission.WithPay = aprobado && withPay;
+            permission.AuthorizationComment = string.IsNullOrWhiteSpace(comment) ? null : comment?.Trim();
             permission.AuthorizingUserId = authorizingUserId;
             permission.AuthorizedAt = DateTime.Now;
             permission.UpdatedByUserId = authorizingUserId;
             permission.UpdatedAt = DateTime.Now;
 
             _context.Update(permission);
-            return await _context.SaveChangesAsync() > 0;
+            var saved = await _context.SaveChangesAsync() > 0;
+            if (saved) BumpStatsVersion();
+            return saved;
         }
 
         public bool CanUserAccessPermiso(int userId, int userType, Permission permission)
@@ -251,6 +271,11 @@ namespace RecursosHumanosWeb.Services
             }
             
             return false;
+        }
+
+        private void BumpStatsVersion()
+        {
+            _cache.Set(StatsVersionKey, _cache.Get<int>(StatsVersionKey) + 1, StatsCacheDuration);
         }
     }
 }

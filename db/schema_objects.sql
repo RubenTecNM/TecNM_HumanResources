@@ -1,4 +1,4 @@
--- =============================================
+﻿-- =============================================
 -- TABLE TYPES
 -- =============================================
 IF NOT EXISTS (SELECT * FROM sys.types WHERE name = 'IdTableType' AND is_table_type = 1)

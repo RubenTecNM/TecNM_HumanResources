@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Models.DTOs;
+using RecursosHumanosWeb.Models.Enums;
 
 namespace RecursosHumanosWeb.Controllers.Api
 {
@@ -11,6 +13,7 @@ namespace RecursosHumanosWeb.Controllers.Api
     /// </summary>
     [ApiController]
     [Route("Test")]
+    [Authorize(Policy = "AdminOnly")]
     public class TestController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
@@ -25,7 +28,7 @@ namespace RecursosHumanosWeb.Controllers.Api
         public async Task<IActionResult> RunCase(int @case = 1, bool confirmed = false)
         {
             // Buscar cutoff activo
-            var activeCutoff = await _context.Cutoffs.Where(c => c.CutoffStatusTypeId == 1).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
+            var activeCutoff = await _context.Cutoffs.Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open).OrderByDescending(c => c.Id).FirstOrDefaultAsync();
             if (activeCutoff == null)
                 return BadRequest(new AlertResponseDTO { Success = false, Title = "Error de Corte", Message = "No se encontró un corte activo." });
 
@@ -77,7 +80,7 @@ namespace RecursosHumanosWeb.Controllers.Api
                         RequestingUserId = user.Id,
                         CreatedByUserId = user.Id,
                         CreatedAt = DateTime.Now,
-                        PermissionStatusTypeId = 1,
+                        PermissionStatusTypeId = (int)PermissionStatusEnum.Pending,
                         WithPay = false
                     };
                     _context.Permissions.Add(permission);
@@ -102,7 +105,7 @@ namespace RecursosHumanosWeb.Controllers.Api
                     RequestingUserId = user.Id,
                     CreatedByUserId = user.Id,
                     CreatedAt = DateTime.Now,
-                    PermissionStatusTypeId = 1,
+                    PermissionStatusTypeId = (int)PermissionStatusEnum.Pending,
                     WithPay = false
                 };
                 _context.Permissions.Add(permission);

@@ -249,7 +249,7 @@
                         </div>
                         @if (!string.IsNullOrEmpty(item.Evidence))
                         {
-                            <a href="#" class="pdf-attachment has-pdf" onclick="openPDF('@item.Evidence')">
+                            <a href="@Url.Action("GetEvidence", "Permission", new { id = item.Id })" target="_blank" class="pdf-attachment has-pdf">
                                 <i class="fas fa-file-pdf pdf-icon"></i>
                                 PDF
                             </a>
@@ -394,33 +394,8 @@
     }
 </div>
 
-<!-- Approve Modal -->
-<div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="approveModalLabel">Aprobar Permiso</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>¿Está seguro de aprobar este permiso?</p>
-                <div class="form-group">
-                    <label for="approveComments">Comentarios de autorización:</label>
-                    <textarea class="form-control" id="approveComments" rows="3" placeholder="Comentarios adicionales (opcional)"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <!-- Botón "Aprobar Permiso" eliminado -->
-            </div>
-        </div>
-    </div>
-</div>
-</div>
-
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="~/js/Permissions/index.js" asp-append-version="true"></script>
+    <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
     <script>
         $(document).ready(function() {
             // Initialize Select2 for User Filter

@@ -110,6 +110,10 @@ namespace RecursosHumanosWeb.Controllers
             ViewBag.DateFrom = dateFrom;
             ViewBag.DateTo = dateTo;
             ViewBag.StatusId = statusId;
+            ViewBag.Statuses = await _context.CutoffStatusTypes
+                .Where(s => s.Status)
+                .OrderBy(s => s.Id)
+                .ToListAsync();
 
             return View(model);
         }
@@ -215,7 +219,7 @@ namespace RecursosHumanosWeb.Controllers
                 {
                     StartDate = viewModel.StartDate,
                     EndDate = viewModel.EndDate,
-                    CutoffStatusTypeId = 1 // Open por defecto
+                    CutoffStatusTypeId = (int)CutoffStatusEnum.Open // Open por defecto
                 };
 
                 var success = await _cutoffService.CreateCutoffAsync(newCutoff, userId);
@@ -230,7 +234,7 @@ namespace RecursosHumanosWeb.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al crear corte.");
-                ModelState.AddModelError("", $"Error al guardar el corte: {ex.Message}");
+                ModelState.AddModelError("", "Error al guardar el corte. Inténtelo nuevamente.");
                 return View(viewModel);
             }
         }
@@ -286,7 +290,7 @@ namespace RecursosHumanosWeb.Controllers
                 {
                     var inner = ex.InnerException?.Message ?? "No inner exception";
                     _logger.LogError(ex, "Error al editar corte {Id}. Detalle: {Inner}", cutoff.Id, inner);
-                    ModelState.AddModelError("", $"Error al actualizar el corte: {ex.Message}. Detalle: {inner}");
+                    ModelState.AddModelError("", "Error al actualizar el corte. Inténtelo nuevamente.");
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -441,7 +445,7 @@ namespace RecursosHumanosWeb.Controllers
 
             // 2. Obtener los permissions activos para las estadísticas
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == id && p.PermissionStatusTypeId != 3) // Excluyendo Invalidados
+                .Where(p => p.CutoffId == id && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod) // Excluyendo Invalidados
                 .Include(p => p.PermissionType)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
@@ -475,8 +479,8 @@ namespace RecursosHumanosWeb.Controllers
                 .Select(g => new {
                     Month = g.Key ?? "S/F",
                     Total = g.Count(),
-                    Approved = g.Count(x => x.PermissionStatusTypeId == 2),
-                    Pending = g.Count(x => x.PermissionStatusTypeId == 1)
+                    Approved = g.Count(x => x.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved),
+                    Pending = g.Count(x => x.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending)
                 }).ToList();
 
             var heatmap = permissions

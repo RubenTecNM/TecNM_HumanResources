@@ -22,35 +22,35 @@ namespace RecursosHumanosWeb.Controllers
     public class PermissionController : Controller
     {
         private readonly HumanResourcesContext _context;
-        private readonly IWebHostEnvironment _environment;
         private readonly IMapper _mapper;
         private readonly ILogger<PermissionController> _logger;
         private readonly IPermissionService _permissionService;
         private readonly ICutoffService _cutoffService;
         private readonly IConfiguration _configuration;
+        private readonly IEvidenceStorage _evidenceStorage;
 
         public PermissionController(
             HumanResourcesContext context,
-            IWebHostEnvironment environment,
             IMapper mapper,
             ILogger<PermissionController> logger,
             IPermissionService permissionService,
             ICutoffService cutoffService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IEvidenceStorage evidenceStorage)
         {
             _context = context;
-            _environment = environment;
             _mapper = mapper;
             _logger = logger;
             _permissionService = permissionService;
             _cutoffService = cutoffService;
             _configuration = configuration;
+            _evidenceStorage = evidenceStorage;
         }
 
         #region VISTAS Y FILTROS
 
         [HttpGet]
-        public async Task<IActionResult> Index(string? userName = null, int? areaId = null, DateTime? fromDay = null, DateTime? toDay = null, bool? reviewed = null, int? page = 1)
+        public async Task<IActionResult> Index(string? userName = null, int? areaId = null, DateTime? fromDay = null, DateTime? toDay = null, int? statusId = null, int? page = 1)
         {
             await _cutoffService.AutoCloseCutoffIfNeededAsync();
             
@@ -58,7 +58,7 @@ namespace RecursosHumanosWeb.Controllers
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
             int pageSize = _configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize");
-            var permissions = await _permissionService.GetPermissionsPagedAsync(userId, areaId, userName, fromDay, toDay, reviewed, page ?? 1, pageSize);
+            var permissions = await _permissionService.GetPermissionsPagedAsync(userId, areaId, userName, fromDay, toDay, statusId, page ?? 1, pageSize);
 
             var areas = (userType == (int)UserTypeEnum.HumanResources || userType == (int)UserTypeEnum.Administrator)
                 ? await _context.Areas.Where(a => a.Status).Select(a => new AreasDTO { Id = a.Id, Description = a.Description }).OrderBy(a => a.Description).ToListAsync()
@@ -70,12 +70,17 @@ namespace RecursosHumanosWeb.Controllers
                 Areas = areas,
                 SelectedUser = userName,
                 SelectedArea = areaId,
-                Reviewed = reviewed
+                StatusId = statusId
             };
 
             ViewBag.FromDay = fromDay?.ToString("yyyy-MM-dd");
             ViewBag.Today = toDay?.ToString("yyyy-MM-dd");
-            ViewBag.Reviewed = reviewed;
+            ViewBag.UserName = userName;
+            ViewBag.StatusId = statusId;
+            ViewBag.Statuses = await _context.PermissionStatusTypes
+                .Where(s => s.Status)
+                .OrderBy(s => s.Id)
+                .ToListAsync();
             ViewBag.IsAuthorizer = userType == (int)UserTypeEnum.Authorizer;
             ViewBag.IsRH = userType == (int)UserTypeEnum.HumanResources;
             ViewBag.IsAdministrator = userType == (int)UserTypeEnum.Administrator;
@@ -111,7 +116,7 @@ namespace RecursosHumanosWeb.Controllers
 
             await PrepareCreateEditViewBag();
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            return View(new PermissionsCreateViewModel { RequestingUserId = userId });
+            return View(new PermissionCreateViewModel { RequestingUserId = userId });
         }
 
         [HttpGet]
@@ -135,9 +140,9 @@ namespace RecursosHumanosWeb.Controllers
                 return RedirectToAction("Index");
             }
 
-            bool isPending = permission.PermissionStatusTypeId == 1; // 1 = Pending
+            bool isPending = permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending;
             var cutoff = permission.Cutoff;
-            if (cutoff == null || cutoff.CutoffStatusTypeId != 1) // 1 = Open
+            if (cutoff == null || cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open)
             {
                 TempData["ErrorAlert"] = GetAlertJson("No permitido", "No se puede editar un permiso si el periodo ya está cerrado o invalidado.");
                 return RedirectToAction("Index");
@@ -159,7 +164,7 @@ namespace RecursosHumanosWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(PermissionsCreateViewModel model, bool? confirmed)
+        public async Task<IActionResult> Create(PermissionCreateViewModel model, bool? confirmed)
         {
             string? evidenciaPath = null;
             int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -201,20 +206,25 @@ namespace RecursosHumanosWeb.Controllers
 
                 if (model.EvidenceFile != null)
                 {
-                    evidenciaPath = await SaveEvidenceFile(model.EvidenceFile, model.RequestingUserId.Value);
+                    var evidenceError = ValidateEvidenceFile(model.EvidenceFile);
+                    if (evidenceError != null)
+                        return Json(new AlertResponseDTO { Success = false, Title = "Validación", Message = evidenceError });
+
+                    evidenciaPath = await _evidenceStorage.SaveAsync(model.EvidenceFile, model.RequestingUserId.Value);
                 }
 
                 var permission = _mapper.Map<Permission>(model);
                 permission.Evidence = evidenciaPath;
-                permission.PermissionStatusTypeId = 1; // Pending por defecto
+                permission.PermissionStatusTypeId = (int)PermissionStatusEnum.Pending; // Pending por defecto
                 await _permissionService.CreatePermissionAsync(permission, userId);
 
                 return Json(new AlertResponseDTO(controllerName: "Permission", message: "Permiso creado con éxito."));
             }
             catch (Exception ex)
             {
-                if (evidenciaPath != null) DeleteFile(evidenciaPath);
-                return Json(new AlertResponseDTO { Success = false, Message = ex.Message });
+                if (evidenciaPath != null) _evidenceStorage.Delete(evidenciaPath);
+                _logger.LogError(ex, "Error al crear el permiso del usuario {RequestingUserId}.", model.RequestingUserId);
+                return Json(new AlertResponseDTO { Success = false, Message = "Ocurrió un error inesperado al crear el permiso. Inténtelo nuevamente." });
             }
         }
 
@@ -258,7 +268,11 @@ namespace RecursosHumanosWeb.Controllers
 
                 if (model.EvidenceFile != null)
                 {
-                    newPath = await SaveEvidenceFile(model.EvidenceFile, original.RequestingUserId);
+                    var evidenceError = ValidateEvidenceFile(model.EvidenceFile);
+                    if (evidenceError != null)
+                        return Json(new AlertResponseDTO { Success = false, Title = "Validación", Message = evidenceError });
+
+                    newPath = await _evidenceStorage.SaveAsync(model.EvidenceFile, original.RequestingUserId);
                 }
 
                 // Transferir datos del ViewModel al objeto que irá al servicio
@@ -276,18 +290,19 @@ namespace RecursosHumanosWeb.Controllers
                 bool success = await _permissionService.UpdatePermissionAsync(edited, userId);
                 if (!success) 
                 {
-                    if (newPath != oldPath) DeleteFile(newPath!); // Borrar el nuevo si falló el guardado
+                    if (newPath != oldPath) _evidenceStorage.Delete(newPath!); // Borrar el nuevo si falló el guardado
                     return Json(new AlertResponseDTO { Success = false, Message = "No se pudo actualizar el registro en la base de datos." });
                 }
 
                 // Solo si el guardado fue exitoso y subimos uno nuevo, borramos el viejo
-                if (newPath != oldPath && oldPath != null) DeleteFile(oldPath);
+                if (newPath != oldPath && oldPath != null) _evidenceStorage.Delete(oldPath);
 
                 return Json(new AlertResponseDTO(controllerName: "Permission", message: "Permiso actualizado correctamente."));
             }
             catch (Exception ex)
             {
-                return Json(new AlertResponseDTO { Success = false, Message = ex.Message });
+                _logger.LogError(ex, "Error al actualizar el permiso {Id}.", model.Id);
+                return Json(new AlertResponseDTO { Success = false, Message = "Ocurrió un error inesperado al actualizar el permiso. Inténtelo nuevamente." });
             }
         }
 
@@ -319,9 +334,9 @@ namespace RecursosHumanosWeb.Controllers
             var permission = await _context.Permissions.Include(p => p.Cutoff).FirstOrDefaultAsync(p => p.Id == id);
             if (permission != null && _permissionService.CanUserAccessPermiso(userId, userType, permission))
             {
-                bool isPending = permission.PermissionStatusTypeId == 1;
+                bool isPending = permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending;
                 var cutoff = permission.Cutoff;
-                if (!isPending && (cutoff == null || cutoff.CutoffStatusTypeId != 1))
+                if (!isPending && (cutoff == null || cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open))
                 {
                     TempData["ErrorAlert"] = GetAlertJson("Error", "No se puede borrar un permiso ya revisado de un corte cerrado.");
                     return RedirectToAction("Index");
@@ -343,13 +358,13 @@ namespace RecursosHumanosWeb.Controllers
                 int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
                 var permission = await _context.Permissions.Include(p => p.RequestingUser).Include(p => p.Cutoff).FirstOrDefaultAsync(p => p.Id == request.Id);
-                if (permission == null || permission.PermissionStatusTypeId == 4) // 4 = Rejected/Eliminado? No, usually 4 is Rejected.
+                if (permission == null || permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Rejected)
                     return Json(new AlertResponseDTO { Success = false, Message = "No encontrado o ya procesado." });
 
                 if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
 
                 var cutoff = permission.Cutoff;
-                if (cutoff == null || cutoff.CutoffStatusTypeId != 1)
+                if (cutoff == null || cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open)
                     return Json(new AlertResponseDTO { Success = false, Message = "El permiso ya no se puede eliminar porque el periodo ya está cerrado o invalidado." });
 
                 if (!request.Confirmed)
@@ -365,7 +380,7 @@ namespace RecursosHumanosWeb.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error en DeleteAjax");
-                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = ex.Message }); // En producción, no mostrar ex.Message directo si es sensible
+                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = "Ocurrió un error inesperado al eliminar. Inténtelo nuevamente." });
             }
         }
 
@@ -391,7 +406,7 @@ namespace RecursosHumanosWeb.Controllers
 
             int authId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-            bool success = await _permissionService.AuthorizePermissionAsync(id, authId, model.WithPay, "Revisado");
+            bool success = await _permissionService.AuthorizePermissionAsync(id, authId, aprobado: true, withPay: model.WithPay, comment: model.AuthorizationComment);
             if (!success) return Json(new AlertResponseDTO { Success = false, Message = "Error al revisar" });
 
             return Json(new AlertResponseDTO { Success = true, RedirectUrl = Url.Action("Index", "Permission") });
@@ -437,12 +452,13 @@ namespace RecursosHumanosWeb.Controllers
                 }
             }
 
-            if (permission.PermissionStatusTypeId == 1 && (userType == (int)UserTypeEnum.Authorizer || userType == (int)UserTypeEnum.Administrator))
+            if (permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending && (userType == (int)UserTypeEnum.Authorizer || userType == (int)UserTypeEnum.Administrator))
             {
                  // Si es el autorizador asignado, redirigir a Authorize
                  if (ViewBag.IsApprover == true) return RedirectToAction("Authorize", new { id });
             }
 
+            ViewBag.EvidenceExists = _evidenceStorage.ResolvePhysicalPath(permission.Evidence) != null;
             return View(permission);
         }
 
@@ -476,6 +492,7 @@ namespace RecursosHumanosWeb.Controllers
             }
             ViewBag.IsApprover = isApprover;
 
+            ViewBag.EvidenceExists = _evidenceStorage.ResolvePhysicalPath(permission.Evidence) != null;
             return View(permission);
         }
 
@@ -499,7 +516,7 @@ namespace RecursosHumanosWeb.Controllers
                 if (solicitante?.AreaId == autorizador?.AreaId) isApprover = true;
             }
 
-            string action = (isApprover && permission.PermissionStatusTypeId == 1) ? "Authorize" : "Details";
+            string action = (isApprover && permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending) ? "Authorize" : "Details";
             return Json(new { exists = true, hasAccess = true, url = Url.Action(action, "Permission", new { id }) });
         }
 
@@ -509,6 +526,7 @@ namespace RecursosHumanosWeb.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> GenerateTestData()
         {
             if (!User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString())) return Forbid();
@@ -538,7 +556,7 @@ namespace RecursosHumanosWeb.Controllers
                     UpdatedByUserId = autorizadores.ContainsKey(user.AreaId) ? autorizadores[user.AreaId] : adminId,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
-                    PermissionStatusTypeId = 1, // Pending
+                    PermissionStatusTypeId = (int)PermissionStatusEnum.Pending, // Pending
                     WithPay = random.Next(100) < 70
                 });
 
@@ -558,6 +576,64 @@ namespace RecursosHumanosWeb.Controllers
 
         #region HELPERS
 
+        /// <summary>Configuración de presentación por tipo de permiso (icono, subtítulo y campos). Fuente única para Create/Edit.</summary>
+        public class PermissionTypeFieldConfig
+        {
+            public bool Show { get; set; }
+            public string Label { get; set; } = string.Empty;
+            public bool Required { get; set; }
+        }
+
+        public class PermissionTypeCardConfig
+        {
+            public string Icon { get; set; } = "fa-file-alt";
+            public string Subtitle { get; set; } = string.Empty;
+            public PermissionTypeFieldConfig Date1 { get; set; } = new();
+            public PermissionTypeFieldConfig Date2 { get; set; } = new();
+            public PermissionTypeFieldConfig Time1 { get; set; } = new();
+            public PermissionTypeFieldConfig Time2 { get; set; } = new();
+        }
+
+        private static readonly Dictionary<int, PermissionTypeCardConfig> PermissionTypeCardConfigs = new()
+        {
+            [1] = new PermissionTypeCardConfig
+            {
+                Icon = "fa-history",
+                Subtitle = "Llegada tarde",
+                Date1 = new PermissionTypeFieldConfig { Show = true, Label = "En el día", Required = true },
+                Date2 = new PermissionTypeFieldConfig { Show = false, Label = "Al día", Required = false },
+                Time1 = new PermissionTypeFieldConfig { Show = true, Label = "Hora de llegada", Required = true },
+                Time2 = new PermissionTypeFieldConfig { Show = false, Label = "Hora salida", Required = false }
+            },
+            [2] = new PermissionTypeCardConfig
+            {
+                Icon = "fa-sync-alt",
+                Subtitle = "Intercambio de turno",
+                Date1 = new PermissionTypeFieldConfig { Show = true, Label = "Del día", Required = true },
+                Date2 = new PermissionTypeFieldConfig { Show = true, Label = "Por el día", Required = true },
+                Time1 = new PermissionTypeFieldConfig { Show = true, Label = "Hora entrada", Required = true },
+                Time2 = new PermissionTypeFieldConfig { Show = true, Label = "Hora salida", Required = true }
+            },
+            [3] = new PermissionTypeCardConfig
+            {
+                Icon = "fa-calendar-times",
+                Subtitle = "Ausencia por uno o varios días",
+                Date1 = new PermissionTypeFieldConfig { Show = true, Label = "Del día", Required = true },
+                Date2 = new PermissionTypeFieldConfig { Show = true, Label = "Al día", Required = true },
+                Time1 = new PermissionTypeFieldConfig { Show = false, Label = "Hora entrada", Required = false },
+                Time2 = new PermissionTypeFieldConfig { Show = false, Label = "Hora salida", Required = false }
+            },
+            [4] = new PermissionTypeCardConfig
+            {
+                Icon = "fa-business-time",
+                Subtitle = "Modificar horario",
+                Date1 = new PermissionTypeFieldConfig { Show = true, Label = "Del día", Required = true },
+                Date2 = new PermissionTypeFieldConfig { Show = true, Label = "Al día", Required = true },
+                Time1 = new PermissionTypeFieldConfig { Show = true, Label = "Hora entrada", Required = true },
+                Time2 = new PermissionTypeFieldConfig { Show = true, Label = "Hora salida", Required = true }
+            }
+        };
+
         private async Task PrepareCreateEditViewBag(int? selectedUserId = null)
         {
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
@@ -569,25 +645,44 @@ namespace RecursosHumanosWeb.Controllers
 
             ViewBag.Users = new SelectList(await usersQuery.OrderBy(u => u.Name).ToListAsync(), "Id", "Name", selectedUserId);
             ViewBag.PermissionTypes = new SelectList(await _context.PermissionTypes.ToListAsync(), "Id", "Description");
+            ViewBag.PermissionTypeList = await _context.PermissionTypes.OrderBy(t => t.Id).ToListAsync();
+            ViewBag.PermissionTypeConfigs = PermissionTypeCardConfigs;
         }
 
         private Dictionary<string, string[]> GetModelStateErrors() => 
             ModelState.Where(x => x.Value!.Errors.Any()).ToDictionary(kvp => kvp.Key, kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
 
-        private async Task<string?> SaveEvidenceFile(IFormFile file, int userId)
+        private string? ValidateEvidenceFile(IFormFile file)
         {
+            if (file.Length <= 0) return "El archivo adjunto está vacío.";
+
             int maxMb = _configuration.GetValue<int>("BusinessRules:Uploads:MaxFileSizeMB");
-            if (file.Length > maxMb * 1024 * 1024) return null;
-            string uploads = Path.Combine(_environment.WebRootPath, "Evidences");
-            if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
-            string name = $"{userId}_{Guid.NewGuid()}{Path.GetExtension(file.FileName).ToLower()}";
-            using (var stream = new FileStream(Path.Combine(uploads, name), FileMode.Create)) await file.CopyToAsync(stream);
-            return "/Evidences/" + name;
+            if (file.Length > maxMb * 1024 * 1024)
+                return $"El archivo excede el tamaño máximo permitido de {maxMb} MB.";
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (extension != ".pdf")
+                return "Solo se permiten archivos PDF como evidencia.";
+
+            return null;
         }
 
-        private void DeleteFile(string webPath)
+        [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+        public IActionResult GetEvidence(int id)
         {
-            try { string path = Path.Combine(_environment.WebRootPath, "Evidences", Path.GetFileName(webPath)); if (System.IO.File.Exists(path)) System.IO.File.Delete(path); } catch { }
+            var permission = _context.Permissions.AsNoTracking().FirstOrDefault(p => p.Id == id);
+            if (permission == null || string.IsNullOrWhiteSpace(permission.Evidence)) return NotFound();
+
+            int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
+
+            if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Forbid();
+
+            var path = _evidenceStorage.ResolvePhysicalPath(permission.Evidence);
+            if (path == null) return NotFound();
+
+            return PhysicalFile(path, "application/pdf", Path.GetFileName(path));
         }
 
         private string GetAlertJson(string title, string text) => System.Text.Json.JsonSerializer.Serialize(new { icon = "error", title, text });

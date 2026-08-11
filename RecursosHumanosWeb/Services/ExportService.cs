@@ -2,6 +2,7 @@ using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using RecursosHumanosWeb.Models;
+using RecursosHumanosWeb.Models.Enums;
 using System.Text;
 using System.Xml;
 
@@ -36,7 +37,7 @@ namespace RecursosHumanosWeb.Services
                         .Where(p => p.CutoffId == cutoffId &&
                                     p.RequestingUser.AreaId == area.Id &&
                                     p.PermissionTypeId != 5 &&
-                                    p.PermissionStatusTypeId != 3) // Excluyendo Invalidados
+                                    p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod) // Excluyendo Invalidados
                         .Include(p => p.RequestingUser)
                         .Include(p => p.AuthorizingUser)
                         .Include(p => p.PermissionType)
@@ -106,7 +107,7 @@ namespace RecursosHumanosWeb.Services
                         .Where(p => p.CutoffId == cutoffId &&
                                     p.RequestingUser.AreaId == area.Id &&
                                     p.PermissionTypeId == 5 &&
-                                    p.PermissionStatusTypeId != 3)
+                                    p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                         .Include(p => p.RequestingUser)
                         .Include(p => p.AuthorizingUser)
                         .Include(p => p.PermissionType)
@@ -242,7 +243,7 @@ namespace RecursosHumanosWeb.Services
             if (cutoff == null) return (null, null);
 
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != 3)
+                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
                 .Include(p => p.AuthorizingUser)
@@ -263,7 +264,7 @@ namespace RecursosHumanosWeb.Services
                     $"{(p.WithPay ? "Sí" : "No")}," +
                     $"{p.StartDate?.ToString("yyyy-MM-dd")}," +
                     $"{p.EndDate?.ToString("yyyy-MM-dd")}," +
-                    $"{(p.PermissionStatusTypeId == 2 ? "Sí" : "No")}," +
+                    $"{(p.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved ? "Sí" : "No")}," +
                     $"\"{p.AuthorizingUser?.Name}\"," +
                     $"{p.CreatedAt.ToString("yyyy-MM-dd HH:mm")}");
             }
@@ -281,7 +282,7 @@ namespace RecursosHumanosWeb.Services
             if (cutoff == null) return (null, null);
 
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != 3)
+                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
                 .Include(p => p.AuthorizingUser)
@@ -316,8 +317,8 @@ namespace RecursosHumanosWeb.Services
                 Estadisticas = new
                 {
                     Total = permissions.Count,
-                    Aprobados = permissions.Count(p => p.PermissionStatusTypeId == 2),
-                    Pendientes = permissions.Count(p => p.PermissionStatusTypeId == 1),
+                    Aprobados = permissions.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved),
+                    Pendientes = permissions.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending),
                     DiasPromedio = permissions.Any() ? permissions.Average(p => p.Days ?? 0) : 0
                 }
             };
@@ -336,7 +337,7 @@ namespace RecursosHumanosWeb.Services
             if (cutoff == null) return (null, null);
 
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != 3)
+                .Where(p => p.CutoffId == cutoffId && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
                 .Include(p => p.AuthorizingUser)
@@ -356,8 +357,8 @@ namespace RecursosHumanosWeb.Services
 
                 xmlWriter.WriteStartElement("Estadisticas");
                 xmlWriter.WriteElementString("Total", permissions.Count.ToString());
-                xmlWriter.WriteElementString("Aprobados", permissions.Count(p => p.PermissionStatusTypeId == 2).ToString());
-                xmlWriter.WriteElementString("Pendientes", permissions.Count(p => p.PermissionStatusTypeId == 1).ToString());
+                xmlWriter.WriteElementString("Aprobados", permissions.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved).ToString());
+                xmlWriter.WriteElementString("Pendientes", permissions.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending).ToString());
                 xmlWriter.WriteElementString("DiasPromedio", (permissions.Any() ? permissions.Average(p => p.Days ?? 0) : 0).ToString("F2"));
                 xmlWriter.WriteEndElement(); 
 
@@ -374,7 +375,7 @@ namespace RecursosHumanosWeb.Services
                     xmlWriter.WriteElementString("WithPay", p.WithPay ? "Sí" : "No");
                     xmlWriter.WriteElementString("FromDay", p.StartDate?.ToString("yyyy-MM-dd") ?? "");
                     xmlWriter.WriteElementString("ToDay", p.EndDate?.ToString("yyyy-MM-dd") ?? "");
-                    xmlWriter.WriteElementString("Estado", p.PermissionStatusTypeId == 2 ? "Sí" : "No");
+                    xmlWriter.WriteElementString("Estado", p.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved ? "Sí" : "No");
                     xmlWriter.WriteElementString("AuthorizedBy", p.AuthorizingUser?.Name ?? "");
                     xmlWriter.WriteElementString("CreatedAt", p.CreatedAt.ToString("yyyy-MM-dd HH:mm") ?? "");
                     xmlWriter.WriteEndElement(); 

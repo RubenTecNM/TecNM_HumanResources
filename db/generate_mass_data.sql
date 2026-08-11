@@ -1,8 +1,27 @@
--- Mass Data Generation Script for TecRHPermisos
+﻿-- Mass Data Generation Script for TecRHPermisos
 -- Generates ~100,000 permission records distributed across periods (Cutoffs) since 2020.
 -- Guarantees no period overlaps and dates within ranges (00:00:00 - 23:59:59).
 
 SET NOCOUNT ON;
+
+-- =============================================================
+-- LIMPIEZA PREVIA (idempotente): elimina los datos existentes
+-- antes de regenerar, en orden de dependencias (FK) y en una
+-- transacción para garantizar consistencia.
+-- =============================================================
+BEGIN TRY
+    BEGIN TRANSACTION;
+        DELETE FROM ResetPasswordToken;
+        DELETE FROM AuditLog;
+        DELETE FROM Permission;
+        DELETE FROM Cutoff;
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    PRINT 'ERROR en la limpieza previa: ' + ERROR_MESSAGE();
+    RETURN;
+END CATCH;
 
 DECLARE @StartDate DATETIME = '2020-01-01 00:00:00';
 DECLARE @Today DATETIME = GETDATE();

@@ -47,6 +47,9 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Debug);
 });
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<AuthenticationDataAttribute>();
@@ -65,7 +68,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
     });
 
@@ -98,6 +101,10 @@ builder.Services.AddAutoMapper(typeof(RecursosHumanosWeb.Mapping.AutoMapperProfi
 // Memory cache for tokens
 builder.Services.AddMemoryCache();
 
+// Login attempt lockout (anti fuerza bruta)
+builder.Services.Configure<LoginAttemptOptions>(builder.Configuration.GetSection(LoginAttemptOptions.SectionName));
+builder.Services.AddSingleton<ILoginAttemptTracker, MemoryLoginAttemptTracker>();
+
 // SMTP configuration from appsettings
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
@@ -109,6 +116,7 @@ builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddScoped<ICutoffService, CutoffService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IEvidenceStorage, PhysicalEvidenceStorage>();
 
 // Authorization Policies
 builder.Services.AddAuthorization(options =>
@@ -227,6 +235,13 @@ using (var scope = app.Services.CreateScope())
                 
                 logger.LogInformation("Base de datos inicializada al 100% (Datos y Objetos).");
             }
+
+            // Aplicar upgrades de esquema versionados (idempotentes) a bases existentes
+            var upgradeBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath }
+                .FirstOrDefault(dir => Directory.Exists(Path.Combine(dir, "db", "upgrade")))
+                ?? AppContext.BaseDirectory;
+            SchemaUpgradeRunner.ApplyPendingUpgrades(context, logger, upgradeBase);
+
             break;
         }
         catch (Exception ex)
@@ -246,25 +261,10 @@ using (var scope = app.Services.CreateScope())
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-else
-{
-    app.UseExceptionHandler(errorApp =>
-    {
-        errorApp.Run(async context =>
-        {
-            var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
-            if (exception != null)
-            {
-                var logger = app.Services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(exception.Error, "Excepci�n no manejada: {Message}", exception.Error.Message);
-                await context.Response.WriteAsync($"Error: {exception.Error.Message}");
-            }
-        });
-    });
-}
+
+app.UseExceptionHandler();
 
 // app.UseHttpsRedirection(); // Comentado para evitar errores 502 en Tunnel Cloudflare
 

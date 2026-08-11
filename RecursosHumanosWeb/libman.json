@@ -1,0 +1,83 @@
+{
+  "version": "1.0",
+  "defaultProvider": "jsdelivr",
+  "libraries": [
+    {
+      "library": "jquery@3.7.0",
+      "files": [
+        "dist/jquery.min.js",
+        "dist/jquery.min.map"
+      ],
+      "destination": "wwwroot/lib/jquery"
+    },
+    {
+      "library": "sweetalert2@11.14.4",
+      "files": [
+        "dist/sweetalert2.min.js"
+      ],
+      "destination": "wwwroot/lib/sweetalert2"
+    },
+    {
+      "library": "animate.css@4.1.1",
+      "files": [
+        "animate.min.css"
+      ],
+      "destination": "wwwroot/lib/animate.css"
+    },
+    {
+      "library": "aos@2.3.4",
+      "files": [
+        "dist/aos.css",
+        "dist/aos.js"
+      ],
+      "destination": "wwwroot/lib/aos"
+    },
+    {
+      "provider": "cdnjs",
+      "library": "font-awesome@6.4.0",
+      "files": [
+        "css/all.min.css",
+        "webfonts/**"
+      ],
+      "destination": "wwwroot/lib/font-awesome"
+    },
+    {
+      "library": "select2@4.1.0-rc.0",
+      "files": [
+        "dist/css/select2.min.css",
+        "dist/js/select2.min.js"
+      ],
+      "destination": "wwwroot/lib/select2"
+    },
+    {
+      "library": "flatpickr@4.6.13",
+      "files": [
+        "dist/flatpickr.min.css",
+        "dist/flatpickr.min.js",
+        "dist/l10n/es.js"
+      ],
+      "destination": "wwwroot/lib/flatpickr"
+    },
+    {
+      "library": "cleave.js@1.6.0",
+      "files": [
+        "dist/cleave.min.js"
+      ],
+      "destination": "wwwroot/lib/cleave.js"
+    },
+    {
+      "library": "d3@7.8.5",
+      "files": [
+        "dist/d3.min.js"
+      ],
+      "destination": "wwwroot/lib/d3"
+    },
+    {
+      "library": "apexcharts@3.44.0",
+      "files": [
+        "dist/apexcharts.min.js"
+      ],
+      "destination": "wwwroot/lib/apexcharts"
+    }
+  ]
+}

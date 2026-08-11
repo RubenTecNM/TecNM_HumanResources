@@ -21,20 +21,23 @@ namespace RecursosHumanosWeb.Filters
 
             if (!isAjax && !acceptsJson)
             {
-                // Permitir que el flujo siga al ErrorHandler estándar para vistas MVC
+                // Permitir que el flujo siga al manejador global de excepciones para vistas MVC
                 return;
             }
-            
+
             var exception = context.Exception;
             var inner = exception.InnerException?.Message ?? "No inner exception";
 
             _logger.LogError(exception, "Error no manejado en llamada asíncrona/API. Detalle: {Inner}", inner);
 
+            var includeDetail = context.HttpContext.RequestServices
+                .GetService<IWebHostEnvironment>()?.IsDevelopment() == true;
+
             var response = new
             {
                 error = "Internal Server Error",
-                message = exception.Message,
-                detail = inner
+                message = "Ocurrió un error inesperado. Inténtelo de nuevo más tarde.",
+                detail = includeDetail ? inner : null
             };
 
             context.Result = new ObjectResult(response)

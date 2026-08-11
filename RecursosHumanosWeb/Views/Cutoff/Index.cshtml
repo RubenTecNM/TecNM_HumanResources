@@ -66,9 +66,17 @@
                                 <label class="fw-bold text-muted small text-uppercase mb-2 ms-2">Estatus del Período</label>
                                     <select id="statusId" name="statusId" class="form-control filter-input-pill form-select">
                                         <option value="" selected="@(ViewBag.StatusId == null ? "selected" : null)">Todos los estatus</option>
-                                        <option value="1" selected="@(ViewBag.StatusId == 1 ? "selected" : null)">🟢 Abierto</option>
-                                        <option value="2" selected="@(ViewBag.StatusId == 2 ? "selected" : null)">🔒 Cerrado</option>
-                                        <option value="3" selected="@(ViewBag.StatusId == 3 ? "selected" : null)">🚫 Invalidado</option>
+                                        @foreach (var st in (IEnumerable<RecursosHumanosWeb.Models.CutoffStatusType>)ViewBag.Statuses)
+                                        {
+                                            var icon = st.Color switch
+                                            {
+                                                "success" => "🟢",
+                                                "secondary" => "🔒",
+                                                "danger" => "🚫",
+                                                _ => ""
+                                            };
+                                            <option value="@st.Id" selected="@(ViewBag.StatusId == st.Id ? "selected" : null)">@icon @st.Description</option>
+                                        }
                                     </select>
                             </div>
                         </div>

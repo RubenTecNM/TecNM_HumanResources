@@ -25,6 +25,10 @@ namespace RecursosHumanosWeb.Models.ViewModels
         [Required(ErrorMessage = "Debe indicar si el permiso es con o sin goce de sueldo.")]
         public bool WithPay { get; set; }
 
+        // Comentario opcional del autorizador al revisar la solicitud
+        [StringLength(500, ErrorMessage = "El comentario no puede superar los 500 caracteres.")]
+        public string? AuthorizationComment { get; set; }
+
         // Información adicional (solo lectura)
         public DateTime CreatedAt { get; set; }
         public string? CreatedBy { get; set; }

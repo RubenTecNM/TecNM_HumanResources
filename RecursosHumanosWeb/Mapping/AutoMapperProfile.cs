@@ -50,6 +50,9 @@ namespace RecursosHumanosWeb.Mapping
                 .ReverseMap()
                 .ForMember(dest => dest.Evidence, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Evidence)));
 
+            // 3b. Creación (VM sin WithPay/Id/Evidence para evitar over-posting)
+            CreateMap<PermissionCreateViewModel, Permission>();
+
             // 4. Listados
             CreateMap<Cutoff, CutoffsDTO>()
                 .ForMember(d => d.StatusDescription, o => o.MapFrom(s => s.CutoffStatusType.Description ?? "N/A"))

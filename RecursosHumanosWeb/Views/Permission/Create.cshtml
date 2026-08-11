@@ -1,4 +1,4 @@
-@model RecursosHumanosWeb.Models.ViewModels.PermissionsCreateViewModel
+@model RecursosHumanosWeb.Models.ViewModels.PermissionCreateViewModel
 @{
     ViewData["Title"] = "Solicitud de Permiso";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -20,8 +20,7 @@
     </div>
     <form asp-action="Create" method="post" enctype="multipart/form-data" class="permission-form ajax-form" id="permissionForm"
           data-is-rh="@(ViewBag.IsRH ?? false)"
-          data-is-administrator="@(ViewBag.IsAdministrator ?? false)"
-          data-is-employee="@(ViewBag.IsEmployee ?? false)">
+          data-is-administrator="@(ViewBag.IsAdministrator ?? false)">
 
         <div class="form-sections">
             @{
@@ -54,46 +53,26 @@
                     <span class="section-indicator">@((isRH || isAdministrator) ? "2" : "1")</span>
                 </div>
                 <div class="permission-types">
-                    <div class="permission-type-card" data-type="3">
-                        <input type="radio" id="falta" name="PermissionTypeId" value="3" asp-for="PermissionTypeId">
-                        <label for="falta" class="type-label">
-                            <div class="type-icon shadow-sm">
-                                <i class="fas fa-calendar-times"></i>
-                            </div>
-                            <h4>Falta</h4>
-                            <p>Ausencia por uno o varios días</p>
-                        </label>
-                    </div>
-                    <div class="permission-type-card" data-type="1">
-                        <input type="radio" id="retardo" name="PermissionTypeId" value="1" asp-for="PermissionTypeId">
-                        <label for="retardo" class="type-label">
-                            <div class="type-icon shadow-sm">
-                                <i class="fas fa-history"></i>
-                            </div>
-                            <h4>Retardo</h4>
-                            <p>Llegada tarde</p>
-                        </label>
-                    </div>
-                    <div class="permission-type-card" data-type="4">
-                        <input type="radio" id="cambioHorario" name="PermissionTypeId" value="4" asp-for="PermissionTypeId">
-                        <label for="cambioHorario" class="type-label">
-                            <div class="type-icon shadow-sm">
-                                <i class="fas fa-business-time"></i>
-                            </div>
-                            <h4>Horario</h4>
-                            <p>Modificar horario</p>
-                        </label>
-                    </div>
-                    <div class="permission-type-card" data-type="2">
-                        <input type="radio" id="turnoPorTurno" name="PermissionTypeId" value="2" asp-for="PermissionTypeId">
-                        <label for="turnoPorTurno" class="type-label">
-                            <div class="type-icon shadow-sm">
-                                <i class="fas fa-sync-alt"></i>
-                            </div>
-                            <h4>Turno</h4>
-                            <p>Intercambio de turno</p>
-                        </label>
-                    </div>
+                    @{
+                        var typeList = ViewBag.PermissionTypeList as IEnumerable<RecursosHumanosWeb.Models.PermissionType> ?? new List<RecursosHumanosWeb.Models.PermissionType>();
+                        var typeConfigs = ViewBag.PermissionTypeConfigs as Dictionary<int, RecursosHumanosWeb.Controllers.PermissionController.PermissionTypeCardConfig> ?? new Dictionary<int, RecursosHumanosWeb.Controllers.PermissionController.PermissionTypeCardConfig>();
+                        var jsonOptions = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
+                    }
+                    @foreach (var type in typeList)
+                    {
+                        var typeConfig = typeConfigs.TryGetValue(type.Id, out var cfg) ? cfg : null;
+                        <div class="permission-type-card" data-type="@type.Id"
+                             data-config="@(typeConfig != null ? System.Text.Json.JsonSerializer.Serialize((object)typeConfig, jsonOptions) : null)">
+                            <input type="radio" id="pt-@type.Id" name="PermissionTypeId" value="@type.Id" asp-for="PermissionTypeId">
+                            <label for="pt-@type.Id" class="type-label">
+                                <div class="type-icon shadow-sm">
+                                    <i class="fas @(typeConfig?.Icon ?? "fa-file-alt")"></i>
+                                </div>
+                                <h4>@type.Description</h4>
+                                <p>@(typeConfig?.Subtitle ?? "Permiso de tipo " + type.Description)</p>
+                            </label>
+                        </div>
+                    }
                 </div>
                 <span asp-validation-for="PermissionTypeId" class="text-danger validation-message"></span>
             </div>
@@ -182,7 +161,6 @@
                             </button>
                         </div>
                     </div>
-                    <input asp-for="Evidence" type="hidden" />
                 </div>
             </div>
         </div>

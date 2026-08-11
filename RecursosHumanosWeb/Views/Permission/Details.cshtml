@@ -14,7 +14,7 @@
 
     string FormatFullDate(DateTime date)
     {
-        return date.ToString("dd 'de' MMMM 'del' yyyy", culture);
+        return date.ToString("dd/MM/yyyy", culture);
     }
 
     // Mapeo corregido segun base de datos: 1: Retardo, 2: Turno, 3: Falta, 4: Horario
@@ -56,22 +56,9 @@
     string time1 = config != null && config["Time1"].show && Model.StartDate != null ? FormatHour12(Model.StartDate.Value) : null!;
     string time2 = config != null && config["Time2"].show && Model.EndDate.HasValue ? FormatHour12(Model.EndDate.Value) : null!;
 
-    // Normalize evidence path
-    string? evidenceUrl = null;
-    string? evidencePath = null;
-    bool evidenceExists = false;
-    if (!string.IsNullOrEmpty(Model.Evidence))
-    {
-        var raw = Model.Evidence.Replace('\\', '/').Trim();
-        if (!raw.StartsWith("/") && !raw.Contains("/"))
-        {
-            raw = "/Evidences/" + raw;
-        }
-        evidenceUrl = raw;
-        var relativePath = raw.TrimStart('/');
-        evidencePath = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
-        evidenceExists = System.IO.File.Exists(evidencePath);
-    }
+    // Evidencia: se sirve únicamente mediante la acción autorizada GetEvidence
+    bool evidenceExists = ViewBag.EvidenceExists ?? false;
+    string? evidenceUrl = Url.Action("GetEvidence", "Permission", new { id = Model.Id });
 
     // Authorization logic for review
     int currentUserType = ViewBag.CurrentUserType ?? 0;
@@ -266,6 +253,23 @@
                             </div>
                         </div>
                     </div>
+
+                    @if (!string.IsNullOrEmpty(Model.AuthorizationComment))
+                    {
+                        <div class="mb-3">
+                            <div class="info-card p-4 rounded-4 shadow-sm border border-start-4 border-start-warning">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="icon-circle bg-warning-subtle text-warning">
+                                        <i class="fas fa-comment-dots"></i>
+                                    </div>
+                                    <span class="small fw-bold text-dark text-uppercase">Comentario de la Revisión</span>
+                                </div>
+                                <div class="ms-5 mt-2">
+                                    <p class="small text-dark fw-medium mb-0" style="white-space: pre-wrap;">@Model.AuthorizationComment</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
 
                 <!-- SECCIÓN DE EVIDENCIA (ANCHO COMPLETO) -->
@@ -279,7 +283,7 @@
                             @if (evidenceExists)
                             {
                                 <div class="p-3 bg-white border-bottom d-flex justify-content-between align-items-center">
-                                    <span class="small fw-bold text-dark"><i class="fas fa-file-pdf me-2 text-danger"></i> @System.IO.Path.GetFileName(evidenceUrl)</span>
+                                    <span class="small fw-bold text-dark"><i class="fas fa-file-pdf me-2 text-danger"></i> @System.IO.Path.GetFileName(Model.Evidence.Replace('\\', '/'))</span>
                                     <a href="@evidenceUrl" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
                                         <i class="fas fa-external-link-alt me-1"></i> Abrir PDF
                                     </a>

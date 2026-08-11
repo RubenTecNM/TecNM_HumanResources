@@ -37,55 +37,24 @@
                     <span class="section-indicator">1</span>
                 </div>
                 <div class="permission-types readonly-mode">
-                    @if (Model.PermissionTypeId == 1)
-                    {
-                        <div class="permission-type-card selected" data-type="1">
-                            <input type="radio" id="retardo" name="PermissionTypeId" value="1" asp-for="PermissionTypeId" disabled checked>
-                            <label for="retardo" class="type-label">
-                                <div class="type-icon">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <h4>Retardo</h4>
-                                <p>Llegada tarde en un día específico</p>
-                            </label>
-                        </div>
+                    @{
+                        var typeList = ViewBag.PermissionTypeList as IEnumerable<RecursosHumanosWeb.Models.PermissionType> ?? new List<RecursosHumanosWeb.Models.PermissionType>();
+                        var typeConfigs = ViewBag.PermissionTypeConfigs as Dictionary<int, RecursosHumanosWeb.Controllers.PermissionController.PermissionTypeCardConfig> ?? new Dictionary<int, RecursosHumanosWeb.Controllers.PermissionController.PermissionTypeCardConfig>();
+                        var jsonOptions = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
                     }
-                    @if (Model.PermissionTypeId == 2)
+                    @foreach (var type in typeList)
                     {
-                        <div class="permission-type-card selected" data-type="2">
-                            <input type="radio" id="turnoPorTurno" name="PermissionTypeId" value="2" asp-for="PermissionTypeId" disabled checked>
-                            <label for="turnoPorTurno" class="type-label">
+                        if (type.Id != Model.PermissionTypeId) { continue; }
+                        var typeConfig = typeConfigs.TryGetValue(type.Id, out var cfg) ? cfg : null;
+                        <div class="permission-type-card selected" data-type="@type.Id"
+                             data-config="@(typeConfig != null ? System.Text.Json.JsonSerializer.Serialize((object)typeConfig, jsonOptions) : null)">
+                            <input type="radio" id="pt-@type.Id" name="PermissionTypeId" value="@type.Id" asp-for="PermissionTypeId" disabled checked>
+                            <label for="pt-@type.Id" class="type-label">
                                 <div class="type-icon">
-                                    <i class="fas fa-sync-alt"></i>
+                                    <i class="fas @(typeConfig?.Icon ?? "fa-file-alt")"></i>
                                 </div>
-                                <h4>Turno por Turno</h4>
-                                <p>Intercambio de turnos con compañero</p>
-                            </label>
-                        </div>
-                    }
-                    @if (Model.PermissionTypeId == 3)
-                    {
-                        <div class="permission-type-card selected" data-type="3">
-                            <input type="radio" id="falta" name="PermissionTypeId" value="3" asp-for="PermissionTypeId" disabled checked>
-                            <label for="falta" class="type-label">
-                                <div class="type-icon">
-                                    <i class="fas fa-calendar-times"></i>
-                                </div>
-                                <h4>Falta</h4>
-                                <p>Ausencia por uno o varios días</p>
-                            </label>
-                        </div>
-                    }
-                    @if (Model.PermissionTypeId == 4)
-                    {
-                        <div class="permission-type-card selected" data-type="4">
-                            <input type="radio" id="cambioHorario" name="PermissionTypeId" value="4" asp-for="PermissionTypeId" disabled checked>
-                            <label for="cambioHorario" class="type-label">
-                                <div class="type-icon">
-                                    <i class="fas fa-exchange-alt"></i>
-                                </div>
-                                <h4>Cambio de Horario</h4>
-                                <p>Modificar horario de trabajo</p>
+                                <h4>@type.Description</h4>
+                                <p>@(typeConfig?.Subtitle ?? "Permiso de tipo " + type.Description)</p>
                             </label>
                         </div>
                     }
@@ -201,7 +170,7 @@
                             </div>
                             <div class="flex-grow-1">
                                 <div class="fw-bold text-success small">Documento Existente</div>
-                                <a href="@Model.Evidence" target="_blank" class="text-decoration-none small fw-semibold">
+                                <a href="@Url.Action("GetEvidence", "Permission", new { id = Model.Id })" target="_blank" class="text-decoration-none small fw-semibold">
                                     <i class="fas fa-external-link-alt me-1"></i> Ver documento actual
                                 </a>
                             </div>

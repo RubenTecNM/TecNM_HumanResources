@@ -115,12 +115,12 @@ namespace RecursosHumanosWeb.Services
 
             // Obtener contadores de permissions
             var permissionStats = await _context.Permissions
-                .Where(p => p.RequestingUserId == id && p.PermissionStatusTypeId != 3)
+                .Where(p => p.RequestingUserId == id && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .GroupBy(p => 1)
                 .Select(g => new
                 {
                     TotalPermissions = g.Count(),
-                    ReviewedPermissions = g.Count(p => p.PermissionStatusTypeId != 1),
+                    ReviewedPermissions = g.Count(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending),
                     WithPay = g.Count(p => p.WithPay),
                     WithoutPay = g.Count(p => !p.WithPay)
                 })

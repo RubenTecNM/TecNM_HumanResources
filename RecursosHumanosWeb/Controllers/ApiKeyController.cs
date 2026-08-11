@@ -20,12 +20,14 @@ namespace RecursosHumanosWeb.Controllers
         private readonly HumanResourcesContext _context;
         private readonly AutoMapper.IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<ApiKeyController> _logger;
 
-        public ApiKeyController(HumanResourcesContext context, AutoMapper.IMapper mapper, IConfiguration configuration)
+        public ApiKeyController(HumanResourcesContext context, AutoMapper.IMapper mapper, IConfiguration configuration, ILogger<ApiKeyController> logger)
         {
             _context = context;
             _mapper = mapper;
             _configuration = configuration;
+            _logger = logger;
         }
         #endregion
 
@@ -229,7 +231,8 @@ namespace RecursosHumanosWeb.Controllers
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    ModelState.AddModelError("", "Error al generar la API Key: " + ex.Message);
+                    _logger.LogError(ex, "Error al generar la API Key.");
+                    ModelState.AddModelError("", "Error al generar la API Key. Inténtelo nuevamente.");
 
                     // Recargar datos para la vista (Copy-paste de la lógica de arriba)
                     var usersList = _context.Users
@@ -396,7 +399,8 @@ namespace RecursosHumanosWeb.Controllers
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    ModelState.AddModelError("", $"Error al actualizar la API Key: {ex.Message}");
+                    _logger.LogError(ex, "Error al actualizar la API Key.");
+                    ModelState.AddModelError("", "Error al actualizar la API Key. Inténtelo nuevamente.");
 
                     // Recargar listas
                     var usersList = _context.Users
@@ -509,7 +513,8 @@ namespace RecursosHumanosWeb.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = $"Ocurrió un error al inactivar: {ex.Message}", Icon = "error" });
+                _logger.LogError(ex, "Error al inactivar API Key.");
+                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = "Ocurrió un error al inactivar la API Key. Inténtelo nuevamente.", Icon = "error" });
             }
         }
         #endregion

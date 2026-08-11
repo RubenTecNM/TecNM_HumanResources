@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Filters;
 using RecursosHumanosWeb.Models;
+using RecursosHumanosWeb.Models.Enums;
 using RecursosHumanosWeb.Models.ViewModels.Cutoffs;
 
 namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
@@ -77,7 +78,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
             var userId = HttpContext.Items["ApiUserId"] as int? ?? 1;
 
             var cutoff = _mapper.Map<Cutoff>(model);
-            cutoff.CutoffStatusTypeId = 1; // Open
+            cutoff.CutoffStatusTypeId = (int)CutoffStatusEnum.Open; // Open
             cutoff.CreatedAt = DateTime.Now;
             cutoff.UpdatedAt = DateTime.Now;
             cutoff.CreatedByUserId = userId;
@@ -121,11 +122,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
             if (cutoff == null) return NotFound();
 
             // Los cutoffs usualmente no se borran si tienen permissions, pero aquí hacemos soft delete básico
-            if (cutoff.CutoffStatusTypeId == 2) return BadRequest("El corte ya está cerrado/inactivo.");
+            if (cutoff.CutoffStatusTypeId == (int)CutoffStatusEnum.Closed) return BadRequest("El corte ya está cerrado/inactivo.");
 
             var userId = HttpContext.Items["ApiUserId"] as int? ?? cutoff.UpdatedByUserId;
 
-            cutoff.CutoffStatusTypeId = 2; // Cerrar/Inactivar
+            cutoff.CutoffStatusTypeId = (int)CutoffStatusEnum.Closed; // Cerrar/Inactivar
             cutoff.UpdatedAt = DateTime.Now;
             cutoff.UpdatedByUserId = userId;
 

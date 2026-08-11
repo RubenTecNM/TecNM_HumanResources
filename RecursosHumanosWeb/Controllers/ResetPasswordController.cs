@@ -23,16 +23,22 @@ namespace RecursosHumanosWeb.Controllers
         private readonly IEmailSender _emailSender;
         private readonly SmtpSettings _smtpSettings;
         private readonly ILogger<ResetPasswordController> _logger;
+        private readonly TimeSpan _tokenLifetime;
 
-        private static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(20);
-
-        public ResetPasswordController(HumanResourcesContext context, IMemoryCache cache, IEmailSender emailSender, IOptions<SmtpSettings> smtpOptions, ILogger<ResetPasswordController> logger)
+        public ResetPasswordController(
+            HumanResourcesContext context,
+            IMemoryCache cache,
+            IEmailSender emailSender,
+            IOptions<SmtpSettings> smtpOptions,
+            ILogger<ResetPasswordController> logger,
+            IConfiguration configuration)
         {
             _context = context;
             _cache = cache;
             _emailSender = emailSender;
             _smtpSettings = smtpOptions.Value;
             _logger = logger;
+            _tokenLifetime = TimeSpan.FromMinutes(configuration.GetValue("ResetPassword:TokenLifetimeMinutes", 20));
         }
 
         [HttpGet]
@@ -58,7 +64,7 @@ namespace RecursosHumanosWeb.Controllers
             // Validate
             if (string.IsNullOrWhiteSpace(dto.Email) || !new EmailAddressAttribute().IsValid(dto.Email))
             {
-                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Email inv�lido.", Icon = "error" };
+                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Email inválido.", Icon = "error" };
                 return Json(bad);
             }
 
@@ -85,7 +91,7 @@ namespace RecursosHumanosWeb.Controllers
                 Used = false,
                 RequestingUserId = user.Id,
                 CreatedByUserId = user.Id,   // BaseEntity.CreatedByUserId es int (no nullable); el solicitante crea su propio token
-                ExpiresAt = DateTime.Now.Add(TokenLifetime)
+                ExpiresAt = DateTime.Now.Add(_tokenLifetime)
             };
 
             _context.ResetPasswordTokens.Add(token);
@@ -99,13 +105,13 @@ namespace RecursosHumanosWeb.Controllers
                 Selector = selector,
                 Verifier = verifier,
                 Link = link,
-                ExpirationMinutes = (int)TokenLifetime.TotalMinutes
+                ExpirationMinutes = (int)_tokenLifetime.TotalMinutes
             };
 
             var sent = await _emailSender.SendTokenEmailAsync(emailModel);
             if (!sent)
             {
-                var fail = new AlertResponseDTO { Success = false, Title = "Error", Message = "No se pudo enviar el correo. Intente m�s tarde.", Icon = "error" };
+                var fail = new AlertResponseDTO { Success = false, Title = "Error", Message = "No se pudo enviar el correo. Intente más tarde.", Icon = "error" };
                 return Json(fail);
             }
 
@@ -139,7 +145,7 @@ namespace RecursosHumanosWeb.Controllers
 
             if (tokenEntry == null)
             {
-                TempData["ResetPasswordMessage"] = "Token inv�lido o no encontrado.";
+                TempData["ResetPasswordMessage"] = "Token inválido o no encontrado.";
                 return RedirectToAction(nameof(RequestToken));
             }
 
@@ -153,7 +159,7 @@ namespace RecursosHumanosWeb.Controllers
             var providedHash = ComputeSha256Hash(tok);
             if (!string.Equals(providedHash, tokenEntry.TokenHash, StringComparison.OrdinalIgnoreCase))
             {
-                TempData["ResetPasswordMessage"] = "Token inv�lido.";
+                TempData["ResetPasswordMessage"] = "Token inválido.";
                 return RedirectToAction(nameof(RequestToken));
             }
 
@@ -179,28 +185,14 @@ namespace RecursosHumanosWeb.Controllers
                     .Where(m => m.Value!.Errors.Any())
                     .ToDictionary(k => k.Key, v => v.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
 
-                // Log ModelState and submitted form keys for debugging
-                try
-                {
-                    _logger.LogWarning("ResetPassword POST - ModelState invalid. Errors: {Errors}", errors);
-
-                    // Log form values (may be empty for AJAX JSON), but useful when FormData is used
-                    if (Request.HasFormContentType)
-                    {
-                        var formKeys = Request.Form.Keys.ToDictionary(k => k, k => Request.Form[k].ToString());
-                        _logger.LogWarning("ResetPassword POST - Form values: {FormKeys}", formKeys);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error logging ModelState or form when ResetPassword POST invalid.");
-                }
+                // Log únicamente los nombres de los campos en error, nunca los valores enviados.
+                _logger.LogWarning("ResetPassword POST - ModelState invalid. Campos en error: {Fields}", errors.Keys.ToArray());
 
                 var bad = new AlertResponseDTO
                 {
                     Success = false,
                     Title = "Error",
-                    Message = "Datos inv�lidos",
+                    Message = "Datos inválidos",
                     Icon = "error",
                     Errors = errors
                 };
@@ -216,7 +208,7 @@ namespace RecursosHumanosWeb.Controllers
 
             if (tokenEntry == null)
             {
-                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Token inv�lido o ya usado.", Icon = "error" };
+                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Token inválido o ya usado.", Icon = "error" };
                 return Json(bad);
             }
 
@@ -229,7 +221,7 @@ namespace RecursosHumanosWeb.Controllers
             var providedHash = ComputeSha256Hash(model.Token);
             if (!string.Equals(providedHash, tokenEntry.TokenHash, StringComparison.OrdinalIgnoreCase))
             {
-                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Token inv�lido.", Icon = "error" };
+                var bad = new AlertResponseDTO { Success = false, Title = "Error", Message = "Token inválido.", Icon = "error" };
                 return Json(bad);
             }
 
@@ -250,48 +242,10 @@ namespace RecursosHumanosWeb.Controllers
             _context.Update(tokenEntry);
             await _context.SaveChangesAsync();
 
-            var successMessage = "Contrase�a actualizada correctamente.";
+            var successMessage = "Contraseña actualizada correctamente.";
 
-            var ok = new AlertResponseDTO { Success = true, Title = "�xito", Message = successMessage, Icon = "success", RedirectUrl = Url.Action("Login", "Account") };
+            var ok = new AlertResponseDTO { Success = true, Title = "Éxito", Message = successMessage, Icon = "success", RedirectUrl = Url.Action("Login", "Account") };
             return Json(ok);
-        }
-
-        // Debug endpoint to inspect incoming request payload and model binding
-        [HttpPost]
-        [Route("ResetPassword/DebugEcho")]
-        public async Task<IActionResult> DebugEcho()
-        {
-            try
-            {
-                var result = new Dictionary<string, object?>();
-
-                if (Request.HasFormContentType)
-                {
-                    var form = Request.Form.ToDictionary(k => k.Key, v => (object?)v.Value.ToString());
-                    result["form"] = form;
-                }
-                else
-                {
-                    Request.Body.Seek(0, System.IO.SeekOrigin.Begin);
-                    using var reader = new System.IO.StreamReader(Request.Body, Encoding.UTF8, true, 1024, true);
-                    var body = await reader.ReadToEndAsync();
-                    result["body"] = body;
-                }
-
-                var vm = new ResetPasswordViewModel();
-                await TryUpdateModelAsync(vm);
-                result["boundModel"] = vm;
-
-                var errors = ModelState.Where(m => m.Value.Errors.Any()).ToDictionary(k => k.Key, v => v.Value.Errors.Select(e => e.ErrorMessage).ToArray());
-                result["modelStateErrors"] = errors;
-
-                return Json(new { ok = true, data = result });
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, "DebugEcho error");
-                return Json(new { ok = false, error = ex.Message });
-            }
         }
 
         // Helpers

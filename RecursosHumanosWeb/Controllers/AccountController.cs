@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Models.ViewModels;
+using RecursosHumanosWeb.Services;
 using System.Security.Claims;
 using System.Security.Cryptography; // Necesario para SHA256
 using System.Text; // Necesario para Encoding
@@ -14,11 +15,13 @@ namespace RecursosHumanosWeb.Controllers
     {
         private readonly HumanResourcesContext _context;
         private readonly ILogger<AccountController> _logger;
+        private readonly ILoginAttemptTracker _loginAttemptTracker;
 
-        public AccountController(HumanResourcesContext context, ILogger<AccountController> logger)
+        public AccountController(HumanResourcesContext context, ILogger<AccountController> logger, ILoginAttemptTracker loginAttemptTracker)
         {
             _context = context;
             _logger = logger;
+            _loginAttemptTracker = loginAttemptTracker;
         }
 
         [HttpGet]
@@ -40,6 +43,15 @@ namespace RecursosHumanosWeb.Controllers
 
             try
             {
+                var loginKey = model.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+
+                if (_loginAttemptTracker.IsLockedOut(loginKey))
+                {
+                    _logger.LogWarning("Intento de inicio de sesión bloqueado para {Email}.", model.Email);
+                    ModelState.AddModelError(string.Empty, "Demasiados intentos fallidos. Inténtelo nuevamente más tarde.");
+                    return View(model);
+                }
+
                 // 1. Encriptar la clave recibida del formulario usando el Helper unificado
                 string claveEncriptada = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256(model.Password);
 
@@ -50,9 +62,12 @@ namespace RecursosHumanosWeb.Controllers
 
                 if (user == null)
                 {
+                    _loginAttemptTracker.RegisterFailure(loginKey);
                     ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos");
                     return View(model);
                 }
+
+                _loginAttemptTracker.Reset(loginKey);
 
                 // 3. Crear los Claims para la sesión
                 var claims = new List<Claim>

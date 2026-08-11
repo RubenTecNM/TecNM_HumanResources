@@ -5,40 +5,32 @@
     const formElement = $('#permissionForm');
     const isRH = formElement.data('is-rh') === true || formElement.data('is-rh') === 'True';
     const isAdministrator = formElement.data('is-administrator') === true || formElement.data('is-administrator') === 'True';
-    // const isEmployee = formElement.data('is-employee') === true || formElement.data('is-employee') === 'True'; // No necesario para esta lógica
-
     console.log('Roles:', { isRH, isAdministrator });
 
     // Elemento select (Select2) para usuario solicitante — el select2 se inicializa en la vista Create.cshtml
     const $requestingUserId = $("#requestingUserId");
 
-    // --- 3. CONFIGURACIÓN DE TIPOS DE PERMISO (LÓGICA EXISTENTE) ---
-    const typeConfigurations = {
-        3: { // Falta
-            date1: { show: true, label: "Del día", required: true },
-            date2: { show: true, label: "Al día", required: true },
-            time1: { show: false, label: "Hora entrada", required: false },
-            time2: { show: false, label: "Hora salida", required: false }
-        },
-        1: { // Retardo
-            date1: { show: true, label: "En el día", required: true },
-            date2: { show: false, label: "Al día", required: false },
-            time1: { show: true, label: "Hora de llegada", required: true },
-            time2: { show: false, label: "Hora salida", required: false }
-        },
-        4: { // Cambio de Horario
-            date1: { show: true, label: "Del día", required: true },
-            date2: { show: true, label: "Al día", required: true },
-            time1: { show: true, label: "Hora entrada", required: true },
-            time2: { show: true, label: "Hora salida", required: true }
-        },
-        2: { // Turno por Turno
-            date1: { show: true, label: "Del día", required: true },
-            date2: { show: true, label: "Por el día", required: true },
-            time1: { show: true, label: "Hora entrada", required: true },
-            time2: { show: true, label: "Hora salida", required: true }
-        }
+    // --- 3. CONFIGURACIÓN DE TIPOS DE PERMISO (derivada de las tarjetas renderizadas desde el catálogo) ---
+    // Las tarjetas emiten data-type + data-config (JSON) desde el server (PermissionTypeCardConfigs).
+    // Así el JS no hardcodea IDs de tipo: si el catálogo cambia, las configs siguen a las tarjetas.
+    const typeConfigurations = {};
+    $('.permission-type-card').each(function () {
+        const $card = $(this);
+        const config = $card.data('config');
+        if (config) typeConfigurations[$card.data('type')] = config;
+    });
+
+    // Configuración por defecto para tipos nuevos sin config específica en el server
+    const defaultTypeConfig = {
+        date1: { show: true, label: 'Fecha de inicio', required: true },
+        date2: { show: true, label: 'Fecha de fin', required: false },
+        time1: { show: false, label: 'Hora de entrada', required: false },
+        time2: { show: false, label: 'Hora de salida', required: false }
     };
+
+    function getTypeConfig(typeId) {
+        return typeConfigurations[typeId] || defaultTypeConfig;
+    }
 
     // Event handler para cambio de tipo de permiso
     $('input[name="PermissionTypeId"]').on('change', function () {
@@ -48,7 +40,7 @@
         // Actualizar visual de las tarjetas
         $('.permission-type-card').removeClass('selected active');
         $(this).closest('.permission-type-card').addClass('selected active');
-        const config = typeConfigurations[selectedType];
+        const config = getTypeConfig(selectedType);
 
         if (config) {
             // Mostrar las secciones siguientes
@@ -126,8 +118,9 @@
         const fileUploadContent = $('.file-upload-content');
 
         if (file) {
-            // Validar tipo de archivo
-            if (file.type !== 'application/pdf') {
+            // Validar tipo de archivo (solo PDF). Acepta file.type vacío (algunos navegadores) si la extensión es .pdf
+            const isValidPdf = /\.pdf$/i.test(file.name) && (!file.type || file.type === 'application/pdf');
+            if (!isValidPdf) {
                 // Usar el manejador centralizado para mostrar alertas
                 handleAlertResponse({ success: false, title: 'Error de Archivo', message: 'Solo se permiten archivos PDF.', icon: 'error' });
                 this.value = '';
@@ -190,7 +183,7 @@
         }
 
         // 5.4. Verificar campos requeridos según el tipo
-        const config = selectedType && typeConfigurations[selectedType] ? typeConfigurations[selectedType] : null;
+        const config = selectedType ? getTypeConfig(selectedType) : null;
         if (config) {
 
             // Validar fechas y horas
@@ -202,12 +195,14 @@
             // Validación lógica de Fechas (Fecha1 no debe ser posterior a Fecha2)
             const date1Val = $('input[name="StartDateOnly"]').val();
             const date2Val = $('input[name="EndDateOnly"]').val();
+            let datesInverted = false;
             if (config.date1.show && config.date2.show && date1Val && date2Val) {
                 if (new Date(date1Val) > new Date(date2Val)) {
-                    // Mostrar error visual aquí (p. ej., span de validación)
                     isValid = false;
+                    datesInverted = true;
                 }
             }
+            toggleDateInversionError(datesInverted);
         }
 
         // Habilitar/deshabilitar botón de envío
@@ -215,42 +210,38 @@
         return isValid;
     }
 
+    // Mensaje inline de fechas invertidas (FR8A)
+    function toggleDateInversionError(show) {
+        const $group = $('#date2-group');
+        $group.find('.validation-error-message').remove();
+        if (show) {
+            $('<span class="text-danger validation-error-message" style="font-size: 0.8rem; margin-top: 0.25rem; display: block;">La fecha de fin no puede ser anterior a la de inicio.</span>')
+                .appendTo($group);
+        }
+    }
+
     // Combinar fecha y hora en campos ocultos (para el Model Binder de ASP.NET)
+    // Usa combineDateTimeLocal() de site.js: envía hora local sin zona horaria.
     function combineDateTime() {
         const selectedType = $('input[name="PermissionTypeId"]:checked').val();
         if (!selectedType) return;
 
-        const config = typeConfigurations[selectedType];
+        const config = getTypeConfig(selectedType);
 
-        // Fecha1
+        // Fecha1 (inicio: si no hay hora visible/ingresada, usa 00:00:00)
         if (config.date1.show) {
             const date1 = $('input[name="StartDateOnly"]').val();
-            const time1 = $('input[name="StartTime"]').val() || '00:00'; // Valor por defecto si no se pide hora
-
-            let combined1 = date1;
-            // Si la hora es requerida o visible, combinamos fecha y hora
-            if (config.time1.show && $('input[name="StartTime"]').val()) {
-                combined1 = `${date1}T${time1}:00`;
-            } else if (date1) {
-                combined1 = `${date1}T00:00:00`; // Solo fecha
-            }
-            $('input[name="StartDate"]').val(combined1);
+            const time1 = $('input[name="StartTime"]').val() || null;
+            $('input[name="StartDate"]').val(combineDateTimeLocal(date1, time1));
         } else {
             $('input[name="StartDate"]').val('');
         }
 
-        // Fecha2
+        // Fecha2 (fin: si no hay hora visible/ingresada, usa 23:59:59)
         if (config.date2.show) {
             const date2 = $('input[name="EndDateOnly"]').val();
-            const time2 = $('input[name="EndTime"]').val() || '00:00';
-
-            let combined2 = date2;
-            if (config.time2.show && $('input[name="EndTime"]').val()) {
-                combined2 = `${date2}T${time2}:00`;
-            } else if (date2) {
-                combined2 = `${date2}T23:59:59`;
-            }
-            $('input[name="EndDate"]').val(combined2);
+            const time2 = $('input[name="EndTime"]').val() || null;
+            $('input[name="EndDate"]').val(combineDateTimeLocal(date2, time2, true));
         } else {
             $('input[name="EndDate"]').val('');
         }

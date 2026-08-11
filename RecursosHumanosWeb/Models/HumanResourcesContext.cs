@@ -50,9 +50,6 @@ public partial class HumanResourcesContext : DbContext
     public virtual DbSet<PermissionStatusType> PermissionStatusTypes { get; set; }
     public virtual DbSet<ResetPasswordToken> ResetPasswordTokens { get; set; }
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
-    public virtual DbSet<VwPermissionsUsers> VwPermissionsUsers { get; set; }
-    public DbSet<LoginDTO> LoginResultDTO { get; set; }
-    public DbSet<PermissionsDTO> SearchPermissionsDTO { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -70,7 +67,7 @@ public partial class HumanResourcesContext : DbContext
     {
         modelBuilder.Entity<ApiFunction>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ApiFunct__3214EC0745513D7B");
+            entity.HasKey(e => e.Id).HasName("PK_ApiFunction");
 
             entity.ToTable(tb => tb.HasTrigger("trg_ApiFunction_UpdateModifiedAt"));
 
@@ -89,16 +86,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ApiFunctionCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ApiFunctions_Usuario_Crea");
+                .HasConstraintName("FK_ApiFunction_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.ApiFunctionUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_ApiFunctions_Usuario_Modifica");
+                .HasConstraintName("FK_ApiFunction_UpdatedByUserId");
         });
 
         modelBuilder.Entity<ApiKey>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ApiKey__3214EC07C3DAD720");
+            entity.HasKey(e => e.Id).HasName("PK_ApiKey");
 
             entity.ToTable("ApiKey", tb => tb.HasTrigger("trg_ApiKey_UpdateModifiedAt"));
 
@@ -117,16 +114,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ApiKeyCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ApiKeys_Usuario_Crea");
+                .HasConstraintName("FK_ApiKey_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.ApiKeyUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_ApiKeys_Usuario_Modifica");
+                .HasConstraintName("FK_ApiKey_UpdatedByUserId");
         });
 
         modelBuilder.Entity<ApiPermission>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ApiPermi__3214EC07EB278C1E");
+            entity.HasKey(e => e.Id).HasName("PK_ApiPermission");
 
             entity.ToTable("ApiPermission", tb => tb.HasTrigger("trg_ApiPermission_UpdateModifiedAt"));
 
@@ -145,16 +142,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ApiPermissionCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ApiPermisos_Usuario_Crea");
+                .HasConstraintName("FK_ApiPermission_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.ApiPermissionUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_ApiPermisos_Usuario_Modifica");
+                .HasConstraintName("FK_ApiPermission_UpdatedByUserId");
         });
 
         modelBuilder.Entity<ApiKeyTablePermission>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ApiPermi__3214EC078F3D9269");
+            entity.HasKey(e => e.Id).HasName("PK_ApiKeyTablePermission");
 
             entity.ToTable("ApiKeyTablePermission", tb => tb.HasTrigger("trg_ApiKeyTablePermission_UpdateModifiedAt"));
 
@@ -170,31 +167,31 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.ApiKey).WithMany(p => p.ApiKeyTablePermissions)
                 .HasForeignKey(d => d.ApiKeyId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ApiPermisosApiKeysTablas_ApiKeys");
+                .HasConstraintName("FK_ApiKeyTablePermission_ApiKeyId");
 
             entity.HasOne(d => d.ApiPermission).WithMany(p => p.ApiKeyTablePermissions)
                 .HasForeignKey(d => d.ApiPermissionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ApiPermisosApiKeysTablas_ApiPermisos");
+                .HasConstraintName("FK_ApiKeyTablePermission_ApiPermissionId");
 
             entity.HasOne(d => d.Table).WithMany(p => p.ApiKeyTablePermissions)
                 .HasForeignKey(d => d.TableId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ApiPermisosApiKeysTablas_Tablas");
+                .HasConstraintName("FK_ApiKeyTablePermission_TableId");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ApiKeyTablePermissionCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ApiPermisosApiKeysTablas_UsuarioCrea");
+                .HasConstraintName("FK_ApiKeyTablePermission_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.ApiKeyTablePermissionUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_ApiPermisosApiKeysTablas_UsuarioModifica");
+                .HasConstraintName("FK_ApiKeyTablePermission_UpdatedByUserId");
         });
 
         modelBuilder.Entity<Area>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Area__3214EC07A750D956");
+            entity.HasKey(e => e.Id).HasName("PK_Area");
 
             entity.ToTable("Area", tb => tb.HasTrigger("trg_Area_UpdateModifiedAt"));
 
@@ -213,16 +210,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.AreaCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Area__IdUsuarioC__24285DB4");
+                .HasConstraintName("FK_Area_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.AreaUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__Area__IdUsuarioM__251C81ED");
+                .HasConstraintName("FK_Area_UpdatedByUserId");
         });
 
         modelBuilder.Entity<Cutoff>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Corte__3214EC07702F01F4");
+            entity.HasKey(e => e.Id).HasName("PK_Cutoff");
 
             entity.ToTable("Cutoff", tb => tb.HasTrigger("trg_Cutoff_UpdateModifiedAt"));
 
@@ -240,21 +237,21 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CutoffStatusType).WithMany(p => p.Cutoffs)
                 .HasForeignKey(d => d.CutoffStatusTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Corte_TipoEstadoCorte");
+                .HasConstraintName("FK_Cutoff_CutoffStatusTypeId");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.CutoffCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Corte__IdUsuario__74AE54BC");
+                .HasConstraintName("FK_Cutoff_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.CutoffUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__Corte__IdUsuario__75A278F5");
+                .HasConstraintName("FK_Cutoff_UpdatedByUserId");
         });
 
         modelBuilder.Entity<Department>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Departam__3214EC071FFCF6A1");
+            entity.HasKey(e => e.Id).HasName("PK_Department");
 
             entity.ToTable("Department", tb => tb.HasTrigger("trg_Department_UpdateModifiedAt"));
 
@@ -273,16 +270,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.DepartmentCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Departame__IdUsu__27F8EE98");
+                .HasConstraintName("FK_Department_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.DepartmentUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__Departame__IdUsu__28ED12D1");
+                .HasConstraintName("FK_Department_UpdatedByUserId");
         });
 
         modelBuilder.Entity<Permission>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Permiso__3214EC07503FFDCA");
+            entity.HasKey(e => e.Id).HasName("PK_Permission");
 
             entity.ToTable("Permission", tb => tb.HasTrigger("trg_Permission_UpdateModifiedAt"));
 
@@ -306,44 +303,47 @@ public partial class HumanResourcesContext : DbContext
             entity.Property(e => e.Reason)
                 .HasMaxLength(255)
                 .IsUnicode(false);
+            entity.Property(e => e.AuthorizationComment)
+                .HasMaxLength(500)
+                .IsUnicode(false);
 
             entity.HasOne(d => d.Cutoff).WithMany(p => p.Permissions)
                 .HasForeignKey(d => d.CutoffId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Permiso__IdCorte__2A6B46EF");
+                .HasConstraintName("FK_Permission_CutoffId");
 
             entity.HasOne(d => d.PermissionStatusType).WithMany(p => p.Permissions)
                 .HasForeignKey(d => d.PermissionStatusTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Permiso_TipoEstadoPermiso");
+                .HasConstraintName("FK_Permission_PermissionStatusTypeId");
 
             entity.HasOne(d => d.PermissionType).WithMany(p => p.Permissions)
                 .HasForeignKey(d => d.PermissionTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Permiso__IdTipoP__2B5F6B28");
+                .HasConstraintName("FK_Permission_PermissionTypeId");
 
             entity.HasOne(d => d.AuthorizingUser).WithMany(p => p.PermissionAuthorizedBy)
                 .HasForeignKey(d => d.AuthorizingUserId)
-                .HasConstraintName("FK__Permiso__IdUsuar__2F2FFC0C");
+                .HasConstraintName("FK_Permission_AuthorizingUserId");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.PermissionCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Permiso__IdUsuar__2D47B39A");
+                .HasConstraintName("FK_Permission_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.PermissionUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__Permiso__IdUsuar__2E3BD7D3");
+                .HasConstraintName("FK_Permission_UpdatedByUserId");
 
             entity.HasOne(d => d.RequestingUser).WithMany(p => p.PermissionRequestedBy)
                 .HasForeignKey(d => d.RequestingUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Permiso__IdUsuar__2C538F61");
+                .HasConstraintName("FK_Permission_RequestingUserId");
         });
 
         modelBuilder.Entity<Position>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Puesto__3214EC07319CC249");
+            entity.HasKey(e => e.Id).HasName("PK_Position");
 
             entity.ToTable("Position", tb => tb.HasTrigger("trg_Position_UpdateModifiedAt"));
 
@@ -365,16 +365,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.PositionCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Puesto__IdUsuari__308E3499");
+                .HasConstraintName("FK_Position_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.PositionUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__Puesto__IdUsuari__318258D2");
+                .HasConstraintName("FK_Position_UpdatedByUserId");
         });
 
         modelBuilder.Entity<DatabaseTable>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Tabla__3214EC0771DFB8B8");
+            entity.HasKey(e => e.Id).HasName("PK_DatabaseTable");
 
             entity.ToTable("DatabaseTable", tb => tb.HasTrigger("trg_DatabaseTable_UpdateModifiedAt"));
 
@@ -393,16 +393,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.DatabaseTableCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Tablas_Usuario_Crea");
+                .HasConstraintName("FK_DatabaseTable_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.DatabaseTableUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_Tablas_Usuario_Modifica");
+                .HasConstraintName("FK_DatabaseTable_UpdatedByUserId");
         });
 
         modelBuilder.Entity<PermissionType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TipoPerm__3214EC07AEB8B6FC");
+            entity.HasKey(e => e.Id).HasName("PK_PermissionType");
 
             entity.ToTable("PermissionType", tb => tb.HasTrigger("trg_PermissionType_UpdateModifiedAt"));
 
@@ -421,16 +421,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.PermissionTypeCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TipoPermi__IdUsu__345EC57D");
+                .HasConstraintName("FK_PermissionType_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.PermissionTypeUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__TipoPermi__IdUsu__3552E9B6");
+                .HasConstraintName("FK_PermissionType_UpdatedByUserId");
         });
 
         modelBuilder.Entity<UserType>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TipoUsua__3214EC070D31226E");
+            entity.HasKey(e => e.Id).HasName("PK_UserType");
 
             entity.ToTable("UserType", tb => tb.HasTrigger("trg_UserType_UpdateModifiedAt"));
 
@@ -449,11 +449,11 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.UserTypeCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__TipoUsuar__IdUsu__36470DEF");
+                .HasConstraintName("FK_UserType_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.UserTypeUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__TipoUsuar__IdUsu__373B3228");
+                .HasConstraintName("FK_UserType_UpdatedByUserId");
         });
 
         modelBuilder.Entity<CutoffStatusType>(entity =>
@@ -463,7 +463,7 @@ public partial class HumanResourcesContext : DbContext
             entity.Property(e => e.Color).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.Status).HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
-            entity.HasOne(d => d.CreatedByUser).WithMany().HasForeignKey(d => d.CreatedByUserId).HasConstraintName("FK_TipoEstadoCorte_UsuarioCrea");
+            entity.HasOne(d => d.CreatedByUser).WithMany().HasForeignKey(d => d.CreatedByUserId).HasConstraintName("FK_CutoffStatusType_CreatedByUserId");
         });
 
         modelBuilder.Entity<PermissionStatusType>(entity =>
@@ -473,7 +473,7 @@ public partial class HumanResourcesContext : DbContext
             entity.Property(e => e.Color).HasMaxLength(20).IsUnicode(false);
             entity.Property(e => e.Status).HasDefaultValue(true);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("(getdate())").HasColumnType("datetime");
-            entity.HasOne(d => d.CreatedByUser).WithMany().HasForeignKey(d => d.CreatedByUserId).HasConstraintName("FK_TipoEstadoPermiso_UsuarioCrea");
+            entity.HasOne(d => d.CreatedByUser).WithMany().HasForeignKey(d => d.CreatedByUserId).HasConstraintName("FK_PermissionStatusType_CreatedByUserId");
         });
 
         modelBuilder.Entity<OriginType>(entity =>
@@ -498,16 +498,16 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.CreatedByUser).WithMany()
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_TipoOrigen_Usuario_Crea");
+                .HasConstraintName("FK_OriginType_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany()
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_TipoOrigen_Usuario_Modifica");
+                .HasConstraintName("FK_OriginType_UpdatedByUserId");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Usuario__3214EC07981AC028");
+            entity.HasKey(e => e.Id).HasName("PK_User");
 
             entity.ToTable("User", tb => tb.HasTrigger("trg_User_UpdateModifiedAt"));
 
@@ -533,31 +533,31 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.Area).WithMany(p => p.Users)
                 .HasForeignKey(d => d.AreaId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Usuario__IdArea__382F5661");
+                .HasConstraintName("FK_User_AreaId");
 
             entity.HasOne(d => d.Department).WithMany(p => p.Users)
                 .HasForeignKey(d => d.DepartmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Usuario__IdDepar__39237A9A");
+                .HasConstraintName("FK_User_DepartmentId");
 
             entity.HasOne(d => d.Position).WithMany(p => p.Users)
                 .HasForeignKey(d => d.PositionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Usuario__IdPuest__3A179ED3");
+                .HasConstraintName("FK_User_PositionId");
 
             entity.HasOne(d => d.UserType).WithMany(p => p.Users)
                 .HasForeignKey(d => d.UserTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Usuario__IdTipoU__3B0BC30C");
+                .HasConstraintName("FK_User_UserTypeId");
 
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.InverseCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Usuario__IdUsuar__3BFFE745");
+                .HasConstraintName("FK_User_UpdatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.InverseUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK__Usuario__IdUsuar__3CF40B7E");
+                .HasConstraintName("FK_User_CreatedByUserId");
         });
 
         modelBuilder.Entity<ResetPasswordToken>(entity =>
@@ -589,19 +589,19 @@ public partial class HumanResourcesContext : DbContext
                 .WithMany()
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ResetPasswordToken_UsuarioCrea");
+                .HasConstraintName("FK_ResetPasswordToken_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser)
                 .WithMany()
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_ResetPasswordToken_UsuarioModifica");
+                .HasConstraintName("FK_ResetPasswordToken_UpdatedByUserId");
 
             // ResetPasswordToken-specific FK
             entity.HasOne<User>()
                 .WithMany()
                 .HasForeignKey(d => d.RequestingUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_ResetPasswordToken_UsuarioSolicita");
+                .HasConstraintName("FK_ResetPasswordToken_RequestingUserId");
         });
 
         modelBuilder.Entity<AuditLog>(entity =>
@@ -615,41 +615,34 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.ApiFunction).WithMany()
                 .HasForeignKey(d => d.ApiFunctionId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Auditoria_ApiFunction");
+                .HasConstraintName("FK_AuditLog_ApiFunctionId");
 
             entity.HasOne(d => d.ApiKey).WithMany()
                 .HasForeignKey(d => d.ApiKeyId)
-                .HasConstraintName("FK_Auditoria_ApiKey");
+                .HasConstraintName("FK_AuditLog_ApiKeyId");
 
             entity.HasOne(d => d.Table).WithMany()
                 .HasForeignKey(d => d.TableId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Auditoria_Tabla");
+                .HasConstraintName("FK_AuditLog_TableId");
 
             entity.HasOne(d => d.CreatedByUser).WithMany()
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Auditoria_UsuarioCrea");
+                .HasConstraintName("FK_AuditLog_CreatedByUserId");
 
             entity.HasOne(d => d.UpdatedByUser).WithMany()
                 .HasForeignKey(d => d.UpdatedByUserId)
-                .HasConstraintName("FK_Auditoria_UsuarioModifica");
+                .HasConstraintName("FK_AuditLog_UpdatedByUserId");
 
             entity.HasOne(d => d.OriginType).WithMany(p => p.AuditLogs)
                 .HasForeignKey(d => d.OriginTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Auditoria_TipoOrigen");
+                .HasConstraintName("FK_AuditLog_OriginTypeId");
+
+            entity.HasIndex(e => e.CreatedAt).HasDatabaseName("IX_AuditLog_CreatedAt");
         });
 
-        modelBuilder.Entity<LoginDTO>(entity =>
-        {
-            entity.HasNoKey(); // IMPORTANT: As it is a DTO from an SP, it has no key
-        });
-
-        modelBuilder.Entity<PermissionsDTO>(entity =>
-        {
-            entity.HasNoKey();
-        });
         OnModelCreatingPartial(modelBuilder);
     }
 
