@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Models.ViewModels;
+using RecursosHumanosWeb.Services;
 using System.Security.Claims;
 using System.Security.Cryptography; // Necesario para SHA256
 using System.Text; // Necesario para Encoding
@@ -12,20 +13,22 @@ namespace RecursosHumanosWeb.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly RecursosHumanosContext _context;
+        private readonly HumanResourcesContext _context;
         private readonly ILogger<AccountController> _logger;
+        private readonly ILoginAttemptTracker _loginAttemptTracker;
 
-        public AccountController(RecursosHumanosContext context, ILogger<AccountController> logger)
+        public AccountController(HumanResourcesContext context, ILogger<AccountController> logger, ILoginAttemptTracker loginAttemptTracker)
         {
             _context = context;
             _logger = logger;
+            _loginAttemptTracker = loginAttemptTracker;
         }
 
         [HttpGet]
         public async Task<IActionResult> Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToAction("Index", "Permiso");
+                return RedirectToAction("Index", "Permission");
 
 
             return View(new LoginViewModel { ReturnUrl = returnUrl });
@@ -40,27 +43,39 @@ namespace RecursosHumanosWeb.Controllers
 
             try
             {
-                // 1. Encriptar la clave recibida del formulario usando el Helper unificado
-                string claveEncriptada = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256(model.Clave);
+                var loginKey = model.Email?.Trim().ToLowerInvariant() ?? string.Empty;
 
-                // 2. Buscar usuario que coincida con correo Y clave encriptada
-                var usuario = await _context.Usuarios
-                    .Where(u => u.Correo == model.Correo && u.Clave == claveEncriptada && u.Estatus == true)
-                    .FirstOrDefaultAsync();
-
-                if (usuario == null)
+                if (_loginAttemptTracker.IsLockedOut(loginKey))
                 {
-                    ModelState.AddModelError(string.Empty, "Correo o contraseña incorrectos");
+                    _logger.LogWarning("Intento de inicio de sesión bloqueado para {Email}.", model.Email);
+                    ModelState.AddModelError(string.Empty, "Demasiados intentos fallidos. Inténtelo nuevamente más tarde.");
                     return View(model);
                 }
+
+                // 1. Encriptar la clave recibida del formulario usando el Helper unificado
+                string claveEncriptada = RecursosHumanosWeb.Helpers.PasswordHasher.HashSha256(model.Password);
+
+                // 2. Buscar user que coincida con correo Y clave encriptada
+                var user = await _context.Users
+                    .Where(u => u.Email == model.Email && u.PasswordHash == claveEncriptada && u.Status == true)
+                    .FirstOrDefaultAsync();
+
+                if (user == null)
+                {
+                    _loginAttemptTracker.RegisterFailure(loginKey);
+                    ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos");
+                    return View(model);
+                }
+
+                _loginAttemptTracker.Reset(loginKey);
 
                 // 3. Crear los Claims para la sesión
                 var claims = new List<Claim>
                 {
-                    new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                    new Claim(ClaimTypes.Name, usuario.Nombre),
-                    new Claim(ClaimTypes.Email, usuario.Correo),
-                    new Claim("TipoUsuario", usuario.IdTipoUsuario.ToString())
+                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                    new Claim(ClaimTypes.Name, user.Name),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim("UserType", user.UserTypeId.ToString())
                 };
 
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -77,18 +92,18 @@ namespace RecursosHumanosWeb.Controllers
                     authProperties
                 );
 
-                _logger.LogInformation("Usuario {Correo} inició sesión correctamente.", model.Correo);
+                _logger.LogInformation("User {Email} inició sesión correctamente.", model.Email);
 
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 {
                     return Redirect(model.ReturnUrl);
                 }
 
-                return RedirectToAction("Index", "Permiso");
+                return RedirectToAction("Index", "Permission");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error crítico en el login para {Correo}", model.Correo);
+                _logger.LogError(ex, "Error crítico en el login para {Email}", model.Email);
                 ModelState.AddModelError(string.Empty, "Error interno al procesar el inicio de sesión");
                 return View(model);
             }

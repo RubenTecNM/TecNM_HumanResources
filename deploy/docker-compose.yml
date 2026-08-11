@@ -10,15 +10,18 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__RecursosHumanosContext=Server=nexsmart_central_db_sql;Database=RecursosHumanosDB;User Id=sa;Password=Buss1ness.2026;Encrypt=False;TrustServerCertificate=True;
+      - ConnectionStrings__HumanResourcesContext=Server=nexsmart_central_db_sql;Database=DB_Production_HumanResources;User Id=sa;Password=${SQL_SA_PASSWORD:?Defina SQL_SA_PASSWORD en el archivo .env};Encrypt=False;TrustServerCertificate=True;
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+      - Evidences__UploadsPath=/app/evidences
     volumes:
       - itsmrh_dataprotection_keys:/app/keys
+      - itsmrh_evidences:/app/evidences
     networks:
       - nexsmart_network
 
 volumes:
   itsmrh_dataprotection_keys:
+  itsmrh_evidences:
 
 
 networks:

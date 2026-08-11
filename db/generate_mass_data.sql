@@ -1,78 +1,95 @@
--- Script de Generación Masiva de Datos para TecRHPermisos
--- Genera aprox 100,000 registros de permisos distribuidos en periodos (Cortes) desde 2020.
--- Garantiza no traslapes de periodos y fechas dentro de rangos (00:00:00 - 23:59:59).
+﻿-- Mass Data Generation Script for TecRHPermisos
+-- Generates ~100,000 permission records distributed across periods (Cutoffs) since 2020.
+-- Guarantees no period overlaps and dates within ranges (00:00:00 - 23:59:59).
 
 SET NOCOUNT ON;
 
-SET NOCOUNT ON;
+-- =============================================================
+-- LIMPIEZA PREVIA (idempotente): elimina los datos existentes
+-- antes de regenerar, en orden de dependencias (FK) y en una
+-- transacción para garantizar consistencia.
+-- =============================================================
+BEGIN TRY
+    BEGIN TRANSACTION;
+        DELETE FROM ResetPasswordToken;
+        DELETE FROM AuditLog;
+        DELETE FROM Permission;
+        DELETE FROM Cutoff;
+    COMMIT TRANSACTION;
+END TRY
+BEGIN CATCH
+    IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+    PRINT 'ERROR en la limpieza previa: ' + ERROR_MESSAGE();
+    RETURN;
+END CATCH;
 
 DECLARE @StartDate DATETIME = '2020-01-01 00:00:00';
 DECLARE @Today DATETIME = GETDATE();
-DECLARE @CurrentInicia DATETIME = @StartDate;
-DECLARE @CurrentTermina DATETIME;
-DECLARE @CorteId INT;
+DECLARE @CurrentStartDate DATETIME = @StartDate;
+DECLARE @CurrentEndDate DATETIME;
+DECLARE @CutoffId INT;
 DECLARE @TotalPermissions INT = 0;
 DECLARE @TargetTotal INT = 100000;
-DECLARE @PermissionsPerCorte INT = 650; -- Quincenas aproximadas desde 2020 (~150 cortes)
+DECLARE @PermissionsPerCutoff INT = 650; -- Approximate biweekly periods since 2020 (~150 cutoffs)
 
-PRINT 'Iniciando generación masiva de datos (Meta: 100,000 registros)...';
+PRINT 'Starting mass data generation (Target: 100,000 records)...';
 
-WHILE @CurrentInicia < @Today AND @TotalPermissions < @TargetTotal
+WHILE @CurrentStartDate < @Today AND @TotalPermissions < @TargetTotal
 BEGIN
-    SET @CurrentTermina = DATEADD(SECOND, -1, DATEADD(DAY, 15, @CurrentInicia)); -- Quincena exacta (termina 23:59:59)
+    SET @CurrentEndDate = DATEADD(SECOND, -1, DATEADD(DAY, 15, @CurrentStartDate)); -- Exact biweek (ends 23:59:59)
     
-    -- Determinar estado: 2 (Cerrado) si ya terminó, 1 (Abierto) si es el periodo actual
-    DECLARE @StatusCorte INT = CASE WHEN @CurrentTermina < GETDATE() THEN 2 ELSE 1 END;
+    -- Determine status: 2 (Closed) if it already ended, 1 (Open) if it is the current period
+    DECLARE @CutoffStatusTypeId INT = CASE WHEN @CurrentEndDate < GETDATE() THEN 2 ELSE 1 END;
 
-    INSERT INTO Corte (Inicia, Termina, IdEstadoCorte, FechaCreacion, IdUsuarioCrea, IdUsuarioModifica, Estatus)
-    VALUES (@CurrentInicia, @CurrentTermina, @StatusCorte, @CurrentInicia, 1, 1, 1);
+    INSERT INTO Cutoff (StartDate, EndDate, CutoffStatusTypeId, CreatedAt, CreatedByUserId, UpdatedByUserId, Status)
+    VALUES (@CurrentStartDate, @CurrentEndDate, @CutoffStatusTypeId, @CurrentStartDate, 1, 1, 1);
     
-    SET @CorteId = @@IDENTITY;
+    SET @CutoffId = @@IDENTITY;
     
-    -- Insertar Permisos para este Corte
+    -- Insert permissions for this cutoff
     DECLARE @j INT = 1;
-    WHILE @j <= @PermissionsPerCorte AND @TotalPermissions < @TargetTotal
+    WHILE @j <= @PermissionsPerCutoff AND @TotalPermissions < @TargetTotal
     BEGIN
         DECLARE @UserId INT;
-        -- Seleccionar usuario trabajador (IdTipoUsuario = 4)
-        SELECT TOP 1 @UserId = Id FROM Usuario WHERE IdTipoUsuario = 4 ORDER BY NEWID();
+        -- Select a worker user (UserTypeId = 4)
+        SELECT TOP 1 @UserId = Id FROM [User] WHERE UserTypeId = 4 ORDER BY NEWID();
         
-        DECLARE @TipoPermisoId INT;
-        SELECT TOP 1 @TipoPermisoId = Id FROM TipoPermiso ORDER BY NEWID();
+        DECLARE @PermissionTypeId INT;
+        SELECT TOP 1 @PermissionTypeId = Id FROM PermissionType ORDER BY NEWID();
         
-        DECLARE @EstadoId INT;
-        SET @EstadoId = (ABS(CHECKSUM(NEWID())) % 4) + 1; -- IDs 1 a 4
+        DECLARE @PermissionStatusTypeId INT;
+        SET @PermissionStatusTypeId = (ABS(CHECKSUM(NEWID())) % 4) + 1; -- IDs 1 to 4
         
-        DECLARE @FechaPermiso DATETIME;
-        -- Fecha aleatoria dentro del rango del corte
-        SET @FechaPermiso = DATEADD(SECOND, ABS(CHECKSUM(NEWID())) % DATEDIFF(SECOND, @CurrentInicia, @CurrentTermina), @CurrentInicia);
+        DECLARE @PermissionDate DATETIME;
+        -- Random date within the cutoff range
+        SET @PermissionDate = DATEADD(SECOND, ABS(CHECKSUM(NEWID())) % DATEDIFF(SECOND, @CurrentStartDate, @CurrentEndDate), @CurrentStartDate);
 
-        INSERT INTO Permiso (
-            Motivo, Fecha1, Fecha2, IdTipoPermiso, IdUsuarioSolicita, 
-            IdCorte, IdEstadoPermiso, Goce, FechaCreacion, IdUsuarioCrea, 
-            IdUsuarioModifica, FechaModificacion, Estatus
+        INSERT INTO Permission (
+            Reason, StartDate, EndDate, PermissionTypeId, RequestingUserId, 
+            CutoffId, PermissionStatusTypeId, WithPay, CreatedAt, CreatedByUserId, 
+            UpdatedByUserId, UpdatedAt, Status
         )
         VALUES (
             'Simulación de carga masiva #' + CAST(@TotalPermissions AS VARCHAR), 
-            @FechaPermiso, @FechaPermiso, @TipoPermisoId, @UserId, 
-            @CorteId, @EstadoId, CASE WHEN @EstadoId = 2 THEN 1 ELSE 0 END, 
-            @FechaPermiso, 1, 1, @FechaPermiso, 1
+            @PermissionDate, @PermissionDate, @PermissionTypeId, @UserId, 
+            @CutoffId, @PermissionStatusTypeId, CASE WHEN @PermissionStatusTypeId = 2 THEN 1 ELSE 0 END, 
+            @PermissionDate, 1, 1, @PermissionDate, 1
         );
         
         SET @j = @j + 1;
         SET @TotalPermissions = @TotalPermissions + 1;
     END
 
-    SET @CurrentInicia = DATEADD(SECOND, 1, @CurrentTermina); -- Siguiente segundo para evitar traslape
+    SET @CurrentStartDate = DATEADD(SECOND, 1, @CurrentEndDate); -- Next second to avoid overlap
     
     IF @TotalPermissions % 10000 = 0
-        PRINT 'Progreso: ' + CAST(@TotalPermissions AS VARCHAR) + ' permisos insertados...';
+        PRINT 'Progress: ' + CAST(@TotalPermissions AS VARCHAR) + ' permissions inserted...';
 END
 
 PRINT '*********************************************************';
-PRINT 'GENERACIÓN COMPLETADA EXITOSAMENTE';
-    DECLARE @TotalCortes INT = (SELECT COUNT(*) FROM Corte WHERE FechaCreacion >= '2020-01-01');
-    PRINT 'Total de permisos: ' + CAST(@TotalPermissions AS VARCHAR);
-    PRINT 'Total de cortes: ' + CAST(@TotalCortes AS VARCHAR);
+PRINT 'GENERATION COMPLETED SUCCESSFULLY';
+    DECLARE @TotalCutoffs INT = (SELECT COUNT(*) FROM Cutoff WHERE CreatedAt >= '2020-01-01');
+    PRINT 'Total permissions: ' + CAST(@TotalPermissions AS VARCHAR);
+    PRINT 'Total cutoffs: ' + CAST(@TotalCutoffs AS VARCHAR);
 PRINT '*********************************************************';
 PRINT '*********************************************************';

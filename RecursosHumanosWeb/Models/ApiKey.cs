@@ -8,14 +8,14 @@ namespace RecursosHumanosWeb.Models;
 public partial class ApiKey : BaseEntity
 {
     /// <summary>
-    /// Clave de autenticación de la API. SHA-256 produce exactamente 64 caracteres hexadecimales.
+    /// API authentication key. SHA-256 produces exactly 64 hexadecimal characters.
     /// </summary>
     [Required(ErrorMessage = "La clave de API es obligatoria.")]
     [StringLength(64, MinimumLength = 64, ErrorMessage = "La clave debe ser un hash SHA-256 de exactamente 64 caracteres.")]
-    public string Clave { get; set; } = null!;
+    public string Key { get; set; } = null!;
 
     // ──────────────────────────────────────────────────────────────
-    // COLECCIONES
+    // COLLECTIONS
     // ──────────────────────────────────────────────────────────────
-    public virtual ICollection<ApiPermisosApiKeysTabla> ApiPermisosApiKeysTablas { get; set; } = new List<ApiPermisosApiKeysTabla>();
+    public virtual ICollection<ApiKeyTablePermission> ApiKeyTablePermissions { get; set; } = new List<ApiKeyTablePermission>();
 }

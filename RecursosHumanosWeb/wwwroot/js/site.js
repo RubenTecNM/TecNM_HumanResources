@@ -16,6 +16,21 @@ function clearValidationErrors() {
     $("[data-valmsg-for]").empty(); // Limpia mensajes de error del helper MVC
 }
 
+/**
+ * Combina fecha (YYYY-MM-DD) y hora (HH:mm) en una cadena LOCAL sin zona horaria,
+ * de modo que ASP.NET la interprete como hora local (Unspecified) en el servidor.
+ * @param {string|null} dateOnly - Valor del input date ("YYYY-MM-DD").
+ * @param {string|null} timeOnly - Valor del input time ("HH:mm") o null.
+ * @param {boolean} [endOfDay=false] - Si true y no hay hora, usa 23:59:59.
+ * @returns {string|null} Cadena local "YYYY-MM-DDTHH:mm:ss" o null.
+ */
+function combineDateTimeLocal(dateOnly, timeOnly, endOfDay = false) {
+    if (!dateOnly) return null;
+    let time = timeOnly && timeOnly.trim() ? timeOnly.trim() : (endOfDay ? '23:59:59' : '00:00:00');
+    if (time.split(':').length === 2) time += ':00';
+    return `${dateOnly}T${time}`;
+}
+
 // Helper global para mostrar toasts rápidos usando SweetAlert2.
 // Uso: showToast('Mensaje', 'success'|'info'|'warning'|'error')
 function showToast(message, type = 'info') {
@@ -31,6 +46,24 @@ function showToast(message, type = 'info') {
         }
     });
     Toast.fire({ icon: type, title: message });
+}
+
+// Helper global para alternar visibilidad de contraseña (FR4).
+// Uso: <button type="button" data-toggle-password><i class="fas fa-eye"></i></button>
+// junto a un input[type="password"] dentro del mismo .input-wrapper.
+function togglePassword(btn) {
+    const wrapper = btn.closest('.input-wrapper');
+    const input = wrapper ? wrapper.querySelector('input[type="password"], input[type="text"]') : null;
+    if (!input) return;
+
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    const icon = btn.querySelector('i');
+    if (icon) {
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+    }
+    btn.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
 }
 
 /**
@@ -292,7 +325,7 @@ $(document).ready(function () {
 
         const $btn = $(this);
         const action = $btn.data('action');
-        const controller = $btn.data('controller') || 'Permisos';
+        const controller = $btn.data('controller') || 'Permission';
         const id = $btn.data('id');
 
         // Soporte para URL dinámica (Url.Action) o construcción manual (compatibilidad)
@@ -311,6 +344,11 @@ $(document).ready(function () {
                 $btn.prop('disabled', false);
                 $btn.css('opacity', '1');
             });
+    });
+
+    // Toggle de contraseña (FR4): auto-enlaza botones [data-toggle-password]
+    $(document).on('click', '[data-toggle-password]', function (e) {
+        togglePassword(this);
     });
 
     // Add AJAX form handler: intercept forms with class 'ajax-form' and submit as form data

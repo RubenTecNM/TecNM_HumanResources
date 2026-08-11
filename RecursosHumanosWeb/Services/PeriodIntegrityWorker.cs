@@ -5,6 +5,8 @@ namespace RecursosHumanosWeb.Services
 {
     public class PeriodIntegrityWorker : BackgroundService
     {
+        private static readonly TimeSpan TokenRetentionPeriod = TimeSpan.FromDays(30);
+
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<PeriodIntegrityWorker> _logger;
 
@@ -24,29 +26,10 @@ namespace RecursosHumanosWeb.Services
                 {
                     using (var scope = _serviceProvider.CreateScope())
                     {
-                        var context = scope.ServiceProvider.GetRequiredService<RecursosHumanosContext>();
+                        var cutoffService = scope.ServiceProvider.GetRequiredService<ICutoffService>();
+                        await cutoffService.AutoCloseCutoffIfNeededAsync();
 
-                        // 1. Buscar periodos vencidos que siguen abiertos
-                        var expiredPeriods = await context.Cortes
-                            .Where(c => c.IdEstadoCorte == 1 && c.Termina < DateTime.Now)
-                            .ToListAsync(stoppingToken);
-
-                        if (expiredPeriods.Any())
-                        {
-                            _logger.LogInformation("Se detectaron {Count} periodos vencidos. Procediendo al cierre automático...", expiredPeriods.Count);
-
-                            foreach (var period in expiredPeriods)
-                            {
-                                period.IdEstadoCorte = 2; // Cerrado
-                                period.FechaModificacion = DateTime.Now;
-                                period.IdUsuarioModifica = 1; // Sistema
-                            }
-
-                            // El contexto guardará los cambios y el trigger de SQL hará la cascada de los permisos
-                            await context.SaveChangesAsync(stoppingToken);
-                            
-                            _logger.LogInformation("Periodos cerrados y permisos sincronizados correctamente.");
-                        }
+                        await CleanupExpiredResetTokensAsync(scope, stoppingToken);
                     }
                 }
                 catch (Exception ex)
@@ -57,6 +40,22 @@ namespace RecursosHumanosWeb.Services
                 // Esperar 1 hora para mantenimiento regular
                 await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
             }
+        }
+
+        private async Task CleanupExpiredResetTokensAsync(IServiceScope scope, CancellationToken stoppingToken)
+        {
+            var context = scope.ServiceProvider.GetRequiredService<HumanResourcesContext>();
+            var retentionLimit = DateTime.Now.Subtract(TokenRetentionPeriod);
+
+            var expiredTokens = await context.ResetPasswordTokens
+                .Where(t => (!t.Status || t.Used || t.ExpiresAt < DateTime.Now) && t.CreatedAt < retentionLimit)
+                .ToListAsync(stoppingToken);
+
+            if (expiredTokens.Count == 0) return;
+
+            context.ResetPasswordTokens.RemoveRange(expiredTokens);
+            await context.SaveChangesAsync(stoppingToken);
+            _logger.LogInformation("Se limpiaron {Count} tokens de restablecimiento vencidos o usados.", expiredTokens.Count);
         }
     }
 }

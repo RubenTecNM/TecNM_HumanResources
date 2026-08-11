@@ -35,7 +35,7 @@ namespace RecursosHumanosWeb.Models.DTOs
         /// <summary>
         /// Crea una respuesta de éxito con redirección automática al Index del controlador actual.
         /// </summary>
-        /// <param name="controllerName">Nombre del controlador (obtenido de RouteData).</param>
+        /// <param name="controllerName">Name del controlador (obtenido de RouteData).</param>
         /// <param name="message">Mensaje de éxito a mostrar.</param>
         /// <param name="title">Título de la alerta (opcional).</param>
         /// <param name="showView">Vista de destino (opcional, por defecto "Index").</param>

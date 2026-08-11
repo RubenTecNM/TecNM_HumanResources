@@ -12,11 +12,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
     [ApiController]
     public class AreasApiController : ControllerBase
     {
-        private readonly RecursosHumanosContext _context;
+        private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<AreasApiController> _logger;
 
-        public AreasApiController(RecursosHumanosContext context, IMapper mapper, ILogger<AreasApiController> logger)
+        public AreasApiController(HumanResourcesContext context, IMapper mapper, ILogger<AreasApiController> logger)
         {
             _context = context;
             _mapper = mapper;
@@ -25,15 +25,15 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // GET: api/Areas
         [HttpGet]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Leer")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Leer")]
         public async Task<IActionResult> GetAreas()
         {
             var areas = await _context.Areas
-                .Where(a => a.Estatus == true)
+                .Where(a => a.Status == true)
                 .Select(a => new
                 {
                     a.Id,
-                    a.Descripcion
+                    a.Description
                 })
                 .ToListAsync();
 
@@ -44,20 +44,20 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // GET: api/Areas/5
         [HttpGet("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Leer")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Leer")]
         public async Task<IActionResult> GetArea(int id)
         {
             var area = await _context.Areas
-                .Where(a => a.Id == id && a.Estatus == true)
+                .Where(a => a.Id == id && a.Status == true)
                 .Select(a => new
                 {
                     a.Id,
-                    a.Descripcion,
-                    a.Estatus,
-                    a.FechaCreacion,
-                    a.FechaModificacion,
-                    CreadoPor = a.IdUsuarioCreaNavigation.Nombre,
-                    ModificadoPor = a.IdUsuarioModificaNavigation.Nombre
+                    a.Description,
+                    a.Status,
+                    a.CreatedAt,
+                    a.UpdatedAt,
+                    CreatedBy = a.CreatedByUser.Name,
+                    UpdatedBy = a.UpdatedByUser.Name
                 })
                 .FirstOrDefaultAsync();
 
@@ -68,7 +68,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // POST: api/Areas
         [HttpPost]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Escribir")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Escribir")]
         public async Task<IActionResult> PostArea([FromBody] AreaCreateViewModel model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -76,18 +76,18 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
             var userId = HttpContext.Items["ApiUserId"] as int? ?? 1;
 
             var area = _mapper.Map<Area>(model);
-            area.Estatus = true;
-            area.FechaCreacion = DateTime.Now;
-            area.FechaModificacion = DateTime.Now;
-            area.IdUsuarioCrea = userId;
-            area.IdUsuarioModifica = userId;
+            area.Status = true;
+            area.CreatedAt = DateTime.Now;
+            area.UpdatedAt = DateTime.Now;
+            area.CreatedByUserId = userId;
+            area.UpdatedByUserId = userId;
 
             try
             {
                 _context.Areas.Add(area);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetArea), new { id = area.Id }, new { area.Id, area.Descripcion });
+                return CreatedAtAction(nameof(GetArea), new { id = area.Id }, new { area.Id, area.Description });
             }
             catch (Exception ex)
             {
@@ -99,7 +99,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // PUT: api/Areas/5
         [HttpPut("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Actualizar")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Actualizar")]
         public async Task<IActionResult> PutArea(int id, [FromBody] AreaUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
@@ -107,11 +107,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
             var area = await _context.Areas.FindAsync(id);
             if (area == null) return NotFound();
 
-            var userId = HttpContext.Items["ApiUserId"] as int? ?? area.IdUsuarioModifica;
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? area.UpdatedByUserId;
 
             _mapper.Map(model, area);
-            area.FechaModificacion = DateTime.Now;
-            area.IdUsuarioModifica = userId;
+            area.UpdatedAt = DateTime.Now;
+            area.UpdatedByUserId = userId;
 
             try
             {
@@ -129,19 +129,19 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
 
         // DELETE: api/Areas/5
         [HttpDelete("{id}")]
-        [ApiKeyAuthorize(TablaObjetivo = "Area", PermisoRequerido = "Eliminar")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Eliminar")]
         public async Task<IActionResult> DeleteArea(int id)
         {
             var area = await _context.Areas.FindAsync(id);
             if (area == null) return NotFound();
 
-            if (!area.Estatus) return BadRequest("El área ya está inactiva.");
+            if (!area.Status) return BadRequest("El área ya está inactiva.");
 
-            var userId = HttpContext.Items["ApiUserId"] as int? ?? area.IdUsuarioModifica;
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? area.UpdatedByUserId;
 
-            area.Estatus = false;
-            area.FechaModificacion = DateTime.Now;
-            area.IdUsuarioModifica = userId; // Soft delete attribution
+            area.Status = false;
+            area.UpdatedAt = DateTime.Now;
+            area.UpdatedByUserId = userId; // Soft delete attribution
 
             _context.Update(area);
             await _context.SaveChangesAsync();

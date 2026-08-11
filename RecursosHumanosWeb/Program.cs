@@ -16,7 +16,7 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configurar CORS (Abierto para microservicios)
+// 1. Configurar CORS (Open para microservicios)
 
 builder.Services.AddCors(options =>
 {
@@ -47,6 +47,9 @@ builder.Services.AddLogging(logging =>
     logging.SetMinimumLevel(LogLevel.Debug);
 });
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<AuthenticationDataAttribute>();
@@ -54,7 +57,7 @@ builder.Services.AddControllersWithViews(options =>
 })
 .AddJsonOptions(options =>
 {
-    // Esto es vital para que el Usuario 1 (que se creó a sí mismo) no rompa la página
+    // Esto es vital para que el User 1 (que se creó a sí mismo) no rompa la página
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     options.JsonSerializerOptions.PropertyNamingPolicy = null; 
 });
@@ -65,7 +68,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Account/Login";
         options.LogoutPath = "/Account/Logout";
         options.AccessDeniedPath = "/Account/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
     });
 
@@ -84,9 +87,9 @@ builder.Services.AddDataProtection()
     .SetApplicationName("TecRHPermisosApp");
 
 
-builder.Services.AddDbContext<RecursosHumanosContext>(options =>
+builder.Services.AddDbContext<HumanResourcesContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("RecursosHumanosContext"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("HumanResourcesContext"));
 });
 
 // Registrar el Guardián de Integridad de Periodos
@@ -98,6 +101,10 @@ builder.Services.AddAutoMapper(typeof(RecursosHumanosWeb.Mapping.AutoMapperProfi
 // Memory cache for tokens
 builder.Services.AddMemoryCache();
 
+// Login attempt lockout (anti fuerza bruta)
+builder.Services.Configure<LoginAttemptOptions>(builder.Configuration.GetSection(LoginAttemptOptions.SectionName));
+builder.Services.AddSingleton<ILoginAttemptTracker, MemoryLoginAttemptTracker>();
+
 // SMTP configuration from appsettings
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 
@@ -106,18 +113,19 @@ builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 // Business Services
 builder.Services.AddScoped<IExportService, ExportService>();
-builder.Services.AddScoped<ICorteService, CorteService>();
-builder.Services.AddScoped<IPermisoService, PermisoService>();
-builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<ICutoffService, CutoffService>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<IEvidenceStorage, PhysicalEvidenceStorage>();
 
 // Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly", policy => policy.RequireClaim("TipoUsuario", "1"));
-    options.AddPolicy("RHOnly", policy => policy.RequireClaim("TipoUsuario", "3"));
-    options.AddPolicy("AutorizadorOnly", policy => policy.RequireClaim("TipoUsuario", "2"));
-    options.AddPolicy("RHOrAdmin", policy => policy.RequireClaim("TipoUsuario", "1", "3"));
-    options.AddPolicy("AutorizadorOrAbove", policy => policy.RequireClaim("TipoUsuario", "1", "3", "2"));
+    options.AddPolicy("AdminOnly", policy => policy.RequireClaim("UserType", "1"));
+    options.AddPolicy("RHOnly", policy => policy.RequireClaim("UserType", "3"));
+    options.AddPolicy("AutorizadorOnly", policy => policy.RequireClaim("UserType", "2"));
+    options.AddPolicy("RHOrAdmin", policy => policy.RequireClaim("UserType", "1", "3"));
+    options.AddPolicy("AutorizadorOrAbove", policy => policy.RequireClaim("UserType", "1", "3", "2"));
 });
 
 var app = builder.Build();
@@ -135,7 +143,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 app.UseCors("OpenCors");
 
 // Health Check para monitoreo del túnel
-app.MapGet("/health", () => Results.Ok(new { Message = "TecRH Permisos API is running", Environment = app.Environment.EnvironmentName }));
+app.MapGet("/health", () => Results.Ok(new { Message = "TecRH Permissions API is running", Environment = app.Environment.EnvironmentName }));
 
 
 
@@ -143,7 +151,7 @@ app.MapGet("/health", () => Results.Ok(new { Message = "TecRH Permisos API is ru
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<RecursosHumanosContext>();
+    var context = services.GetRequiredService<HumanResourcesContext>();
     var logger = services.GetRequiredService<ILogger<Program>>();
     
     int retries = 10;
@@ -183,12 +191,12 @@ using (var scope = app.Services.CreateScope())
                         while (reader.Read()) tables.Add(reader.GetString(0));
                     }
                 }
-                logger.LogInformation("Tablas encontradas en la DB: {Tables}", string.Join(", ", tables));
+                logger.LogInformation("DatabaseTables encontradas en la DB: {Tables}", string.Join(", ", tables));
             } catch (Exception ex) {
                 logger.LogWarning("No se pudo listar las tablas: {Message}", ex.Message);
             }
 
-            if (!context.Usuarios.Any())
+            if (!context.Users.Any())
 
             {
                 // 4.1 Inserción de Datos Básicos
@@ -227,6 +235,13 @@ using (var scope = app.Services.CreateScope())
                 
                 logger.LogInformation("Base de datos inicializada al 100% (Datos y Objetos).");
             }
+
+            // Aplicar upgrades de esquema versionados (idempotentes) a bases existentes
+            var upgradeBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath }
+                .FirstOrDefault(dir => Directory.Exists(Path.Combine(dir, "db", "upgrade")))
+                ?? AppContext.BaseDirectory;
+            SchemaUpgradeRunner.ApplyPendingUpgrades(context, logger, upgradeBase);
+
             break;
         }
         catch (Exception ex)
@@ -246,25 +261,10 @@ using (var scope = app.Services.CreateScope())
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-else
-{
-    app.UseExceptionHandler(errorApp =>
-    {
-        errorApp.Run(async context =>
-        {
-            var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
-            if (exception != null)
-            {
-                var logger = app.Services.GetRequiredService<ILogger<Program>>();
-                logger.LogError(exception.Error, "Excepci�n no manejada: {Message}", exception.Error.Message);
-                await context.Response.WriteAsync($"Error: {exception.Error.Message}");
-            }
-        });
-    });
-}
+
+app.UseExceptionHandler();
 
 // app.UseHttpsRedirection(); // Comentado para evitar errores 502 en Tunnel Cloudflare
 

@@ -8,14 +8,14 @@ namespace RecursosHumanosWeb.Models;
 public partial class Area : BaseEntity
 {
     /// <summary>
-    /// Nombre descriptivo del área organizacional. Máximo 50 caracteres.
+    /// Descriptive name of the organizational area. Up to 50 characters.
     /// </summary>
     [Required(ErrorMessage = "La descripción del área es obligatoria.")]
     [StringLength(50, ErrorMessage = "La descripción no puede superar los 50 caracteres.")]
-    public string Descripcion { get; set; } = null!;
+    public string Description { get; set; } = null!;
 
     // ──────────────────────────────────────────────────────────────
-    // COLECCIONES
+    // COLLECTIONS
     // ──────────────────────────────────────────────────────────────
-    public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

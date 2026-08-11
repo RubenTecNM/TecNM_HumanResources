@@ -4,21 +4,21 @@
     {
         public int Id { get; set; }
 
-        public string Descripcion { get; set; } = null!;
+        public string Description { get; set; } = null!;
 
-        public DateTime FechaCreacion { get; set; }
+        public DateTime CreatedAt { get; set; }
 
-        public DateTime? FechaModificacion { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
-        public bool Estatus { get; set; }
+        public bool Status { get; set; }
 
-        public int IdUsuarioCrea { get; set; }
+        public int CreatedByUserId { get; set; }
 
-        public int? IdUsuarioModifica { get; set; }
+        public int? UpdatedByUserId { get; set; }
 
-        public virtual Usuario IdUsuarioCreaNavigation { get; set; } = null!;
+        public virtual User CreatedByUser { get; set; } = null!;
 
-        public virtual Usuario? IdUsuarioModificaNavigation { get; set; } = null!;
-        public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+        public virtual User? UpdatedByUser { get; set; } = null!;
+        public virtual ICollection<User> Users { get; set; } = new List<User>();
     }
 }

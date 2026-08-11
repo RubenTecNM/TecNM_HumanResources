@@ -17,48 +17,49 @@ namespace RecursosHumanosWeb.Controllers
     public class ApiKeyController : Controller
     {
         #region FIELDS & CONSTRUCTOR
-        public string Clave { get; set; }
-        private readonly RecursosHumanosContext _context;
+        private readonly HumanResourcesContext _context;
         private readonly AutoMapper.IMapper _mapper;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<ApiKeyController> _logger;
 
-        public ApiKeyController(RecursosHumanosContext context, AutoMapper.IMapper mapper, IConfiguration configuration)
+        public ApiKeyController(HumanResourcesContext context, AutoMapper.IMapper mapper, IConfiguration configuration, ILogger<ApiKeyController> logger)
         {
             _context = context;
             _mapper = mapper;
             _configuration = configuration;
+            _logger = logger;
         }
         #endregion
 
         #region INDEX
         // GET: ApiKeys
-        public async Task<IActionResult> Index(string nombreUsuario, DateTime? delDia, DateTime? alDia)
+        public async Task<IActionResult> Index(string userName, DateTime? fromDay, DateTime? toDay)
         {
             var query = _context.ApiKeys
-                .Include(a => a.IdUsuarioCreaNavigation)
-                .Include(a => a.IdUsuarioModificaNavigation)
+                .Include(a => a.CreatedByUser)
+                .Include(a => a.UpdatedByUser)
                 .AsQueryable();
 
-            if (!string.IsNullOrEmpty(nombreUsuario))
+            if (!string.IsNullOrEmpty(userName))
             {
-                query = query.Where(a => a.IdUsuarioCreaNavigation.Nombre.Contains(nombreUsuario));
+                query = query.Where(a => a.CreatedByUser.Name.Contains(userName));
             }
 
-            if (delDia.HasValue)
+            if (fromDay.HasValue)
             {
-                query = query.Where(a => a.FechaCreacion.Date >= delDia.Value.Date);
+                query = query.Where(a => a.CreatedAt.Date >= fromDay.Value.Date);
             }
 
-            if (alDia.HasValue)
+            if (toDay.HasValue)
             {
-                query = query.Where(a => a.FechaCreacion.Date <= alDia.Value.Date);
+                query = query.Where(a => a.CreatedAt.Date <= toDay.Value.Date);
             }
 
-            ViewBag.NombreUsuario = nombreUsuario;
-            ViewBag.DelDia = delDia?.ToString("yyyy-MM-dd");
-            ViewBag.AlDia = alDia?.ToString("yyyy-MM-dd");
+            ViewBag.UserName = userName;
+            ViewBag.FromDay = fromDay?.ToString("yyyy-MM-dd");
+            ViewBag.Today = toDay?.ToString("yyyy-MM-dd");
 
-            return View(await query.OrderByDescending(a => a.FechaCreacion).ToListAsync());
+            return View(await query.OrderByDescending(a => a.CreatedAt).ToListAsync());
         }
         #endregion
 
@@ -72,8 +73,8 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             var apiKey = await _context.ApiKeys
-                .Include(a => a.IdUsuarioCreaNavigation)
-                .Include(a => a.IdUsuarioModificaNavigation)
+                .Include(a => a.CreatedByUser)
+                .Include(a => a.UpdatedByUser)
                 .FirstOrDefaultAsync(m => m.Id == id);
             
             if (apiKey == null)
@@ -81,20 +82,20 @@ namespace RecursosHumanosWeb.Controllers
                 return NotFound();
             }
 
-            // Cargar permisos asignados agrupados por tabla
-            var permisosAsignados = await _context.ApiPermisosApiKeysTablas
-                .Where(p => p.IdApiKey == id && p.Estatus)
-                .Include(p => p.IdTablaNavigation)
-                .Include(p => p.IdApiPermisoNavigation)
-                .GroupBy(p => p.IdTablaNavigation.Descripcion)
+            // Cargar permissions asignados agrupados por tabla
+            var assignedPermissions = await _context.ApiKeyTablePermissions
+                .Where(p => p.ApiKeyId == id && p.Status)
+                .Include(p => p.Table)
+                .Include(p => p.ApiPermission)
+                .GroupBy(p => p.Table.Description)
                 .Select(g => new
                 {
-                    Tabla = g.Key,
-                    Permisos = g.Select(p => p.IdApiPermisoNavigation.Descripcion).ToList()
+                    DatabaseTable = g.Key,
+                    Permissions = g.Select(p => p.ApiPermission.Description).ToList()
                 })
                 .ToListAsync();
 
-            ViewBag.PermisosAsignados = permisosAsignados;
+            ViewBag.AssignedPermissions = assignedPermissions;
 
             return View(apiKey);
         }
@@ -105,20 +106,20 @@ namespace RecursosHumanosWeb.Controllers
         public IActionResult Create()
         {
             // CORRECCIÓN: Usamos proyección segura para evitar nulos en el SelectList
-            var usuariosActivos = _context.Usuarios
-                .Where(u => u.Estatus)
-                .Select(u => new { u.Id, u.Nombre }) // Solo traemos lo necesario
-                .OrderBy(u => u.Nombre)
+            var activeUsers = _context.Users
+                .Where(u => u.Status)
+                .Select(u => new { u.Id, u.Name }) // Solo traemos lo necesario
+                .OrderBy(u => u.Name)
                 .ToList();
 
-            // Usamos "Nombre" que es la propiedad anónima definida arriba
-            ViewData["Usuario"] = new SelectList(usuariosActivos, "Id", "Nombre");
+            // Usamos "Name" que es la propiedad anónima definida arriba
+            ViewData["User"] = new SelectList(activeUsers, "Id", "Name");
 
-            ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
-            ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
+            ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
+            ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
 
             // Lógica de roles (ajusta según tus necesidades reales)
-            ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+            ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
             return View(new ApiKeyCreateViewModel());
         }
@@ -138,27 +139,27 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             // 2. LÓGICA DE TITULARIDAD
-            // Si el dropdown vino vacío (null), asignamos el usuario logueado.
-            // Si el dropdown trajo un ID, respetamos ese ID (viewModel.IdUsuarioTitular).
-            if (!viewModel.IdUsuarioTitular.HasValue)
+            // Si el dropdown vino vacío (null), asignamos el user logueado.
+            // Si el dropdown trajo un ID, respetamos ese ID (viewModel.OwnerUserId).
+            if (!viewModel.OwnerUserId.HasValue)
             {
-                viewModel.IdUsuarioTitular = userId;
+                viewModel.OwnerUserId = userId;
             }
 
             // VALIDACIÓN DEL MODELO
-            if (!ModelState.IsValid || viewModel.IdUsuarioTitular == null || userId == 0)
+            if (!ModelState.IsValid || viewModel.OwnerUserId == null || userId == 0)
             {
                 // Recargar listas en caso de error (con la misma lógica segura del GET)
-                var usuariosList = _context.Usuarios
-                                        .Where(u => u.Estatus)
-                                        .Select(u => new { u.Id, u.Nombre })
-                                        .OrderBy(u => u.Nombre)
+                var usersList = _context.Users
+                                        .Where(u => u.Status)
+                                        .Select(u => new { u.Id, u.Name })
+                                        .OrderBy(u => u.Name)
                                         .ToList();
 
-                ViewData["Usuario"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
-                ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
-                ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
-                ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+                ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
+                ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
+                ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
+                ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                 return View(viewModel);
             }
@@ -172,51 +173,51 @@ namespace RecursosHumanosWeb.Controllers
                     // 3. CREAR API KEY
                     var newApiKey = new ApiKey
                     {
-                        Clave = Guid.NewGuid().ToString("N"),
-                        Estatus = true,
-                        FechaCreacion = currentDateTime,
+                        Key = Guid.NewGuid().ToString("N"),
+                        Status = true,
+                        CreatedAt = currentDateTime,
 
                         // CORRECCIÓN CRÍTICA: DateTime.Now en lugar de default
-                        FechaModificacion = currentDateTime,
+                        UpdatedAt = currentDateTime,
 
-                        IdUsuarioCrea = userId,
-                        IdUsuarioModifica = userId
+                        CreatedByUserId = userId,
+                        UpdatedByUserId = userId
 
-                        // Nota: Si tienes un campo IdUsuarioTitular en la tabla ApiKey, asígnalo aquí:
-                        // IdUsuarioTitular = viewModel.IdUsuarioTitular.Value 
+                        // Nota: Si tienes un campo OwnerUserId en la tabla ApiKey, asígnalo aquí:
+                        // OwnerUserId = viewModel.OwnerUserId.Value 
                     };
 
                     _context.Add(newApiKey);
                     await _context.SaveChangesAsync(); // Se genera el ID de la ApiKey
 
-                    // 4. CREAR PERMISOS (ApiPermisosApiKeysTabla)
+                    // 4. CREAR PERMISOS (ApiKeyTablePermission)
                     if (viewModel.Assignments != null)
                     {
                         foreach (var assignment in viewModel.Assignments)
                         {
-                            if (assignment.IdsApiPermisosSeleccionados != null)
+                            if (assignment.IdsApiPermissionsSeleccionados != null)
                             {
-                                foreach (var idPermiso in assignment.IdsApiPermisosSeleccionados.Distinct())
+                                foreach (var permissionId in assignment.IdsApiPermissionsSeleccionados.Distinct())
                                 {
-                                    var newAssignment = new ApiPermisosApiKeysTabla
+                                    var newAssignment = new ApiKeyTablePermission
                                     {
-                                        IdApiKey = newApiKey.Id, // Usamos el ID recién creado
-                                        IdApiPermiso = idPermiso,
-                                        IdTabla = assignment.IdTabla,
-                                        Estatus = true,
-                                        FechaCreacion = currentDateTime,
+                                        ApiKeyId = newApiKey.Id, // Usamos el ID recién creado
+                                        ApiPermissionId = permissionId,
+                                        TableId = assignment.TableId,
+                                        Status = true,
+                                        CreatedAt = currentDateTime,
 
                                         // CORRECCIÓN CRÍTICA: DateTime.Now en lugar de default
-                                        FechaModificacion = currentDateTime,
+                                        UpdatedAt = currentDateTime,
 
-                                        IdUsuarioCrea = userId,
-                                        IdUsuarioModifica = userId,
+                                        CreatedByUserId = userId,
+                                        UpdatedByUserId = userId,
                                     };
                                     _context.Add(newAssignment);
                                 }
                             }
                         }
-                        // Guardamos los permisos dentro de la transacción
+                        // Guardamos los permissions dentro de la transacción
                         await _context.SaveChangesAsync();
                     }
 
@@ -230,18 +231,19 @@ namespace RecursosHumanosWeb.Controllers
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    ModelState.AddModelError("", "Error al generar la API Key: " + ex.Message);
+                    _logger.LogError(ex, "Error al generar la API Key.");
+                    ModelState.AddModelError("", "Error al generar la API Key. Inténtelo nuevamente.");
 
                     // Recargar datos para la vista (Copy-paste de la lógica de arriba)
-                    var usuariosList = _context.Usuarios
-                                            .Where(u => u.Estatus)
-                                            .Select(u => new { u.Id, u.Nombre })
-                                            .OrderBy(u => u.Nombre)
+                    var usersList = _context.Users
+                                            .Where(u => u.Status)
+                                            .Select(u => new { u.Id, u.Name })
+                                            .OrderBy(u => u.Name)
                                             .ToList();
-                    ViewData["Usuario"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
-                    ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
-                    ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
-                    ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+                    ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
+                    ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
+                    ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
+                    ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                     return View(viewModel);
                 }
@@ -264,35 +266,35 @@ namespace RecursosHumanosWeb.Controllers
                 return NotFound();
             }
 
-            // Cargar permisos actuales
-            var permisosActuales = await _context.ApiPermisosApiKeysTablas
-                .Where(p => p.IdApiKey == id && p.Estatus)
-                .GroupBy(p => p.IdTabla)
+            // Cargar permissions actuales
+            var currentPermissions = await _context.ApiKeyTablePermissions
+                .Where(p => p.ApiKeyId == id && p.Status)
+                .GroupBy(p => p.TableId)
                 .ToDictionaryAsync(
                     g => g.Key,
-                    g => g.Select(p => p.IdApiPermiso).ToList()
+                    g => g.Select(p => p.ApiPermissionId).ToList()
                 );
 
             var viewModel = new ApiKeyCreateViewModel
             {
                 Id = apiKey.Id,
-                Clave = apiKey.Clave,
-                FechaCreacion = apiKey.FechaCreacion,
-                IdUsuarioTitular = apiKey.IdUsuarioCrea // Asumiendo que el titular es quien creó
+                Key = apiKey.Key,
+                CreatedAt = apiKey.CreatedAt,
+                OwnerUserId = apiKey.CreatedByUserId // Asumiendo que el titular es quien creó
             };
 
             // Preparar listas para la vista
-            var usuariosActivos = _context.Usuarios
-                .Where(u => u.Estatus)
-                .Select(u => new { u.Id, u.Nombre })
-                .OrderBy(u => u.Nombre)
+            var activeUsers = _context.Users
+                .Where(u => u.Status)
+                .Select(u => new { u.Id, u.Name })
+                .OrderBy(u => u.Name)
                 .ToList();
 
-            ViewData["Usuario"] = new SelectList(usuariosActivos, "Id", "Nombre", viewModel.IdUsuarioTitular);
-            ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
-            ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
-            ViewBag.PermisosActuales = permisosActuales;
-            ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+            ViewData["User"] = new SelectList(activeUsers, "Id", "Name", viewModel.OwnerUserId);
+            ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
+            ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
+            ViewBag.CurrentPermissions = currentPermissions;
+            ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
             return View(viewModel);
         }
@@ -317,16 +319,16 @@ namespace RecursosHumanosWeb.Controllers
             if (!ModelState.IsValid || userId == 0)
             {
                 // Recargar listas en caso de error
-                var usuariosList = _context.Usuarios
-                    .Where(u => u.Estatus)
-                    .Select(u => new { u.Id, u.Nombre })
-                    .OrderBy(u => u.Nombre)
+                var usersList = _context.Users
+                    .Where(u => u.Status)
+                    .Select(u => new { u.Id, u.Name })
+                    .OrderBy(u => u.Name)
                     .ToList();
 
-                ViewData["Usuario"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
-                ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
-                ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
-                ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+                ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
+                ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
+                ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
+                ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                 return View(viewModel);
             }
@@ -344,43 +346,43 @@ namespace RecursosHumanosWeb.Controllers
                         return NotFound();
                     }
 
-                    apiKey.FechaModificacion = currentDateTime;
-                    apiKey.IdUsuarioModifica = userId;
+                    apiKey.UpdatedAt = currentDateTime;
+                    apiKey.UpdatedByUserId = userId;
                     _context.Update(apiKey);
                     await _context.SaveChangesAsync();
 
-                    // Eliminar permisos anteriores (soft delete)
-                    var permisosAnteriores = await _context.ApiPermisosApiKeysTablas
-                        .Where(p => p.IdApiKey == id)
+                    // Eliminar permissions anteriores (soft delete)
+                    var previousPermissions = await _context.ApiKeyTablePermissions
+                        .Where(p => p.ApiKeyId == id)
                         .ToListAsync();
 
-                    foreach (var permiso in permisosAnteriores)
+                    foreach (var permission in previousPermissions)
                     {
-                        permiso.Estatus = false;
-                        permiso.FechaModificacion = currentDateTime;
-                        permiso.IdUsuarioModifica = userId;
+                        permission.Status = false;
+                        permission.UpdatedAt = currentDateTime;
+                        permission.UpdatedByUserId = userId;
                     }
                     await _context.SaveChangesAsync();
 
-                    // Crear nuevos permisos
+                    // Crear nuevos permissions
                     if (viewModel.Assignments != null)
                     {
                         foreach (var assignment in viewModel.Assignments)
                         {
-                            if (assignment.IdsApiPermisosSeleccionados != null)
+                            if (assignment.IdsApiPermissionsSeleccionados != null)
                             {
-                                foreach (var idPermiso in assignment.IdsApiPermisosSeleccionados.Distinct())
+                                foreach (var permissionId in assignment.IdsApiPermissionsSeleccionados.Distinct())
                                 {
-                                    var newAssignment = new ApiPermisosApiKeysTabla
+                                    var newAssignment = new ApiKeyTablePermission
                                     {
-                                        IdApiKey = apiKey.Id,
-                                        IdApiPermiso = idPermiso,
-                                        IdTabla = assignment.IdTabla,
-                                        Estatus = true,
-                                        FechaCreacion = currentDateTime,
-                                        FechaModificacion = currentDateTime,
-                                        IdUsuarioCrea = userId,
-                                        IdUsuarioModifica = userId,
+                                        ApiKeyId = apiKey.Id,
+                                        ApiPermissionId = permissionId,
+                                        TableId = assignment.TableId,
+                                        Status = true,
+                                        CreatedAt = currentDateTime,
+                                        UpdatedAt = currentDateTime,
+                                        CreatedByUserId = userId,
+                                        UpdatedByUserId = userId,
                                     };
                                     _context.Add(newAssignment);
                                 }
@@ -397,19 +399,20 @@ namespace RecursosHumanosWeb.Controllers
                 catch (Exception ex)
                 {
                     await transaction.RollbackAsync();
-                    ModelState.AddModelError("", $"Error al actualizar la API Key: {ex.Message}");
+                    _logger.LogError(ex, "Error al actualizar la API Key.");
+                    ModelState.AddModelError("", "Error al actualizar la API Key. Inténtelo nuevamente.");
 
                     // Recargar listas
-                    var usuariosList = _context.Usuarios
-                        .Where(u => u.Estatus)
-                        .Select(u => new { u.Id, u.Nombre })
-                        .OrderBy(u => u.Nombre)
+                    var usersList = _context.Users
+                        .Where(u => u.Status)
+                        .Select(u => new { u.Id, u.Name })
+                        .OrderBy(u => u.Name)
                         .ToList();
 
-                    ViewData["Usuario"] = new SelectList(usuariosList, "Id", "Nombre", viewModel.IdUsuarioTitular);
-                    ViewBag.Tablas = _context.Tablas.Where(t => t.Estatus).ToList();
-                    ViewBag.ApiPermisos = _context.ApiPermisos.Where(p => p.Estatus).ToList();
-                    ViewBag.IsAdministrador = User.HasClaim("TipoUsuario", "1");
+                    ViewData["User"] = new SelectList(usersList, "Id", "Name", viewModel.OwnerUserId);
+                    ViewBag.DatabaseTables = _context.DatabaseTables.Where(t => t.Status).ToList();
+                    ViewBag.ApiPermissions = _context.ApiPermissions.Where(p => p.Status).ToList();
+                    ViewBag.IsAdministrator = User.HasClaim("UserType", "1");
 
                     return View(viewModel);
                 }
@@ -427,8 +430,8 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             var apiKey = await _context.ApiKeys
-                .Include(a => a.IdUsuarioCreaNavigation)
-                .Include(a => a.IdUsuarioModificaNavigation)
+                .Include(a => a.CreatedByUser)
+                .Include(a => a.UpdatedByUser)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (apiKey == null)
             {
@@ -446,8 +449,8 @@ namespace RecursosHumanosWeb.Controllers
             var apiKey = await _context.ApiKeys.FindAsync(id);
             if (apiKey != null)
             {
-                apiKey.Estatus = false;
-                apiKey.FechaModificacion = DateTime.Now;
+                apiKey.Status = false;
+                apiKey.UpdatedAt = DateTime.Now;
                 _context.Update(apiKey);
                 await _context.SaveChangesAsync();
             }
@@ -473,9 +476,9 @@ namespace RecursosHumanosWeb.Controllers
             if (!request.Confirmed)
             {
                 // Truncar clave de forma segura
-                var claveDisplay = apiKey.Clave.Length > 16 
-                    ? apiKey.Clave.Substring(0, 16) + "..." 
-                    : apiKey.Clave;
+                var claveDisplay = apiKey.Key.Length > 16 
+                    ? apiKey.Key.Substring(0, 16) + "..." 
+                    : apiKey.Key;
                 
                 return Json(new AlertResponseDTO
                 {
@@ -489,13 +492,13 @@ namespace RecursosHumanosWeb.Controllers
 
             try
             {
-                // Obtener usuario actual
+                // Obtener user actual
                 int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
                 
                 // Borrado lógico
-                apiKey.Estatus = false;
-                apiKey.FechaModificacion = DateTime.Now;
-                apiKey.IdUsuarioModifica = userId;
+                apiKey.Status = false;
+                apiKey.UpdatedAt = DateTime.Now;
+                apiKey.UpdatedByUserId = userId;
                 _context.Update(apiKey);
                 await _context.SaveChangesAsync();
                 
@@ -510,14 +513,15 @@ namespace RecursosHumanosWeb.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = $"Ocurrió un error al inactivar: {ex.Message}", Icon = "error" });
+                _logger.LogError(ex, "Error al inactivar API Key.");
+                return Json(new AlertResponseDTO { Success = false, Title = "Error del Servidor", Message = "Ocurrió un error al inactivar la API Key. Inténtelo nuevamente.", Icon = "error" });
             }
         }
         #endregion
 
         #region AJAX & HELPERS
         [HttpGet]
-        public async Task<JsonResult> GetUsuariosParaBusqueda(string term)
+        public async Task<JsonResult> GetUsersForSearch(string term)
         {
             // Si no hay término de búsqueda, devolvemos una lista vacía o los primeros 10.
             if (string.IsNullOrWhiteSpace(term))
@@ -525,18 +529,18 @@ namespace RecursosHumanosWeb.Controllers
                 term = string.Empty;
             }
 
-            var usuarios = await _context.Usuarios
-                .Where(u => u.Nombre.Contains(term) || u.Correo.Contains(term))
-                .OrderBy(u => u.Nombre)
+            var users = await _context.Users
+                .Where(u => u.Name.Contains(term) || u.Email.Contains(term))
+                .OrderBy(u => u.Name)
                 .Take(_configuration.GetValue<int>("BusinessRules:Pagination:DefaultPageSize")) // Limitar resultados para eficiencia
                 .Select(u => new
                 {
                     id = u.Id,
-                    text = u.Nombre ?? u.Correo
+                    text = u.Name ?? u.Email
                 })
                 .ToListAsync();
 
-            return Json(new { results = usuarios });
+            return Json(new { results = users });
         }
 
         private bool ApiKeyExists(int id)

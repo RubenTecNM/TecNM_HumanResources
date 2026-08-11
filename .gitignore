@@ -99,9 +99,6 @@ StyleCopReport.xml
 *.svclog
 *.scc
 
-# Chutzpah Test files
-_Chutzpah*
-
 # Visual C++ cache files
 ipch/
 *.aps
@@ -298,10 +295,6 @@ node_modules/
 # Visual Studio 6 auto-generated project file (contains which files were open etc.)
 *.vbp
 
-# Visual Studio 6 workspace and project file (working project files containing files to include in project)
-*.dsw
-*.dsp
-
 # Visual Studio 6 technical files 
 *.ncb
 *.aps
@@ -422,9 +415,7 @@ secrets.json
 .DS_Store
 
 # SQL Scripts and database files (use migrations instead)
-# Exclusiones de SQL
 /sql/
-!/db/*.sql
 
 # PowerShell scripts (project-specific, not for version control)
 *.ps1

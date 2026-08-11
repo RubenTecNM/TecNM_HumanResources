@@ -21,6 +21,7 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 COPY db/inserts.sql ./db/inserts.sql
 COPY db/schema_objects.sql ./db/schema_objects.sql
+COPY db/upgrade ./db/upgrade
 
 # Install dependencies for SQL Client if needed
 # RUN apt-get update && apt-get install -y libicu-dev && rm -rf /var/lib/apt/lists/*

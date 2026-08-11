@@ -16,7 +16,7 @@ namespace RecursosHumanosWeb.Controllers
 
         public IActionResult Index()
         {
-            return RedirectToAction("Index", "Permiso");
+            return RedirectToAction("Index", "Permission");
         }
 
         

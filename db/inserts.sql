@@ -1,43 +1,43 @@
--- =============================================================================
--- Script de Poblado Inicial Consolidad - TecRHPermisos
--- Este script es ejecutado por Program.cs al detectar una base de datos vacía.
--- Contiene Catálogos Base, Áreas, Departamentos, Puestos y Usuarios de prueba.
+﻿-- =============================================================================
+-- Initial Seeding Script - TecRHPermisos
+-- This script is executed by Program.cs when it detects an empty database.
+-- It contains base catalogs, Areas, Departments, Positions and test users.
 -- =============================================================================
 
--- 1. DESHABILITAR RESTRICCIONES FK (Necesario para la auto-creación del usuario root)
+-- 1. DISABLE FK CONSTRAINTS (Needed for the root user auto-creation)
 EXEC sp_MSforeachtable 'ALTER TABLE ? NOCHECK CONSTRAINT ALL';
 
--- 2. INSERCIÓN DE CATÁLOGOS BASE
+-- 2. BASE CATALOG INSERTS
 
--- TipoUsuario
-INSERT INTO TipoUsuario (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- UserType
+INSERT INTO UserType (Description, CreatedAt, Status, CreatedByUserId) VALUES 
 ('Administrador', GETDATE(), 1, 1),
 ('Autorizador', GETDATE(), 1, 1),
 ('Recursos Humanos', GETDATE(), 1, 1),
 ('Trabajador', GETDATE(), 1, 1);
 
--- TipoEstadoCorte
-INSERT INTO TipoEstadoCorte (Descripcion, Color, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- CutoffStatusType
+INSERT INTO CutoffStatusType (Description, Color, CreatedAt, Status, CreatedByUserId) VALUES 
 ('Abierto', 'success', GETDATE(), 1, 1),
 ('Cerrado', 'secondary', GETDATE(), 1, 1),
 ('Invalidado', 'danger', GETDATE(), 1, 1);
 
--- TipoEstadoPermiso
-INSERT INTO TipoEstadoPermiso (Descripcion, Color, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- PermissionStatusType
+INSERT INTO PermissionStatusType (Description, Color, CreatedAt, Status, CreatedByUserId) VALUES 
 ('Pendiente por Revisar', 'warning', GETDATE(), 1, 1),
 ('Revisado / Aprobado', 'success', GETDATE(), 1, 1),
 ('Invalidado por Periodo', 'danger', GETDATE(), 1, 1),
-('Rechazado', 'dark', GETDATE(), 1, 1);
+('Revisado / Rechazado', 'dark', GETDATE(), 1, 1);
 
 -- Area
-INSERT INTO Area (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+INSERT INTO Area (Description, CreatedAt, Status, CreatedByUserId) VALUES 
 ('SUBDIRECCION DE SERVICIOS ADMINISTRATIVOS', GETDATE(), 1, 1),
 ('DIRECCION GENERAL', GETDATE(), 1, 1),
 ('DIRECCION DE PLANEACION Y VINCULACION', GETDATE(), 1, 1),
 ('DIRECCION ACADEMICA', GETDATE(), 1, 1);
 
--- Departamento
-INSERT INTO Departamento (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- Department
+INSERT INTO Department (Description, CreatedAt, Status, CreatedByUserId) VALUES 
 ('ACTIVIDADES EXTRAESCOLARES', GETDATE(), 1, 1),
 ('ACTIVO FIJO', GETDATE(), 1, 1),
 ('ASUNTOS ACADÉMICOS', GETDATE(), 1, 1),
@@ -67,8 +67,8 @@ INSERT INTO Departamento (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VA
 ('TALLER DE LIT', GETDATE(), 1, 1),
 ('TRABAJO SOCIAL', GETDATE(), 1, 1);
 
--- Puesto
-INSERT INTO Puesto (Descripcion, ClaveTabular, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- Position
+INSERT INTO Position (Description, TabularCode, CreatedAt, Status, CreatedByUserId) VALUES 
 ('ALMACENISTA', 'A03004', GETDATE(), 1, 1),
 ('ANALISTA ESPECIALIZADO(A)', 'P01002', GETDATE(), 1, 1),
 ('ANALISTA TECNICO(A)', 'P01001', GETDATE(), 1, 1),
@@ -94,16 +94,16 @@ INSERT INTO Puesto (Descripcion, ClaveTabular, FechaCreacion, Estatus, IdUsuario
 ('TECNICO ESPECIALIZADO', 'CF33116', GETDATE(), 1, 1),
 ('VIGILANTE', 'S14001', GETDATE(), 1, 1);
 
--- 3. USUARIOS DE PRUEBA
--- Clave por defecto para todos: Buss1ness.2026
--- Hash SHA256: 5166099b80693a74112e52e935a8bc762699e1ac74d4719b4cfb088e894c25f7
+-- 3. TEST USERS
+-- Default password for all: Buss1ness.2026
+-- SHA256 hash: 5166099b80693a74112e52e935a8bc762699e1ac74d4719b4cfb088e894c25f7
 
 -- ROOT
-INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea) 
+INSERT INTO [User] (Name, Email, PasswordHash, CreatedAt, Status, UserTypeId, AreaId, DepartmentId, PositionId, CreatedByUserId) 
 VALUES ('root', 'controlpermisos@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 1, 1, 1, 1, 1);
 
--- PERSONAL DE PRUEBA
-INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, Estatus, IdTipoUsuario, IdArea, IdDepartamento, IdPuesto, IdUsuarioCrea) VALUES 
+-- TEST STAFF
+INSERT INTO [User] (Name, Email, PasswordHash, CreatedAt, Status, UserTypeId, AreaId, DepartmentId, PositionId, CreatedByUserId) VALUES 
 ('RODRIGUEZ HERNANDEZ FRANCISCO', 'francisco.rh@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 1, 2, 19, 1, 1),
 ('MONTOYA ELIZONDO MAIRA DE JESUS', 'maira.me@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 2, 2, 5, 2, 1),
 ('AGUILERA MANCILLA DANIELA', 'daniela.am@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 4, 3, 26, 3, 1),
@@ -172,10 +172,10 @@ INSERT INTO Usuario (Nombre, Correo, Clave, FechaCreacion, Estatus, IdTipoUsuari
 ('SALINAS MENDOZA ALFREDO', 'alfredo.salinas@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 2, 1, 1, 1, 1),
 ('Axel Ruiz', 'axel.ruiz@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 1, 1, 1, 1, 1);
 
--- 4. CONFIGURACIÓN DE TABLAS DE SISTEMA Y API
+-- 4. SYSTEM AND API TABLES CONFIGURATION
 
--- ApiFunctions
-INSERT INTO ApiFunction (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- ApiFunction
+INSERT INTO ApiFunction (Description, CreatedAt, Status, CreatedByUserId) VALUES 
 ('GET', GETDATE(), 1, 1),
 ('POST', GETDATE(), 1, 1),
 ('PUT', GETDATE(), 1, 1),
@@ -185,36 +185,36 @@ INSERT INTO ApiFunction (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VAL
 ('OPTIONS', GETDATE(), 1, 1),
 ('DELETE LOGICO', GETDATE(), 1, 1);
 
--- ApiPermiso
-INSERT INTO ApiPermiso (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- ApiPermission
+INSERT INTO ApiPermission (Description, CreatedAt, Status, CreatedByUserId) VALUES 
 ('Leer', GETDATE(), 1, 1),
 ('Escribir', GETDATE(), 1, 1),
 ('Actualizar', GETDATE(), 1, 1),
 ('Eliminar', GETDATE(), 1, 1);
 
--- Tabla
-INSERT INTO Tabla (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
-('ApiFunctions', GETDATE(), 1, 1),
+-- DatabaseTable (values are table names referenced by the audit machinery)
+INSERT INTO DatabaseTable (Description, CreatedAt, Status, CreatedByUserId) VALUES 
+('ApiFunction', GETDATE(), 1, 1),
 ('ApiKey', GETDATE(), 1, 1),
-('ApiPermiso', GETDATE(), 1, 1),
-('ApiPermisosApiKeysTabla', GETDATE(), 1, 1),
+('ApiPermission', GETDATE(), 1, 1),
+('ApiKeyTablePermission', GETDATE(), 1, 1),
 ('Area', GETDATE(), 1, 1),
-('Corte', GETDATE(), 1, 1),
-('Departamento', GETDATE(), 1, 1),
-('Permiso', GETDATE(), 1, 1),
-('Puesto', GETDATE(), 1, 1),
-('Tabla', GETDATE(), 1, 1),
-('TipoPermiso', GETDATE(), 1, 1),
-('TipoUsuario', GETDATE(), 1, 1),
-('Usuario', GETDATE(), 1, 1),
+('Cutoff', GETDATE(), 1, 1),
+('Department', GETDATE(), 1, 1),
+('Permission', GETDATE(), 1, 1),
+('Position', GETDATE(), 1, 1),
+('DatabaseTable', GETDATE(), 1, 1),
+('PermissionType', GETDATE(), 1, 1),
+('UserType', GETDATE(), 1, 1),
+('User', GETDATE(), 1, 1),
 ('ResetPasswordToken', GETDATE(), 1, 1),
-('Auditoria', GETDATE(), 1, 1),
-('TipoOrigen', GETDATE(), 1, 1),
-('TipoEstadoCorte', GETDATE(), 1, 1),
-('TipoEstadoPermiso', GETDATE(), 1, 1);
+('AuditLog', GETDATE(), 1, 1),
+('OriginType', GETDATE(), 1, 1),
+('CutoffStatusType', GETDATE(), 1, 1),
+('PermissionStatusType', GETDATE(), 1, 1);
 
--- TipoOrigen
-INSERT INTO TipoOrigen (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- OriginType
+INSERT INTO OriginType (Description, CreatedAt, Status, CreatedByUserId) VALUES 
 ('Interfaz Web', GETDATE(), 1, 1),
 ('API Externa', GETDATE(), 1, 1),
 ('Sistema Automático', GETDATE(), 1, 1),
@@ -222,12 +222,12 @@ INSERT INTO TipoOrigen (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALU
 ('Sincronización LDAP', GETDATE(), 1, 1),
 ('Migración de Datos', GETDATE(), 1, 1);
 
--- TipoPermiso
-INSERT INTO TipoPermiso (Descripcion, FechaCreacion, Estatus, IdUsuarioCrea) VALUES 
+-- PermissionType
+INSERT INTO PermissionType (Description, CreatedAt, Status, CreatedByUserId) VALUES 
 ('Retardo', GETDATE(), 1, 1),
 ('Turno por Turno', GETDATE(), 1, 1),
 ('Falta', GETDATE(), 1, 1),
 ('Cambio de Horario', GETDATE(), 1, 1);
 
--- 5. REACTIVAR FK
+-- 5. RE-ENABLE FK
 EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';

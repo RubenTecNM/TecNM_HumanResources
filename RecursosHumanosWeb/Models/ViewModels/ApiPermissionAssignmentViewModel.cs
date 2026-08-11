@@ -1,15 +1,15 @@
 ﻿namespace RecursosHumanosWeb.Models.ViewModels
 {
     // -----------------------------------------------------------------
-    // SUB-MODELO: Detalle de Asignación de Permisos por Tabla
+    // SUB-MODELO: Detalle de Asignación de Permissions por DatabaseTable
     // -----------------------------------------------------------------
     public class ApiPermissionAssignmentViewModel
     {
-        // ID de la Tabla a la que se le asignarán permisos (ej. 1=Usuario, 2=Tabla)
-        public int IdTabla { get; set; }
+        // ID de la DatabaseTable a la que se le asignarán permissions (ej. 1=User, 2=DatabaseTable)
+        public int TableId { get; set; }
 
-        // Lista de IDs de los ApiPermisos seleccionados (ej. [1, 2] = Leer, Escribir)
+        // Lista de IDs de los ApiPermissions seleccionados (ej. [1, 2] = Leer, Escribir)
         // El Mvc Binder recolecta los valores de todos los checkboxes marcados aquí.
-        public List<int>? IdsApiPermisosSeleccionados { get; set; }
+        public List<int>? IdsApiPermissionsSeleccionados { get; set; }
     }
 }

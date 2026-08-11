@@ -1,6 +1,6 @@
 using AutoMapper;
 using RecursosHumanosWeb.Models;
-using RecursosHumanosWeb.Models.ViewModels.Usuario;
+using RecursosHumanosWeb.Models.ViewModels.User;
 using RecursosHumanosWeb.Models.ViewModels;
 using RecursosHumanosWeb.Models.DTOs;
 
@@ -11,88 +11,91 @@ namespace RecursosHumanosWeb.Mapping
         public AutoMapperProfile()
         {
             // 1. Mapeo para Detalles (Optimizado para ProjectTo)
-            CreateMap<Usuario, UsuarioDetailsViewModel>()
-                // AutoMapper maneja automáticamente el nulo: si IdTipoUsuarioNavigation es nulo, devuelve null.
+            CreateMap<User, UserDetailsViewModel>()
+                // AutoMapper maneja automáticamente el nulo: si UserType es nulo, devuelve null.
                 // Usamos Null-coalescing para asignar el valor por defecto.
-                .ForMember(dest => dest.TipoUsuarioNombre, opt => opt.MapFrom(src => src.IdTipoUsuarioNavigation.Descripcion ?? "N/A"))
-                .ForMember(dest => dest.AreaDescripcion, opt => opt.MapFrom(src => src.IdAreaNavigation.Descripcion ?? "N/A"))
-                .ForMember(dest => dest.DepartamentoDescripcion, opt => opt.MapFrom(src => src.IdDepartamentoNavigation.Descripcion ?? "N/A"))
-                .ForMember(dest => dest.PuestoDescripcion, opt => opt.MapFrom(src => src.IdPuestoNavigation.Descripcion ?? "N/A"))
+                .ForMember(dest => dest.UserTypeName, opt => opt.MapFrom(src => src.UserType.Description ?? "N/A"))
+                .ForMember(dest => dest.AreaDescription, opt => opt.MapFrom(src => src.Area.Description ?? "N/A"))
+                .ForMember(dest => dest.DepartmentDescription, opt => opt.MapFrom(src => src.Department.Description ?? "N/A"))
+                .ForMember(dest => dest.PositionDescription, opt => opt.MapFrom(src => src.Position.Description ?? "N/A"))
                 
                 // Lógica para auditoría: Al usar ProjectTo, esto se traduce a un LEFT JOIN en SQL
-                .ForMember(dest => dest.UsuarioCreaNombre, opt => opt.MapFrom(src => 
-                    src.IdUsuarioCreaNavigation.Nombre ?? "Sistema/Auto-creado"))
-                .ForMember(dest => dest.UsuarioModificaNombre, opt => opt.MapFrom(src => 
-                    src.IdUsuarioModificaNavigation.Nombre ?? "Sin cambios"));
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => 
+                    src.CreatedByUser.Name ?? "Sistema/Auto-creado"))
+                .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => 
+                    src.UpdatedByUser.Name ?? "Sin cambios"));
 
             // 2. Mapeos de Creación y Edición
-            CreateMap<UsuarioCreateViewModel, Usuario>();
+            CreateMap<UserCreateViewModel, User>();
             
-            CreateMap<UsuarioUpdateViewModel, Usuario>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.IdUsuario))
-                // Solo mapea la clave si el usuario escribió algo en el campo
-                .ForMember(dest => dest.Clave, opt => opt.Condition(src => !string.IsNullOrWhiteSpace(src.Clave)));
+            CreateMap<UserUpdateViewModel, User>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                // Solo mapea la clave si el user escribió algo en el campo
+                .ForMember(dest => dest.PasswordHash, opt => opt.Condition(src => !string.IsNullOrWhiteSpace(src.Password)));
 
-            CreateMap<Usuario, UsuarioUpdateViewModel>()
-                .ForMember(dest => dest.IdUsuario, opt => opt.MapFrom(src => src.Id));
+            CreateMap<User, UserUpdateViewModel>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id));
 
-            CreateMap<Permiso, PermisosDTO>()
-                .ForMember(d => d.Nombre, o => o.MapFrom(s => s.IdUsuarioSolicitaNavigation.Nombre ?? "N/A"))
-                .ForMember(d => d.TipoPermiso, o => o.MapFrom(s => s.IdTipoPermisoNavigation.Descripcion ?? "N/A"))
-                .ForMember(d => d.EstadoDescripcion, o => o.MapFrom(s => s.IdEstadoPermisoNavigation.Descripcion ?? "N/A"))
-                .ForMember(d => d.EstadoColor, o => o.MapFrom(s => s.IdEstadoPermisoNavigation.Color ?? "secondary"));
+            CreateMap<Permission, PermissionsDTO>()
+                .ForMember(d => d.Name, o => o.MapFrom(s => s.RequestingUser.Name ?? "N/A"))
+                .ForMember(d => d.PermissionType, o => o.MapFrom(s => s.PermissionType.Description ?? "N/A"))
+                .ForMember(d => d.StatusDescription, o => o.MapFrom(s => s.PermissionStatusType.Description ?? "N/A"))
+                .ForMember(d => d.StatusColor, o => o.MapFrom(s => s.PermissionStatusType.Color ?? "secondary"));
 
-            CreateMap<Permiso, PermissionsCreateViewModel>()
-                .ForMember(dest => dest.Fecha1Date, opt => opt.MapFrom(src => src.Fecha1))
-                .ForMember(dest => dest.Hora1Time, opt => opt.MapFrom(src => src.Fecha1.HasValue ? src.Fecha1.Value.ToString("HH:mm") : null))
-                .ForMember(dest => dest.Fecha2Date, opt => opt.MapFrom(src => src.Fecha2))
-                .ForMember(dest => dest.Hora2Time, opt => opt.MapFrom(src => src.Fecha2.HasValue ? src.Fecha2.Value.ToString("HH:mm") : null))
+            CreateMap<Permission, PermissionsCreateViewModel>()
+                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))
+                .ForMember(dest => dest.StartTime, opt => opt.MapFrom(src => src.StartDate.HasValue ? src.StartDate.Value.ToString("HH:mm") : null))
+                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(src => src.EndDate))
+                .ForMember(dest => dest.EndTime, opt => opt.MapFrom(src => src.EndDate.HasValue ? src.EndDate.Value.ToString("HH:mm") : null))
                 .ReverseMap()
-                .ForMember(dest => dest.Evidencia, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Evidencia)));
+                .ForMember(dest => dest.Evidence, opt => opt.Condition(src => !string.IsNullOrEmpty(src.Evidence)));
+
+            // 3b. Creación (VM sin WithPay/Id/Evidence para evitar over-posting)
+            CreateMap<PermissionCreateViewModel, Permission>();
 
             // 4. Listados
-            CreateMap<Corte, CortesDTO>()
-                .ForMember(d => d.EstadoDescripcion, o => o.MapFrom(s => s.IdEstadoCorteNavigation.Descripcion ?? "N/A"))
-                .ForMember(d => d.EstadoColor, o => o.MapFrom(s => s.IdEstadoCorteNavigation.Color ?? "secondary"));
-            CreateMap<Usuario, UsuariosDTO>();
-            CreateMap<Usuario, UsuariosListDTO>()
-                .ForMember(d => d.Departamento, o => o.MapFrom(s => s.IdDepartamentoNavigation.Descripcion ?? "N/A"));
+            CreateMap<Cutoff, CutoffsDTO>()
+                .ForMember(d => d.StatusDescription, o => o.MapFrom(s => s.CutoffStatusType.Description ?? "N/A"))
+                .ForMember(d => d.StatusColor, o => o.MapFrom(s => s.CutoffStatusType.Color ?? "secondary"));
+            CreateMap<User, UsersDTO>();
+            CreateMap<User, UsersListDTO>()
+                .ForMember(d => d.Department, o => o.MapFrom(s => s.Department.Description ?? "N/A"));
 
            // 5. Areas
             CreateMap<RecursosHumanosWeb.Models.ViewModels.Areas.AreaCreateViewModel, Area>();
             CreateMap<RecursosHumanosWeb.Models.ViewModels.Areas.AreaUpdateViewModel, Area>();
 
-            // 6. Departamentos
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Departamentos.DepartamentoCreateViewModel, Departamento>();
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Departamentos.DepartamentoUpdateViewModel, Departamento>();
+            // 6. Departments
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Departments.DepartmentCreateViewModel, Department>();
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Departments.DepartmentUpdateViewModel, Department>();
 
-            // 7. Puestos
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Puestos.PuestoCreateViewModel, Puesto>();
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Puestos.PuestoUpdateViewModel, Puesto>();
+            // 7. Positions
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Positions.PositionCreateViewModel, Position>();
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Positions.PositionUpdateViewModel, Position>();
 
-            // 8. TipoPermisos
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.TipoPermisos.TipoPermisoCreateViewModel, TipoPermiso>();
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.TipoPermisos.TipoPermisoUpdateViewModel, TipoPermiso>();
+            // 8. PermissionTypes
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.PermissionTypes.PermissionTypeCreateViewModel, PermissionType>();
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.PermissionTypes.PermissionTypeUpdateViewModel, PermissionType>();
 
-            // 9. TipoUsuarios
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.TipoUsuarios.TipoUsuarioCreateViewModel, TipoUsuario>();
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.TipoUsuarios.TipoUsuarioUpdateViewModel, TipoUsuario>();
+            // 9. UserTypes
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.UserTypes.UserTypeCreateViewModel, UserType>();
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.UserTypes.UserTypeUpdateViewModel, UserType>();
 
-            // 10. Cortes (API)
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Cortes.CorteApiCreateViewModel, Corte>();
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Cortes.CorteApiUpdateViewModel, Corte>();
+            // 10. Cutoffs (API)
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Cutoffs.CutoffApiCreateViewModel, Cutoff>();
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Cutoffs.CutoffApiUpdateViewModel, Cutoff>();
 
-            // 11. Permisos (API)
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Permisos.PermisoApiCreateViewModel, Permiso>();
-            CreateMap<RecursosHumanosWeb.Models.ViewModels.Permisos.PermisoApiUpdateViewModel, Permiso>();
+            // 11. Permissions (API)
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Permissions.PermissionApiCreateViewModel, Permission>();
+            CreateMap<RecursosHumanosWeb.Models.ViewModels.Permissions.PermissionApiUpdateViewModel, Permission>();
 
-            // 12. Auditoria
-            CreateMap<Auditoria, AuditoriaDTO>()
-                .ForMember(d => d.Tabla, o => o.MapFrom(s => s.IdTablaNavigation.Descripcion))
-                .ForMember(d => d.Accion, o => o.MapFrom(s => s.IdApiFunctionNavigation.Descripcion))
-                .ForMember(d => d.Usuario, o => o.MapFrom(s => s.IdUsuarioCreaNavigation.Nombre))
-                .ForMember(d => d.ApiKeyDesc, o => o.MapFrom(s => s.IdApiKeyNavigation != null ? (s.IdApiKeyNavigation.Clave.Length >= 8 ? s.IdApiKeyNavigation.Clave.Substring(0, 8) + "..." : s.IdApiKeyNavigation.Clave) : "N/A"))
-                .ForMember(d => d.TipoOrigenDesc, o => o.MapFrom(s => s.IdTipoOrigenNavigation.Descripcion));
+            // 12. AuditLog
+            CreateMap<AuditLog, AuditLogDTO>()
+                .ForMember(d => d.DatabaseTable, o => o.MapFrom(s => s.Table.Description))
+                .ForMember(d => d.Accion, o => o.MapFrom(s => s.ApiFunction.Description))
+                .ForMember(d => d.User, o => o.MapFrom(s => s.CreatedByUser.Name))
+                .ForMember(d => d.ApiKeyDescription, o => o.MapFrom(s => s.ApiKey != null ? (s.ApiKey.Key.Length >= 8 ? s.ApiKey.Key.Substring(0, 8) + "..." : s.ApiKey.Key) : "N/A"))
+                .ForMember(d => d.OriginTypeDescription, o => o.MapFrom(s => s.OriginType.Description));
         }
     }
 }

@@ -28,9 +28,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="App_Data\Evidences\**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Views\Shared\NewFolder\" />
     <Folder Include="Views\UsuarioPermisos\" />
-    <Folder Include="wwwroot\Evidences\" />
   </ItemGroup>
 
 </Project>

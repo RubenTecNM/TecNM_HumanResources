@@ -1,26 +1,25 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - RecursosHumanosWeb</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+    <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="~/lib/animate.css/animate.min.css" />
+    <link rel="stylesheet" href="~/lib/aos/dist/aos.css" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/cssv2/v2-site.css?v=@DateTime.Now.Ticks" asp-append-version="true" />
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="~/lib/select2/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/RecursosHumanosWeb.styles.css" asp-append-version="true" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="~/lib/flatpickr/dist/flatpickr.min.css">
     
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -64,7 +63,7 @@
                 <!-- Account Actions (Mobile) -->
                 <div class="d-flex align-items-center gap-2">
                     <!-- Profile Avatar -->
-                    <a asp-controller="Usuario" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="mobile-header__profile">
+                    <a asp-controller="User" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="mobile-header__profile">
                         <div class="user-avatar-circle shadow-sm" style="width: 32px; height: 32px; font-size: 0.8rem;">
                             @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
                         </div>
@@ -96,18 +95,18 @@
                 <ul class="drawer-menu">
                     <li class="drawer-section">Navegación</li>
                     <li>
-                        <a asp-controller="Permiso" asp-action="Index" class="drawer-link @(currentCtrl == "Permiso" ? "active" : "")">
+                        <a asp-controller="Permission" asp-action="Index" class="drawer-link @(currentCtrl == "Permission" ? "active" : "")">
                             <i class="fas fa-file-contract"></i> Permisos
                         </a>
                     </li>
                     <authorize-section policy="RHOrAdmin">
                         <li>
-                            <a asp-controller="Corte" asp-action="Index" class="drawer-link @(currentCtrl == "Corte" ? "active" : "")">
+                            <a asp-controller="Cutoff" asp-action="Index" class="drawer-link @(currentCtrl == "Cutoff" ? "active" : "")">
                                 <i class="fas fa-calendar-check"></i> Periodos
                             </a>
                         </li>
                         <li>
-                            <a asp-controller="Usuario" asp-action="Index" class="drawer-link @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                            <a asp-controller="User" asp-action="Index" class="drawer-link @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
                                 <i class="fas fa-users-cog"></i> Usuarios
                             </a>
                         </li>
@@ -116,7 +115,7 @@
                     <authorize-section policy="AdminOnly">
                         <li class="drawer-section">Administración</li>
                         <li>
-                            <a asp-controller="Auditoria" asp-action="Index" class="drawer-link @(currentCtrl == "Auditoria" ? "active" : "")">
+                            <a asp-controller="AuditLog" asp-action="Index" class="drawer-link @(currentCtrl == "AuditLog" ? "active" : "")">
                                 <i class="fas fa-history"></i> Auditoría
                             </a>
                         </li>
@@ -129,7 +128,7 @@
                     
                     <li class="drawer-section">Cuenta</li>
                     <li>
-                        <a asp-controller="Usuario" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="drawer-link @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
+                        <a asp-controller="User" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="drawer-link @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
                             <i class="fas fa-user-circle"></i> Mi Perfil
                         </a>
                     </li>
@@ -153,22 +152,22 @@
             </div>
 
             <ul class="navbar-side__menu">
-                <li class="navbar-side__item @(currentCtrl == "Permiso" ? "active" : "")">
-                    <a asp-controller="Permiso" asp-action="Index" class="navbar-side__link">
+                <li class="navbar-side__item @(currentCtrl == "Permission" ? "active" : "")">
+                    <a asp-controller="Permission" asp-action="Index" class="navbar-side__link">
                         <i class="fas fa-file-contract"></i>
                         <span>Permisos</span>
                     </a>
                 </li>
 
                 <authorize-section policy="RHOrAdmin">
-                    <li class="navbar-side__item @(currentCtrl == "Corte" ? "active" : "")">
-                        <a asp-controller="Corte" asp-action="Index" class="navbar-side__link">
+                    <li class="navbar-side__item @(currentCtrl == "Cutoff" ? "active" : "")">
+                        <a asp-controller="Cutoff" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-calendar-check"></i>
                             <span>Periodos</span>
                         </a>
                     </li>
-                    <li class="navbar-side__item @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
-                        <a asp-controller="Usuario" asp-action="Index" class="navbar-side__link">
+                    <li class="navbar-side__item @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                        <a asp-controller="User" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-users-cog"></i>
                             <span>Usuarios</span>
                         </a>
@@ -176,8 +175,8 @@
                 </authorize-section>
 
                 <authorize-section policy="AdminOnly">
-                    <li class="navbar-side__item d-none d-lg-block @(currentCtrl == "Auditoria" ? "active" : "")">
-                        <a asp-controller="Auditoria" asp-action="Index" class="navbar-side__link">
+                    <li class="navbar-side__item d-none d-lg-block @(currentCtrl == "AuditLog" ? "active" : "")">
+                        <a asp-controller="AuditLog" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-history"></i>
                             <span>Auditoría</span>
                         </a>
@@ -202,8 +201,8 @@
             <!-- Sidebar Footer (Account Actions) -->
             <div class="navbar-side__footer mt-auto pt-3 border-top">
                 <ul class="navbar-side__menu mb-0">
-                    <li class="navbar-side__item @(currentCtrl == "Usuario" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
-                        <a asp-controller="Usuario" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="navbar-side__link">
+                    <li class="navbar-side__item @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
+                        <a asp-controller="User" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="navbar-side__link">
                             <i class="fas fa-user-circle"></i>
                             <span>Perfil</span>
                         </a>
@@ -236,11 +235,11 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
+    <script src="~/lib/select2/dist/js/select2.min.js"></script>
+    <script src="~/lib/aos/dist/aos.js"></script>
+    <script src="~/lib/flatpickr/dist/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/dist/l10n/es.js"></script>
+    <script src="~/lib/cleave.js/dist/cleave.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
@@ -269,7 +268,7 @@
                         Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                         try {
                             const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-                            const response = await fetch('/Permiso/GenerateTestData', {
+                            const response = await fetch('/Permission/GenerateTestData', {
                                 method: 'POST',
                                 headers: { 'RequestVerificationToken': token }
                             });

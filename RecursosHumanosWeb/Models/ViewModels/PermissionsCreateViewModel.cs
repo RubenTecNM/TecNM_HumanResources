@@ -4,54 +4,54 @@ namespace RecursosHumanosWeb.Models.ViewModels
 {
     public class PermissionsCreateViewModel
     {
-        // Identificador único del permiso (opcional, solo para edición)
+        // Identificador único del permission (opcional, solo para edición)
         public int? Id { get; set; }
 
         // El motivo es siempre obligatorio y tiene un límite de longitud
         [Required(ErrorMessage = "El motivo es obligatorio.")]
         [StringLength(255, ErrorMessage = "El motivo no puede exceder los 255 caracteres.")]
-        public string Motivo { get; set; }
+        public string Reason { get; set; }
 
-        // Fecha1: Almacena la fecha y hora combinadas (inicio o evento principal)
+        // StartDate: Almacena la fecha y hora combinadas (inicio o evento principal)
         [DataType(DataType.DateTime)]
-        public DateTime? Fecha1 { get; set; }
+        public DateTime? StartDate { get; set; }
 
-        // Fecha2: Almacena la fecha y hora combinadas (fin o evento secundario, si aplica)
+        // EndDate: Almacena la fecha y hora combinadas (fin o evento secundario, si aplica)
         [DataType(DataType.DateTime)]
-        public DateTime? Fecha2 { get; set; }
+        public DateTime? EndDate { get; set; }
 
-        // El tipo de permiso es siempre obligatorio
+        // El tipo de permission es siempre obligatorio
         [Required(ErrorMessage = "El tipo de permiso es obligatorio.")]
-        public int IdTipoPermiso { get; set; }
+        public int PermissionTypeId { get; set; }
 
         // Ruta de la evidencia (string): Puede ser nula, longitud limitada
         [StringLength(255, ErrorMessage = "La evidencia no puede exceder los 255 caracteres.")]
-        public string? Evidencia { get; set; }
+        public string? Evidence { get; set; }
 
         // Archivo de evidencia (IFormFile): Es opcional, por lo que ya es nullable
         public IFormFile? EvidenceFile { get; set; }
 
-        // Goce de sueldo (opcional, editable solo por Administrador/Autorizador en edición)
-        public bool? Goce { get; set; }
+        // WithPay de sueldo (opcional, editable solo por Administrator/Authorizer en edición)
+        public bool? WithPay { get; set; }
 
         // Campos temporales para la UI (no se guardan en la base de datos)
         [DataType(DataType.Date)]
-        public DateTime? Fecha1Date { get; set; }
+        public DateTime? StartDateOnly { get; set; }
 
         // Cambiar TimeSpan a string para compatibilidad con input type="time"
         [DataType(DataType.Time)]
-        public string? Hora1Time { get; set; }
+        public string? StartTime { get; set; }
 
         [DataType(DataType.Date)]
-        public DateTime? Fecha2Date { get; set; }
+        public DateTime? EndDateOnly { get; set; }
 
         [DataType(DataType.Time)]
-        public string? Hora2Time { get; set; }
+        public string? EndTime { get; set; }
 
-        // Usuario que solicita (opcional, prellenado en creación, de solo lectura en edición)
-        public int? IdUsuarioSolicita { get; set; }
+        // User que solicita (opcional, prellenado en creación, de solo lectura en edición)
+        public int? RequestingUserId { get; set; }
 
-        // Usuario que crea (opcional, prellenado en creación)
-        public int? IdUsuarioCrea { get; set; }
+        // User que crea (opcional, prellenado en creación)
+        public int? CreatedByUserId { get; set; }
     }
 }

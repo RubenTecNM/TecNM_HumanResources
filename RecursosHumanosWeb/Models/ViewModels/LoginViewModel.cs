@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace RecursosHumanosWeb.Models.ViewModels
 {
@@ -7,12 +7,12 @@ namespace RecursosHumanosWeb.Models.ViewModels
         [Required(ErrorMessage = "El correo es obligatorio")]
         [RegularExpression(@"^[^@\s]+@monclova\.tecnm\.mx$",
          ErrorMessage = "El correo debe pertenecer al dominio monclova.tecnm.mx")]
-        [Display(Name = "Correo Electr&oacute;nico")]
-        public string Correo { get; set; }
+        [Display(Name = "Email Electr&oacute;nico")]
+        public string Email { get; set; }
 
         [Required(ErrorMessage = "La contrase&ntilde;a es obligatoria")]
         [Display(Name = "Contrase&ntilde;a")]
-        public string Clave { get; set; }
+        public string Password { get; set; }
 
         public bool RememberMe { get; set; }
         public string? ReturnUrl { get; set; }

@@ -5,69 +5,67 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace RecursosHumanosWeb.Models;
 
 /// <summary>
-/// Clase base abstracta para todas las entidades del dominio.
-/// Centraliza los campos de auditoría y el control de estado, evitando duplicación
-/// y garantizando consistencia en todas las tablas.
+/// Abstract base class for all domain entities.
+/// Centralizes the audit fields and status control, avoiding duplication
+/// and guaranteeing consistency across all tables.
 /// </summary>
 public abstract class BaseEntity
 {
     /// <summary>
-    /// Clave primaria autoincremental.
+    /// Auto-incremental primary key.
     /// </summary>
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     /// <summary>
-    /// Indica si el registro está activo (true) o fue dado de baja lógica (false).
+    /// Indicates whether the record is active (true) or was soft-deleted (false).
     /// </summary>
     [Required]
-    public bool Estatus { get; set; } = true;
+    public bool Status { get; set; } = true;
 
     // ──────────────────────────────────────────────────────────────
-    // CAMPOS DE AUDITORÍA - CREACIÓN
+    // AUDIT FIELDS - CREATION
     // ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Fecha y hora en que se creó el registro. Se asigna automáticamente.
+    /// Date and time when the record was created. Assigned automatically.
     /// </summary>
     [Required]
-    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     /// <summary>
-    /// ID del usuario que creó el registro. Llave foránea hacia Usuario.
+    /// ID of the user who created the record. Foreign key to User.
     /// </summary>
     [Required]
-    public int IdUsuarioCrea { get; set; }
+    public int CreatedByUserId { get; set; }
 
     // ──────────────────────────────────────────────────────────────
-    // CAMPOS DE AUDITORÍA - MODIFICACIÓN
-    // ──────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Fecha y hora de la última modificación. Null si nunca se ha modificado.
-    /// </summary>
-    public DateTime? FechaModificacion { get; set; }
-
-    /// <summary>
-    /// ID del usuario que realizó la última modificación. Null si nunca se ha modificado.
-    /// </summary>
-    public int? IdUsuarioModifica { get; set; }
-
-    // ──────────────────────────────────────────────────────────────
-    // PROPIEDADES DE NAVEGACIÓN
-    // Se definen como virtual para permitir lazy loading.
-    // Las clases hijas deben configurar el [ForeignKey] en OnModelCreating
-    // si EF Core no puede inferirlo automáticamente.
+    // AUDIT FIELDS - MODIFICATION
     // ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Navegación hacia el usuario que creó el registro.
+    /// Date and time of the last modification. Null if never modified.
     /// </summary>
-    public virtual Usuario? IdUsuarioCreaNavigation { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
-    /// Navegación hacia el usuario que modificó el registro por última vez.
+    /// ID of the user who performed the last modification. Null if never modified.
     /// </summary>
-    public virtual Usuario? IdUsuarioModificaNavigation { get; set; }
+    public int? UpdatedByUserId { get; set; }
+
+    // ──────────────────────────────────────────────────────────────
+    // NAVIGATION PROPERTIES
+    // Defined as virtual to allow lazy loading.
+    // ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Navigation to the user who created the record.
+    /// </summary>
+    public virtual User? CreatedByUser { get; set; }
+
+    /// <summary>
+    /// Navigation to the user who last modified the record.
+    /// </summary>
+    public virtual User? UpdatedByUser { get; set; }
 }
