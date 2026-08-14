@@ -1,39 +1,103 @@
 /* ==========================================================================
    VIEWS/PERMISOS/DETAILS.CSS
-   Styles for the Permission Details read-only view.
+   Permiso Details — mirrors the spacing and structure of the Index view
    ========================================================================== */
 
-/* The details view currently inherits from _details.css global module.
-   Add any overrides or Permiso-specific detail styles below. */
-
-/* --- Container width for uniform distribution --- */
-.details-container {
-   max-width: 1200px;
-   margin: 0 auto;
-   padding: 0 1rem;
+/* Fills the same area as index-container — no max-width clamp */
+.details-page-wrapper {
+   width: 100%;
 }
 
-/* --- Enhance Shadow --- */
+/* Outer card: same radius as premium page-header-v2 cards used in Index */
 .details-card {
-   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+   border-radius: var(--radius-xl) !important;
+   border: 1px solid var(--border-soft);
+   box-shadow: var(--shadow-md);
 }
 
+/* Header fills the top of the card with correct top rounding */
 .details-header-v2 {
-   color: var(--white);
+   border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
 }
 
-.details-header-v2 .h4,
-.details-header-v2 .page-title,
-.details-header-v2 .text-white {
-   color: var(--white) !important;
+/* ---- Tinted Info Cards ---- */
+.info-card {
+   border: 1px solid var(--border-soft);
+   transition: box-shadow var(--t-fast);
 }
 
-/* --- Expand Motivo de Ausencia --- */
-.motivo-box {
-   min-height: 120px;
+.info-card:hover {
+   box-shadow: var(--shadow-md);
+}
+
+.info-card-purple {
+   background: rgba(124, 58, 237, 0.04);
+   border-color: rgba(124, 58, 237, 0.12);
+}
+
+.info-card-indigo {
+   background: rgba(37, 99, 235, 0.04);
+   border-color: rgba(37, 99, 235, 0.12);
+}
+
+.info-card-green {
+   background: rgba(16, 185, 129, 0.04);
+   border-color: rgba(16, 185, 129, 0.12);
+}
+
+.info-card-red {
+   background: rgba(239, 68, 68, 0.04);
+   border-color: rgba(239, 68, 68, 0.12);
+}
+
+/* ---- Icon Circles ---- */
+.icon-circle {
+   width: 34px;
+   height: 34px;
+   border-radius: 50%;
    display: flex;
    align-items: center;
-   padding: 1.5rem !important;
+   justify-content: center;
+   flex-shrink: 0;
 }
 
-/* Inherits premium styles from global _components.css */
+.purple-circle {
+   background: rgba(124, 58, 237, 0.1);
+   color: #7c3aed;
+}
+
+.indigo-circle {
+   background: rgba(37, 99, 235, 0.1);
+   color: #2563eb;
+}
+
+.green-circle {
+   background: rgba(16, 185, 129, 0.1);
+   color: #10b981;
+}
+
+.red-circle {
+   background: rgba(239, 68, 68, 0.1);
+   color: #ef4444;
+}
+
+/* ---- Audit ---- */
+.audit-card {
+   border: 1px solid var(--border-soft);
+}
+
+.audit-icon {
+   width: 36px;
+   height: 36px;
+   border-radius: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   flex-shrink: 0;
+   font-size: 0.85rem;
+}
+
+/* ---- Section title ---- */
+.section-title {
+   margin-bottom: 1rem;
+}
