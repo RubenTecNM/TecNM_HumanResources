@@ -16,7 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RecursosHumanosWeb\RecursosHumanosWeb.csproj" />
+    <ProjectReference Include="..\RecursosHumanosWeb.Core\RecursosHumanosWeb.Core.csproj" />
+    <ProjectReference Include="..\RecursosHumanosWeb.Data\RecursosHumanosWeb.Data.csproj" />
+    <ProjectReference Include="..\RecursosHumanosWeb.Crosscutting\RecursosHumanosWeb.Crosscutting.csproj" />
+    <ProjectReference Include="..\RecursosHumanosWeb.Services\RecursosHumanosWeb.Services.csproj" />
   </ItemGroup>
 
   <ItemGroup>

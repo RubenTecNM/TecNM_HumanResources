@@ -11,9 +11,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RecursosHumanosWeb.Core\RecursosHumanosWeb.Core.csproj" />
+    <ProjectReference Include="..\RecursosHumanosWeb.Data\RecursosHumanosWeb.Data.csproj" />
+    <ProjectReference Include="..\RecursosHumanosWeb.Crosscutting\RecursosHumanosWeb.Crosscutting.csproj" />
+    <ProjectReference Include="..\RecursosHumanosWeb.Services\RecursosHumanosWeb.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
-    <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.7">

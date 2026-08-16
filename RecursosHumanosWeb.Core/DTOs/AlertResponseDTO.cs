@@ -19,7 +19,7 @@ namespace RecursosHumanosWeb.Models.DTOs
 
         // Datos adicionales
         public object Data { get; set; }
-        public Dictionary<string, string[]> Errors { get; internal set; }
+        public Dictionary<string, string[]> Errors { get; set; }
 
         // =========================================================
         // 1. Constructor por defecto: Necesario para la deserialización JSON

@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Models;
 
 namespace RecursosHumanosWeb.Services
