@@ -145,7 +145,7 @@ function createAreaChart() {
         series: [
             { name: 'Con Goce', data: trend.map(t => t.Approved || 0), color: '#10b981' },
             { name: 'Sin Goce', data: trend.map(t => t.Pending || 0), color: '#f59e0b' },
-            { name: 'Total', data: trend.map(t => t.Total || 0), color: '#3b82f6' }
+            { name: 'Total', data: trend.map(t => t.Total || 0), color: '#1B396A' }
         ],
         xaxis: {
             categories: trend.map(t => t.Month || ''),
@@ -476,7 +476,7 @@ function createHeatmap() {
         .style("cursor", "pointer")
         .style("opacity", 0)
         .on("mouseover", function (event, d) {
-            d3.select(this).style("stroke", "#3b82f6").style("stroke-width", 3);
+            d3.select(this).style("stroke", "#1B396A").style("stroke-width", 3);
         })
         .on("mouseout", function () {
             d3.select(this).style("stroke", "white").style("stroke-width", 2);

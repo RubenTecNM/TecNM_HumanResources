@@ -36,7 +36,7 @@
     justify-content: center;
     color: var(--white);
     font-size: 2rem;
-    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 10px 20px rgba(27, 57, 106, 0.3);
 }
 
 .login-title {
@@ -100,5 +100,5 @@
 
 .login-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 10px 25px rgba(27, 57, 106, 0.4);
 }

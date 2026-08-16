@@ -293,7 +293,7 @@
         if (elements.fileUploadArea) {
             elements.fileUploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                elements.fileUploadArea.style.borderColor = '#3b82f6';
+                elements.fileUploadArea.style.borderColor = '#1B396A';
             });
 
             elements.fileUploadArea.addEventListener('dragleave', () => {

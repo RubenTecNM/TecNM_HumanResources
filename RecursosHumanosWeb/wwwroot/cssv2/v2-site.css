@@ -13,6 +13,7 @@
    ========================================================================== */
 
 /* 1. Core: Tokens, Reset, Utilities */
+@import url('core/_tecnm-tokens.css');
 @import url('core/_variables.css');
 @import url('core/_base.css');
 
@@ -20,6 +21,7 @@
 @import url('layout/_layout.css');
 
 /* 3. Components: Reusable UI Library */
+@import url('components/_tecnm-components.css');
 @import url('components/_components.css');
 @import url('components/_forms.css');
 @import url('components/_details.css');

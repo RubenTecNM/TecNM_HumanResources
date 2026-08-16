@@ -47,7 +47,7 @@
 
 .card-header-custom,
 .filter-header-premium {
-    background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, var(--white) 100%);
+    background: linear-gradient(90deg, rgba(27, 57, 106, 0.05) 0%, var(--white) 100%);
     border-bottom: 1px solid var(--border-soft);
     border-left: 4px solid var(--primary-500);
     padding: 1rem 1.5rem;
@@ -204,14 +204,14 @@
 }
 
 .v2-badge-primary {
-    background-color: rgba(59, 130, 246, 0.1);
-    color: #1e40af;
-    border-color: rgba(59, 130, 246, 0.2);
+    background-color: rgba(27, 57, 106, 0.1);
+    color: #0F2548;
+    border-color: rgba(27, 57, 106, 0.2);
 }
 
 .v2-badge-primary .v2-badge-dot {
-    background-color: #3b82f6;
-    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    background-color: #1B396A;
+    box-shadow: 0 0 8px rgba(27, 57, 106, 0.5);
 }
 
 /* --- Input Utilities --- */
@@ -246,7 +246,7 @@
 .filter-input-pill:focus {
     border-color: var(--primary-500);
     background: var(--white);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 4px rgba(27, 57, 106, 0.1);
 }
 
 /* --- Action Buttons (Enhanced) --- */
@@ -278,7 +278,7 @@
 .btn-view:hover {
     color: var(--primary-600);
     border-color: var(--primary-300);
-    background: rgba(37, 99, 235, 0.05);
+    background: rgba(27, 57, 106, 0.05);
 }
 
 .btn-edit:hover {
@@ -465,10 +465,10 @@
 }
 
 .v2-pagination .page-item.active .page-link {
-    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-    border-color: #2563EB;
+    background: linear-gradient(135deg, #1B396A 0%, #1B396A 100%);
+    border-color: #1B396A;
     color: var(--white);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    box-shadow: 0 4px 12px rgba(27, 57, 106, 0.25);
 }
 
 .v2-pagination .page-item.disabled .page-link {
@@ -666,7 +666,7 @@
     right: -10%;
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(27, 57, 106, 0.15) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
 }

@@ -151,7 +151,7 @@
     display: block;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--text-dark, #0f172a);
+    color: var(--text-dark, #1E293B);
     margin-bottom: 0.5rem;
 }
 
@@ -195,7 +195,7 @@
 .input-wrapper .form-control-v2:focus,
 .form-control-v2:focus {
     border-color: var(--primary-500);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    box-shadow: 0 0 0 4px rgba(27, 57, 106, 0.12);
     outline: none;
     background: var(--white);
     transform: translateY(-1px);
@@ -232,7 +232,7 @@
 
 .textarea-v2:focus {
     border-color: var(--primary-500);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+    box-shadow: 0 0 0 4px rgba(27, 57, 106, 0.12);
     outline: none;
     transform: translateY(-1px);
 }
@@ -303,7 +303,7 @@
 .permission-type-card.selected .type-label {
     border-color: var(--primary-600);
     background: var(--primary-50);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 4px rgba(27, 57, 106, 0.1);
 }
 
 .type-icon {
@@ -317,13 +317,13 @@
     justify-content: center;
     font-size: 1.4rem;
     margin-bottom: 1rem;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 12px rgba(27, 57, 106, 0.3);
     transition: var(--t-spring);
 }
 
 .permission-type-card:hover .type-icon {
     transform: scale(1.1) rotate(5deg);
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 8px 20px rgba(27, 57, 106, 0.4);
 }
 
 /* --- Evidence File Upload --- */

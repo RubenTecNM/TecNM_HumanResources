@@ -1,0 +1,38 @@
+/* ==========================================================================
+   V2-TECNM-TOKENS.CSS
+   Institutional Design Tokens - Manual de Identidad Gráfica TecNM 2024
+   Panther series: --tecnm-* tokens + remapped v2 palette anchors
+   Reference: https://iguala.tecnm.mx/pdf/Manual_Identidad_Grafica_TecNM_2024.pdf
+   ========================================================================== */
+
+:root {
+    /* --- Institutional Brand Colors (Pantone 288 C / Pantone 117 C) --- */
+    --tecnm-blue-primary: #1B396A;      /* Dominant Header/Navbar */
+    --tecnm-blue-dark: #0F2548;         /* Footers & active states */
+    --tecnm-blue-hover: #244B88;        /* Interactive hover state */
+    --tecnm-gold-accent: #C5A059;       /* Institutional Accent/Borders */
+    --tecnm-gold-hover: #D4AF37;        /* Gold highlight hover */
+    --tecnm-gold-light: #F7F3E9;        /* Soft gold container fill */
+
+    /* --- Neutral Background & Surface Palette --- */
+    --tecnm-bg-main: #F4F6F9;           /* App background tint */
+    --tecnm-surface-white: #FFFFFF;     /* Cards, Modals, Form Containers */
+    --tecnm-border-color: #E2E8F0;      /* Standard card and table borders */
+    --tecnm-border-focus: #1B396A;      /* Input focus indicator */
+
+    /* --- Typography Colors --- */
+    --tecnm-text-primary: #1E293B;      /* Body & Headline text (High contrast) */
+    --tecnm-text-secondary: #64748B;    /* Subtitles, hints & captions */
+    --tecnm-text-on-blue: #FFFFFF;      /* White text over TecNM blue */
+    --tecnm-text-on-gold: #1B396A;      /* Dark text over TecNM gold */
+
+    /* --- Functional / Semantic Status Palette --- */
+    --tecnm-status-approved-bg: #D1FAE5;
+    --tecnm-status-approved-text: #065F46;
+    --tecnm-status-pending-bg: #FEF3C7;
+    --tecnm-status-pending-text: #92400E;
+    --tecnm-status-rejected-bg: #FEE2E2;
+    --tecnm-status-rejected-text: #991B1B;
+    --tecnm-status-info-bg: #E0F2FE;
+    --tecnm-status-info-text: #075985;
+}

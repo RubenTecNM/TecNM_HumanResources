@@ -60,12 +60,8 @@
 }
 
 .navbar-side--expanded .navbar-side__brand {
-    justify-content: flex-end !important;
-    padding-right: 1rem !important;
-}
-
-.navbar-side--expanded .navbar-side__toggle i {
-    transform: rotate(90deg);
+    justify-content: center !important;
+    padding-right: 0 !important;
 }
 
 .navbar-side__menu {
@@ -213,7 +209,7 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle 600px at 20% 30%, rgba(59, 130, 246, 0.15), transparent),
+    background: radial-gradient(circle 600px at 20% 30%, rgba(27, 57, 106, 0.15), transparent),
         radial-gradient(circle 500px at 80% 70%, rgba(148, 163, 184, 0.12), transparent);
     animation: v2-gradientShift 25s ease-in-out infinite;
 }
@@ -242,7 +238,7 @@
 .glow-1 {
     width: 400px;
     height: 400px;
-    background: radial-gradient(circle, #3b82f6, transparent);
+    background: radial-gradient(circle, #1B396A, transparent);
     top: 10%;
     left: 5%;
     animation: glowPulse 8s ease-in-out infinite;
@@ -251,7 +247,7 @@
 .glow-2 {
     width: 300px;
     height: 300px;
-    background: radial-gradient(circle, #6366f1, transparent);
+    background: radial-gradient(circle, #C5A059, transparent);
     bottom: 15%;
     right: 10%;
     animation: glowPulse 10s ease-in-out infinite reverse;
@@ -289,13 +285,13 @@
 }
 
 .wave-1 {
-    stroke: rgba(59, 130, 246, 0.08);
+    stroke: rgba(27, 57, 106, 0.08);
     bottom: 20px;
     animation: waveFloat 12s ease-in-out infinite;
 }
 
 .wave-2 {
-    stroke: rgba(99, 102, 241, 0.06);
+    stroke: rgba(197, 160, 89, 0.06);
     bottom: 0;
     animation: waveFloat 16s ease-in-out infinite reverse;
 }
@@ -345,7 +341,7 @@
     position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-xl), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(27, 57, 106, 0.2);
 }
 
 .header-content {

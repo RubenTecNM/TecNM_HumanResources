@@ -12,7 +12,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -47,6 +47,7 @@
     @{
         var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
         var currentCtrl = ViewContext.RouteData.Values["Controller"]?.ToString();
+        var sidebarExpanded = Context.Request.Cookies["sidebar-expanded"] == "true";
     }
 
     @if (isAuthenticated)
@@ -81,7 +82,7 @@
         <div class="offcanvas offcanvas-start mobile-drawer" tabindex="-1" id="mobileDrawer" aria-labelledby="mobileDrawerLabel">
             <div class="offcanvas-header">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="user-avatar-circle shadow-sm" style="width: 48px; height: 48px; border: 2px solid rgba(59, 130, 246, 0.2); background: rgba(59, 130, 246, 0.1); color: var(--primary-dark);">
+                    <div class="user-avatar-circle shadow-sm" style="width: 48px; height: 48px; border: 2px solid rgba(27, 57, 106, 0.2); background: rgba(27, 57, 106, 0.1); color: var(--primary-dark);">
                         @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
                     </div>
                     <div>
@@ -149,7 +150,7 @@
             </div>
         </div>
 
-        <aside class="navbar-side" id="desktopSidebar">
+        <aside class="navbar-side @(sidebarExpanded ? "navbar-side--expanded" : "")" id="desktopSidebar">
             <div class="navbar-side__brand" style="display: flex; justify-content: center; padding: 1.25rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 0.75rem;">
                 <button type="button" id="sidebarToggle" class="navbar-side__toggle" aria-label="Expandir menú lateral" aria-expanded="false" title="Expandir menú lateral">
                     <i class="fas fa-layer-group"></i>
@@ -230,7 +231,7 @@
         </aside>
     }
 
-    <div id="mainContent" class="container @(isAuthenticated ? "main-content-shifted" : "mt-4")">
+    <div id="mainContent" class="container @(isAuthenticated ? "main-content-shifted" : "mt-4") @(isAuthenticated && sidebarExpanded ? "main-content-shifted--expanded" : "")">
         <main role="main" class="main-content">
             @if (TempData["ErrorAlert"] != null)
             {
@@ -260,17 +261,21 @@
             const mainContent = document.getElementById('mainContent');
 
             if (sidebar && sidebarToggle && mainContent) {
-                const storageKey = 'sidebar-expanded';
+                const cookieName = 'sidebar-expanded';
+                const readCookie = (name) => {
+                    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+                    return match ? decodeURIComponent(match[2]) : null;
+                };
                 const setSidebarState = (expanded) => {
                     sidebar.classList.toggle('navbar-side--expanded', expanded);
                     mainContent.classList.toggle('main-content-shifted--expanded', expanded);
                     sidebarToggle.setAttribute('aria-expanded', expanded.toString());
                     sidebarToggle.setAttribute('aria-label', expanded ? 'Contraer menú lateral' : 'Expandir menú lateral');
                     sidebarToggle.setAttribute('title', expanded ? 'Contraer menú lateral' : 'Expandir menú lateral');
-                    localStorage.setItem(storageKey, expanded.toString());
+                    document.cookie = cookieName + '=' + expanded + ';path=/;max-age=31536000;samesite=lax';
                 };
 
-                setSidebarState(localStorage.getItem(storageKey) === 'true');
+                setSidebarState(readCookie(cookieName) === 'true');
                 sidebarToggle.addEventListener('click', () => {
                     setSidebarState(!sidebar.classList.contains('navbar-side--expanded'));
                 });

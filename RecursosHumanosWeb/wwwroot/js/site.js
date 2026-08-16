@@ -4,6 +4,23 @@
 // 1. FUNCIONES AUXILIARES PARA MANEJO DE ALERTA Y VALIDACIÓN
 // ----------------------------------------------------------------------
 
+// ----------------------------------------------------------------------
+// FORMATO DE FECHA ESTÁNDAR TECNM (DD/NombreMes/YYYY)
+// Uso: window.formatTecNMDate(iso)
+// Ejemplo: '2026-08-10T14:00:00' -> '10/Agosto/2026'
+// ----------------------------------------------------------------------
+window.formatTecNMDate = function (iso) {
+    if (!iso) return '—';
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return iso;
+    const months = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${day}/${months[date.getMonth()]}/${date.getFullYear()}`;
+};
+
 /**
  * Limpia los mensajes de error de validación previos en el formulario.
  */

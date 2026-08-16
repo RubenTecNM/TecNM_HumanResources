@@ -134,7 +134,7 @@
 .form-control-v2:focus,
 .form-control:focus {
     border-color: var(--primary-500);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 4px rgba(27, 57, 106, 0.1);
     outline: none;
     background-color: var(--white);
 }
@@ -216,7 +216,7 @@
 
 .select2-container--default.select2-container--focus .select2-selection--single {
     border-color: var(--primary-500) !important;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+    box-shadow: 0 0 0 4px rgba(27, 57, 106, 0.1) !important;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow {
