@@ -9,13 +9,13 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 {
     [Route("api/Departments")]
     [ApiController]
-    public class DepartamentosApiController : ControllerBase
+    public class DepartmentsApiController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
         private readonly IMapper _mapper;
-        private readonly ILogger<DepartamentosApiController> _logger;
+        private readonly ILogger<DepartmentsApiController> _logger;
 
-        public DepartamentosApiController(HumanResourcesContext context, IMapper mapper, ILogger<DepartamentosApiController> logger)
+        public DepartmentsApiController(HumanResourcesContext context, IMapper mapper, ILogger<DepartmentsApiController> logger)
         {
             _context = context;
             _mapper = mapper;

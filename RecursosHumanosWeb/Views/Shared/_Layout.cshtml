@@ -110,6 +110,11 @@
                                 <i class="fas fa-users-cog"></i> Usuarios
                             </a>
                         </li>
+                        <li>
+                            <a asp-controller="Departments" asp-action="Index" class="drawer-link @(currentCtrl == "Departments" ? "active" : "")">
+                                <i class="fas fa-sitemap"></i> Departamentos
+                            </a>
+                        </li>
                     </authorize-section>
 
                     <authorize-section policy="AdminOnly">
@@ -144,11 +149,11 @@
             </div>
         </div>
 
-        <aside class="navbar-side">
+        <aside class="navbar-side" id="desktopSidebar">
             <div class="navbar-side__brand" style="display: flex; justify-content: center; padding: 1.25rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 0.75rem;">
-                <a asp-controller="Home" asp-action="Index" style="color: var(--primary-600); font-size: 1.75rem; text-decoration: none;">
+                <button type="button" id="sidebarToggle" class="navbar-side__toggle" aria-label="Expandir menú lateral" aria-expanded="false" title="Expandir menú lateral">
                     <i class="fas fa-layer-group"></i>
-                </a>
+                </button>
             </div>
 
             <ul class="navbar-side__menu">
@@ -170,6 +175,12 @@
                         <a asp-controller="User" asp-action="Index" class="navbar-side__link">
                             <i class="fas fa-users-cog"></i>
                             <span>Usuarios</span>
+                        </a>
+                    </li>
+                    <li class="navbar-side__item @(currentCtrl == "Departments" ? "active" : "")">
+                        <a asp-controller="Departments" asp-action="Index" class="navbar-side__link">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Departamentos</span>
                         </a>
                     </li>
                 </authorize-section>
@@ -219,7 +230,7 @@
         </aside>
     }
 
-    <div class="container @(isAuthenticated ? "main-content-shifted" : "mt-4")">
+    <div id="mainContent" class="container @(isAuthenticated ? "main-content-shifted" : "mt-4")">
         <main role="main" class="main-content">
             @if (TempData["ErrorAlert"] != null)
             {
@@ -244,6 +255,27 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('desktopSidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mainContent = document.getElementById('mainContent');
+
+            if (sidebar && sidebarToggle && mainContent) {
+                const storageKey = 'sidebar-expanded';
+                const setSidebarState = (expanded) => {
+                    sidebar.classList.toggle('navbar-side--expanded', expanded);
+                    mainContent.classList.toggle('main-content-shifted--expanded', expanded);
+                    sidebarToggle.setAttribute('aria-expanded', expanded.toString());
+                    sidebarToggle.setAttribute('aria-label', expanded ? 'Contraer menú lateral' : 'Expandir menú lateral');
+                    sidebarToggle.setAttribute('title', expanded ? 'Contraer menú lateral' : 'Expandir menú lateral');
+                    localStorage.setItem(storageKey, expanded.toString());
+                };
+
+                setSidebarState(localStorage.getItem(storageKey) === 'true');
+                sidebarToggle.addEventListener('click', () => {
+                    setSidebarState(!sidebar.classList.contains('navbar-side--expanded'));
+                });
+            }
+
             if ('scrollRestoration' in history) {
                 history.scrollRestoration = 'manual';
             }
