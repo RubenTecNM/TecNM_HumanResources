@@ -594,7 +594,7 @@ namespace RecursosHumanosWeb.Controllers
             public PermissionTypeFieldConfig Time2 { get; set; } = new();
         }
 
-        private static readonly Dictionary<int, PermissionTypeCardConfig> PermissionTypeCardConfigs = new()
+        public static readonly Dictionary<int, PermissionTypeCardConfig> PermissionTypeCardConfigs = new()
         {
             [1] = new PermissionTypeCardConfig
             {

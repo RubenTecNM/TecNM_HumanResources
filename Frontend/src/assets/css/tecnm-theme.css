@@ -1,0 +1,166 @@
+/* ============================================================
+   TecNM Graphic Identity - Design Tokens
+   Source: Manual de Identidad Gráfica TecNM 2024 (vault 08)
+   ============================================================ */
+
+:root {
+  /* Institutional Brand Colors */
+  --tecnm-blue-primary: #1B396A;
+  --tecnm-blue-dark: #0F2548;
+  --tecnm-blue-hover: #244B88;
+  --tecnm-gold-accent: #C5A059;
+  --tecnm-gold-hover: #D4AF37;
+  --tecnm-gold-light: #F7F3E9;
+
+  /* Neutral Background & Surface */
+  --tecnm-bg-main: #F4F6F9;
+  --tecnm-surface-white: #FFFFFF;
+  --tecnm-border-color: #E2E8F0;
+  --tecnm-border-focus: #1B396A;
+
+  /* Typography Colors */
+  --tecnm-text-primary: #1E293B;
+  --tecnm-text-secondary: #64748B;
+  --tecnm-text-on-blue: #FFFFFF;
+  --tecnm-text-on-gold: #1B396A;
+
+  /* Semantic (theme-aware) tokens: never dark-on-dark */
+  --tecnm-heading-color: #1B396A;
+  --tecnm-accent-text: #1B396A;
+  --tecnm-soft-hover: rgba(27, 57, 106, 0.05);
+  --tecnm-table-head-bg: #EAF0FB;
+  --tecnm-table-head-text: #1B396A;
+
+  /* Functional / Semantic Status */
+  --tecnm-status-approved-bg: #D1FAE5;
+  --tecnm-status-approved-text: #065F46;
+  --tecnm-status-pending-bg: #FEF3C7;
+  --tecnm-status-pending-text: #92400E;
+  --tecnm-status-rejected-bg: #FEE2E2;
+  --tecnm-status-rejected-text: #991B1B;
+  --tecnm-status-info-bg: #E0F2FE;
+  --tecnm-status-info-text: #075985;
+
+  /* Buttons */
+  --tecnm-danger: #DC2626;
+  --tecnm-danger-hover: #B91C1C;
+
+  /* Radii / Shadows / Transitions */
+  --tecnm-radius-sm: 0.375rem;
+  --tecnm-radius-md: 0.5rem;
+  --tecnm-radius-lg: 0.75rem;
+  --tecnm-radius-xl: 1rem;
+  --tecnm-radius-full: 9999px;
+
+  --tecnm-shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --tecnm-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --tecnm-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --tecnm-shadow-xl: 0 20px 50px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  --tecnm-transition: all 0.2s ease-in-out;
+  --tecnm-transition-fast: all 0.15s ease-in-out;
+  --tecnm-transition-spring: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Layout: collapsible sidebar */
+  --tecnm-nav-width: 88px;
+  --tecnm-nav-width-expanded: 240px;
+  --tecnm-header-height: 64px;
+
+  /* Spacing scale */
+  --tecnm-space-1: 0.25rem;
+  --tecnm-space-2: 0.5rem;
+  --tecnm-space-3: 0.75rem;
+  --tecnm-space-4: 1rem;
+  --tecnm-space-5: 1.25rem;
+  --tecnm-space-6: 1.5rem;
+  --tecnm-space-8: 2rem;
+  --tecnm-section-gap: 1.5rem;
+
+  /* Typography scale */
+  --tecnm-font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --tecnm-text-h1: 2.25rem;
+  --tecnm-text-h2: 1.75rem;
+  --tecnm-text-h3: 1.25rem;
+  --tecnm-text-h4: 1.1rem;
+  --tecnm-text-body: 1rem;
+  --tecnm-text-small: 0.875rem;
+}
+
+/* ============================================================
+   Theme: dark (Oscuro)
+   Reuses the deep-blue + gold palette of the login `tecnm-modern-bg`
+   ============================================================ */
+[data-theme='dark'] {
+  --tecnm-blue-primary: #2C4E8C;
+  --tecnm-blue-dark: #0A1A33;
+  --tecnm-blue-hover: #3B62A8;
+  --tecnm-gold-accent: #C5A059;
+  --tecnm-gold-hover: #D4AF37;
+  --tecnm-gold-light: rgba(197, 160, 89, 0.14);
+
+  --tecnm-bg-main: #0D1B33;
+  --tecnm-surface-white: #152440;
+  --tecnm-border-color: rgba(148, 163, 184, 0.24);
+  --tecnm-border-focus: #C5A059;
+
+  --tecnm-text-primary: #E6EDF7;
+  --tecnm-text-secondary: #9FB0C9;
+  --tecnm-text-on-blue: #F8FAFC;
+  --tecnm-text-on-gold: #1B396A;
+
+  --tecnm-heading-color: #E6EDF7;
+  --tecnm-accent-text: #9FC0F5;
+  --tecnm-soft-hover: rgba(159, 192, 245, 0.12);
+  --tecnm-table-head-bg: rgba(159, 192, 245, 0.14);
+  --tecnm-table-head-text: #E6EDF7;
+
+  --tecnm-status-approved-bg: rgba(16, 185, 129, 0.16);
+  --tecnm-status-approved-text: #34D399;
+  --tecnm-status-pending-bg: rgba(245, 158, 11, 0.16);
+  --tecnm-status-pending-text: #FBBF24;
+  --tecnm-status-rejected-bg: rgba(239, 68, 68, 0.16);
+  --tecnm-status-rejected-text: #F87171;
+  --tecnm-status-info-bg: rgba(14, 165, 233, 0.16);
+  --tecnm-status-info-text: #38BDF8;
+
+  --tecnm-danger: #F87171;
+  --tecnm-danger-hover: #EF4444;
+
+  --tecnm-shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --tecnm-shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --tecnm-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.55), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --tecnm-shadow-xl: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ============================================================
+   Theme: contrast (Alto contraste)
+   ============================================================ */
+[data-theme='contrast'] {
+  --tecnm-blue-primary: #003366;
+  --tecnm-blue-dark: #00214D;
+  --tecnm-blue-hover: #004a99;
+  --tecnm-gold-accent: #C5A059;
+  --tecnm-gold-hover: #D4AF37;
+  --tecnm-gold-light: #FFF3D6;
+
+  --tecnm-bg-main: #FFFFFF;
+  --tecnm-surface-white: #FFFFFF;
+  --tecnm-border-color: #000000;
+  --tecnm-border-focus: #003366;
+
+  --tecnm-text-primary: #000000;
+  --tecnm-text-secondary: #1A1A1A;
+  --tecnm-text-on-blue: #FFFFFF;
+  --tecnm-text-on-gold: #000000;
+
+  --tecnm-heading-color: #000000;
+  --tecnm-accent-text: #003366;
+  --tecnm-soft-hover: #E6EFFF;
+  --tecnm-table-head-bg: #000000;
+  --tecnm-table-head-text: #FFFFFF;
+
+  --tecnm-shadow-sm: none;
+  --tecnm-shadow-md: none;
+  --tecnm-shadow-lg: none;
+  --tecnm-shadow-xl: none;
+}

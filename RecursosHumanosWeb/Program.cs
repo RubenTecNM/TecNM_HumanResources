@@ -59,7 +59,9 @@ builder.Services.AddControllersWithViews(options =>
 {
     // Esto es vital para que el User 1 (que se creó a sí mismo) no rompa la página
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    options.JsonSerializerOptions.PropertyNamingPolicy = null; 
+    // El SPA consume respuestas en camelCase (axios) — caso: /api/PermissionTypes devolvía
+    // PascalCase (Id, Date1) y el frontend espera id/config/date1. 
+    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase; 
 });
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -282,7 +284,10 @@ app.Use(async (context, next) =>
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller}/{action}/{id?}");
+
+// SPA fallback: serve index.html for Vue Router routes that don't match MVC controllers
+app.MapFallbackToFile("index.html");
 
 // 5. Configurar Scalar API Documentation
 app.MapOpenApi();

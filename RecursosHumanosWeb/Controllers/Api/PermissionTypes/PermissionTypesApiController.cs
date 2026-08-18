@@ -29,16 +29,29 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
         {
             var permissionTypes = await _context.PermissionTypes
                 .Where(t => t.Status == true)
-                .Select(t => new
-                {
-                    t.Id,
-                    t.Description
-                })
+                .Select(t => new { t.Id, t.Description })
                 .ToListAsync();
 
             if (!permissionTypes.Any()) return NotFound("No se encontraron tipos de permiso activos.");
 
-            return Ok(permissionTypes);
+            var result = permissionTypes.Select(t => new
+            {
+                t.Id,
+                t.Description,
+                Config = PermissionController.PermissionTypeCardConfigs.TryGetValue(t.Id, out var cfg)
+                    ? new
+                    {
+                        cfg.Icon,
+                        cfg.Subtitle,
+                        Date1 = cfg.Date1,
+                        Date2 = cfg.Date2,
+                        Time1 = cfg.Time1,
+                        Time2 = cfg.Time2
+                    }
+                    : null
+            });
+
+            return Ok(result);
         }
 
         // GET: api/PermissionTypes/5
@@ -126,10 +139,10 @@ namespace RecursosHumanosWeb.Controllers.Api.PermissionTypes
             }
         }
 
-        // DELETE: api/PermissionTypes/5
-        [HttpDelete("{id}")]
+        // PUT: api/PermissionTypes/5/deactivate  (borrado LÓGICO: no existe DELETE físico)
+        [HttpPut("{id}/deactivate")]
         [ApiKeyAuthorize(TargetTable = "PermissionType", RequiredPermission = "Eliminar")]
-        public async Task<IActionResult> DeletePermissionType(int id)
+        public async Task<IActionResult> DeactivatePermissionType(int id)
         {
             var permissionType = await _context.PermissionTypes.FindAsync(id);
             if (permissionType == null) return NotFound();

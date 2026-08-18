@@ -21,6 +21,17 @@ namespace RecursosHumanosWeb.Filters
             var dbContext = context.HttpContext.RequestServices.GetRequiredService<HumanResourcesContext>();
             string? extractedApiKey = null;
 
+            // 0. SI EL USUARIO YA ESTÁ AUTENTICADO POR COOKIES/SESIÓN EN LA SPA, PERMITIR ACCESO
+            if (context.HttpContext.User?.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = context.HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdClaim, out int loggedUserId))
+                {
+                    context.HttpContext.Items["ApiUserId"] = loggedUserId;
+                }
+                return;
+            }
+
             // 1. INTENTAR OBTENER LA CLAVE DEL ENCABEZADO (MÉTODO PREFERIDO Y SEGURO)
             if (context.HttpContext.Request.Headers.TryGetValue(HeaderApiKeyName, out var headerApiKey))
             {
@@ -35,11 +46,10 @@ namespace RecursosHumanosWeb.Filters
             // 3. SI NO SE ENCONTRÓ EN NINGÚN LUGAR, NEGAR EL ACCESO
             if (string.IsNullOrEmpty(extractedApiKey))
             {
-                // Usamos UnauthorizedObjectResult para asegurar una respuesta API limpia (401)
                 context.Result = new UnauthorizedObjectResult(new
                 {
                     error = "Unauthorized",
-                    message = $"Se requiere el encabezado '{HeaderApiKeyName}' o el parámetro de URL '{QueryStringApiKeyName}'."
+                    message = $"Se requiere iniciar sesión o proporcionar el encabezado '{HeaderApiKeyName}'."
                 });
                 return;
             }

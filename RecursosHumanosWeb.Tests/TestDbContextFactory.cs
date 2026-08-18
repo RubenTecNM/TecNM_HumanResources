@@ -16,6 +16,7 @@ public static class TestDbContextFactory
         var options = new DbContextOptionsBuilder<HumanResourcesContext>()
             .UseInMemoryDatabase(dbName)
             .EnableSensitiveDataLogging()
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         return new HumanResourcesContext(options);
@@ -39,6 +40,11 @@ public static class TestDbContextFactory
     public static CutoffService CreateCutoffService(HumanResourcesContext context)
     {
         return new CutoffService(context, NullLogger<CutoffService>.Instance);
+    }
+
+    public static UserService CreateUserService(HumanResourcesContext context)
+    {
+        return new UserService(context, NullLogger<UserService>.Instance);
     }
 
     public static User CreateUser(string name, UserTypeEnum userType, int areaId = 1)

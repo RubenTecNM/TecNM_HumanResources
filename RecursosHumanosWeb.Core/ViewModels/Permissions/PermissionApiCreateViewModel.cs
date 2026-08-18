@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace RecursosHumanosWeb.Models.ViewModels.Permissions
 {
@@ -20,6 +21,10 @@ namespace RecursosHumanosWeb.Models.ViewModels.Permissions
         // El user solicitante se suele inferir, pero lo permitimos setear por si la API es usada por un sistema maestro
         public int? RequestingUserId { get; set; }
 
-        // Evidence por ahora no se incluye o podría ser base64
+        // Evidencia opcional (PDF) enviada por multipart/form-data
+        public IFormFile? EvidenceFile { get; set; }
+
+        // Confirmación de exceder el periodo (segundo intento tras el diálogo)
+        public bool? Confirmed { get; set; }
     }
 }

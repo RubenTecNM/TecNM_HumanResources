@@ -123,6 +123,26 @@ namespace RecursosHumanosWeb.Controllers
             return View();
         }
 
+        // Returns the current cookie-authenticated user identity so the SPA can
+        // read role claims (UserType) that drive menu visibility.
+        [HttpGet]
+        public IActionResult Me()
+        {
+            if (User.Identity?.IsAuthenticated != true)
+                return Unauthorized();
+
+            var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
+            var typeClaim = User.FindFirstValue("UserType") ?? "0";
+
+            return Json(new
+            {
+                Id = int.TryParse(idClaim, out var id) ? id : 0,
+                Name = User.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
+                Email = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
+                UserType = int.TryParse(typeClaim, out var type) ? type : 0
+            });
+        }
+
         // Función auxiliar para encriptar en SHA256
         private string ConvertirSha256(string texto)
         {

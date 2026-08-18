@@ -127,10 +127,10 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
             }
         }
 
-        // DELETE: api/Areas/5
-        [HttpDelete("{id}")]
+        // PUT: api/Areas/5/deactivate  (borrado LÓGICO: no existe DELETE físico)
+        [HttpPut("{id}/deactivate")]
         [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Eliminar")]
-        public async Task<IActionResult> DeleteArea(int id)
+        public async Task<IActionResult> DeactivateArea(int id)
         {
             var area = await _context.Areas.FindAsync(id);
             if (area == null) return NotFound();

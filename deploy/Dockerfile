@@ -1,4 +1,14 @@
-# Stage 1: Build
+# Stage 1: Build Vue frontend
+FROM node:22-alpine AS frontend-build
+RUN corepack enable && corepack prepare pnpm@9 --activate
+WORKDIR /app/Frontend
+COPY Frontend/package.json Frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY Frontend/src ./src
+COPY Frontend/index.html Frontend/tsconfig.json Frontend/vite.config.ts Frontend/.env* ./
+RUN pnpm build
+
+# Stage 2: Build .NET backend
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -11,22 +21,19 @@ COPY . .
 WORKDIR "/src/RecursosHumanosWeb"
 RUN dotnet build "RecursosHumanosWeb.csproj" -c Release -o /app/build
 
-# Stage 2: Publish
+# Stage 3: Publish
 FROM build AS publish
 RUN dotnet publish "RecursosHumanosWeb.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Stage 3: Runtime
+# Stage 4: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY --from=frontend-build /app/Frontend/dist ./wwwroot
 COPY db/inserts.sql ./db/inserts.sql
 COPY db/schema_objects.sql ./db/schema_objects.sql
 COPY db/upgrade ./db/upgrade
 
-# Install dependencies for SQL Client if needed
-# RUN apt-get update && apt-get install -y libicu-dev && rm -rf /var/lib/apt/lists/*
-
-# Configuración de red para el contenedor
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 

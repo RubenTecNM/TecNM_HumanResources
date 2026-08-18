@@ -2663,6 +2663,80 @@
         "frameworkReferences": [
           "Microsoft.AspNetCore.App"
         ]
+      },
+      "RecursosHumanosWeb.Core/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "X.PagedList": "10.5.9"
+        },
+        "compile": {
+          "bin/placeholder/RecursosHumanosWeb.Core.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/RecursosHumanosWeb.Core.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "RecursosHumanosWeb.Crosscutting/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "AutoMapper": "12.0.1",
+          "RecursosHumanosWeb.Core": "1.0.0",
+          "RecursosHumanosWeb.Data": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/RecursosHumanosWeb.Crosscutting.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/RecursosHumanosWeb.Crosscutting.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "RecursosHumanosWeb.Data/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore.SqlServer": "9.0.7",
+          "RecursosHumanosWeb.Core": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/RecursosHumanosWeb.Data.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/RecursosHumanosWeb.Data.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
+      },
+      "RecursosHumanosWeb.Services/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "AutoMapper": "12.0.1",
+          "ClosedXML": "0.105.0",
+          "Microsoft.Extensions.Caching.Memory": "9.0.7",
+          "Newtonsoft.Json": "13.0.3",
+          "RecursosHumanosWeb.Core": "1.0.0",
+          "RecursosHumanosWeb.Crosscutting": "1.0.0",
+          "RecursosHumanosWeb.Data": "1.0.0",
+          "X.PagedList": "10.5.9"
+        },
+        "compile": {
+          "bin/placeholder/RecursosHumanosWeb.Services.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/RecursosHumanosWeb.Services.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.AspNetCore.App"
+        ]
       }
     }
   },
@@ -6915,17 +6989,41 @@
         "x.pagedlist.mvc.core.10.5.9.nupkg.sha512",
         "x.pagedlist.mvc.core.nuspec"
       ]
+    },
+    "RecursosHumanosWeb.Core/1.0.0": {
+      "type": "project",
+      "path": "../RecursosHumanosWeb.Core/RecursosHumanosWeb.Core.csproj",
+      "msbuildProject": "../RecursosHumanosWeb.Core/RecursosHumanosWeb.Core.csproj"
+    },
+    "RecursosHumanosWeb.Crosscutting/1.0.0": {
+      "type": "project",
+      "path": "../RecursosHumanosWeb.Crosscutting/RecursosHumanosWeb.Crosscutting.csproj",
+      "msbuildProject": "../RecursosHumanosWeb.Crosscutting/RecursosHumanosWeb.Crosscutting.csproj"
+    },
+    "RecursosHumanosWeb.Data/1.0.0": {
+      "type": "project",
+      "path": "../RecursosHumanosWeb.Data/RecursosHumanosWeb.Data.csproj",
+      "msbuildProject": "../RecursosHumanosWeb.Data/RecursosHumanosWeb.Data.csproj"
+    },
+    "RecursosHumanosWeb.Services/1.0.0": {
+      "type": "project",
+      "path": "../RecursosHumanosWeb.Services/RecursosHumanosWeb.Services.csproj",
+      "msbuildProject": "../RecursosHumanosWeb.Services/RecursosHumanosWeb.Services.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
       "AutoMapper >= 12.0.1",
       "AutoMapper.Extensions.Microsoft.DependencyInjection >= 12.0.1",
-      "ClosedXML >= 0.105.0",
       "Microsoft.AspNetCore.OpenApi >= 9.0.0",
       "Microsoft.EntityFrameworkCore.SqlServer >= 9.0.7",
       "Microsoft.EntityFrameworkCore.Tools >= 9.0.7",
       "Microsoft.VisualStudio.Web.CodeGeneration.Design >= 9.0.0",
+      "Newtonsoft.Json >= 13.0.3",
+      "RecursosHumanosWeb.Core >= 1.0.0",
+      "RecursosHumanosWeb.Crosscutting >= 1.0.0",
+      "RecursosHumanosWeb.Data >= 1.0.0",
+      "RecursosHumanosWeb.Services >= 1.0.0",
       "Scalar.AspNetCore >= 2.0.1",
       "X.PagedList.Mvc.Core >= 10.5.9"
     ]
@@ -6936,11 +7034,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/axel/Projects/itsmRH_GestionPermisos-develop/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
+      "projectUniqueName": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
       "projectName": "RecursosHumanosWeb",
-      "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos-develop/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
+      "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb/RecursosHumanosWeb.csproj",
       "packagesPath": "/home/axel/.nuget/packages/",
-      "outputPath": "/home/axel/Projects/itsmRH_GestionPermisos-develop/RecursosHumanosWeb/obj/",
+      "outputPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/axel/.nuget/NuGet/NuGet.Config"
@@ -6954,7 +7052,20 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Core/RecursosHumanosWeb.Core.csproj": {
+              "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Core/RecursosHumanosWeb.Core.csproj"
+            },
+            "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Crosscutting/RecursosHumanosWeb.Crosscutting.csproj": {
+              "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Crosscutting/RecursosHumanosWeb.Crosscutting.csproj"
+            },
+            "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Data/RecursosHumanosWeb.Data.csproj": {
+              "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Data/RecursosHumanosWeb.Data.csproj"
+            },
+            "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Services/RecursosHumanosWeb.Services.csproj": {
+              "projectPath": "/home/axel/Projects/itsmRH_GestionPermisos/RecursosHumanosWeb.Services/RecursosHumanosWeb.Services.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -6981,10 +7092,6 @@
             "target": "Package",
             "version": "[12.0.1, )"
           },
-          "ClosedXML": {
-            "target": "Package",
-            "version": "[0.105.0, )"
-          },
           "Microsoft.AspNetCore.OpenApi": {
             "target": "Package",
             "version": "[9.0.0, )"
@@ -7002,6 +7109,10 @@
           "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
             "target": "Package",
             "version": "[9.0.0, )"
+          },
+          "Newtonsoft.Json": {
+            "target": "Package",
+            "version": "[13.0.3, )"
           },
           "Scalar.AspNetCore": {
             "target": "Package",

@@ -8,6 +8,8 @@ namespace RecursosHumanosWeb.Tests;
 
 public class PermissionServiceTests
 {
+    // ── Tests base (8) ──────────────────────────────────────────────────────
+
     [Fact]
     public async Task CreatePermissionAsync_ConAuthorizador_LanzaInvalidOperation()
     {
@@ -165,5 +167,150 @@ public class PermissionServiceTests
         var page = await service.GetPermissionsPagedAsync(empleado.Id, null, "", null, null, null, 1, 10);
 
         Assert.Equal(1, page.TotalItemCount);
+    }
+
+    // ── Tests nuevos Fase 6 (+6) ─────────────────────────────────────────────
+
+    [Fact]
+    public async Task AuthorizePermissionAsync_ApruebaConGoce()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(AuthorizePermissionAsync_ApruebaConGoce));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var jefe = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Authorizer);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var perm = TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var ok = await service.AuthorizePermissionAsync(perm.Id, jefe.Id, aprobado: true, withPay: true, null);
+
+        Assert.True(ok);
+        var actual = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == perm.Id);
+        Assert.Equal(PermissionStatusEnum.Approved, (PermissionStatusEnum)actual.PermissionStatusTypeId);
+        Assert.True(actual.WithPay);
+        Assert.Equal(jefe.Id, actual.AuthorizingUserId);
+    }
+
+    [Fact]
+    public async Task AuthorizePermissionAsync_ApruebaSinGoce()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(AuthorizePermissionAsync_ApruebaSinGoce));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var jefe = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Authorizer);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var perm = TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, withPay: true);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var ok = await service.AuthorizePermissionAsync(perm.Id, jefe.Id, aprobado: true, withPay: false, null);
+
+        Assert.True(ok);
+        var actual = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == perm.Id);
+        Assert.Equal(PermissionStatusEnum.Approved, (PermissionStatusEnum)actual.PermissionStatusTypeId);
+        // aprobado=true && withPay=false → WithPay debe ser false
+        Assert.False(actual.WithPay);
+    }
+
+    [Fact]
+    public async Task CanUserAccessPermiso_Propietario_AdminY_AutorizadorAreaTienenAcceso()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(CanUserAccessPermiso_Propietario_AdminY_AutorizadorAreaTienenAcceso));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var admin = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Administrator);
+        var jefe = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Authorizer);
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        // Permiso pertenece al empleado, mismo área que el jefe (areaId=1 para todos)
+        var perm = TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        // Cargar con navegación
+        var permCargado = await context.Permissions
+            .Include(p => p.RequestingUser)
+            .SingleAsync(p => p.Id == perm.Id);
+
+        // El propietario puede acceder
+        Assert.True(service.CanUserAccessPermiso(empleado.Id, (int)UserTypeEnum.Employee, permCargado));
+
+        // El admin puede acceder
+        Assert.True(service.CanUserAccessPermiso(admin.Id, (int)UserTypeEnum.Administrator, permCargado));
+
+        // El jefe del área puede acceder (mismo areaId)
+        Assert.True(service.CanUserAccessPermiso(jefe.Id, (int)UserTypeEnum.Authorizer, permCargado));
+    }
+
+    [Fact]
+    public async Task GetPermissionsPagedAsync_Autorizador_SoloVePropiosYPendientesDeArea()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetPermissionsPagedAsync_Autorizador_SoloVePropiosYPendientesDeArea));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var jefe = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Authorizer);
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        // Permiso del empleado (misma área) — Pending → el autorizador debe verlo
+        await context.Permissions.AddAsync(TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Pending));
+        // Permiso del propio jefe → siempre visible
+        await context.Permissions.AddAsync(TestDbContextFactory.CreatePermission(jefe.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Approved));
+        await context.SaveChangesAsync();
+
+        var page = await service.GetPermissionsPagedAsync(jefe.Id, null, "", null, null, null, 1, 10);
+
+        Assert.Equal(2, page.TotalItemCount);
+    }
+
+    [Fact]
+    public async Task GetPermissionsPagedAsync_ExcluyeInvalidatedByPeriod()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetPermissionsPagedAsync_ExcluyeInvalidatedByPeriod));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var admin = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Administrator);
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        // Un permiso normal y uno invalidado
+        await context.Permissions.AddAsync(TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Approved));
+        await context.Permissions.AddAsync(TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.InvalidatedByPeriod));
+        await context.SaveChangesAsync();
+
+        // Admin ve todo, pero InvalidatedByPeriod nunca debe aparecer
+        var page = await service.GetPermissionsPagedAsync(admin.Id, null, "", null, null, null, 1, 10);
+
+        Assert.Equal(1, page.TotalItemCount);
+        Assert.All(page, p => Assert.NotEqual((int)PermissionStatusEnum.InvalidatedByPeriod, p.PermissionStatusTypeId));
+    }
+
+    [Fact]
+    public async Task UpdatePermissionAsync_SoloPendingYCorteAbierto()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(UpdatePermissionAsync_SoloPendingYCorteAbierto));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        // Permiso ya aprobado — no debe poder editarse
+        var permAprobado = TestDbContextFactory.CreatePermission(
+            empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Approved);
+        await context.Permissions.AddAsync(permAprobado);
+        await context.SaveChangesAsync();
+
+        var permUpdate = TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now.AddHours(1), DateTime.Now.AddHours(2), cutoff.Id);
+        permUpdate.Id = permAprobado.Id;
+
+        var result = await service.UpdatePermissionAsync(permUpdate, empleado.Id);
+
+        Assert.False(result, "No se debe poder editar un permiso ya Approved");
     }
 }

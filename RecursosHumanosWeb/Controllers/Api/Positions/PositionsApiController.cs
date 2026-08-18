@@ -128,10 +128,10 @@ namespace RecursosHumanosWeb.Controllers.Api.Positions
             }
         }
 
-        // DELETE: api/Positions/5
-        [HttpDelete("{id}")]
+        // PUT: api/Positions/5/deactivate  (borrado LÓGICO: no existe DELETE físico)
+        [HttpPut("{id}/deactivate")]
         [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Eliminar")]
-        public async Task<IActionResult> DeletePosition(int id)
+        public async Task<IActionResult> DeactivatePosition(int id)
         {
             var position = await _context.Positions.FindAsync(id);
             if (position == null) return NotFound();

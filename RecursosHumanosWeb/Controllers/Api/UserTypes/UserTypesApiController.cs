@@ -126,10 +126,10 @@ namespace RecursosHumanosWeb.Controllers.Api.UserTypes
             }
         }
 
-        // DELETE: api/UserTypes/5
-        [HttpDelete("{id}")]
+        // PUT: api/UserTypes/5/deactivate  (borrado LÓGICO: no existe DELETE físico)
+        [HttpPut("{id}/deactivate")]
         [ApiKeyAuthorize(TargetTable = "UserType", RequiredPermission = "Eliminar")]
-        public async Task<IActionResult> DeleteUserType(int id)
+        public async Task<IActionResult> DeactivateUserType(int id)
         {
             var userType = await _context.UserTypes.FindAsync(id);
             if (userType == null) return NotFound();
