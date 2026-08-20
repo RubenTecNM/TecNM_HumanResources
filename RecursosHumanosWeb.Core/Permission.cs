@@ -41,6 +41,27 @@ public partial class Permission : BaseEntity
     public string? Evidence { get; set; }
 
     // ──────────────────────────────────────────────────────────────
+    // TEACHER ABSENCE FIELDS (PermissionTypeId = 5)
+    // ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Work shift: 1 = Morning, 2 = Night. Only used by Teacher Absence type.
+    /// </summary>
+    public int? Shift { get; set; }
+
+    /// <summary>
+    /// Hours the teacher was present teaching (in front of classroom).
+    /// Only used by Teacher Absence type.
+    /// </summary>
+    public int? HoursInClassroom { get; set; }
+
+    /// <summary>
+    /// Non-teaching hours (tutoring, admin, research). Part of contractual workload.
+    /// Only used by Teacher Absence type.
+    /// </summary>
+    public int? HoursDischarge { get; set; }
+
+    // ──────────────────────────────────────────────────────────────
     // STATUS AND AUTHORIZATION
     // ──────────────────────────────────────────────────────────────
 

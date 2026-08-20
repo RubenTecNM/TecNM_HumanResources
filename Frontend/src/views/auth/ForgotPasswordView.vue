@@ -23,11 +23,11 @@
           </div>
         </div>
 
-        <div v-if="errorMessage" class="alert alert-danger">
+        <div v-if="errorMessage" class="alert alert-danger" role="alert">
           <i class="fas fa-exclamation-circle me-2"></i> {{ errorMessage }}
         </div>
 
-        <div v-if="successMessage" class="alert alert-success">
+        <div v-if="successMessage" class="alert alert-success" role="status">
           <i class="fas fa-check-circle me-2"></i> {{ successMessage }}
         </div>
 
@@ -91,14 +91,14 @@ async function handleSubmit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f4f6f9;
+  background-color: var(--tecnm-bg-main);
   padding: 1.5rem;
 }
 
 .auth-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  background: var(--tecnm-surface-white);
+  border-radius: var(--tecnm-radius-lg);
+  box-shadow: var(--tecnm-shadow-lg);
   width: 100%;
   max-width: 440px;
   padding: 2.5rem 2rem;
@@ -109,22 +109,16 @@ async function handleSubmit() {
   margin-bottom: 2rem;
 }
 
-.auth-logo {
-  height: 64px;
-  object-fit: contain;
-  margin-bottom: 1rem;
-}
-
 .auth-title {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #1b396a;
+  color: var(--tecnm-blue-primary);
   margin-bottom: 0.5rem;
 }
 
 .auth-subtitle {
   font-size: 0.875rem;
-  color: #6c757d;
+  color: var(--tecnm-text-secondary);
   line-height: 1.4;
 }
 
@@ -135,7 +129,7 @@ async function handleSubmit() {
 .form-label {
   font-weight: 600;
   font-size: 0.875rem;
-  color: #333;
+  color: var(--tecnm-text-primary);
   margin-bottom: 0.5rem;
   display: block;
 }
@@ -149,37 +143,37 @@ async function handleSubmit() {
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #a0aec0;
+  color: var(--tecnm-text-secondary);
 }
 
 .form-control {
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid #cbd5e0;
-  border-radius: 8px;
+  border: 1px solid var(--tecnm-border-color);
+  border-radius: var(--tecnm-radius-md);
   font-size: 0.95rem;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-control:focus {
-  border-color: #1b396a;
+  border-color: var(--tecnm-border-focus);
   box-shadow: 0 0 0 3px rgba(27, 57, 106, 0.15);
   outline: none;
 }
 
 .btn-primary {
-  background-color: #1b396a;
-  border-color: #1b396a;
-  color: #ffffff;
+  background-color: var(--tecnm-blue-primary);
+  border-color: var(--tecnm-blue-primary);
+  color: var(--tecnm-text-on-blue);
   padding: 0.75rem 1.5rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: var(--tecnm-radius-md);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #142a4f;
+  background-color: var(--tecnm-blue-dark);
 }
 
 .btn-primary:disabled {
@@ -188,7 +182,7 @@ async function handleSubmit() {
 }
 
 .back-link {
-  color: #1b396a;
+  color: var(--tecnm-blue-primary);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 600;
@@ -200,20 +194,20 @@ async function handleSubmit() {
 
 .alert {
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--tecnm-radius-md);
   font-size: 0.875rem;
   margin-top: 1rem;
 }
 
 .alert-danger {
-  background-color: #fff5f5;
-  color: #c53030;
-  border: 1px solid #feb2b2;
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
 }
 
 .alert-success {
-  background-color: #f0fff4;
-  color: #276749;
-  border: 1px solid #9ae6b4;
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
 }
 </style>

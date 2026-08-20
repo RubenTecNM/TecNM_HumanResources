@@ -73,6 +73,7 @@
               <tr>
                 <th class="text-center">ID</th>
                 <th class="text-center">Solicitante</th>
+                <th class="text-center">Tipo</th>
                 <th class="text-center">Estado</th>
                 <th class="text-center">Creación</th>
                 <th class="text-center">Modificación</th>
@@ -84,6 +85,12 @@
                 <td class="text-center">{{ p.id }}</td>
                 <td>
                   <strong>{{ p.requester || '-' }}</strong>
+                </td>
+                <td class="text-center">
+                  <span class="type-cell">
+                    {{ p.type }}
+                    <i v-if="p.permissionTypeId === 5" class="fa fa-chalkboard-teacher type-badge" :title="p.shift === 1 ? 'Matutino' : p.shift === 2 ? 'Vespertino' : 'Falta docente'" aria-hidden="true"></i>
+                  </span>
                 </td>
                 <td class="text-center">
                   <StatusBadge :variant="badgeVariant(p.permissionStatusTypeId)">
@@ -155,7 +162,7 @@
                 </td>
               </tr>
               <tr v-if="!items.length">
-                <td colspan="6"><EmptyState message="No hay permisos registrados"><span>Intenta ajustar los filtros de búsqueda</span></EmptyState></td>
+                <td colspan="7"><EmptyState message="No hay permisos registrados"><span>Intenta ajustar los filtros de búsqueda</span></EmptyState></td>
               </tr>
             </tbody>
           </table>
@@ -356,6 +363,17 @@ onMounted(async () => {
 
 .text-center {
   text-align: center;
+}
+
+.type-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.type-badge {
+  color: var(--tecnm-accent-text);
+  font-size: 0.85rem;
 }
 
 

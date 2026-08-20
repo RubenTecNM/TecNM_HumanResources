@@ -218,8 +218,8 @@ onBeforeUnmount(() => {
   right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: 50%;
   background: transparent;

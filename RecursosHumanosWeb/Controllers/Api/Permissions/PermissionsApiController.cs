@@ -62,6 +62,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 p.Id,
                 Requester = p.Name,
                 Type = p.PermissionType,
+                p.PermissionTypeId,
                 p.StartDate,
                 p.EndDate,
                 p.Reason,
@@ -70,7 +71,10 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 p.StatusColor,
                 p.WithPay,
                 p.CreatedAt,
-                p.UpdatedAt
+                p.UpdatedAt,
+                p.Shift,
+                p.HoursInClassroom,
+                p.HoursDischarge
             }).ToList();
 
             int totalItems = paged.TotalItemCount;
@@ -161,6 +165,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 permission.Id,
                 Requester = permission.RequestingUser.Name,
                 Type = permission.PermissionType.Description,
+                permission.PermissionTypeId,
                 permission.StartDate,
                 permission.EndDate,
                 permission.Days,
@@ -174,7 +179,10 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 permission.AuthorizedAt,
                 AuthorizedBy = permission.AuthorizingUser?.Name,
                 permission.AuthorizationComment,
-                Cutoff = permission.Cutoff.StartDate.ToString("yyyy-MM-dd") + " - " + permission.Cutoff.EndDate.ToString("yyyy-MM-dd")
+                Cutoff = permission.Cutoff.StartDate.ToString("yyyy-MM-dd") + " - " + permission.Cutoff.EndDate.ToString("yyyy-MM-dd"),
+                permission.Shift,
+                permission.HoursInClassroom,
+                permission.HoursDischarge
             };
 
             return Ok(result);
@@ -268,7 +276,10 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                     RequestingUserId = requesterId,
                     WithPay = model.WithPay,
                     Evidence = evidencePath,
-                    Days = days
+                    Days = days,
+                    Shift = model.Shift,
+                    HoursInClassroom = model.HoursInClassroom,
+                    HoursDischarge = model.HoursDischarge
                 };
 
                 // El servicio aplica las reglas de negocio: valida corte activo, asigna CutoffId y
@@ -367,6 +378,9 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             permission.PermissionTypeId = model.PermissionTypeId;
             permission.WithPay = model.WithPay;
             permission.Evidence = newPath;
+            permission.Shift = model.Shift;
+            permission.HoursInClassroom = model.HoursInClassroom;
+            permission.HoursDischarge = model.HoursDischarge;
 
             try
             {

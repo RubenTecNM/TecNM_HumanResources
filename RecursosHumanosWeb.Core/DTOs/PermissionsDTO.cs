@@ -55,5 +55,10 @@ namespace RecursosHumanosWeb.Models.DTOs
         public string CreatedBy { get; set; }
 
         public string? UpdatedBy { get; set; }
+
+        // Teacher Absence fields (PermissionTypeId = 5)
+        public int? Shift { get; set; }
+        public int? HoursInClassroom { get; set; }
+        public int? HoursDischarge { get; set; }
     }
 }

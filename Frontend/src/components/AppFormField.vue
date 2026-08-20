@@ -1,17 +1,18 @@
 <template>
   <div class="tecnm-form-group">
     <label v-if="label" class="tecnm-label" :for="id">{{ label }}</label>
-    <slot :id="id" />
-    <span v-if="error" class="tecnm-form-error">{{ error }}</span>
+    <slot :id="id" :aria-describedby="errorId" />
+    <span v-if="error" :id="errorId" class="tecnm-form-error" role="alert">{{ error }}</span>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useId } from 'vue'
+import { computed, useId } from 'vue'
 
-withDefaults(defineProps<{ label?: string; error?: string }>(), {
+const props = withDefaults(defineProps<{ label?: string; error?: string }>(), {
   error: ''
 })
 
 const id = useId()
+const errorId = computed(() => props.error ? `${id}-error` : undefined)
 </script>

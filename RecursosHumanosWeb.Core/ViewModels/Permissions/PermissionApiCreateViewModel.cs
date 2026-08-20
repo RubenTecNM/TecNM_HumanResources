@@ -26,5 +26,13 @@ namespace RecursosHumanosWeb.Models.ViewModels.Permissions
 
         // Confirmación de exceder el periodo (segundo intento tras el diálogo)
         public bool? Confirmed { get; set; }
+
+        // Teacher Absence fields (PermissionTypeId = 5)
+        /// <summary>Work shift: 1 = Morning, 2 = Night.</summary>
+        public int? Shift { get; set; }
+        /// <summary>Hours the teacher was present teaching.</summary>
+        public int? HoursInClassroom { get; set; }
+        /// <summary>Non-teaching hours (tutoring, admin, research).</summary>
+        public int? HoursDischarge { get; set; }
     }
 }

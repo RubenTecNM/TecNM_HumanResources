@@ -1,5 +1,5 @@
 <template>
-  <div class="theme-switcher" ref="rootEl">
+  <div class="theme-switcher" :class="{ 'is-collapsed': collapsed }" ref="rootEl">
     <button
       type="button"
       class="theme-switcher__trigger"
@@ -7,47 +7,67 @@
       :aria-expanded="open"
       aria-haspopup="listbox"
       :title="`Tema: ${currentTheme.label}`"
-      @click="open = !open"
+      @click="toggle"
+      ref="triggerEl"
     >
       <i class="fa" :class="currentTheme.icon" aria-hidden="true"></i>
-      <span class="theme-switcher__label">{{ currentTheme.shortLabel }}</span>
-      <i class="fa fa-chevron-down theme-switcher__caret" aria-hidden="true"></i>
+      <span v-if="!collapsed" class="theme-switcher__label">{{ currentTheme.shortLabel }}</span>
+      <i v-if="!collapsed" class="fa fa-chevron-down theme-switcher__caret" aria-hidden="true"></i>
     </button>
 
-    <Transition name="theme-switcher">
-      <ul v-if="open" class="theme-switcher__menu" role="listbox" aria-label="Seleccionar tema">
-        <li class="theme-switcher__heading">Apariencia</li>
-        <li
-          v-for="opt in options"
-          :key="opt.id"
-          role="option"
-          :aria-selected="opt.id === currentTheme.id"
-          class="theme-switcher__option"
-          :class="{ 'is-selected': opt.id === currentTheme.id }"
-          @click="select(opt.id)"
-        >
-          <span class="theme-switcher__swatch" :style="swatchStyle(opt)">
-            <span v-for="(c, i) in opt.swatch" :key="i" class="theme-switcher__swatch-dot" :style="{ background: c }"></span>
-          </span>
-          <span class="theme-switcher__option-label">
-            {{ opt.label }}
-            <span v-if="opt.animatedBg" class="theme-switcher__annot">· animado</span>
-          </span>
-          <i v-if="opt.id === currentTheme.id" class="fa fa-check theme-switcher__check" aria-hidden="true"></i>
-        </li>
-      </ul>
-    </Transition>
+    <Teleport to="body">
+      <Transition name="theme-switcher">
+        <ul v-if="open" class="theme-switcher__menu" role="listbox" aria-label="Seleccionar tema" :style="menuStyle">
+          <li class="theme-switcher__heading">Apariencia</li>
+          <li
+            v-for="opt in options"
+            :key="opt.id"
+            role="option"
+            :aria-selected="opt.id === currentTheme.id"
+            class="theme-switcher__option"
+            :class="{ 'is-selected': opt.id === currentTheme.id }"
+            @click="select(opt.id)"
+          >
+            <span class="theme-switcher__swatch" :style="swatchStyle(opt)">
+              <span v-for="(c, i) in opt.swatch" :key="i" class="theme-switcher__swatch-dot" :style="{ background: c }"></span>
+            </span>
+            <span class="theme-switcher__option-label">
+              {{ opt.label }}
+              <span v-if="opt.animatedBg" class="theme-switcher__annot">· animado</span>
+            </span>
+            <i v-if="opt.id === currentTheme.id" class="fa fa-check theme-switcher__check" aria-hidden="true"></i>
+          </li>
+        </ul>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useTheme, type ThemeOption } from '@/composables/useTheme'
+
+const props = defineProps<{ collapsed?: boolean }>()
 
 const { currentTheme, setTheme, options } = useTheme()
 
 const open = ref(false)
 const rootEl = ref<HTMLElement | null>(null)
+const triggerEl = ref<HTMLElement | null>(null)
+const menuStyle = ref<Record<string, string>>({})
+
+function toggle() {
+  if (!open.value && props.collapsed && triggerEl.value) {
+    const rect = triggerEl.value.getBoundingClientRect()
+    menuStyle.value = {
+      position: 'fixed',
+      left: rect.right + 4 + 'px',
+      top: rect.top + 'px',
+      bottom: 'auto',
+    }
+  }
+  open.value = !open.value
+}
 
 function select(id: string) {
   setTheme(id)
@@ -112,7 +132,7 @@ onBeforeUnmount(() => {
 }
 
 .theme-switcher__caret {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   transition: transform var(--tecnm-transition-fast);
 }
 
@@ -140,7 +160,7 @@ onBeforeUnmount(() => {
 }
 
 .theme-switcher__heading {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -221,5 +241,21 @@ onBeforeUnmount(() => {
   .theme-switcher__label {
     display: none;
   }
+}
+
+.theme-switcher.is-collapsed .theme-switcher__trigger {
+  padding: 0;
+  width: 100%;
+  height: 44px;
+  justify-content: center;
+  border-color: transparent;
+  background: transparent;
+  border-radius: var(--tecnm-radius-md);
+}
+
+.theme-switcher.is-collapsed .theme-switcher__trigger:hover,
+.theme-switcher.is-collapsed .theme-switcher__trigger.is-open {
+  background: var(--tecnm-gold-light);
+  border-color: var(--tecnm-gold-accent);
 }
 </style>

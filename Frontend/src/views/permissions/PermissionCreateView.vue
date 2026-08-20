@@ -60,12 +60,21 @@
               <input v-model="form.endTime" type="time" class="tecnm-form-control" :required="time2Config.required" />
             </AppFormField>
 
-            <AppFormField label="Con goce de sueldo">
-              <label class="switch-row">
-                <input v-model="form.withPay" type="checkbox" />
-                <span>El permiso es con goce de sueldo</span>
-              </label>
-            </AppFormField>
+            <template v-if="isTeacherAbsence">
+              <AppFormField label="Horas en aula" :error="errors.hours">
+                <input v-model.number="form.hoursInClassroom" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" />
+              </AppFormField>
+
+              <AppFormField label="Horas de descarga">
+                <input v-model.number="form.hoursDischarge" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" />
+              </AppFormField>
+
+              <div v-if="totalHours > 0" class="tecnm-form-group">
+                <small class="char-counter" :class="totalHours > 8 ? 'error' : 'success'">
+                  Total: {{ totalHours }} / 8 hrs
+                </small>
+              </div>
+            </template>
           </div>
 
           <div class="tecnm-form-group">
@@ -165,8 +174,14 @@ const form = reactive({
   endDate: '',
   endTime: '',
   withPay: true,
-  reason: ''
+  reason: '',
+  hoursInClassroom: undefined as number | undefined,
+  hoursDischarge: undefined as number | undefined
 })
+
+const isTeacherAbsence = computed(() => form.permissionTypeId === 5)
+
+const totalHours = computed(() => (form.hoursInClassroom ?? 0) + (form.hoursDischarge ?? 0))
 
 const canChooseRequester = computed(() => authStore.isAdmin || authStore.isRH)
 
@@ -245,6 +260,10 @@ function clearDynamicFields() {
   if (!date2Config.value.show) form.endDate = ''
   if (!time1Config.value.show) form.startTime = ''
   if (!time2Config.value.show) form.endTime = ''
+  if (!isTeacherAbsence.value) {
+    form.hoursInClassroom = undefined
+    form.hoursDischarge = undefined
+  }
 }
 
 const formValid = computed(() => {
@@ -255,6 +274,10 @@ const formValid = computed(() => {
   if (time1Config.value.required && !form.startTime) return false
   if (time2Config.value.required && !form.endTime) return false
   if (datesInverted.value) return false
+  if (isTeacherAbsence.value) {
+    const th = totalHours.value
+    if (th < 1 || th > 8) return false
+  }
   const reason = form.reason.trim()
   if (!reason || reason.length > 255) return false
   return true
@@ -286,6 +309,11 @@ function validate() {
   }
   if (datesInverted.value) {
     errors.datesInverted = 'La fecha de fin no puede ser anterior a la de inicio.'
+  }
+  if (isTeacherAbsence.value) {
+    const th = totalHours.value
+    if (th < 1 || th > 8) errors.hours = 'Las horas totales deben ser entre 1 y 8.'
+    else delete errors.hours
   }
   const reason = form.reason.trim()
   if (!reason) errors.reason = 'El motivo es obligatorio.'
@@ -355,7 +383,9 @@ async function submit() {
     permissionTypeId: form.permissionTypeId as number,
     withPay: form.withPay,
     requestingUserId: canChooseRequester.value ? form.requestingUserId : authStore.user?.id,
-    evidence: evidenceFile.value
+    evidence: evidenceFile.value,
+    hoursInClassroom: isTeacherAbsence.value ? form.hoursInClassroom : undefined,
+    hoursDischarge: isTeacherAbsence.value ? form.hoursDischarge : undefined
   }
 
   submitting.value = true
@@ -593,8 +623,8 @@ onMounted(async () => {
 }
 
 .remove-file {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--tecnm-status-rejected-bg);

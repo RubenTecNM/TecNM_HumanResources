@@ -51,7 +51,7 @@ namespace RecursosHumanosWeb.Services
 
                     // 1. Rechazar permissions pendientes
                     var pendientes = await _context.Permissions
-                        .Where(p => p.CutoffId == activeCutoff.Id && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending)
+                        .Where(p => p.CutoffId == activeCutoff.Id && p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending && p.Status)
                         .ToListAsync();
 
                     if (pendientes.Any())

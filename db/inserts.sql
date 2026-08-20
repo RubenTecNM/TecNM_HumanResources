@@ -227,7 +227,8 @@ INSERT INTO PermissionType (Description, CreatedAt, Status, CreatedByUserId) VAL
 ('Retardo', GETDATE(), 1, 1),
 ('Turno por Turno', GETDATE(), 1, 1),
 ('Falta', GETDATE(), 1, 1),
-('Cambio de Horario', GETDATE(), 1, 1);
+('Cambio de Horario', GETDATE(), 1, 1),
+('Teacher Absence', GETDATE(), 1, 1);
 
 -- 5. RE-ENABLE FK
 EXEC sp_MSforeachtable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT ALL';

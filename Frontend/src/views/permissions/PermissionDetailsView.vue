@@ -66,6 +66,20 @@
               <dt>Corte</dt>
               <dd>{{ permission?.cutoff || '—' }}</dd>
             </div>
+            <template v-if="permission?.permissionTypeId === 5">
+              <div class="detail-item">
+                <dt>Turno</dt>
+                <dd>{{ permission?.shift === 1 ? 'Matutino' : permission?.shift === 2 ? 'Vespertino' : '—' }}</dd>
+              </div>
+              <div class="detail-item">
+                <dt>Horas en aula</dt>
+                <dd>{{ permission?.hoursInClassroom ?? '—' }}</dd>
+              </div>
+              <div class="detail-item">
+                <dt>Horas de descarga</dt>
+                <dd>{{ permission?.hoursDischarge ?? '—' }}</dd>
+              </div>
+            </template>
             <div class="detail-item">
               <dt>Fecha de creación</dt>
               <dd>{{ formatTecNMDateTime(permission?.createdAt) }}</dd>

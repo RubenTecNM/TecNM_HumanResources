@@ -52,12 +52,28 @@
                 <input v-model="form.endTime" type="time" class="tecnm-form-control" :required="time2Config.required" />
               </AppFormField>
 
-              <AppFormField label="Con goce de sueldo">
+              <AppFormField v-if="canSeeWithPay" label="Con goce de sueldo">
                 <label class="switch-row">
                   <input v-model="form.withPay" type="checkbox" />
                   <span>El permiso es con goce de sueldo</span>
                 </label>
               </AppFormField>
+
+              <template v-if="isTeacherAbsence">
+                <AppFormField label="Horas en aula" :error="errors.hours">
+                  <input v-model.number="form.hoursInClassroom" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" />
+                </AppFormField>
+
+                <AppFormField label="Horas de descarga">
+                  <input v-model.number="form.hoursDischarge" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" />
+                </AppFormField>
+
+                <div v-if="totalHours > 0" class="tecnm-form-group">
+                  <small class="char-counter" :class="totalHours > 8 ? 'error' : 'success'">
+                    Total: {{ totalHours }} / 8 hrs
+                  </small>
+                </div>
+              </template>
             </div>
 
             <div class="tecnm-form-group">
@@ -135,9 +151,11 @@ import {
 import { deactivatePermission, fetchPermission, updatePermission, type PermissionCreatePayload } from '@/api/permissions'
 import { combineDateTimeLocal, calculateDays, toDateInputValue, toTimeInputValue } from '@/composables/useDates'
 import { askConfirmation, handleAlertResponse, showToast } from '@/composables/useAlerts'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const id = Number(route.params.id)
 
 const permissionTypes = ref<PermissionTypeItem[]>([])
@@ -158,7 +176,9 @@ const form = reactive({
   endDate: '',
   endTime: '',
   withPay: true,
-  reason: ''
+  reason: '',
+  hoursInClassroom: undefined as number | undefined,
+  hoursDischarge: undefined as number | undefined
 })
 
 const defaultTypeConfig: PermissionTypeCardConfig = {
@@ -174,6 +194,12 @@ const selectedConfig = computed<PermissionTypeCardConfig>(() => {
   const type = permissionTypes.value.find((t) => t.id === form.permissionTypeId)
   return type?.config ?? defaultTypeConfig
 })
+
+const isTeacherAbsence = computed(() => form.permissionTypeId === 5)
+
+const totalHours = computed(() => (form.hoursInClassroom ?? 0) + (form.hoursDischarge ?? 0))
+
+const canSeeWithPay = computed(() => authStore.isAuthorizer || authStore.isAdmin || authStore.isRH)
 
 const date1Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.date1)
 const date2Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.date2)
@@ -213,6 +239,10 @@ const formValid = computed(() => {
   if (time1Config.value.required && !form.startTime) return false
   if (time2Config.value.required && !form.endTime) return false
   if (datesInverted.value) return false
+  if (isTeacherAbsence.value) {
+    const th = totalHours.value
+    if (th < 1 || th > 8) return false
+  }
   const reason = form.reason.trim()
   if (!reason || reason.length > 255) return false
   return true
@@ -240,6 +270,11 @@ function validate() {
   if (datesInverted.value) {
     errors.datesInverted = 'La fecha de fin no puede ser anterior a la de inicio.'
   }
+  if (isTeacherAbsence.value) {
+    const th = totalHours.value
+    if (th < 1 || th > 8) errors.hours = 'Las horas totales deben ser entre 1 y 8.'
+    else delete errors.hours
+  }
   const reason = form.reason.trim()
   if (!reason) errors.reason = 'El motivo es obligatorio.'
   else if (reason.length > 255) errors.reason = 'El motivo no puede exceder los 255 caracteres.'
@@ -257,6 +292,10 @@ function clearDynamicFields() {
   if (!date2Config.value.show) form.endDate = ''
   if (!time1Config.value.show) form.startTime = ''
   if (!time2Config.value.show) form.endTime = ''
+  if (!isTeacherAbsence.value) {
+    form.hoursInClassroom = undefined
+    form.hoursDischarge = undefined
+  }
 }
 
 function typeIcon(t: PermissionTypeItem): string {
@@ -331,6 +370,8 @@ onMounted(async () => {
     form.endTime = toTimeInputValue(detail.endDate)
     form.withPay = detail.withPay
     form.reason = detail.reason || ''
+    form.hoursInClassroom = detail.hoursInClassroom ?? undefined
+    form.hoursDischarge = detail.hoursDischarge ?? undefined
     existingEvidence.value = detail.evidence || null
     clearEvidence.value = false
   } catch (err) {
@@ -354,7 +395,9 @@ async function submit() {
     permissionTypeId: form.permissionTypeId as number,
     withPay: form.withPay,
     evidence: evidenceFile.value,
-    clearEvidence: clearEvidence.value
+    clearEvidence: clearEvidence.value,
+    hoursInClassroom: isTeacherAbsence.value ? form.hoursInClassroom : undefined,
+    hoursDischarge: isTeacherAbsence.value ? form.hoursDischarge : undefined
   }
 
   submitting.value = true
@@ -594,8 +637,8 @@ async function remove() {
 }
 
 .remove-file {
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--tecnm-status-rejected-bg);

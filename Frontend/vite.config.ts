@@ -2,6 +2,16 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
+const BACKEND = 'http://localhost:5270'
+
+const proxyEntry = {
+  target: BACKEND,
+  changeOrigin: true,
+  // Reescribe el dominio de las cookies para que el navegador las envíe
+  // correctamente desde :5173 al volver a pasar por el proxy hacia :5270.
+  cookieDomainRewrite: 'localhost'
+}
+
 export default defineConfig({
   plugins: [vue()],
   resolve: {
@@ -12,26 +22,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:5270',
-        changeOrigin: true
-      },
-      '/Account': {
-        target: 'http://localhost:5270',
-        changeOrigin: true
-      },
-      '/Permission': {
-        target: 'http://localhost:5270',
-        changeOrigin: true
-      },
-      '/ResetPassword': {
-        target: 'http://localhost:5270',
-        changeOrigin: true
-      },
-      '/health': {
-        target: 'http://localhost:5270',
-        changeOrigin: true
-      }
+      '/api':          proxyEntry,
+      '/Account':      proxyEntry,
+      '/Permission':   proxyEntry,
+      '/ResetPassword': proxyEntry,
+      '/health':       proxyEntry
     }
   }
 })

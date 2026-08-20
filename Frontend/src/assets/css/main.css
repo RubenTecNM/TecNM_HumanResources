@@ -432,7 +432,8 @@ select.tecnm-form-control {
   padding: var(--tecnm-space-4) 0;
   z-index: 1000;
   transition: width var(--tecnm-transition);
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 /* Connecting edge that visually ties sidebar to the topbar */
@@ -494,7 +495,7 @@ select.tecnm-form-control {
 }
 
 .tecnm-sidebar__brand-sub {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--tecnm-text-secondary);
 }
@@ -533,7 +534,7 @@ select.tecnm-form-control {
 }
 
 .tecnm-sidebar__label {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -557,7 +558,7 @@ select.tecnm-form-control {
   padding: 0.4rem 0.35rem;
   border: 1px solid transparent;
   border-radius: var(--tecnm-radius-md);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -589,7 +590,6 @@ select.tecnm-form-control {
   background: linear-gradient(135deg, var(--tecnm-gold-light), transparent 85%);
   border-color: var(--tecnm-gold-accent);
   color: var(--tecnm-accent-text);
-  box-shadow: inset 2px 0 0 var(--tecnm-gold-accent);
   font-weight: 700;
 }
 
@@ -627,6 +627,22 @@ select.tecnm-form-control {
   text-align: center;
 }
 
+/* Collapsed (88px): hide button text, show icons only */
+.tecnm-sidebar__link span,
+.tecnm-logout-btn span {
+  transition: opacity var(--tecnm-transition-fast);
+}
+
+:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-sidebar__link,
+:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-logout-btn {
+  padding: 0.4rem 0;
+}
+
+:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-sidebar__link span,
+:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-logout-btn span {
+  display: none;
+}
+
 .tecnm-sidebar__footer {
   margin-top: auto;
   border-top: 1px solid var(--tecnm-border-color);
@@ -640,16 +656,10 @@ select.tecnm-form-control {
   gap: 0.25rem;
   padding: var(--tecnm-space-2) var(--tecnm-space-3);
   color: var(--tecnm-text-secondary);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-decoration: none;
   white-space: nowrap;
   transition: var(--tecnm-transition);
-}
-
-.tecnm-sidebar__profile:hover {
-  color: var(--tecnm-accent-text);
-  background-color: var(--tecnm-gold-light);
-  border-radius: var(--tecnm-radius-md);
 }
 
 .tecnm-app.is-sidebar-expanded .tecnm-sidebar__profile {
@@ -657,6 +667,17 @@ select.tecnm-form-control {
   justify-content: flex-start;
   gap: 0.75rem;
   font-size: 0.85rem;
+}
+
+.tecnm-sidebar__footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tecnm-space-1);
+  padding: 0 var(--tecnm-space-2);
+}
+
+.tecnm-app.is-sidebar-expanded .tecnm-sidebar__footer-actions {
+  padding: 0 var(--tecnm-space-2);
 }
 
 /* ---------- Mobile ---------- */
@@ -886,8 +907,8 @@ select.tecnm-form-control {
 
 /* ---------- Premium Action Buttons ---------- */
 .tecnm-action-btn {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -972,7 +993,8 @@ select.tecnm-form-control {
   font-size: 0.85rem;
   transition: var(--tecnm-transition-fast);
   background: var(--tecnm-surface-white);
-  min-width: 38px;
+  min-width: 44px;
+  min-height: 44px;
   text-align: center;
   cursor: pointer;
   text-decoration: none;
@@ -1123,4 +1145,17 @@ select.tecnm-form-control {
 @media (max-width: 640px) {
   .tecnm-page-header { flex-direction: column; align-items: flex-start; }
   .tecnm-table-actions { flex-direction: column; }
+}
+
+/* ---------- Reduced Motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .tecnm-animated-bg { display: none !important; }
 }

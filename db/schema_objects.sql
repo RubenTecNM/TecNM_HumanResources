@@ -22,39 +22,7 @@ END;
 GO
 
 -- =============================================
--- 2. SearchFilteredPermissions
--- =============================================
-CREATE OR ALTER PROCEDURE [dbo].[SearchFilteredPermissions]
-    @FromDate DATETIME = NULL, @ToDate DATETIME = NULL, @UserId INT = NULL,
-    @UserEmail NVARCHAR(100) = NULL, @AreaId INT = NULL, @PermissionTypeId INT = 0,
-    @IsEmployee BIT = 0, @IsAuthorizer BIT = 0, @Page INT = 1, @Limit INT = 10
-AS
-BEGIN
-    SET NOCOUNT ON;
-    DECLARE @Offset INT = (@Page - 1) * @Limit;
-    ;WITH FilteredPermissions AS (
-        SELECT p.Reason AS Description, p.Days AS RequestedDays, p.WithPay AS WithPay,
-            p.StartDate AS FromDay, p.EndDate AS ToDay, p.Evidence, p.CreatedAt,
-            p.AuthorizedAt, p.CreatedAt AS RequestedAt, p.CutoffId,
-            p.PermissionTypeId, p.Status, u.Name, u.Email, u.AreaId,
-            u.Id AS UserId, p.Id AS PermissionId
-        FROM Permission p INNER JOIN [User] u ON p.RequestingUserId = u.Id
-        WHERE (@FromDate IS NULL OR p.CreatedAt >= @FromDate)
-            AND (@ToDate IS NULL OR p.CreatedAt <= @ToDate)
-            AND ((@IsEmployee = 1 AND @IsAuthorizer = 0 AND u.Id = @UserId)
-                OR (@UserEmail IS NOT NULL AND u.Email = @UserEmail)
-                OR (@IsEmployee = 0 AND @IsAuthorizer = 1 AND u.AreaId = @AreaId)
-                OR (@AreaId IS NOT NULL AND u.AreaId = @AreaId))
-            AND (@PermissionTypeId = 0 OR p.PermissionTypeId = @PermissionTypeId)
-    )
-    SELECT * FROM FilteredPermissions ORDER BY CreatedAt DESC
-    OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY;
-    SELECT COUNT(*) AS Total FROM FilteredPermissions;
-END;
-GO
-
--- =============================================
--- 3. GetPermissionsAuthorizer
+-- 2. GetPermissionsAuthorizer
 -- =============================================
 CREATE OR ALTER PROCEDURE [dbo].[GetPermissionsAuthorizer]
     @AreaId INT, @Status BIT
@@ -71,26 +39,28 @@ END;
 GO
 
 -- =============================================
--- 4. InsertPermission
+-- 3. InsertPermission
 -- =============================================
 CREATE OR ALTER PROCEDURE [dbo].[InsertPermission]  
     @Reason VARCHAR(255), @StartDate DATETIME, @EndDate DATETIME, @CutoffId INT, 
     @PermissionTypeId INT, @RequestingUserId INT, @CreatedByUserId INT, 
-    @UpdatedByUserId INT, @Evidence VARCHAR(255) = NULL, @PermissionId INT OUTPUT  
+    @UpdatedByUserId INT, @Evidence VARCHAR(255) = NULL,
+    @Shift INT = NULL, @HoursInClassroom INT = NULL, @HoursDischarge INT = NULL,
+    @PermissionId INT OUTPUT  
 AS  
 BEGIN  
     SET NOCOUNT ON;  
-    DECLARE @Days INT = CASE WHEN @PermissionTypeId IN (2, 4, 5) THEN DATEDIFF(DAY, @StartDate, @EndDate) + 1 ELSE 1 END;  
+    DECLARE @Days INT = CASE WHEN @PermissionTypeId IN (2, 4) THEN DATEDIFF(DAY, @StartDate, @EndDate) + 1 ELSE 1 END;  
     DECLARE @InsertedIds TABLE (Id INT);  
-    INSERT INTO [dbo].[Permission] (Reason, StartDate, EndDate, Days, RequestingUserId, CreatedByUserId, UpdatedByUserId, PermissionTypeId, CutoffId, WithPay, Status, PermissionStatusTypeId, Evidence, CreatedAt, UpdatedAt)
+    INSERT INTO [dbo].[Permission] (Reason, StartDate, EndDate, Days, RequestingUserId, CreatedByUserId, UpdatedByUserId, PermissionTypeId, CutoffId, WithPay, Status, PermissionStatusTypeId, Evidence, Shift, HoursInClassroom, HoursDischarge, CreatedAt, UpdatedAt)
     OUTPUT INSERTED.Id INTO @InsertedIds(Id) 
-    VALUES (@Reason, @StartDate, @EndDate, @Days, @RequestingUserId, @CreatedByUserId, @UpdatedByUserId, @PermissionTypeId, @CutoffId, 0, 1, 1, @Evidence, GETDATE(), GETDATE());  
+    VALUES (@Reason, @StartDate, @EndDate, @Days, @RequestingUserId, @CreatedByUserId, @UpdatedByUserId, @PermissionTypeId, @CutoffId, 0, 1, 1, @Evidence, @Shift, @HoursInClassroom, @HoursDischarge, GETDATE(), GETDATE());  
     SET @PermissionId = (SELECT Id FROM @InsertedIds);  
 END;
 GO
 
 -- =============================================
--- 5. UpdatePermission
+-- 4. UpdatePermission
 -- =============================================
 CREATE OR ALTER PROCEDURE [dbo].[UpdatePermission]
     @PermissionId INT, @Reason VARCHAR(255) = NULL, @StartDate DATE = NULL, @EndDate DATE = NULL,
@@ -109,7 +79,7 @@ END;
 GO
 
 -- =============================================
--- 6. UpdateStatusOfPermission
+-- 5. UpdateStatusOfPermission
 -- =============================================
 CREATE OR ALTER PROCEDURE [dbo].[UpdateStatusOfPermission]
     @PermissionId INT, @WithPay BIT, @UpdatedByUserId INT, @AuthorizingUserId INT, @PermissionStatusTypeId INT
@@ -123,7 +93,7 @@ END;
 GO
 
 -- =============================================
--- 7. UpdateModifiedAt (Optimized with Session)
+-- 6. UpdateModifiedAt (Optimized with Session)
 -- =============================================
 CREATE OR ALTER PROCEDURE UpdateModifiedAt
     @TableId INT, @Ids IdTableType READONLY
@@ -150,7 +120,7 @@ END;
 GO
 
 -- =============================================
--- 8. GLOBAL TRIGGER: Audit and Traceability (Permission)
+-- 7. GLOBAL TRIGGER: Audit and Traceability (Permission)
 -- =============================================
 IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_Permission_Audit') DROP TRIGGER trg_Permission_Audit;
 IF EXISTS (SELECT * FROM sys.triggers WHERE name = 'trg_Permission_UpdateModifiedAt') DROP TRIGGER trg_Permission_UpdateModifiedAt;
@@ -199,7 +169,7 @@ END;
 GO
 
 -- =============================================
--- 9. CATALOG TRIGGERS (Simple Traceability)
+-- 8. CATALOG TRIGGERS (Simple Traceability)
 -- =============================================
 CREATE OR ALTER TRIGGER trg_CutoffStatusType_UpdateModifiedAt ON CutoffStatusType AFTER UPDATE AS 
 BEGIN 
@@ -226,24 +196,26 @@ END;
 GO
 
 -- =============================================
--- 10. TRIGGER: Close Cascade (Cutoff -> Permission)
+-- 9. TRIGGER: Close Cascade (Cutoff -> Permission)
 -- =============================================
+-- Safety net: mirrors C# CloseCutoffAsync / AutoCloseCutoffIfNeededAsync.
+-- Pending permissions → Rejected (4) without pay when corte closes/invalidates.
 CREATE OR ALTER TRIGGER trg_Cutoff_CloseCascade ON Cutoff AFTER UPDATE AS
 BEGIN
     SET NOCOUNT ON;
     
-    -- If the cutoff status changed to Closed (2) or Invalidated (3)
     IF UPDATE(CutoffStatusTypeId)
     BEGIN
-        -- Map pending permissions (1) to Invalidated by Period (3)
         UPDATE p
-        SET p.PermissionStatusTypeId = 3, -- Invalidated by Period
+        SET p.PermissionStatusTypeId = 4, -- Rejected (matches C# behavior)
+            p.WithPay = 0,
             p.UpdatedAt = GETDATE(),
             p.UpdatedByUserId = COALESCE(TRY_CAST(SESSION_CONTEXT(N'UserId') AS INT), 1)
         FROM Permission p
         INNER JOIN inserted i ON p.CutoffId = i.Id
         WHERE i.CutoffStatusTypeId IN (2, 3) -- Closed or Invalidated
-          AND p.PermissionStatusTypeId = 1;   -- Only the Pending ones
+          AND p.PermissionStatusTypeId = 1    -- Only Pending
+          AND p.Status = 1;                    -- Only active records
     END
 END;
 GO

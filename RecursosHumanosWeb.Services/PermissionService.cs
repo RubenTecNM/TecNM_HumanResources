@@ -133,6 +133,21 @@ namespace RecursosHumanosWeb.Services
             if (createdBy?.UserTypeId == (int)UserTypeEnum.Authorizer)
                 throw new InvalidOperationException("Los jefes de área no pueden crear solicitudes de permiso para asegurar la imparcialidad del proceso.");
 
+            // Teacher Absence validation
+            if (permission.PermissionTypeId == 5)
+            {
+                // Auto-derive shift from StartDate: hour < 12 → Matutino(1), else → Vespertino(2)
+                permission.Shift = permission.StartDate.HasValue && permission.StartDate.Value.Hour < 12 ? 1 : 2;
+
+                int totalHours = (permission.HoursInClassroom ?? 0) + (permission.HoursDischarge ?? 0);
+                if (totalHours <= 0 || totalHours > 8)
+                    throw new InvalidOperationException("Las horas totales deben estar entre 1 y 8.");
+
+                // Single-day absence for teacher type
+                permission.EndDate = permission.StartDate;
+                permission.Days = 1;
+            }
+
             var activeCutoff = await _context.Cutoffs
                 .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open)
                 .OrderByDescending(c => c.Id)
@@ -194,6 +209,18 @@ namespace RecursosHumanosWeb.Services
             existing.PermissionTypeId = permission.PermissionTypeId;
             existing.Evidence = permission.Evidence;
             existing.WithPay = permission.WithPay;
+
+            // Teacher Absence fields
+            existing.HoursInClassroom = permission.HoursInClassroom;
+            existing.HoursDischarge = permission.HoursDischarge;
+
+            // For type 5, enforce single-day + auto-derive shift
+            if (existing.PermissionTypeId == 5)
+            {
+                existing.Shift = existing.StartDate.HasValue && existing.StartDate.Value.Hour < 12 ? 1 : 2;
+                existing.EndDate = existing.StartDate;
+                existing.Days = 1;
+            }
             
             existing.CutoffId = originalCutoffId; // Preservar el periodo original
             existing.UpdatedByUserId = updatedByUserId;

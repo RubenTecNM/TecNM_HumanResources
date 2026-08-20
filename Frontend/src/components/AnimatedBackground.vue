@@ -12,26 +12,29 @@ const props = defineProps<{ enabled: boolean }>()
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 
-interface Particle {
+interface GridNode {
   x: number
   y: number
-  r: number
-  gold: boolean
-  vx: number
-  vy: number
-  tw: number
+  restX: number
+  restY: number
   phase: number
 }
 
 let ctx: CanvasRenderingContext2D | null = null
-let particles: Particle[] = []
+let nodes: GridNode[] = []
 let rafId = 0
 let width = 0
 let height = 0
 let running = false
+let mouseX = -999
+let mouseY = -999
 
 const GOLD = '197, 160, 89'
 const BLUE = '59, 98, 168'
+const COLS = 30
+const ROWS = 18
+const NODE_RADIUS = 2
+const CONNECT_DIST = 160
 
 function resize() {
   if (!canvasEl.value) return
@@ -42,25 +45,26 @@ function resize() {
   canvasEl.value.height = height * dpr
   canvasEl.value.style.width = `${width}px`
   canvasEl.value.style.height = `${height}px`
-  if (ctx) {
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  }
-  spawn(180)
+  if (ctx) ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  spawnGrid()
 }
 
-function spawn(count: number) {
-  particles = []
-  for (let i = 0; i < count; i++) {
-    particles.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      r: 0.6 + Math.random() * 2.2,
-      gold: Math.random() > 0.6,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      tw: 1.5 + Math.random() * 3,
-      phase: Math.random() * Math.PI * 2
-    })
+function spawnGrid() {
+  nodes = []
+  const spacingX = width / (COLS - 1)
+  const spacingY = height / (ROWS - 1)
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      const restX = col * spacingX
+      const restY = row * spacingY
+      nodes.push({
+        x: restX,
+        y: restY,
+        restX,
+        restY,
+        phase: Math.random() * Math.PI * 2
+      })
+    }
   }
 }
 
@@ -69,34 +73,94 @@ function draw() {
   ctx.clearRect(0, 0, width, height)
 
   const t = performance.now() / 1000
-  const g1 = ctx.createRadialGradient(width * 0.18, height * 0.24, 0, width * 0.18, height * 0.24, Math.min(width, height) * 0.5)
-  g1.addColorStop(0, `rgba(${BLUE}, 0.22)`)
+
+  // subtle blue glow top-left
+  const g1 = ctx.createRadialGradient(width * 0.15, height * 0.2, 0, width * 0.15, height * 0.2, Math.min(width, height) * 0.45)
+  g1.addColorStop(0, `rgba(${BLUE}, 0.12)`)
   g1.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.fillStyle = g1
   ctx.fillRect(0, 0, width, height)
 
-  const g2 = ctx.createRadialGradient(width * 0.82, height * 0.78, 0, width * 0.82, height * 0.78, Math.min(width, height) * 0.45)
-  g2.addColorStop(0, `rgba(${GOLD}, 0.16)`)
+  // subtle gold glow bottom-right
+  const g2 = ctx.createRadialGradient(width * 0.85, height * 0.8, 0, width * 0.85, height * 0.8, Math.min(width, height) * 0.4)
+  g2.addColorStop(0, `rgba(${GOLD}, 0.08)`)
   g2.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.fillStyle = g2
   ctx.fillRect(0, 0, width, height)
 
-  for (const p of particles) {
-    p.x += p.vx + Math.sin(t * 0.4 + p.phase) * 0.12
-    p.y += p.vy + Math.cos(t * 0.35 + p.phase) * 0.12
-    if (p.x < -10) p.x = width + 10
-    if (p.x > width + 10) p.x = -10
-    if (p.y < -10) p.y = height + 10
-    if (p.y > height + 10) p.y = -10
+  // animate node positions: gentle drift + mouse repulsion
+  for (const n of nodes) {
+    n.x = n.restX + Math.sin(t * 0.25 + n.phase) * 6
+    n.y = n.restY + Math.cos(t * 0.2 + n.phase) * 4
 
-    const twinkle = 0.35 + 0.65 * Math.abs(Math.sin(t * p.tw + p.phase))
+    const dx = n.x - mouseX
+    const dy = n.y - mouseY
+    const dist = Math.sqrt(dx * dx + dy * dy)
+    if (dist < 180 && dist > 0) {
+      const push = (180 - dist) / 180 * 14
+      n.x += (dx / dist) * push
+      n.y += (dy / dist) * push
+    }
+  }
+
+  // draw connections
+  ctx.lineWidth = 0.6
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      const a = nodes[i]
+      const b = nodes[j]
+      const dx = a.x - b.x
+      const dy = a.y - b.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      if (dist < CONNECT_DIST) {
+        const alpha = (1 - dist / CONNECT_DIST) * 0.18
+        ctx.strokeStyle = `rgba(${BLUE}, ${alpha})`
+        ctx.beginPath()
+        ctx.moveTo(a.x, a.y)
+        ctx.lineTo(b.x, b.y)
+        ctx.stroke()
+      }
+    }
+  }
+
+  // draw nodes
+  for (const n of nodes) {
+    const dx = n.x - mouseX
+    const dy = n.y - mouseY
+    const distMouse = Math.sqrt(dx * dx + dy * dy)
+    const proximity = distMouse < 180 ? (180 - distMouse) / 180 : 0
+    const isGold = proximity > 0.5
+    const baseAlpha = 0.25 + proximity * 0.5
+    const twinkle = 0.8 + 0.2 * Math.sin(t * 1.2 + n.phase)
+    const alpha = baseAlpha * twinkle
+    const r = NODE_RADIUS + proximity * 1.5
+
     ctx.beginPath()
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-    ctx.fillStyle = p.gold ? `rgba(${GOLD}, ${0.75 * twinkle})` : `rgba(${BLUE}, ${0.7 * twinkle})`
+    ctx.arc(n.x, n.y, r, 0, Math.PI * 2)
+    ctx.fillStyle = isGold
+      ? `rgba(${GOLD}, ${Math.min(alpha + 0.25, 1)})`
+      : `rgba(${BLUE}, ${alpha})`
     ctx.fill()
+
+    if (proximity > 0.6) {
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, r + 4 * proximity, 0, Math.PI * 2)
+      ctx.fillStyle = `rgba(${GOLD}, ${0.08 * proximity})`
+      ctx.fill()
+    }
   }
 
   rafId = requestAnimationFrame(draw)
+}
+
+function onMouseMove(e: MouseEvent) {
+  mouseX = e.clientX
+  mouseY = e.clientY
+}
+
+function onMouseLeave() {
+  mouseX = -999
+  mouseY = -999
 }
 
 function start() {
@@ -115,10 +179,16 @@ function stop() {
 onMounted(() => {
   ctx = canvasEl.value?.getContext('2d') ?? null
   window.addEventListener('resize', resize)
-  if (props.enabled) start()
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseleave', onMouseLeave)
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+  if (!mq.matches && props.enabled) start()
+  mq.addEventListener('change', (e) => {
+    if (e.matches) stop()
+    else if (props.enabled) start()
+  })
 })
 
-// Toggle the animation live when the theme changes (canvas is always mounted).
 watch(
   () => props.enabled,
   (value) => {
@@ -131,6 +201,8 @@ watch(
 onBeforeUnmount(() => {
   stop()
   window.removeEventListener('resize', resize)
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('mouseleave', onMouseLeave)
 })
 </script>
 

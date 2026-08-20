@@ -2,14 +2,27 @@
   <Teleport to="body">
     <Transition name="modal-fade">
       <div v-if="show" class="tecnm-modal-backdrop" @click.self="handleBackdropClick">
-        <div class="tecnm-modal-container" :class="[`tecnm-modal--${size}`]" role="dialog" aria-modal="true">
+        <div
+          ref="containerEl"
+          class="tecnm-modal-container"
+          :class="[`tecnm-modal--${size}`]"
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="titleId"
+        >
           <!-- Header -->
           <div class="tecnm-modal-header">
-            <h3 class="tecnm-modal-title">
+            <h3 :id="titleId" class="tecnm-modal-title">
               <i v-if="icon" :class="`fa ${icon}`" aria-hidden="true"></i>
               {{ title }}
             </h3>
-            <button type="button" class="tecnm-modal-close" aria-label="Cerrar modal" @click="close">
+            <button
+              ref="closeBtnEl"
+              type="button"
+              class="tecnm-modal-close"
+              aria-label="Cerrar modal"
+              @click="close"
+            >
               <i class="fa fa-times" aria-hidden="true"></i>
             </button>
           </div>
@@ -48,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, onUnmounted } from 'vue'
+import { ref, watch, onUnmounted, useId, nextTick } from 'vue'
 import AppButton from '@/components/AppButton.vue'
 
 const props = withDefaults(
@@ -85,6 +98,46 @@ const emit = defineEmits<{
   (e: 'confirm'): void
 }>()
 
+const titleId = useId()
+const containerEl = ref<HTMLElement | null>(null)
+const closeBtnEl = ref<HTMLButtonElement | null>(null)
+let previousFocus: HTMLElement | null = null
+
+function getFocusableElements(): HTMLElement[] {
+  if (!containerEl.value) return []
+  return Array.from(
+    containerEl.value.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+  ).filter((el) => !(el as HTMLInputElement).disabled && el.offsetParent !== null)
+}
+
+function handleTabTrap(e: KeyboardEvent) {
+  if (e.key !== 'Tab' || !containerEl.value) return
+  const focusable = getFocusableElements()
+  if (focusable.length === 0) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (e.shiftKey) {
+    if (document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    }
+  } else {
+    if (document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
+}
+
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && props.show) {
+    close()
+  }
+  handleTabTrap(e)
+}
+
 function close() {
   if (props.loading) return
   emit('update:show', false)
@@ -97,21 +150,20 @@ function handleBackdropClick() {
   }
 }
 
-function handleKeyDown(e: KeyboardEvent) {
-  if (e.key === 'Escape' && props.show) {
-    close()
-  }
-}
-
 watch(
   () => props.show,
-  (val) => {
+  async (val) => {
     if (val) {
+      previousFocus = document.activeElement as HTMLElement
       document.body.style.overflow = 'hidden'
       window.addEventListener('keydown', handleKeyDown)
+      await nextTick()
+      closeBtnEl.value?.focus()
     } else {
       document.body.style.overflow = ''
       window.removeEventListener('keydown', handleKeyDown)
+      previousFocus?.focus()
+      previousFocus = null
     }
   },
   { immediate: true }
@@ -140,15 +192,16 @@ onUnmounted(() => {
 }
 
 .tecnm-modal-container {
-  background: var(--tecnm-card-bg, #ffffff);
-  border: 1px solid var(--tecnm-border-color, #e2e8f0);
+  background: var(--tecnm-surface-white);
+  border: 1px solid var(--tecnm-border-color);
   border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--tecnm-shadow-lg);
   width: 100%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  color: var(--tecnm-text-primary);
 }
 
 .tecnm-modal--sm { max-width: 400px; }
@@ -180,7 +233,12 @@ onUnmounted(() => {
   color: rgba(255, 255, 255, 0.8);
   font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
+  padding: 0.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
   transition: all 0.2s ease;
 }
@@ -198,8 +256,8 @@ onUnmounted(() => {
 
 .tecnm-modal-footer {
   padding: 1rem 1.25rem;
-  background: var(--tecnm-soft-hover, #f8fafc);
-  border-top: 1px solid var(--tecnm-border-color, #e2e8f0);
+  background: var(--tecnm-soft-hover);
+  border-top: 1px solid var(--tecnm-border-color);
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
@@ -208,7 +266,7 @@ onUnmounted(() => {
 /* Transiciones CSS */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
-  transition: opacity 0.25s ease;
+  transition: opacity 0.3s ease;
 }
 
 .modal-fade-enter-from,
@@ -217,7 +275,11 @@ onUnmounted(() => {
 }
 
 .modal-fade-enter-active .tecnm-modal-container {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-fade-leave-active .tecnm-modal-container {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .modal-fade-enter-from .tecnm-modal-container {

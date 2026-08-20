@@ -574,10 +574,17 @@ namespace RecursosHumanosWeb.Controllers
 
         #endregion
 
-        #region HELPERS
+    #region HELPERS
 
-        /// <summary>Configuración de presentación por tipo de permiso (icono, subtítulo y campos). Fuente única para Create/Edit.</summary>
-        public class PermissionTypeFieldConfig
+    /// <summary>Teacher Absence shift options.</summary>
+    public enum ShiftType
+    {
+        Morning = 1,
+        Night = 2
+    }
+
+    /// <summary>Configuración de presentación por tipo de permiso (icono, subtítulo y campos). Fuente única para Create/Edit.</summary>
+    public class PermissionTypeFieldConfig
         {
             public bool Show { get; set; }
             public string Label { get; set; } = string.Empty;
@@ -631,6 +638,15 @@ namespace RecursosHumanosWeb.Controllers
                 Date2 = new PermissionTypeFieldConfig { Show = true, Label = "Al día", Required = true },
                 Time1 = new PermissionTypeFieldConfig { Show = true, Label = "Hora entrada", Required = true },
                 Time2 = new PermissionTypeFieldConfig { Show = true, Label = "Hora salida", Required = true }
+            },
+            [5] = new PermissionTypeCardConfig
+            {
+                Icon = "fa-chalkboard-teacher",
+                Subtitle = "Falta de docente (1 día)",
+                Date1 = new PermissionTypeFieldConfig { Show = true, Label = "Día de falta", Required = true },
+                Date2 = new PermissionTypeFieldConfig { Show = false, Label = "", Required = false },
+                Time1 = new PermissionTypeFieldConfig { Show = false, Label = "", Required = false },
+                Time2 = new PermissionTypeFieldConfig { Show = false, Label = "", Required = false }
             }
         };
 

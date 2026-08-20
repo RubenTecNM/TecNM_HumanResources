@@ -11,9 +11,6 @@
         <span class="tecnm-brand-title">Tecnológico Nacional de México</span>
         <span class="tecnm-brand-subtitle">Sistema de Permisos</span>
       </div>
-      <div class="tecnm-topbar__actions">
-        <ThemeSwitcher />
-      </div>
     </header>
 
     <!-- Mobile overlay -->
@@ -87,16 +84,15 @@
       <div class="tecnm-sidebar__footer">
         <div class="tecnm-sidebar__profile">
           <span class="avatar">{{ authStore.initial }}</span>
-          <span class="user-name">{{ authStore.user?.name }}</span>
+          <span v-if="expanded" class="user-name">{{ authStore.user?.name }}</span>
         </div>
-        <ul class="tecnm-sidebar__menu">
-          <li class="tecnm-sidebar__item">
-            <button type="button" class="tecnm-logout-btn" @click="logout">
-              <i class="fa fa-power-off" aria-hidden="true"></i>
-              <span>Salir</span>
-            </button>
-          </li>
-        </ul>
+        <div class="tecnm-sidebar__footer-actions">
+          <ThemeSwitcher :collapsed="!expanded" />
+          <button type="button" class="tecnm-logout-btn" @click="logout">
+            <i class="fa fa-power-off" aria-hidden="true"></i>
+            <span v-if="expanded">Salir</span>
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -161,12 +157,6 @@ async function logout() {
 .user-name {
   font-size: 0.85rem;
   font-weight: 600;
-}
-
-.tecnm-topbar__actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
 }
 
 .tecnm-sidebar .user-name {

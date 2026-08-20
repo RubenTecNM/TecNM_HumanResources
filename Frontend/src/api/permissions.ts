@@ -4,6 +4,7 @@ export interface PermissionListItem {
   id: number
   requester: string
   type: string
+  permissionTypeId: number
   startDate: string | null
   endDate: string | null
   reason: string
@@ -13,6 +14,9 @@ export interface PermissionListItem {
   withPay: boolean
   createdAt: string | null
   updatedAt: string | null
+  shift?: number | null
+  hoursInClassroom?: number | null
+  hoursDischarge?: number | null
 }
 
 export interface PermissionListPage {
@@ -29,6 +33,7 @@ export interface PermissionDetail {
   id: number
   requester: string
   type: string
+  permissionTypeId: number
   startDate: string | null
   endDate: string | null
   reason: string
@@ -41,6 +46,9 @@ export interface PermissionDetail {
   authorizedBy?: string | null
   authorizedAt?: string | null
   authorizationComment?: string | null
+  shift?: number | null
+  hoursInClassroom?: number | null
+  hoursDischarge?: number | null
 }
 
 export interface PermissionCreatePayload {
@@ -53,6 +61,8 @@ export interface PermissionCreatePayload {
   evidence?: File | null
   confirmed?: boolean
   clearEvidence?: boolean
+  hoursInClassroom?: number | null
+  hoursDischarge?: number | null
 }
 
 export interface PermissionSubmitResult {
@@ -143,5 +153,7 @@ function buildPermissionForm(payload: PermissionCreatePayload): FormData {
   if (payload.evidence) form.append('evidenceFile', payload.evidence)
   if (payload.confirmed !== undefined) form.append('confirmed', payload.confirmed ? 'true' : 'false')
   if (payload.clearEvidence) form.append('clearEvidence', 'true')
+  if (payload.hoursInClassroom != null) form.append('hoursInClassroom', String(payload.hoursInClassroom))
+  if (payload.hoursDischarge != null) form.append('hoursDischarge', String(payload.hoursDischarge))
   return form
 }

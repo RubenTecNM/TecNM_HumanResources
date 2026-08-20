@@ -72,7 +72,21 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/Account/AccessDenied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
+        // En desarrollo el SPA corre en :5173 y la API en :5270.
+        // SameSite=Strict bloquea las cookies en peticiones cross-port del proxy de Vite.
+        // SameSite=Lax permite el flujo de login vía proxy sin abrir seguridad en producción.
+        if (builder.Environment.IsDevelopment())
+            options.Cookie.SameSite = SameSiteMode.Lax;
     });
+
+// Relajar SameSite del token antiforgery en desarrollo para el proxy de Vite
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddAntiforgery(options =>
+    {
+        options.Cookie.SameSite = SameSiteMode.Lax;
+    });
+}
 
 // Persistencia de llaves para evitar errores de Antiforgery en Docker
 var keysPath = builder.Environment.IsDevelopment() 

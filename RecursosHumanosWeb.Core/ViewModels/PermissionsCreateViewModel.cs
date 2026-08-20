@@ -53,5 +53,10 @@ namespace RecursosHumanosWeb.Models.ViewModels
 
         // User que crea (opcional, prellenado en creación)
         public int? CreatedByUserId { get; set; }
+
+        // Teacher Absence fields (PermissionTypeId = 5)
+        public int? Shift { get; set; }
+        public int? HoursInClassroom { get; set; }
+        public int? HoursDischarge { get; set; }
     }
 }

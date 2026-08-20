@@ -57,7 +57,50 @@ function toggle(tableId: number, permissionId: number) {
 
 <style scoped>
 .rules-editor {
-  max-height: 320px;
+  max-height: 340px;
   overflow-y: auto;
+  border-radius: var(--tecnm-radius-sm);
+  border: 1px solid var(--tecnm-border-color);
+  scrollbar-width: thin;
+  scrollbar-color: var(--tecnm-border-color) transparent;
+}
+
+/* Make table cells clearly readable inside the modal */
+.rules-editor :deep(.tecnm-table) th,
+.rules-editor :deep(.tecnm-table) td {
+  color: var(--tecnm-text-primary);
+  background: var(--tecnm-surface-white);
+}
+
+.rules-editor :deep(.tecnm-table) thead th {
+  background: var(--tecnm-table-head-bg);
+  color: var(--tecnm-table-head-text);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.5rem 0.6rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.rules-editor :deep(.tecnm-table) tbody tr:nth-child(even) td {
+  background: var(--tecnm-soft-hover);
+}
+
+.rules-editor :deep(.tecnm-table) td {
+  padding: 0.4rem 0.6rem;
+  vertical-align: middle;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--tecnm-border-color);
+}
+
+/* Checkbox styling — make it visible in dark mode */
+.rules-editor :deep(input[type='checkbox']) {
+  accent-color: var(--tecnm-blue-primary);
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
 }
 </style>

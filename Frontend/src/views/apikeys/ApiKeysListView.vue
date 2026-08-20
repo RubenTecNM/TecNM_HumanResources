@@ -526,22 +526,25 @@ onMounted(() => {
   border-radius: 9999px;
 }
 
+/* ---- Key token pill in table rows ---- */
 .key-token-row {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--tecnm-bg-light);
+  background: var(--tecnm-table-head-bg);
   padding: 0.25rem 0.6rem;
   border-radius: 4px;
-  border: 1px solid var(--tecnm-border);
+  border: 1px solid var(--tecnm-border-color);
 }
 
 .key-token-row code {
   font-family: monospace;
   font-size: 0.85rem;
-  color: var(--tecnm-navy);
+  color: var(--tecnm-text-primary);
+  font-weight: 600;
 }
 
+/* ---- Token display box inside modals ---- */
 .token-result-box {
   background: var(--tecnm-soft-hover);
   border: 1px solid var(--tecnm-border-color);
@@ -557,10 +560,11 @@ onMounted(() => {
   font-family: monospace;
   font-size: 1rem;
   font-weight: 700;
-  color: var(--tecnm-navy);
+  color: var(--tecnm-blue-primary);
   word-break: break-all;
 }
 
+/* ---- Copy icon button ---- */
 .icon-copy-btn {
   background: transparent;
   border: none;
@@ -569,19 +573,24 @@ onMounted(() => {
   padding: 0.1rem 0.3rem;
 
   &:hover {
-    color: var(--tecnm-navy);
+    color: var(--tecnm-blue-primary);
   }
 }
 
+/* ---- Rules badge (permissions count) ---- */
 .rules-badge {
   font-size: 0.82rem;
-  background: var(--tecnm-bg-light);
-  color: var(--tecnm-text);
+  background: var(--tecnm-table-head-bg);
+  color: var(--tecnm-table-head-text);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
-  border: 1px solid var(--tecnm-border);
+  border: 1px solid var(--tecnm-border-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
+/* ---- Datetime cells ---- */
 .datetime-cell {
   display: flex;
   flex-direction: column;
@@ -604,15 +613,29 @@ onMounted(() => {
   text-align: center;
 }
 
+/* ---- Details modal info grid ---- */
 .audit-info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.75rem;
   font-size: 0.9rem;
+  color: var(--tecnm-text-primary);
   background: var(--tecnm-soft-hover);
   padding: 0.75rem 1rem;
   border-radius: 6px;
-  border: 1px solid var(--tecnm-border-color, #e2e8f0);
+  border: 1px solid var(--tecnm-border-color);
+}
+
+.audit-info-grid strong {
+  color: var(--tecnm-heading-color);
+}
+
+/* ---- JSON / code section boxes ---- */
+.json-box {
+  background: var(--tecnm-soft-hover);
+  border: 1px solid var(--tecnm-border-color);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
 }
 
 .json-box-title {
@@ -620,9 +643,54 @@ onMounted(() => {
   font-weight: 600;
   font-size: 0.85rem;
   margin-bottom: 0.5rem;
+  color: var(--tecnm-heading-color);
+}
+
+/* ---- Collapsible rules toggle button ---- */
+.btn.btn-outline-secondary,
+.btn-outline-secondary {
+  background: transparent;
+  border: 1px solid var(--tecnm-border-color);
+  color: var(--tecnm-text-primary);
+  border-radius: var(--tecnm-radius-sm);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: var(--tecnm-transition-fast);
+}
+
+.btn.btn-outline-secondary:hover,
+.btn-outline-secondary:hover {
+  background: var(--tecnm-soft-hover);
+  border-color: var(--tecnm-blue-primary);
+  color: var(--tecnm-blue-primary);
+}
+
+/* ---- Modal text helpers ---- */
+.small {
+  font-size: 0.875rem;
+}
+
+.text-muted {
+  color: var(--tecnm-text-secondary) !important;
 }
 
 .mb-3 {
   margin-bottom: 0.75rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
+.mb-0 {
+  margin-bottom: 0;
 }
 </style>

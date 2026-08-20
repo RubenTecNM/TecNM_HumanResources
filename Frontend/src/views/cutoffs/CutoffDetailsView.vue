@@ -503,7 +503,7 @@ onMounted(() => {
 }
 
 .kpi-label {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--tecnm-text-secondary, #475569);
   text-transform: uppercase;
@@ -519,7 +519,7 @@ onMounted(() => {
 }
 
 .kpi-sub {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   color: var(--tecnm-text-secondary, #64748b);
 }
 
@@ -533,7 +533,7 @@ onMounted(() => {
 .chart-switcher-btn {
   background: transparent;
   border: none;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--tecnm-text-secondary, #475569);
   padding: 0.25rem 0.75rem;
