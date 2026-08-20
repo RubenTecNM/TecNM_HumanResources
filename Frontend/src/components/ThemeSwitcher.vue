@@ -57,13 +57,15 @@ const triggerEl = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 
 function toggle() {
-  if (!open.value && props.collapsed && triggerEl.value) {
+  if (!open.value && triggerEl.value) {
     const rect = triggerEl.value.getBoundingClientRect()
     menuStyle.value = {
       position: 'fixed',
       left: rect.right + 4 + 'px',
       top: rect.top + 'px',
       bottom: 'auto',
+      minWidth: '220px',
+      maxWidth: '280px',
     }
   }
   open.value = !open.value
@@ -257,5 +259,39 @@ onBeforeUnmount(() => {
 .theme-switcher.is-collapsed .theme-switcher__trigger.is-open {
   background: var(--tecnm-gold-light);
   border-color: var(--tecnm-gold-accent);
+}
+
+/* Expanded: match sidebar button row layout */
+.tecnm-app.is-sidebar-expanded .theme-switcher__trigger {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.88rem;
+  border-radius: var(--tecnm-radius-md);
+  border-color: transparent;
+  background: transparent;
+  color: var(--tecnm-text-secondary);
+}
+
+.tecnm-app.is-sidebar-expanded .theme-switcher__trigger:hover,
+.tecnm-app.is-sidebar-expanded .theme-switcher__trigger.is-open {
+  background: var(--tecnm-gold-light);
+  border-color: var(--tecnm-gold-accent);
+  color: var(--tecnm-accent-text);
+}
+
+.tecnm-app.is-sidebar-expanded .theme-switcher__trigger i:first-child {
+  width: 1.5rem;
+  text-align: center;
+  font-size: 1.25rem;
+}
+
+.tecnm-app.is-sidebar-expanded .theme-switcher__trigger .theme-switcher__caret {
+  margin-left: auto;
+  font-size: 0.7rem;
 }
 </style>
