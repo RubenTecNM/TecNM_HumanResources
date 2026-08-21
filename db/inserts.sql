@@ -172,6 +172,44 @@ INSERT INTO [User] (Name, Email, PasswordHash, CreatedAt, Status, UserTypeId, Ar
 ('SALINAS MENDOZA ALFREDO', 'alfredo.salinas@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 2, 1, 1, 1, 1),
 ('Axel Ruiz', 'axel.ruiz@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 1, 1, 1, 1, 1);
 
+-- 3.5 SEED USERS WITH FIXED IDs (referenced by permission seeds below)
+SET IDENTITY_INSERT [dbo].[User] ON;
+INSERT INTO [User] (Id, Name, Email, PasswordHash, CreatedAt, Status, UserTypeId, AreaId, DepartmentId, PositionId, CreatedByUserId)
+VALUES (86,  'SEMILLA DOCENTE 86',  'docente86@monclova.tecnm.mx',  '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 4, 3, 12, 10, 1),
+       (111, 'SEMILLA DOCENTE 111', 'docente111@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 4, 1, 19, 7, 1);
+SET IDENTITY_INSERT [dbo].[User] OFF;
+
+-- 3.6 ACTIVE CUTOFF (Permission.CutoffId is NOT NULL; permissions below belong to this cutoff)
+INSERT INTO Cutoff (StartDate, EndDate, CutoffStatusTypeId, Status, CreatedAt, CreatedByUserId)
+VALUES ('2026-05-01', '2026-06-30', 1, 1, GETDATE(), 1);
+DECLARE @SeedCutoffId INT = SCOPE_IDENTITY();
+
+-- 3.7 PERMISSION SEEDS
+-- Hours-per-type logic (see funcionalidad/permisos/create.md):
+--   Retardo (1):        HORA_ENTRADA -> StartDate time, EndDate NULL
+--   Turno x Turno (2):  HORA_ENTRADA/HORA_SALIDA -> StartDate/EndDate times
+--   Falta (3):          dates only (00:00:00 / 23:59:59)
+--   Cambio Horario (4): both times like type 2
+-- All seeded WithPay = 1 (con goce), status 1 = Pendiente por Revisar.
+-- Rows with inverted date ranges were adapted by swapping start/end.
+INSERT INTO Permission (StartDate, EndDate, Reason, PermissionStatusTypeId, WithPay, CutoffId, PermissionTypeId, RequestingUserId, Status, CreatedAt, CreatedByUserId) VALUES
+('2026-06-20T00:00:00', '2026-06-21T23:59:59', 'Falta por motivos personales', 1, 1, @SeedCutoffId, 3, 10, 1, GETDATE(), 1),
+('2026-06-22T18:30:00', NULL,                   'Retardo por tráfico', 1, 1, @SeedCutoffId, 1, 16, 1, GETDATE(), 1),
+('2026-06-13T00:00:00', '2026-06-17T23:59:59', 'Necesidades del área', 1, 1, @SeedCutoffId, 2, 38, 1, GETDATE(), 1),
+('2026-06-18T11:00:00', '2026-06-18T19:00:00', 'Necesidades del área', 1, 1, @SeedCutoffId, 4, 62, 1, GETDATE(), 1),
+('2026-06-05T00:00:00', '2026-06-05T23:59:59', 'Comisión a preparatorias', 1, 1, @SeedCutoffId, 3, 111, 1, GETDATE(), 1),
+('2026-06-04T08:18:00', NULL,                   'Personal', 1, 1, @SeedCutoffId, 1, 26, 1, GETDATE(), 1),
+('2026-06-01T08:30:00', NULL,                   'Traslado de hijos para cuidados', 1, 1, @SeedCutoffId, 1, 49, 1, GETDATE(), 1),
+('2026-06-04T08:00:00', '2026-06-04T16:00:00', 'Necesidades del departamento', 1, 1, @SeedCutoffId, 4, 12, 1, GETDATE(), 1),
+('2026-06-04T08:16:00', NULL,                   'Recoger resultados de programa "Vive saludable, vive feliz"', 1, 1, @SeedCutoffId, 1, 111, 1, GETDATE(), 1),
+('2026-06-08T00:00:00', '2026-06-08T23:59:59', 'Problemas de salud', 1, 1, @SeedCutoffId, 3, 43, 1, GETDATE(), 1),
+('2026-06-08T08:21:00', NULL,                   'Cuidado de menor', 1, 1, @SeedCutoffId, 1, 86, 1, GETDATE(), 1),
+('2026-06-01T00:00:00', '2026-06-01T23:59:59', 'Enfermedad', 1, 1, @SeedCutoffId, 3, 23, 1, GETDATE(), 1),
+('2026-05-09T08:00:00', '2026-05-29T13:00:00', 'Necesidades del departamento', 1, 1, @SeedCutoffId, 2, 26, 1, GETDATE(), 1),
+('2026-05-09T08:00:00', '2026-05-29T13:00:00', 'Necesidades del departamento', 1, 1, @SeedCutoffId, 2, 42, 1, GETDATE(), 1),
+('2026-06-04T08:18:00', NULL,                   'Personal', 1, 1, @SeedCutoffId, 1, 42, 1, GETDATE(), 1),
+('2026-06-08T07:00:00', '2026-06-12T15:00:00', 'Apoyo a las necesidades del área', 1, 1, @SeedCutoffId, 4, 65, 1, GETDATE(), 1);
+
 -- 4. SYSTEM AND API TABLES CONFIGURATION
 
 -- ApiFunction
