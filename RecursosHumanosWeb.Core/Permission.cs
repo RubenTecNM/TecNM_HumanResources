@@ -45,7 +45,8 @@ public partial class Permission : BaseEntity
     // ──────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Work shift: 1 = Morning, 2 = Night. Only used by Teacher Absence type.
+    /// Work shift FK → ShiftType. 1=Morning, 2=Afternoon, 3=Mixed.
+    /// Only used by Teacher Absence type (PermissionTypeId=5).
     /// </summary>
     public int? Shift { get; set; }
 
@@ -131,6 +132,7 @@ public partial class Permission : BaseEntity
     public virtual Cutoff Cutoff { get; set; } = null!;
     public virtual PermissionStatusType PermissionStatusType { get; set; } = null!;
     public virtual PermissionType PermissionType { get; set; } = null!;
+    public virtual ShiftType? ShiftType { get; set; }
     public virtual User? AuthorizingUser { get; set; }
     public virtual User RequestingUser { get; set; } = null!;
 }

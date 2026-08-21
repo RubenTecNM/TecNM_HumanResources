@@ -145,6 +145,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 .Include(p => p.PermissionStatusType)
                 .Include(p => p.Cutoff)
                 .Include(p => p.AuthorizingUser)
+                .Include(p => p.ShiftType)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (permission == null) return NotFound($"Permission con ID {id} no encontrado.");
@@ -181,6 +182,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 permission.AuthorizationComment,
                 Cutoff = permission.Cutoff.StartDate.ToString("yyyy-MM-dd") + " - " + permission.Cutoff.EndDate.ToString("yyyy-MM-dd"),
                 permission.Shift,
+                ShiftDescription = permission.ShiftType?.Description,
                 permission.HoursInClassroom,
                 permission.HoursDischarge
             };

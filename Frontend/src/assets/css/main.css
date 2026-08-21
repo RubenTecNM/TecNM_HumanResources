@@ -545,9 +545,10 @@ select.tecnm-form-control {
   overflow: hidden;
 }
 
-/* Unified sidebar button: nav links and logout share size, radius and layout */
+/* Unified sidebar button: nav links, profile and logout share size, radius and layout */
 .tecnm-sidebar__item .tecnm-sidebar__link,
-.tecnm-logout-btn {
+.tecnm-logout-btn,
+.profile-btn {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -566,7 +567,8 @@ select.tecnm-form-control {
 }
 
 .tecnm-sidebar__link i,
-.tecnm-logout-btn i {
+.tecnm-logout-btn i,
+.profile-btn i {
   font-size: 1.25rem;
   transition: var(--tecnm-transition-spring);
 }
@@ -576,6 +578,14 @@ select.tecnm-form-control {
   color: var(--tecnm-text-secondary);
 }
 
+.profile-btn {
+  width: 100%;
+  color: var(--tecnm-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  background: none;
+}
+
 .tecnm-sidebar__item .tecnm-sidebar__link:hover {
   background-color: var(--tecnm-gold-light);
   border-color: var(--tecnm-gold-accent);
@@ -583,6 +593,16 @@ select.tecnm-form-control {
 }
 
 .tecnm-sidebar__item .tecnm-sidebar__link:hover i {
+  transform: translateY(-1px) scale(1.08);
+}
+
+.profile-btn:hover {
+  background-color: var(--tecnm-gold-light);
+  border-color: var(--tecnm-gold-accent);
+  color: var(--tecnm-accent-text);
+}
+
+.profile-btn:hover i {
   transform: translateY(-1px) scale(1.08);
 }
 
@@ -613,7 +633,8 @@ select.tecnm-form-control {
 
 /* Expanded (240px): all sidebar buttons become icon + label rows */
 .tecnm-app.is-sidebar-expanded .tecnm-sidebar__item .tecnm-sidebar__link,
-.tecnm-app.is-sidebar-expanded .tecnm-logout-btn {
+.tecnm-app.is-sidebar-expanded .tecnm-logout-btn,
+.tecnm-app.is-sidebar-expanded .profile-btn {
   flex-direction: row;
   justify-content: flex-start;
   gap: 0.8rem;
@@ -622,24 +643,28 @@ select.tecnm-form-control {
 }
 
 .tecnm-app.is-sidebar-expanded .tecnm-sidebar__link i,
-.tecnm-app.is-sidebar-expanded .tecnm-logout-btn i {
+.tecnm-app.is-sidebar-expanded .tecnm-logout-btn i,
+.tecnm-app.is-sidebar-expanded .profile-btn i {
   width: 1.5rem;
   text-align: center;
 }
 
 /* Collapsed (88px): hide button text, show icons only */
 .tecnm-sidebar__link span,
-.tecnm-logout-btn span {
+.tecnm-logout-btn span,
+.profile-btn span {
   transition: opacity var(--tecnm-transition-fast);
 }
 
 :not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-sidebar__link,
-:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-logout-btn {
+:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-logout-btn,
+:not(.is-sidebar-expanded) > .tecnm-sidebar .profile-btn {
   padding: 0.4rem 0;
 }
 
 :not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-sidebar__link span,
-:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-logout-btn span {
+:not(.is-sidebar-expanded) > .tecnm-sidebar .tecnm-logout-btn span,
+:not(.is-sidebar-expanded) > .tecnm-sidebar .profile-btn span {
   display: none;
 }
 

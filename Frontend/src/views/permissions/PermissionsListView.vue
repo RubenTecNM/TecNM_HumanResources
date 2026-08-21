@@ -89,7 +89,7 @@
                 <td class="text-center">
                   <span class="type-cell">
                     {{ p.type }}
-                    <i v-if="p.permissionTypeId === 5" class="fa fa-chalkboard-teacher type-badge" :title="p.shift === 1 ? 'Matutino' : p.shift === 2 ? 'Vespertino' : 'Falta docente'" aria-hidden="true"></i>
+                    <i v-if="p.permissionTypeId === 5" class="fa fa-chalkboard-teacher type-badge" :title="p.shiftDescription || 'Falta docente'" aria-hidden="true"></i>
                   </span>
                 </td>
                 <td class="text-center">

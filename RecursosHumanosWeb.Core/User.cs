@@ -125,6 +125,9 @@ public partial class User : BaseEntity
     public virtual ICollection<PermissionType> PermissionTypeCreatedBy { get; set; } = new List<PermissionType>();
     public virtual ICollection<PermissionType>? PermissionTypeUpdatedBy { get; set; }
 
+    public virtual ICollection<ShiftType> ShiftTypeCreatedBy { get; set; } = new List<ShiftType>();
+    public virtual ICollection<ShiftType>? ShiftTypeUpdatedBy { get; set; }
+
     public virtual ICollection<UserType> UserTypeCreatedBy { get; set; } = new List<UserType>();
     public virtual ICollection<UserType>? UserTypeUpdatedBy { get; set; }
 }

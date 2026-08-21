@@ -15,6 +15,7 @@ export interface PermissionListItem {
   createdAt: string | null
   updatedAt: string | null
   shift?: number | null
+  shiftDescription?: string | null
   hoursInClassroom?: number | null
   hoursDischarge?: number | null
 }
@@ -47,6 +48,7 @@ export interface PermissionDetail {
   authorizedAt?: string | null
   authorizationComment?: string | null
   shift?: number | null
+  shiftDescription?: string | null
   hoursInClassroom?: number | null
   hoursDischarge?: number | null
 }

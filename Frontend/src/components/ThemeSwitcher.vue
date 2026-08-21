@@ -56,14 +56,19 @@ const rootEl = ref<HTMLElement | null>(null)
 const triggerEl = ref<HTMLElement | null>(null)
 const menuStyle = ref<Record<string, string>>({})
 
+const MENU_HEIGHT = 180
+
 function toggle() {
   if (!open.value && triggerEl.value) {
     const rect = triggerEl.value.getBoundingClientRect()
+    const spaceBelow = window.innerHeight - rect.bottom
+    const openUp = spaceBelow < MENU_HEIGHT
     menuStyle.value = {
       position: 'fixed',
       left: rect.right + 4 + 'px',
-      top: rect.top + 'px',
-      bottom: 'auto',
+      ...(openUp
+        ? { bottom: window.innerHeight - rect.top + 4 + 'px', top: 'auto' }
+        : { top: rect.top + 'px', bottom: 'auto' }),
       minWidth: '220px',
       maxWidth: '280px',
     }

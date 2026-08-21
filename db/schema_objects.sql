@@ -219,3 +219,18 @@ BEGIN
     END
 END;
 GO
+
+-- =============================================
+-- 10. TRIGGER: UpdateModifiedAt (ShiftType)
+-- =============================================
+CREATE OR ALTER TRIGGER trg_ShiftType_UpdateModifiedAt ON ShiftType AFTER UPDATE AS
+BEGIN
+    IF NOT UPDATE(UpdatedAt)
+    BEGIN
+        DECLARE @Ids IdTableType;
+        DECLARE @TableId INT = (SELECT Id FROM DatabaseTable WHERE Description = 'ShiftType');
+        INSERT INTO @Ids SELECT Id FROM inserted;
+        EXEC UpdateModifiedAt @TableId, @Ids;
+    END
+END;
+GO

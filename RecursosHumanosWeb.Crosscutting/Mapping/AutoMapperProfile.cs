@@ -40,7 +40,8 @@ namespace RecursosHumanosWeb.Mapping
                 .ForMember(d => d.Name, o => o.MapFrom(s => s.RequestingUser.Name ?? "N/A"))
                 .ForMember(d => d.PermissionType, o => o.MapFrom(s => s.PermissionType.Description ?? "N/A"))
                 .ForMember(d => d.StatusDescription, o => o.MapFrom(s => s.PermissionStatusType.Description ?? "N/A"))
-                .ForMember(d => d.StatusColor, o => o.MapFrom(s => s.PermissionStatusType.Color ?? "secondary"));
+                .ForMember(d => d.StatusColor, o => o.MapFrom(s => s.PermissionStatusType.Color ?? "secondary"))
+                .ForMember(d => d.ShiftDescription, o => o.MapFrom(s => s.ShiftType != null ? s.ShiftType.Description : null));
 
             CreateMap<Permission, PermissionsCreateViewModel>()
                 .ForMember(dest => dest.StartDate, opt => opt.MapFrom(src => src.StartDate))

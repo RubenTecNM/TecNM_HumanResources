@@ -82,11 +82,11 @@
       </ul>
 
       <div class="tecnm-sidebar__footer">
-        <div class="tecnm-sidebar__profile">
-          <span class="avatar">{{ authStore.initial }}</span>
-          <span v-if="expanded" class="user-name">{{ authStore.user?.name }}</span>
-        </div>
         <div class="tecnm-sidebar__footer-actions">
+          <button type="button" class="tecnm-sidebar__link profile-btn" @click="showProfile = true" title="Mi perfil">
+            <i class="fa fa-user" aria-hidden="true"></i>
+            <span v-if="expanded">{{ authStore.user?.name }}</span>
+          </button>
           <ThemeSwitcher :collapsed="!expanded" />
           <button type="button" class="tecnm-logout-btn" @click="logout">
             <i class="fa fa-power-off" aria-hidden="true"></i>
@@ -94,6 +94,21 @@
           </button>
         </div>
       </div>
+
+      <AppModal
+        v-model:show="showProfile"
+        title="Mi perfil"
+        icon="fa-user"
+        :show-cancel="false"
+        confirm-text="Cerrar"
+        @confirm="showProfile = false"
+      >
+        <div class="user-detail-grid" v-if="authStore.user">
+          <div class="detail-row"><span class="detail-label">Nombre</span><span class="detail-value">{{ authStore.user.name }}</span></div>
+          <div class="detail-row"><span class="detail-label">Correo</span><span class="detail-value">{{ authStore.user.email }}</span></div>
+          <div class="detail-row"><span class="detail-label">Tipo de Usuario</span><span class="detail-value">{{ roleLabel }}</span></div>
+        </div>
+      </AppModal>
     </aside>
 
     <main class="tecnm-main">
@@ -105,13 +120,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore, USER_TYPE } from '@/stores/auth'
 import { useTheme } from '@/composables/useTheme'
 import { askConfirmation } from '@/composables/useAlerts'
 import AnimatedBackground from '@/components/AnimatedBackground.vue'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
+import AppModal from '@/components/AppModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -120,6 +136,14 @@ const { currentTheme } = useTheme()
 
 const expanded = ref(localStorage.getItem('sidebar-expanded') === 'true')
 const mobileOpen = ref(false)
+const showProfile = ref(false)
+
+const ROLE_LABELS: Record<number, string> = {
+  [USER_TYPE.ADMINISTRADOR]: 'Administrador',
+  [USER_TYPE.AUTORIZADOR]: 'Autorizador',
+  [USER_TYPE.RECURSOS_HUMANOS]: 'Recursos Humanos',
+}
+const roleLabel = computed(() => ROLE_LABELS[authStore.userType ?? 0] ?? 'Empleado')
 
 function toggleSidebar() {
   expanded.value = !expanded.value
@@ -140,36 +164,41 @@ async function logout() {
 </script>
 
 <style scoped>
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--tecnm-gold-accent);
-  color: var(--tecnm-text-on-gold);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.user-name {
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.tecnm-sidebar .user-name {
-  color: var(--tecnm-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 140px;
-}
-
 .tecnm-sidebar__item .tecnm-logout-btn {
   text-decoration: none;
   border-radius: var(--tecnm-radius-md);
   font-family: inherit;
+}
+
+.user-detail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--tecnm-border, #e5e7eb);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  min-width: 140px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--tecnm-text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detail-value {
+  font-size: 0.9rem;
+  color: var(--tecnm-text, #111827);
 }
 </style>

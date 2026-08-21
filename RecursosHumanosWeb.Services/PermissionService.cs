@@ -41,6 +41,7 @@ namespace RecursosHumanosWeb.Services
             var query = _context.Permissions
                 .Include(p => p.RequestingUser)
                 .Include(p => p.PermissionType)
+                .Include(p => p.ShiftType)
                 .Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .AsQueryable();
 
@@ -136,12 +137,26 @@ namespace RecursosHumanosWeb.Services
             // Teacher Absence validation
             if (permission.PermissionTypeId == 5)
             {
-                // Auto-derive shift from StartDate: hour < 12 → Matutino(1), else → Vespertino(2)
-                permission.Shift = permission.StartDate.HasValue && permission.StartDate.Value.Hour < 12 ? 1 : 2;
+                // Auto-derive shift from StartDate hour:
+                //   < 14  → Morning (1): 7am-2pm, max 7h
+                //   >= 16 → Afternoon (2): 4pm-10pm, max 6h
+                //   [14,16) → error (gap between shifts)
+                if (!permission.StartDate.HasValue)
+                    throw new InvalidOperationException("La fecha de inicio es obligatoria para falta de docente.");
+
+                int hour = permission.StartDate.Value.Hour;
+                if (hour >= 14 && hour < 16)
+                    throw new InvalidOperationException("La hora ingresada está en el intervalo sin clases (14:00-16:00). Use turno Matutino (7am-2pm) o Vespertino (4pm-10pm).");
+
+                permission.Shift = hour < 14 ? 1 : 2; // 1=Morning, 2=Afternoon
 
                 int totalHours = (permission.HoursInClassroom ?? 0) + (permission.HoursDischarge ?? 0);
-                if (totalHours <= 0 || totalHours > 8)
-                    throw new InvalidOperationException("Las horas totales deben estar entre 1 y 8.");
+                if (totalHours == 0)
+                    throw new InvalidOperationException("Las horas totales deben ser mayor a 0. Si no asistió, registre una falta.");
+
+                int maxHours = permission.Shift == 1 ? 7 : 6; // Morning=7, Afternoon=6
+                if (totalHours > maxHours)
+                    throw new InvalidOperationException($"Las horas totales ({totalHours}) exceden la duración del turno ({maxHours}h).");
 
                 // Single-day absence for teacher type
                 permission.EndDate = permission.StartDate;
@@ -217,7 +232,23 @@ namespace RecursosHumanosWeb.Services
             // For type 5, enforce single-day + auto-derive shift
             if (existing.PermissionTypeId == 5)
             {
-                existing.Shift = existing.StartDate.HasValue && existing.StartDate.Value.Hour < 12 ? 1 : 2;
+                if (!existing.StartDate.HasValue)
+                    throw new InvalidOperationException("La fecha de inicio es obligatoria para falta de docente.");
+
+                int hour = existing.StartDate.Value.Hour;
+                if (hour >= 14 && hour < 16)
+                    throw new InvalidOperationException("La hora ingresada está en el intervalo sin clases (14:00-16:00). Use turno Matutino (7am-2pm) o Vespertino (4pm-10pm).");
+
+                existing.Shift = hour < 14 ? 1 : 2;
+
+                int totalHours = (existing.HoursInClassroom ?? 0) + (existing.HoursDischarge ?? 0);
+                if (totalHours == 0)
+                    throw new InvalidOperationException("Las horas totales deben ser mayor a 0. Si no asistió, registre una falta.");
+
+                int maxHours = existing.Shift == 1 ? 7 : 6;
+                if (totalHours > maxHours)
+                    throw new InvalidOperationException($"Las horas totales ({totalHours}) exceden la duración del turno ({maxHours}h).");
+
                 existing.EndDate = existing.StartDate;
                 existing.Days = 1;
             }

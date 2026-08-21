@@ -69,7 +69,7 @@
             <template v-if="permission?.permissionTypeId === 5">
               <div class="detail-item">
                 <dt>Turno</dt>
-                <dd>{{ permission?.shift === 1 ? 'Matutino' : permission?.shift === 2 ? 'Vespertino' : '—' }}</dd>
+                <dd>{{ permission?.shiftDescription || '—' }}</dd>
               </div>
               <div class="detail-item">
                 <dt>Horas en aula</dt>

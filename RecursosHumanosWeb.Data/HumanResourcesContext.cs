@@ -48,6 +48,7 @@ public partial class HumanResourcesContext : DbContext
     public virtual DbSet<OriginType> OriginTypes { get; set; }
     public virtual DbSet<CutoffStatusType> CutoffStatusTypes { get; set; }
     public virtual DbSet<PermissionStatusType> PermissionStatusTypes { get; set; }
+    public virtual DbSet<ShiftType> ShiftTypes { get; set; }
     public virtual DbSet<ResetPasswordToken> ResetPasswordTokens { get; set; }
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
 
@@ -340,6 +341,11 @@ public partial class HumanResourcesContext : DbContext
                 .HasForeignKey(d => d.RequestingUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Permission_RequestingUserId");
+
+            entity.HasOne(d => d.ShiftType).WithMany(p => p.Permissions)
+                .HasForeignKey(d => d.Shift)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Permission_Shift");
         });
 
         modelBuilder.Entity<Position>(entity =>
@@ -427,6 +433,34 @@ public partial class HumanResourcesContext : DbContext
             entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.PermissionTypeUpdatedBy)
                 .HasForeignKey(d => d.UpdatedByUserId)
                 .HasConstraintName("FK_PermissionType_UpdatedByUserId");
+        });
+
+        modelBuilder.Entity<ShiftType>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_ShiftType");
+
+            entity.ToTable("ShiftType", tb => tb.HasTrigger("trg_ShiftType_UpdateModifiedAt"));
+
+            entity.Property(e => e.Description)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Status).HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(NULL)")
+                .HasColumnType("datetime");
+            entity.Property(e => e.UpdatedByUserId).HasDefaultValueSql("(NULL)");
+
+            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.ShiftTypeCreatedBy)
+                .HasForeignKey(d => d.CreatedByUserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ShiftType_CreatedByUserId");
+
+            entity.HasOne(d => d.UpdatedByUser).WithMany(p => p.ShiftTypeUpdatedBy)
+                .HasForeignKey(d => d.UpdatedByUserId)
+                .HasConstraintName("FK_ShiftType_UpdatedByUserId");
         });
 
         modelBuilder.Entity<UserType>(entity =>
