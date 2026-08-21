@@ -42,6 +42,18 @@ BEGIN
 END;
 GO
 
+-- 1b. Idempotent seed: runs also when the table already exists (created by EF model on fresh DBs)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[ShiftType] WHERE [Id] IN (1, 2, 3))
+BEGIN
+    SET IDENTITY_INSERT [dbo].[ShiftType] ON;
+    INSERT INTO [dbo].[ShiftType] ([Id], [Description], [Status], [CreatedAt], [CreatedByUserId])
+    VALUES (1, 'Morning',   1, GETDATE(), 1),
+           (2, 'Afternoon', 1, GETDATE(), 1),
+           (3, 'Mixed',     1, GETDATE(), 1);
+    SET IDENTITY_INSERT [dbo].[ShiftType] OFF;
+END;
+GO
+
 -- 2. Migrate Permission.Shift from plain INT to FK → ShiftType
 -- First drop any existing FK on Shift (if upgrade_005 created the column as plain INT)
 IF EXISTS (

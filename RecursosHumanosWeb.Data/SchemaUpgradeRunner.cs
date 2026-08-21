@@ -32,10 +32,20 @@ public static class SchemaUpgradeRunner
 
             var sql = File.ReadAllText(file);
 
+            // Split into GO-separated batches (ExecuteSqlRaw cannot handle GO separators)
+            var batches = System.Text.RegularExpressions.Regex.Split(
+                sql, @"^\s*GO\s*$",
+                System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
             using var transaction = context.Database.BeginTransaction();
             try
             {
-                context.Database.ExecuteSqlRaw(sql);
+                foreach (var batch in batches)
+                {
+                    if (!string.IsNullOrWhiteSpace(batch))
+                        context.Database.ExecuteSqlRaw(batch);
+                }
+
                 context.Database.ExecuteSqlRaw(
                     "INSERT INTO [dbo].[SchemaVersion] ([Version]) VALUES ({0})",
                     version);
