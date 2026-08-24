@@ -28,7 +28,7 @@ export interface SyncImportSummary {
 export type SyncKind = 'usuarios' | 'permisos' | 'autorizadores'
 
 export async function downloadTemplate(kind: SyncKind) {
-  const res = await client.get(`/sync/template/${kind}`, { responseType: 'blob' })
+  const res = await client.get(`/api/Sync/template/${kind}`, { responseType: 'blob' })
   const url = URL.createObjectURL(res.data as Blob)
   const a = document.createElement('a')
   a.href = url
@@ -40,13 +40,13 @@ export async function downloadTemplate(kind: SyncKind) {
 export async function validateFile(kind: SyncKind, file: File) {
   const form = new FormData()
   form.append('file', file)
-  const res = await client.post<SyncPreview>(`/sync/validate/${kind}`, form)
+  const res = await client.post<SyncPreview>(`/api/Sync/validate/${kind}`, form)
   return res.data
 }
 
 export async function runImport(kind: SyncKind, file: File) {
   const form = new FormData()
   form.append('file', file)
-  const res = await client.post<SyncImportSummary>(`/sync/import/${kind}`, form)
+  const res = await client.post<SyncImportSummary>(`/api/Sync/import/${kind}`, form)
   return res.data
 }
