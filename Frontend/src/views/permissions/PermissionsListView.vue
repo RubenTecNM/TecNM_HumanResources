@@ -59,6 +59,19 @@
       </div>
     </section>
 
+    <!-- Leyenda de estados -->
+    <details class="tecnm-card legend-box">
+      <summary>
+        <i class="fa fa-question-circle" aria-hidden="true"></i>
+        ¿Qué significa cada estado?
+      </summary>
+      <p><strong>Pendiente por Revisar</strong> — el permiso fue solicitado y espera revisión del autorizador o Recursos Humanos. Mientras esté así, se puede editar o cancelar.</p>
+      <p><strong>Revisado / Aprobado</strong> — autorizado. Puede ser <em>con goce</em> (se paga) o <em>sin goce</em>, según lo acordado en la revisión.</p>
+      <p><strong>Revisado / Rechazado</strong> — no autorizado; queda registrado como historial pero sin efecto de pago.</p>
+      <p><strong>Invalidado por Periodo</strong> — el permiso nunca fue revisado porque su periodo ya estaba cerrado cuando el sistema lo detectó (p. ej., datos capturados fuera de línea). Se marca en rojo como anomalía para auditoría y siempre es sin goce.</p>
+      <p class="legend-note"><i class="fa fa-clock-o" aria-hidden="true"></i> Al cerrarse un corte, sus permisos pendientes se resuelven automáticamente: los del corte vencido pasan a Rechazado y los encontrados en cortes ya cerrados pasan a Invalidado por Periodo. Un permiso revisado ya no se puede modificar.</p>
+    </details>
+
     <AppSpinner v-if="loading" />
     <template v-else>
       <section class="tecnm-card">
@@ -342,6 +355,32 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.legend-box {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.legend-box summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--tecnm-primary, #0d6efd);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+
+.legend-box p {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
+}
+
+.legend-note {
+  background: var(--tecnm-soft-hover);
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.375rem;
+}
+
 .filter-title {
   display: flex;
   align-items: center;
