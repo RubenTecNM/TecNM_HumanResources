@@ -48,7 +48,7 @@ export interface CutoffAnalytics {
   permissionsByArea: { name: string; value: number }[]
   permissionsByType: { name: string; value: number; color?: string }[]
   trend: { date: string; total: number; approved: number; rejected: number }[]
-  heatmap?: { day: string; week: number; count: number }[]
+  topRequesters?: { name: string; area?: string; value: number }[]
 }
 
 export type CutoffExportFormat = 'excel' | 'csv' | 'json' | 'xml'

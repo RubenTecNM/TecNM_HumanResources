@@ -198,16 +198,17 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
                 })
                 .ToList();
 
-            // Heatmap: intensidad por día de la semana (fila) y semana del mes (columna)
-            var heatmap = permissions
-                .GroupBy(p => new { Day = p.CreatedAt.ToString("dddd", new CultureInfo("en-US")), Week = (p.CreatedAt.Day / 7) + 1 })
+            var topRequesters = permissions
+                .Where(p => p.RequestingUser != null)
+                .GroupBy(p => p.RequestingUser!)
                 .Select(g => new
                 {
-                    day = g.Key.Day,
-                    week = g.Key.Week,
-                    count = g.Count()
+                    name = g.Key.Name,
+                    area = g.Key.Area?.Description,
+                    value = g.Count()
                 })
-                .OrderBy(h => h.week)
+                .OrderByDescending(x => x.value)
+                .Take(5)
                 .ToList();
 
             return Ok(new
@@ -228,14 +229,21 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
                     totalPermissions = permissions.Count,
                     withPay = permissions.Count(p => p.WithPay == true),
                     withoutPay = permissions.Count(p => p.WithPay != true),
-                    averageDays = permissions.Any() ? Math.Round(permissions.Average(p => p.Days ?? 0), 1) : 0,
+                    averageDays = permissions.Any()
+                        ? Math.Round(permissions.Average(p =>
+                        {
+                            var inicio = (p.StartDate ?? DateTime.Today).Date;
+                            var fin = (p.EndDate ?? inicio).Date;
+                            return p.Days ?? (fin - inicio).Days + 1;
+                        }), 1)
+                        : 0,
                     pendingCount = permissions.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending),
                     approvedCount = permissions.Count(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved)
                 },
                 permissionsByArea,
                 permissionsByType,
                 trend,
-                heatmap
+                topRequesters
             });
         }
 

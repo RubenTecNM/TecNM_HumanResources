@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="cutoff-details">
     <AppPageHeader
       :title="`Corte Quincenal #${cutoffId}`"
       :subtitle="cutoff ? `${formatTecNMDate(cutoff.startDate)} – ${formatTecNMDate(cutoff.endDate)}` : 'Dashboard Analítico'"
@@ -114,7 +114,7 @@
       </div>
 
       <!-- Tendencia Temporal -->
-      <AppCard premium class="mb-4">
+      <AppCard premium>
         <template #header>
           <div class="trend-header">
             <h4 class="filter-title">
@@ -176,7 +176,7 @@
       </div>
 
       <!-- Permisos por Área -->
-      <AppCard premium class="mb-4">
+      <AppCard premium>
         <template #header>
           <h4 class="filter-title">
             <i class="fa fa-sitemap me-2" aria-hidden="true"></i>
@@ -189,41 +189,42 @@
         <apexchart v-else type="bar" height="280" :options="barChartOptions" :series="barChartSeries"></apexchart>
       </AppCard>
 
-      <!-- Heatmap de Solicitudes -->
-      <AppCard premium class="mb-4">
-        <template #header>
-          <h4 class="filter-title">
-            <i class="fa fa-calendar-check-o me-2 text-primary" aria-hidden="true"></i>
-            Heatmap de Solicitudes por Día de la Semana
-          </h4>
-        </template>
-        <div v-if="heatmapRows.length === 0" class="text-center py-5 text-muted">
-          Sin solicitudes para generar el mapa de calor.
+      <!-- Actividad Semanal y Top Solicitantes -->
+      <div class="charts-duo">
+        <div>
+          <AppCard premium class="h-100">
+            <template #header>
+              <h4 class="filter-title">
+                <i class="fa fa-calendar-check-o me-2" aria-hidden="true"></i>
+                Solicitudes por Día de la Semana
+              </h4>
+            </template>
+            <div v-if="!weekdaySeries || weekdaySeries.data.length === 0" class="chart-empty">Sin solicitudes en este periodo.</div>
+            <apexchart v-else type="bar" height="280" :options="weekdayChartOptions" :series="weekdaySeries ? [weekdaySeries] : []"></apexchart>
+          </AppCard>
         </div>
-        <div v-else class="table-responsive">
-          <table class="table table-sm align-middle heatmap-table">
-            <thead>
-              <tr>
-                <th class="heatmap-day-col">Día</th>
-                <th v-for="w in maxWeek" :key="w" class="text-center">Semana {{ w }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in heatmapRows" :key="row.day">
-                <td class="heatmap-day-col fw-semibold">{{ row.day }}</td>
-                <td
-                  v-for="w in maxWeek"
-                  :key="w"
-                  class="text-center heatmap-cell"
-                  :class="`heatmap-cell--lvl${cellLevel(row.day, w)}`"
-                >
-                  {{ cellCount(row.day, w) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div>
+          <AppCard premium class="h-100">
+            <template #header>
+              <h4 class="filter-title">
+                <i class="fa fa-trophy me-2" aria-hidden="true"></i>
+                Top Solicitantes del Periodo
+              </h4>
+            </template>
+            <div v-if="topRequesters.length === 0" class="chart-empty">Sin solicitantes registrados.</div>
+            <ol v-else class="top-list">
+              <li v-for="(r, i) in topRequesters" :key="r.name" class="top-item">
+                <span class="top-rank" :class="`top-rank--${i + 1}`">{{ i + 1 }}</span>
+                <span class="top-info">
+                  <span class="top-name">{{ r.name }}</span>
+                  <span v-if="r.area" class="top-area">{{ r.area }}</span>
+                </span>
+                <span class="top-count">{{ r.value }}</span>
+              </li>
+            </ol>
+          </AppCard>
         </div>
-      </AppCard>
+      </div>
 
       <!-- Auditoría de Registro -->
       <AppCard premium>
@@ -233,32 +234,30 @@
             Auditoría de Registro del Periodo
           </h4>
         </template>
-        <div class="row g-3">
-          <div class="col-12 col-md-6">
-            <div class="audit-box">
-              <div class="d-flex align-items-center gap-3">
-                <div class="audit-icon audit-icon--success">
-                  <i class="fa fa-user-plus" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="audit-label">Generado por</span>
-                  <p class="audit-value mb-0">{{ cutoff.createdBy || 'Sistema' }}</p>
-                </div>
+        <div class="audit-grid">
+          <div class="audit-box">
+            <div class="audit-head">
+              <div class="audit-icon audit-icon--success">
+                <i class="fa fa-user-plus" aria-hidden="true"></i>
+              </div>
+              <div>
+                <span class="audit-label">Generado por</span>
+                <p class="audit-value">{{ cutoff.createdBy || 'Sistema' }}</p>
               </div>
             </div>
+            <span v-if="createdAtLabel" class="audit-date">{{ createdAtLabel }}</span>
           </div>
-          <div class="col-12 col-md-6">
-            <div class="audit-box">
-              <div class="d-flex align-items-center gap-3">
-                <div class="audit-icon audit-icon--warning">
-                  <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
-                </div>
-                <div>
-                  <span class="audit-label">Última Modificación por</span>
-                  <p class="audit-value mb-0">{{ cutoff.updatedBy || 'Sin modificaciones' }}</p>
-                </div>
+          <div class="audit-box">
+            <div class="audit-head">
+              <div class="audit-icon audit-icon--warning">
+                <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+              </div>
+              <div>
+                <span class="audit-label">Última modificación</span>
+                <p class="audit-value">{{ cutoff.updatedBy || 'Sin modificaciones' }}</p>
               </div>
             </div>
+            <span v-if="updatedAtLabel" class="audit-date">{{ updatedAtLabel }}</span>
           </div>
         </div>
       </AppCard>
@@ -297,29 +296,45 @@ const kpis = ref<CutoffKpis>({
 const permissionsByArea = ref<{ name: string; value: number }[]>([])
 const permissionsByType = ref<{ name: string; value: number; color?: string }[]>([])
 const trendData = ref<{ date: string; total: number; approved: number; rejected: number }[]>([])
-const heatmap = ref<{ day: string; week: number; count: number }[]>([])
+const topRequesters = ref<{ name: string; area?: string; value: number }[]>([])
 
-const DAY_ORDER = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-
-const heatmapRows = computed(() => DAY_ORDER.map(day => ({ day })))
-
-const maxWeek = computed(() => {
-  const weeks = heatmap.value.map(h => h.week)
-  return weeks.length > 0 ? Math.max(...weeks) : 0
+// Distribución por día de la semana derivada de la serie diaria (sin ida extra al API)
+const weekdaySeries = computed(() => {
+  if (!cutoff.value || trendFull.value.length === 0) return null
+  const counts = [0, 0, 0, 0, 0, 0, 0]
+  const start = new Date(cutoff.value.startDate)
+  trendFull.value.forEach((t, i) => {
+    const d = new Date(start)
+    d.setDate(d.getDate() + i)
+    counts[d.getDay()] += t.total
+  })
+  // Mostramos Lun → Dom
+  return { name: 'Solicitudes', data: [1, 2, 3, 4, 5, 6, 0].map(idx => counts[idx]) }
 })
 
-function cellCount(day: string, week: number): number {
-  return heatmap.value.find(h => h.day === day && h.week === week)?.count ?? 0
-}
+const weekdayChartOptions = computed((): any => ({
+  chart: { fontFamily: chartFontFamily, toolbar: { show: false } },
+  xaxis: {
+    categories: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+    axisBorder: { color: gridColor() },
+    axisTicks: { color: gridColor() },
+    labels: { style: { colors: axisColor(), fontSize: '11px', fontWeight: 600 } }
+  },
+  yaxis: {
+    min: 0,
+    forceNiceScale: true,
+    labels: { style: { colors: legendColor(), fontSize: '11px', fontWeight: 600 } }
+  },
+  colors: ['#38BDF8'],
+  plotOptions: { bar: { borderRadius: 6, columnWidth: '55%' } },
+  dataLabels: { enabled: false },
+  grid: { borderColor: gridColor(), strokeDashArray: 4 },
+  tooltip: { theme: isDark.value ? 'dark' : 'light' }
+}))
 
-function cellLevel(day: string, week: number): number {
-  const count = cellCount(day, week)
-  if (count === 0) return 0
-  if (count <= 2) return 1
-  if (count <= 4) return 2
-  if (count <= 6) return 3
-  return 4
-}
+// Fechas de auditoría legibles
+const createdAtLabel = computed(() => cutoff.value?.createdAt ? formatTecNMDate(cutoff.value.createdAt) : '')
+const updatedAtLabel = computed(() => cutoff.value?.updatedAt ? formatTecNMDate(cutoff.value.updatedAt) : '')
 
 const trendChartType = ref<'area' | 'bar' | 'line'>('area')
 
@@ -564,7 +579,7 @@ async function loadAnalytics() {
     permissionsByArea.value = data.permissionsByArea || []
     permissionsByType.value = data.permissionsByType || []
     trendData.value = data.trend || []
-    heatmap.value = data.heatmap || []
+    topRequesters.value = data.topRequesters || []
   } catch (e: any) {
     error.value = e.response?.data?.message || 'No se pudieron obtener las analíticas del periodo.'
   } finally {
@@ -611,6 +626,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Separación uniforme entre todas las secciones de la vista */
+.cutoff-details > * + * {
+  margin-top: 1.4rem;
+}
+
 /* ── Header: badge con espacio propio + dropdown de exportación ── */
 .status-slot {
   display: inline-flex;
@@ -695,7 +715,6 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  margin-bottom: 1.25rem;
 }
 
 @media (min-width: 576px) {
@@ -783,7 +802,6 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  margin-bottom: 1.25rem;
 }
 
 @media (min-width: 768px) {
@@ -805,32 +823,87 @@ onUnmounted(() => {
   min-height: 290px;
 }
 
-.heatmap-table {
-  font-size: 0.8rem;
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  color: var(--tecnm-text-secondary, #64748b);
+  font-size: 0.85rem;
 }
 
-.heatmap-table th,
-.heatmap-table td {
-  border: 1px solid var(--tecnm-border-color, #e2e8f0);
+.top-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0.25rem 0;
 }
 
-.heatmap-day-col {
-  min-width: 110px;
-  background: var(--tecnm-bg-main, #f8fafc);
+.top-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.35rem;
 }
 
-.heatmap-cell {
-  min-width: 70px;
-  transition: transform 0.15s;
+.top-item + .top-item { border-top: 1px solid var(--tecnm-border-color); }
+
+.top-rank {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  background: var(--tecnm-bg-main);
+  color: var(--tecnm-text-secondary);
+  border: 1px solid var(--tecnm-border-color);
+}
+.top-rank--1 { background: #FEF3C7; color: #B45309; border-color: #FCD34D; }
+.top-rank--2 { background: #E2E8F0; color: #475569; border-color: #CBD5E1; }
+.top-rank--3 { background: #FFEDD5; color: #C2410C; border-color: #FDBA74; }
+
+.top-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.top-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--tecnm-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.top-area {
+  font-size: 0.72rem;
+  color: var(--tecnm-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.heatmap-cell--lvl0 { background-color: #f1f5f9; color: #94a3b8; }
-.heatmap-cell--lvl1 { background-color: #dbeafe; color: #1e40af; }
-.heatmap-cell--lvl2 { background-color: #93c5fd; color: #1e3a8a; }
-.heatmap-cell--lvl3 { background-color: #3b82f6; color: #ffffff; }
-.heatmap-cell--lvl4 { background-color: #1d4ed8; color: #ffffff; font-weight: 700; }
+.top-count {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--tecnm-blue-primary, #1d4ed8);
+  flex-shrink: 0;
+}
+
+.audit-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  .audit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 .audit-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   background: var(--tecnm-bg-main, #f8fafc);
   border: 1px solid var(--tecnm-border-color, #e2e8f0);
   border-radius: var(--tecnm-radius-sm, 8px);
@@ -846,6 +919,15 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 1.1rem;
   flex-shrink: 0;
+}
+
+.audit-head { display: flex; align-items: center; gap: 0.75rem; }
+
+.audit-date {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--tecnm-text-secondary);
+  white-space: nowrap;
 }
 
 .audit-icon--success { background-color: #ecfdf5; color: #10b981; }
