@@ -59,28 +59,9 @@
         <i class="fa fa-question-circle" aria-hidden="true"></i>
         ¿Qué significan <strong>Estado</strong> y <strong>Vigencia</strong>?
       </summary>
-      <div class="legend-grid">
-        <div class="legend-col">
-          <h6><StatusBadge variant="approved">Activo</StatusBadge> / <StatusBadge variant="rejected">Inactivo</StatusBadge></h6>
-          <p class="legend-title">Estado — ¿existe el registro?</p>
-          <ul>
-            <li><strong>Activo:</strong> aparece en listados y puede asignarse a usuarios.</li>
-            <li><strong>Inactivo:</strong> baja lógica. <em>Nunca se borra físicamente</em>; solo deja de mostrarse y su información e historial se conservan.</li>
-          </ul>
-        </div>
-        <div class="legend-col">
-          <h6><StatusBadge variant="approved">Vigente</StatusBadge> / <StatusBadge variant="info">Reemplazado</StatusBadge></h6>
-          <p class="legend-title">Vigencia — ¿es el departamento oficial actual?</p>
-          <ul>
-            <li><strong>Vigente:</strong> forma parte del organigrama vigente.</li>
-            <li><strong>Reemplazado:</strong> fue renombrado o absorbido por una reestructura. Se conserva para no romper el historial de usuarios y permisos que lo referencian.</li>
-          </ul>
-        </div>
-      </div>
-      <div class="legend-note">
-        <i class="fa fa-link" aria-hidden="true"></i>
-        <span><strong>Efecto en registros relacionados:</strong> los usuarios asignados conservan su área y todo su historial de permisos aunque el departamento quede Inactivo o Reemplazado. Ninguna acción aquí borra datos físicamente.</span>
-      </div>
+      <p><strong>Estado</strong> — ¿existe el registro? <strong>Activo</strong>: aparece en listados y puede asignarse a usuarios. <strong>Inactivo</strong>: baja lógica; nunca se borra físicamente, solo deja de mostrarse y conserva su información e historial.</p>
+      <p><strong>Vigencia</strong> — ¿es el departamento oficial actual? <strong>Vigente</strong>: forma parte del organigrama vigente. <strong>Reemplazado</strong>: fue renombrado o absorbido por una reestructura; se conserva para no romper el historial de usuarios y permisos que lo referencian.</p>
+      <p class="legend-note"><i class="fa fa-link" aria-hidden="true"></i> Los usuarios asignados conservan su área e historial de permisos aunque el departamento quede Inactivo o Reemplazado. Ninguna acción aquí borra datos físicamente.</p>
     </details>
 
     <AppSpinner v-if="loading" />
@@ -414,44 +395,15 @@ onMounted(() => {
   user-select: none;
 }
 
-.legend-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 0 2rem;
-  margin-top: 0.75rem;
-}
-
-.legend-col h6 {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.legend-title {
-  font-weight: 600;
-  font-size: 0.85rem;
-  margin-bottom: 0.35rem;
-}
-
-.legend-col ul {
-  padding-left: 1.1rem;
-  margin: 0;
-  font-size: 0.88rem;
-}
-
-.legend-col li {
-  margin-bottom: 0.3rem;
+.legend-box p {
+  margin: 0.6rem 0 0;
+  font-size: 0.9rem;
 }
 
 .legend-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding: 0.6rem 0.8rem;
-  border-radius: 0.375rem;
   background: var(--tecnm-soft-hover);
-  font-size: 0.88rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.375rem;
 }
 
 .filter-title {
