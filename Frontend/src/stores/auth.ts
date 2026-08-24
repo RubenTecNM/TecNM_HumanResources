@@ -8,6 +8,9 @@ export interface AuthUser {
   email: string
   userType: number
   isDocente?: boolean
+  area?: string
+  department?: string
+  position?: string
 }
 
 interface LoginPayload {

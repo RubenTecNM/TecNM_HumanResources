@@ -135,13 +135,17 @@ namespace RecursosHumanosWeb.Controllers
             var typeClaim = User.FindFirstValue("UserType") ?? "0";
             var email = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
 
-            // Resuelto en BD (no claims) para reflejar cambios de departamento sin re-login.
-            var docenciaId = await _context.Departments.AsNoTracking()
-                .Where(d => d.Description == "DOCENCIA")
-                .Select(d => (int?)d.Id)
+            // Resuelto en BD (no claims) para reflejar cambios sin re-login.
+            var info = await _context.Users.AsNoTracking()
+                .Where(u => u.Email == email)
+                .Select(u => new
+                {
+                    Area = u.Area != null ? u.Area.Description : null,
+                    Department = u.Department != null ? u.Department.Description : null,
+                    Position = u.Position != null ? u.Position.Description : null
+                })
                 .FirstOrDefaultAsync();
-            var isDocente = docenciaId.HasValue && await _context.Users.AsNoTracking()
-                .AnyAsync(u => u.Email == email && u.DepartmentId == docenciaId.Value);
+            var isDocente = info != null && info.Department == "DOCENCIA";
 
             return Json(new
             {
@@ -149,7 +153,10 @@ namespace RecursosHumanosWeb.Controllers
                 Name = User.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
                 Email = email,
                 UserType = int.TryParse(typeClaim, out var type) ? type : 0,
-                IsDocente = isDocente
+                IsDocente = isDocente,
+                Area = info?.Area ?? string.Empty,
+                Department = info?.Department ?? string.Empty,
+                Position = info?.Position ?? string.Empty
             });
         }
 

@@ -114,6 +114,9 @@
           <div class="detail-row"><span class="detail-label">Nombre</span><span class="detail-value">{{ authStore.user.name }}</span></div>
           <div class="detail-row"><span class="detail-label">Correo</span><span class="detail-value">{{ authStore.user.email }}</span></div>
           <div class="detail-row"><span class="detail-label">Tipo de Usuario</span><span class="detail-value">{{ roleLabel }}</span></div>
+          <div v-if="authStore.user.position" class="detail-row"><span class="detail-label">Puesto</span><span class="detail-value">{{ authStore.user.position }}</span></div>
+          <div v-if="authStore.user.department" class="detail-row"><span class="detail-label">Departamento</span><span class="detail-value">{{ authStore.user.department }}</span></div>
+          <div v-if="authStore.user.area" class="detail-row"><span class="detail-label">Área</span><span class="detail-value">{{ authStore.user.area }}</span></div>
         </div>
       </AppModal>
     </aside>
