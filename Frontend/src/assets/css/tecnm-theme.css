@@ -16,6 +16,7 @@
   --tecnm-bg-main: #F4F6F9;
   --tecnm-surface-white: #FFFFFF;
   --tecnm-border-color: #E2E8F0;
+  --tecnm-navy: #1B396A;
   --tecnm-border-focus: #1B396A;
 
   /* Typography Colors */
@@ -98,10 +99,11 @@
   --tecnm-gold-hover: #D4AF37;
   --tecnm-gold-light: rgba(197, 160, 89, 0.14);
 
-  --tecnm-bg-main: #0D1B33;
-  --tecnm-surface-white: #152440;
-  --tecnm-border-color: rgba(148, 163, 184, 0.24);
+  --tecnm-bg-main: #0B1425;
+  --tecnm-surface-white: #1D2E52;
+  --tecnm-border-color: rgba(148, 163, 184, 0.32);
   --tecnm-border-focus: #C5A059;
+  --tecnm-navy: #2A3F6B;
 
   --tecnm-text-primary: #E6EDF7;
   --tecnm-text-secondary: #9FB0C9;
