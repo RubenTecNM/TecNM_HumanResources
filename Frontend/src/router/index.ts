@@ -36,7 +36,7 @@ const routes = [
         path: 'permissions/create',
         name: 'permissions.create',
         component: () => import('@/views/permissions/PermissionCreateView.vue'),
-        meta: { title: 'Nuevo Permiso', roles: [1, 3] }
+        meta: { title: 'Nuevo Permiso', roles: [1, 3, 4] }
       },
       {
         path: 'permissions/:id',
