@@ -31,41 +31,37 @@ INSERT INTO PermissionStatusType (Description, Color, CreatedAt, Status, Created
 
 -- Area
 INSERT INTO Area (Description, CreatedAt, Status, CreatedByUserId) VALUES 
-('SUBDIRECCION DE SERVICIOS ADMINISTRATIVOS', GETDATE(), 1, 1),
+('ADMINISTRACIÓN Y FINANZAS', GETDATE(), 1, 1),
 ('DIRECCION GENERAL', GETDATE(), 1, 1),
-('DIRECCION DE PLANEACION Y VINCULACION', GETDATE(), 1, 1),
-('DIRECCION ACADEMICA', GETDATE(), 1, 1);
+('PLANEACIÓN Y VINCULACIÓN', GETDATE(), 1, 1),
+('DIRECCIÓN ACADÉMICA', GETDATE(), 1, 1);
 
 -- Department
-INSERT INTO Department (Description, CreatedAt, Status, IsActive, CreatedByUserId) VALUES 
-('ACTIVIDADES EXTRAESCOLARES', GETDATE(), 1, 1, 1),
-('ACTIVO FIJO', GETDATE(), 1, 1, 1),
-('ASUNTOS ACADÉMICOS', GETDATE(), 1, 1, 1),
-('BIBLIOTECA', GETDATE(), 1, 1, 1),
-('CENTRO DE CÓMPUTO', GETDATE(), 1, 1, 1),
-('CENTRO DE ENTRENAMIENTO NAUTILUS', GETDATE(), 1, 1, 1),
-('CIE', GETDATE(), 1, 1, 1),
-('COMPRAS', GETDATE(), 1, 1, 1),
-('COMUNICACIÓN', GETDATE(), 1, 1, 1),
-('CONTROL INTERNO', GETDATE(), 1, 1, 1),
-('COORDINACIÓN ACADÉMICA', GETDATE(), 1, 1, 1),
-('COORDINACIÓN DE INNOVACIÓN EDUCATIVA', GETDATE(), 1, 1, 1),
-('DEPARTAMENTO JURÍDICO', GETDATE(), 1, 1, 1),
-('DIRECCION GENERAL', GETDATE(), 1, 1, 1),
-('ENFERMERÍA', GETDATE(), 1, 1, 1),
-('GESTIÓN TECNOLÓGICA Y VINCULACIÓN', GETDATE(), 1, 1, 1),
-('IDIOMAS', GETDATE(), 1, 1, 1),
-('INNOVACIÓN Y CALIDAD', GETDATE(), 1, 1, 1),
-('MANTENIMIENTO', GETDATE(), 1, 1, 1),
-('PLANEACIÓN Y PRESUPUESTO', GETDATE(), 1, 1, 1),
-('PREFECTURA', GETDATE(), 1, 1, 1),
-('PSICOLOGÍA', GETDATE(), 1, 1, 1),
-('RECURSOS FINANCIEROS', GETDATE(), 1, 1, 1),
-('RECURSOS HUMANOS', GETDATE(), 1, 1, 1),
-('SERVICIOS ESCOLARES', GETDATE(), 1, 1, 1),
-('SUBDIRECCIÓN DE SERVICIOS', GETDATE(), 1, 1, 1),
-('TALLER DE LIT', GETDATE(), 1, 1, 1),
-('TRABAJO SOCIAL', GETDATE(), 1, 1, 1);
+INSERT INTO Department (Description, AreaId, CreatedAt, Status, IsActive, CreatedByUserId) VALUES 
+('ACTIVIDADES EXTRAESCOLARES', 1, GETDATE(), 1, 1, 1),
+('ACTIVO FIJO', 1, GETDATE(), 1, 1, 1),
+('ASUNTOS ACADÉMICOS', 1, GETDATE(), 1, 1, 1),
+('BIBLIOTECA', 1, GETDATE(), 1, 1, 1),
+('CALIDAD E INNOVACIÓN', 1, GETDATE(), 1, 1, 1),
+('CENTRO DE CÓMPUTO', 1, GETDATE(), 1, 1, 1),
+('COMPRAS', 1, GETDATE(), 1, 1, 1),
+('COMUNICACIÓN Y DIFUSIÓN', 1, GETDATE(), 1, 1, 1),
+('CONTROL INTERNO', 1, GETDATE(), 1, 1, 1),
+('DIRECCIÓN ACADÉMICA', 1, GETDATE(), 1, 1, 1),
+('DIRECCIÓN DE ADMINISTRACIÓN Y FINANZAS', 1, GETDATE(), 1, 1, 1),
+('DIRECCIÓN DE PLANEACIÓN Y VINCULACIÓN', 1, GETDATE(), 1, 1, 1),
+('DIRECCIÓN GENERAL', 1, GETDATE(), 1, 1, 1),
+('DOCENCIA', 1, GETDATE(), 1, 1, 1),
+('ENFERMERÍA', 1, GETDATE(), 1, 1, 1),
+('MANTENIMIENTO', 1, GETDATE(), 1, 1, 1),
+('PREFECTURA', 1, GETDATE(), 1, 1, 1),
+('PSICOLOGÍA', 1, GETDATE(), 1, 1, 1),
+('RECURSOS FINANCIEROS', 1, GETDATE(), 1, 1, 1),
+('RECURSOS HUMANOS', 1, GETDATE(), 1, 1, 1),
+('SERVICIOS ESCOLARES', 1, GETDATE(), 1, 1, 1),
+('SUBDIRECCIÓN DE PLANEACIÓN', 1, GETDATE(), 1, 1, 1),
+('TRABAJO SOCIAL', 1, GETDATE(), 1, 1, 1),
+('VINCULACIÓN', 1, GETDATE(), 1, 1, 1);
 
 -- Position
 INSERT INTO Position (Description, TabularCode, CreatedAt, Status, CreatedByUserId) VALUES 
@@ -94,9 +90,18 @@ INSERT INTO Position (Description, TabularCode, CreatedAt, Status, CreatedByUser
 ('TECNICO ESPECIALIZADO', 'CF33116', GETDATE(), 1, 1),
 ('VIGILANTE', 'S14001', GETDATE(), 1, 1);
 
--- 3. TEST USERS
--- Default password for all: Buss1ness.2026
--- SHA256 hash: 5166099b80693a74112e52e935a8bc762699e1ac74d4719b4cfb088e894c25f7
+-- 3. TEST USERS (NEEDS REGENERATION FROM OFFICIAL CSVs)
+-- The following 70 users are from the previous seed and do not match the official
+-- "Usuarios de sistema" CSV (141 users, IDs 1-141). To align fully, replace this
+-- block with the 141 official users from Formato_Permisos(Usuarios de sistema).csv,
+-- using IDENTITY_INSERT and mapping AreaId/DepartmentId per the department/area CSVs.
+-- Default password hash for all: 82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3
+-- AreaId mapping: 1=ADMIN Y FINANZAS, 2=DIRECCIÓN GENERAL, 3=PLANEACIÓN Y VINCULACIÓN, 4=DIRECCIÓN ACADÉMICA
+-- DepartmentId per CSV column 4 (e.g. ID 1→Dept 1, ID 2→Dept 2, etc.)
+-- Users 86=ESCOBEDO BRIONES PEDRO GUSTAVO and 111=MARTINEZ RAMIREZ PAULA CECILIA
+-- are the only two that overlap with the prior seed placeholder data.
+-- IMPORTANT: After replacing users, re-run the 16 Permission seeds referencing
+-- the new official user IDs (10→CAVAZOS SANCHEZ EDITH ALICIA, 86→ESCOBEDO, 111→MARTINEZ RAMIREZ, etc.)
 
 -- ROOT
 INSERT INTO [User] (Name, Email, PasswordHash, CreatedAt, Status, UserTypeId, AreaId, DepartmentId, PositionId, CreatedByUserId) 

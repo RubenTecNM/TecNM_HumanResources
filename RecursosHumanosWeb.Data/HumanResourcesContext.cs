@@ -269,6 +269,10 @@ public partial class HumanResourcesContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.UpdatedByUserId).HasDefaultValueSql("(NULL)");
 
+            entity.Property(e => e.AreaId)
+                .HasColumnName("AreaId")
+                .HasColumnType("int");
+
             entity.HasOne(d => d.CreatedByUser).WithMany(p => p.DepartmentCreatedBy)
                 .HasForeignKey(d => d.CreatedByUserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

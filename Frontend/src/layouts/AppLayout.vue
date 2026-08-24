@@ -62,6 +62,13 @@
               <span>Departamentos</span>
             </RouterLink>
           </li>
+          
+          <li class="tecnm-sidebar__item" :class="{ active: isActive('areas') }">
+            <RouterLink to="/areas" class="tecnm-sidebar__link">
+              <i class="fa fa-folder" aria-hidden="true"></i>
+              <span>Áreas</span>
+            </RouterLink>
+          </li>
         </template>
 
         <template v-if="authStore.isAdmin">

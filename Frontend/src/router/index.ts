@@ -105,6 +105,12 @@ const routes = [
         meta: { title: 'Gestión de Departamentos', roles: [1, 3] }
       },
       {
+        path: 'areas',
+        name: 'areas.index',
+        component: () => import('@/views/areas/AreasListView.vue'),
+        meta: { title: 'Gestión de Áreas', roles: [1, 3] }
+      },
+      {
         path: 'audit',
         name: 'audit.index',
         component: () => import('@/views/audit/AuditLogListView.vue'),

@@ -47,6 +47,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
                 {
                     d.Id,
                     d.Description,
+                    d.AreaId,
                     d.Status,
                     d.IsActive,
                     d.CreatedAt,
@@ -68,6 +69,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
                 {
                     d.Id,
                     d.Description,
+                    d.AreaId,
                     d.Status,
                     d.IsActive,
                     d.CreatedAt,
@@ -99,6 +101,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
             var department = _mapper.Map<Department>(model);
             department.Description = description;
+            department.AreaId = model.AreaId;
             department.Status = true;
             department.IsActive = true;
             department.CreatedAt = DateTime.Now;
@@ -141,6 +144,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
             _mapper.Map(model, department);
             department.Description = description;
+            department.AreaId = model.AreaId;
             department.UpdatedAt = DateTime.Now;
             department.UpdatedByUserId = userId;
 
@@ -171,6 +175,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
             department.IsActive = willBeActive;
             department.UpdatedAt = DateTime.Now;
+            // Área se mantiene (no cambia al toggle activo/inactivo)
             department.UpdatedByUserId = userId;
 
             _context.Update(department);
@@ -194,6 +199,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
 
             department.Status = false;
             department.UpdatedAt = DateTime.Now;
+            // Área se mantiene (no cambia al desactivar)
             department.UpdatedByUserId = userId;
 
             _context.Update(department);

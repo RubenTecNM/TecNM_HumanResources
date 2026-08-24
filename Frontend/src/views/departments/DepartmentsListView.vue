@@ -68,6 +68,7 @@
             <tbody>
               <tr v-for="d in departments" :key="d.id">
                 <td class="text-center"><strong>#{{ d.id }}</strong></td>
+                <td>{{ d.areaDescription || '—' }}</td>
                 <td><strong>{{ d.description }}</strong></td>
                 <td class="text-center">
                   <StatusBadge :variant="d.status ? 'approved' : 'rejected'">
@@ -144,7 +145,8 @@
           class="tecnm-form-control"
           placeholder="Ej. Recursos Humanos"
           @keyup.enter="saveDepartment"
-        />
+        /> 
+        <small class="text-muted">Departamento pertenece al Área</small>
       </div>
     </AppModal>
   </div>
@@ -165,6 +167,8 @@ import { askConfirmation, showToast } from '@/composables/useAlerts'
 interface DepartmentItem {
   id: number
   description: string
+  areaId: number
+  areaDescription: string
   status?: boolean
   isActive?: boolean
   createdAt?: string
@@ -208,6 +212,9 @@ async function fetchDepartments() {
 
     const res = await http.get(`/api/Departments?${params.toString()}`)
     departments.value = res.data.items || res.data
+    // Map areaId to description for display
+    const areaNames: Record<number, string> = {1: 'ADMINISTRACIÓN Y FINANZAS', 2: 'DIRECCIÓN GENERAL', 3: 'PLANEACIÓN Y VINCULACIÓN', 4: 'DIRECCIÓN ACADÉMICA'}
+    departments.value = departments.value.map((d: any) => ({ ...d, areaDescription: d.areaId ? areaNames[d.areaId] || '' : '—' }))
   } catch (e) {
     showToast('Error cargando departamentos.', 'error')
   } finally {
