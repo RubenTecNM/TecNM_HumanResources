@@ -6,50 +6,43 @@
       icon="fa-calendar"
     >
       <template #actions>
-        <StatusBadge v-if="cutoff" :variant="cutoffStatusVariant(cutoff.cutoffStatusTypeId)" class="align-self-center">
-          {{ cutoff.statusDescription }}
-        </StatusBadge>
-        <div class="dropdown" v-if="cutoff">
-          <button
-            class="btn btn-success dropdown-toggle d-flex align-items-center gap-2 btn-sm rounded-pill px-3"
-            type="button"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            <i class="fa fa-download" aria-hidden="true"></i> Exportar
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2">
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" href="#" @click.prevent="exportCutoff('excel')">
-                <i class="fa fa-file-excel-o text-success" aria-hidden="true"></i> Excel (.xlsx)
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" href="#" @click.prevent="exportCutoff('csv')">
-                <i class="fa fa-file-text-o text-info" aria-hidden="true"></i> CSV (.csv)
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" href="#" @click.prevent="exportCutoff('json')">
-                <i class="fa fa-file-code-o text-warning" aria-hidden="true"></i> JSON (.json)
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" href="#" @click.prevent="exportCutoff('xml')">
-                <i class="fa fa-file-code-o text-danger" aria-hidden="true"></i> XML (.xml)
-              </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center gap-2 py-2 rounded" href="#" @click.prevent="printPage">
-                <i class="fa fa-print text-secondary" aria-hidden="true"></i> Imprimir / PDF
-              </a>
-            </li>
-          </ul>
-        </div>
         <AppButton variant="secondary" icon="fa-arrow-left" size="sm" @click="$router.push({ name: 'cutoffs.index' })">
           Volver
         </AppButton>
+
+        <span class="status-slot" v-if="cutoff">
+          <StatusBadge :variant="cutoffStatusVariant(cutoff.cutoffStatusTypeId)">
+            {{ cutoff.statusDescription }}
+          </StatusBadge>
+        </span>
+
+        <div class="export-menu" ref="exportMenuEl">
+          <button
+            type="button"
+            class="export-toggle"
+            :disabled="exporting"
+            aria-haspopup="true"
+            :aria-expanded="exportOpen"
+            @click="exportOpen = !exportOpen"
+          >
+            <i class="fa fa-download" aria-hidden="true"></i>
+            <span>{{ exporting ? 'Exportando…' : 'Exportar' }}</span>
+            <i class="fa fa-chevron-down export-caret" :class="{ open: exportOpen }" aria-hidden="true"></i>
+          </button>
+          <ul v-if="exportOpen" class="export-menu__list" role="menu">
+            <li v-for="opt in exportOptions" :key="opt.format" role="none">
+              <button type="button" role="menuitem" @click="runExport(opt.format)">
+                <i :class="opt.icon" aria-hidden="true"></i> {{ opt.label }}
+              </button>
+            </li>
+            <li role="none"><hr class="export-menu__divider" /></li>
+            <li role="none">
+              <button type="button" role="menuitem" @click="printPage(); exportOpen = false">
+                <i class="fa fa-print" aria-hidden="true"></i> Imprimir / PDF
+              </button>
+            </li>
+          </ul>
+        </div>
       </template>
     </AppPageHeader>
 
@@ -65,9 +58,8 @@
 
     <template v-else-if="cutoff">
       <!-- KPI Cards -->
-      <div class="row g-4 mb-4 align-items-stretch">
-        <div class="col-12 col-sm-6 col-lg-3">
-          <AppCard premium class="h-100">
+      <div class="kpi-grid">
+<AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--blue">
                 <i class="fa fa-file-text" aria-hidden="true"></i>
@@ -79,9 +71,8 @@
               </div>
             </div>
           </AppCard>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3">
-          <AppCard premium class="h-100">
+
+        <AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--success">
                 <i class="fa fa-money" aria-hidden="true"></i>
@@ -93,9 +84,8 @@
               </div>
             </div>
           </AppCard>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3">
-          <AppCard premium class="h-100">
+
+        <AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--danger">
                 <i class="fa fa-times-circle" aria-hidden="true"></i>
@@ -107,9 +97,8 @@
               </div>
             </div>
           </AppCard>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-3">
-          <AppCard premium class="h-100">
+
+        <AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--info">
                 <i class="fa fa-clock-o" aria-hidden="true"></i>
@@ -121,13 +110,12 @@
               </div>
             </div>
           </AppCard>
-        </div>
       </div>
 
       <!-- Tendencia Temporal -->
       <AppCard premium class="mb-4">
         <template #header>
-          <div class="d-flex justify-content-between align-items-center">
+          <div class="trend-header">
             <h4 class="filter-title">
               <i class="fa fa-line-chart me-2" aria-hidden="true"></i>
               Tendencia de Solicitudes en el Periodo
@@ -150,9 +138,9 @@
         <apexchart v-else :type="trendChartType" height="280" :options="trendChartOptions" :series="trendChartSeries"></apexchart>
       </AppCard>
 
-      <!-- Distribución por Tipo y Proporción de Pago -->
-      <div class="row g-4 mb-4 align-items-stretch">
-        <div class="col-12 col-md-6">
+      <!-- Distribución por Tipo y Proporción de Pago: 2 columnas en la misma fila -->
+      <div class="charts-duo">
+        <div>
           <AppCard premium class="h-100">
             <template #header>
               <h4 class="filter-title">
@@ -168,7 +156,7 @@
             </div>
           </AppCard>
         </div>
-        <div class="col-12 col-md-6">
+        <div>
           <AppCard premium class="h-100">
             <template #header>
               <h4 class="filter-title">
@@ -278,7 +266,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted , onUnmounted} from 'vue'
 import { useRoute } from 'vue-router'
 import AppPageHeader from '@/components/AppPageHeader.vue'
 import AppButton from '@/components/AppButton.vue'
@@ -336,55 +324,162 @@ const trendChartType = ref<'area' | 'bar' | 'line'>('area')
 
 const chartFontFamily = 'Montserrat, Helvetica, Arial, sans-serif'
 
-const trendChartOptions = computed(() => ({
+// ── Menú de exportación (dropdown propio; no dependemos de Bootstrap) ──
+const exportOpen = ref(false)
+const exportMenuEl = ref<HTMLElement | null>(null)
+const exportOptions = [
+  { format: 'excel' as const, label: 'Excel (.xlsx)', icon: 'fa fa-file-excel-o export-icon--excel' },
+  { format: 'csv' as const, label: 'CSV (.csv)', icon: 'fa fa-file-text-o export-icon--csv' },
+  { format: 'json' as const, label: 'JSON (.json)', icon: 'fa fa-file-code-o export-icon--json' },
+  { format: 'xml' as const, label: 'XML (.xml)', icon: 'fa fa-file-code-o export-icon--xml' }
+]
+
+function onDocumentClick(e: MouseEvent) {
+  if (exportOpen.value && exportMenuEl.value && !exportMenuEl.value.contains(e.target as Node)) {
+    exportOpen.value = false
+  }
+}
+
+async function runExport(format: 'excel' | 'csv' | 'json' | 'xml') {
+  exportOpen.value = false
+  await exportCutoff(format)
+}
+
+// Tema actual (para colores de ejes/leyendas legibles en ambos modos)
+const isDark = ref(document.documentElement.getAttribute('data-theme') === 'dark')
+let themeObserver: MutationObserver | null = null
+
+const axisColor = () => (isDark.value ? '#9FB0C9' : '#475569')
+const gridColor = () => (isDark.value ? 'rgba(148, 163, 184, 0.22)' : '#E2E8F0')
+const legendColor = () => (isDark.value ? '#E6EDF7' : '#334155')
+
+// ── Serie completa del periodo: rellena con ceros los días sin solicitudes ──
+const trendFull = computed(() => {
+  if (!cutoff.value || trendData.value.length === 0) return []
+  const start = new Date(cutoff.value.startDate)
+  const end = new Date(cutoff.value.endDate)
+  const days = Math.min(Math.round((end.getTime() - start.getTime()) / 86400000) + 1, 92)
+  if (!Number.isFinite(days) || days <= 0) return []
+  const porDia = new Map(trendData.value.map(t => [t.date.slice(0, 10), t]))
+  const out: { label: string; total: number; approved: number; rejected: number }[] = []
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start)
+    d.setDate(d.getDate() + i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const hit = porDia.get(key)
+    out.push({
+      label: d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }),
+      total: hit?.total ?? 0,
+      approved: hit?.approved ?? 0,
+      rejected: hit?.rejected ?? 0
+    })
+  }
+  return out
+})
+
+const trendChartOptions = computed((): any => ({
   chart: {
     id: 'trend-chart',
     toolbar: { show: false },
     fontFamily: chartFontFamily
   },
   xaxis: {
-    categories: trendData.value.map(t => t.date),
-    labels: { style: { colors: '#475569', fontSize: '11px', fontWeight: 600 } }
+    categories: trendFull.value.map(t => t.label),
+    tickAmount: Math.min(trendFull.value.length || 1, 14),
+    labels: {
+      rotate: -35,
+      hideOverlappingLabels: true,
+      style: { colors: axisColor(), fontSize: '11px', fontWeight: 600 }
+    }
   },
   yaxis: {
-    labels: { style: { colors: '#475569', fontSize: '11px', fontWeight: 600 } }
+    min: 0,
+    forceNiceScale: true,
+    labels: { style: { colors: axisColor(), fontSize: '11px', fontWeight: 600 } }
   },
-  colors: ['#1e3a8a', '#10b981', '#ef4444'],
+  colors: ['#C5A059', '#10B981', '#EF4444'],
   dataLabels: { enabled: false },
   stroke: { curve: 'smooth' as const, width: 2.5 },
-  grid: { borderColor: '#e2e8f0', strokeDashArray: 4 },
+  fill: { type: 'gradient', gradient: { shadeIntensity: 0.4, opacityFrom: 0.35, opacityTo: 0.05 } },
+  grid: { borderColor: gridColor(), strokeDashArray: 4 },
   legend: {
+    position: 'top' as const,
+    horizontalAlign: 'left' as const,
+    offsetY: -4,
     fontFamily: chartFontFamily,
-    labels: { colors: '#1e293b' },
-    fontSize: '12px'
-  }
+    fontSize: '12px',
+    labels: { colors: legendColor() },
+    markers: { radius: 4 }
+  },
+  tooltip: { theme: isDark.value ? 'dark' : 'light' }
 }))
 
 const trendChartSeries = computed(() => [
-  { name: 'Total Solicitudes', data: trendData.value.map(t => t.total) },
-  { name: 'Aprobados', data: trendData.value.map(t => t.approved) },
-  { name: 'Rechazados', data: trendData.value.map(t => t.rejected) }
+  { name: 'Total Solicitudes', data: trendFull.value.map(t => t.total) },
+  { name: 'Aprobados', data: trendFull.value.map(t => t.approved) },
+  { name: 'Rechazados', data: trendFull.value.map(t => t.rejected) }
 ])
 
-const donutChartOptions = computed(() => ({
-  chart: { fontFamily: chartFontFamily },
-  labels: permissionsByType.value.map(t => t.name),
-  colors: permissionsByType.value.map(t => t.color || '#3b82f6'),
-  legend: {
-    position: 'bottom' as const,
-    fontFamily: chartFontFamily,
-    labels: { colors: '#1e293b' },
-    fontSize: '11px'
-  },
-  dataLabels: {
-    enabled: true,
-    style: { fontFamily: chartFontFamily, fontSize: '11px', fontWeight: 700 }
+const donutTotal = computed(() => permissionsByType.value.reduce((a, t) => a + t.value, 0))
+
+const donutChartOptions = computed((): any => {
+  const total = donutTotal.value
+  return {
+    chart: { fontFamily: chartFontFamily, type: 'donut' as const },
+    labels: permissionsByType.value.map(t => t.name),
+    colors: permissionsByType.value.map(t => t.color || '#3b82f6'),
+    stroke: { width: 2, colors: [isDark.value ? '#1D2E52' : '#FFFFFF'] },
+    legend: {
+      position: 'bottom' as const,
+      fontFamily: chartFontFamily,
+      fontSize: '12px',
+      markers: { radius: 4 },
+      labels: { colors: legendColor() },
+      formatter: (name: string, opts: any) => {
+        const serie = opts?.w?.globals?.series?.[opts.seriesIndex] ?? 0
+        const pct = total > 0 ? Math.round((serie / total) * 100) : 0
+        return `${name}: ${serie} (${pct}%)`
+      }
+    },
+    dataLabels: {
+      enabled: total > 0,
+      formatter: (_val: number, opts: any) => {
+        const pct = opts?.percent ?? 0
+        return pct >= 5 ? `${Math.round(pct)}%` : ''
+      },
+      style: { fontFamily: chartFontFamily, fontSize: '11px', fontWeight: 700 },
+      dropShadow: { enabled: false }
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '66%',
+          labels: {
+            show: true,
+            name: { show: true, fontSize: '12px', color: axisColor(), fontFamily: chartFontFamily, offsetY: -2 },
+            value: {
+              show: true, fontSize: '26px', fontWeight: 800,
+              color: legendColor(), fontFamily: chartFontFamily,
+              offsetY: 4, formatter: () => `${donutTotal.value}`
+            },
+            total: {
+              show: true, showAlways: true,
+              label: 'Permisos',
+              fontSize: '12px', fontWeight: 600,
+              color: axisColor(), fontFamily: chartFontFamily,
+              formatter: () => `${donutTotal.value}`
+            }
+          }
+        }
+      }
+    },
+    tooltip: { theme: isDark.value ? 'dark' : 'light' }
   }
-}))
+})
 
 const donutChartSeries = computed(() => permissionsByType.value.map(t => t.value))
 
-const barChartOptions = computed(() => ({
+const barChartOptions = computed((): any => ({
   chart: { fontFamily: chartFontFamily, toolbar: { show: false } },
   plotOptions: {
     bar: { horizontal: true, barHeight: '50%', borderRadius: 4 }
@@ -392,28 +487,29 @@ const barChartOptions = computed(() => ({
   colors: ['#1e3a8a'],
   xaxis: {
     categories: permissionsByArea.value.map(a => a.name),
-    labels: { style: { colors: '#475569', fontSize: '11px', fontWeight: 600 } }
+    labels: { style: { colors: axisColor(), fontSize: '11px', fontWeight: 600 } }
   },
   yaxis: {
-    labels: { style: { colors: '#1e293b', fontSize: '11px', fontWeight: 600 } }
+    labels: { style: { colors: legendColor(), fontSize: '11px', fontWeight: 600 } }
   },
-  grid: { borderColor: '#e2e8f0' },
-  dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: 700 } }
+  grid: { borderColor: gridColor() },
+  dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: 700 }, background: { enabled: false } },
+  legend: { show: false }
 }))
 
 const barChartSeries = computed(() => [
   { name: 'Solicitudes', data: permissionsByArea.value.map(a => a.value) }
 ])
 
-const radialChartOptions = computed(() => ({
+const radialChartOptions = computed((): any => ({
   chart: { fontFamily: chartFontFamily },
   plotOptions: {
     radialBar: {
       hollow: { size: '55%' },
       dataLabels: {
-        name: { show: true, fontSize: '12px', color: '#475569', fontFamily: chartFontFamily, fontWeight: 600 },
+        name: { show: true, fontSize: '12px', color: axisColor(), fontFamily: chartFontFamily, fontWeight: 600 },
         value: {
-          show: true, fontSize: '18px', color: '#0f172a', fontFamily: chartFontFamily, fontWeight: 800,
+          show: true, fontSize: '18px', color: legendColor(), fontFamily: chartFontFamily, fontWeight: 800,
           formatter: (val: number) => `${val}%`
         }
       }
@@ -421,7 +517,7 @@ const radialChartOptions = computed(() => ({
   },
   labels: ['Con Goce', 'Sin Goce'],
   colors: ['#10b981', '#ef4444'],
-  legend: { show: true, position: 'bottom' as const, fontFamily: chartFontFamily, fontSize: '11px' }
+  legend: { show: true, position: 'bottom' as const, fontFamily: chartFontFamily, fontSize: '12px', labels: { colors: legendColor() }, markers: { radius: 4 } }
 }))
 
 const radialChartSeries = computed(() => {
@@ -471,19 +567,131 @@ async function exportCutoff(format: 'excel' | 'csv' | 'json' | 'xml') {
 
 onMounted(() => {
   loadAnalytics()
+  document.addEventListener('click', onDocumentClick)
+  themeObserver = new MutationObserver(() => {
+    isDark.value = document.documentElement.getAttribute('data-theme') === 'dark'
+  })
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocumentClick)
+  themeObserver?.disconnect()
 })
 </script>
 
 <style scoped>
+/* ── Header: badge con espacio propio + dropdown de exportación ── */
+.status-slot {
+  display: inline-flex;
+  align-items: center;
+  min-width: 96px;
+  justify-content: center;
+}
+
+.export-menu {
+  position: relative;
+}
+
+.export-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--tecnm-status-approved-bg, rgba(16, 185, 129, 0.16));
+  color: var(--tecnm-status-approved-text, #10b981);
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.95rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.export-toggle:hover:not(:disabled) { filter: brightness(1.12); }
+.export-toggle:disabled { opacity: 0.6; cursor: wait; }
+
+.export-caret {
+  font-size: 0.65rem;
+  transition: transform 0.15s ease;
+}
+.export-caret.open { transform: rotate(180deg); }
+
+.export-menu__list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 60;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  min-width: 190px;
+  background: var(--tecnm-surface-white);
+  border: 1px solid var(--tecnm-border-color);
+  border-radius: 10px;
+  box-shadow: var(--tecnm-shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.35));
+}
+
+.export-menu__list button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--tecnm-text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.export-menu__list button:hover { background: var(--tecnm-soft-hover); }
+
+.export-icon--excel { color: #10b981; }
+.export-icon--csv { color: #38bdf8; }
+.export-icon--json { color: #f59e0b; }
+.export-icon--xml { color: #ef4444; }
+
+.export-menu__divider {
+  margin: 0.35rem 0.4rem;
+  border: none;
+  border-top: 1px solid var(--tecnm-border-color);
+}
+
+/* ── KPIs: scorecards en grid ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 576px) {
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 992px) {
+  .kpi-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.1rem; }
+}
+
 .kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
 .kpi-icon {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -511,7 +719,7 @@ onMounted(() => {
 }
 
 .kpi-value {
-  font-size: 1.6rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--tecnm-text-primary, #0f172a);
   margin: 0.15rem 0;
@@ -546,6 +754,25 @@ onMounted(() => {
   background: #ffffff;
   color: var(--tecnm-text-primary, #0f172a);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.charts-duo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .charts-duo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem; }
+}
+
+.trend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .chart-container {

@@ -184,12 +184,13 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
                 })
                 .ToList();
 
+            // Serie temporal por día calendario (ISO): el frontend expande el rango completo del corte.
             var trend = permissions
                 .OrderBy(p => p.CreatedAt)
-                .GroupBy(p => p.CreatedAt.ToString("dd MMM"))
+                .GroupBy(p => p.CreatedAt.Date)
                 .Select(g => new
                 {
-                    date = g.Key ?? "S/F",
+                    date = g.Key.ToString("yyyy-MM-dd"),
                     total = g.Count(),
                     approved = g.Count(x => x.PermissionStatusTypeId == (int)PermissionStatusEnum.Approved),
                     pending = g.Count(x => x.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending),
