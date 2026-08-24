@@ -26,7 +26,7 @@
             <label class="tecnm-label">Tipo de permiso <span class="required-mark">*</span></label>
             <div class="permission-types">
               <button
-                v-for="t in permissionTypes"
+                v-for="t in visiblePermissionTypes"
                 :key="t.id"
                 type="button"
                 class="permission-type-card"
@@ -95,7 +95,7 @@
 
           <div class="tecnm-form-group">
             <label class="tecnm-label" for="evidenceFile">Evidencia (PDF opcional)</label>
-            <div class="file-upload-area" :class="{ 'drag-over': dragOver }" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
+            <div class="file-upload-area" :class="{ 'drag-over': dragOver }" role="button" tabindex="0" aria-label="Subir evidencia PDF" @click="triggerFilePicker" @keydown.enter.prevent="triggerFilePicker" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
               <input id="evidenceFile" ref="fileInputRef" type="file" accept=".pdf,application/pdf" class="file-input" @change="onFileChange" />
               <div v-if="!evidenceFile" class="file-upload-content">
                 <div class="file-upload-icon"><i class="fa fa-cloud-upload-alt" aria-hidden="true"></i></div>
@@ -104,7 +104,7 @@
               </div>
               <div v-else class="file-preview">
                 <span class="file-info"><i class="fa fa-file-pdf file-icon" aria-hidden="true"></i>{{ evidenceFile.name }}</span>
-                <button type="button" class="remove-file" title="Eliminar archivo" @click="removeFile">
+                <button type="button" class="remove-file" title="Eliminar archivo" @click.stop="removeFile">
                   <i class="fa fa-times" aria-hidden="true"></i>
                 </button>
               </div>
@@ -159,6 +159,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const permissionTypes = ref<PermissionTypeItem[]>([])
+// Falta Docente (5): solo visible para personal DOCENCIA; el backend revalida.
+const TEACHER_ABSENCE_TYPE_ID = 5
+const visiblePermissionTypes = computed(() =>
+  authStore.user?.isDocente ? permissionTypes.value : permissionTypes.value.filter((t) => t.id !== TEACHER_ABSENCE_TYPE_ID)
+)
 const submitting = ref(false)
 const errorGeneral = ref('')
 const errors = reactive<Record<string, string>>({})
@@ -329,6 +334,10 @@ function validateEvidence(file: File): string | null {
     return 'El archivo no debe superar los 5MB.'
   }
   return null
+}
+
+function triggerFilePicker() {
+  fileInputRef.value?.click()
 }
 
 function onFileChange(e: Event) {
@@ -571,12 +580,10 @@ onMounted(async () => {
 
 .file-input {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  width: 1px;
+  height: 1px;
   opacity: 0;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .file-upload-icon {

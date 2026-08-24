@@ -7,6 +7,7 @@ export interface AuthUser {
   name: string
   email: string
   userType: number
+  isDocente?: boolean
 }
 
 interface LoginPayload {

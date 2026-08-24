@@ -133,9 +133,19 @@ namespace RecursosHumanosWeb.Services
             if (createdBy?.UserTypeId == (int)UserTypeEnum.Authorizer)
                 throw new InvalidOperationException("Los jefes de área no pueden crear solicitudes de permiso para asegurar la imparcialidad del proceso.");
 
-            // Teacher Absence validation
-            if (permission.PermissionTypeId == 5)
-            {
+                // Teacher Absence validation
+                if (permission.PermissionTypeId == 5)
+                {
+                    // Solo aplica al personal del departamento DOCENCIA, sin importar quién capture.
+                    var requestingUser = await _context.Users.AsNoTracking()
+                        .FirstOrDefaultAsync(u => u.Id == permission.RequestingUserId);
+                    var docenciaId = await _context.Departments.AsNoTracking()
+                        .Where(d => d.Description == "DOCENCIA")
+                        .Select(d => (int?)d.Id)
+                        .FirstOrDefaultAsync();
+                    if (requestingUser == null || docenciaId == null || requestingUser.DepartmentId != docenciaId)
+                        throw new InvalidOperationException("El permiso por Falta Docente solo aplica al personal del departamento DOCENCIA.");
+
                 // Auto-derive shift from StartDate hour:
                 //   < 14  → Morning (1): 7am-2pm, max 7h
                 //   >= 16 → Afternoon (2): 4pm-10pm, max 6h

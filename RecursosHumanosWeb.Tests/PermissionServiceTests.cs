@@ -82,6 +82,94 @@ public class PermissionServiceTests
             service.CreatePermissionAsync(permission, empleado.Id));
     }
 
+    // ── Falta Docente (tipo 5) restringida a DOCENCIA ───────────────────────
+
+    private static async Task<User> CrearDocenteAsync(HumanResourcesContext context, string nombre)
+    {
+        var docencia = context.Departments.Add(new Department
+        { Description = "DOCENCIA", Status = true, CreatedByUserId = 1 }).Entity;
+        await context.SaveChangesAsync();
+        var docente = TestDbContextFactory.CreateUser(nombre, UserTypeEnum.Employee);
+        docente.DepartmentId = docencia.Id;
+        context.Users.Add(docente);
+        await context.SaveChangesAsync();
+        return docente;
+    }
+
+    private static Permission CreateTeacherAbsence(int requestingUserId, int cutoffId)
+        => TestDbContextFactory.CreatePermission(requestingUserId, DateTime.Today.AddHours(9), null, cutoffId);
+
+    [Fact]
+    public async Task CreatePermissionAsync_FaltaDocente_DocentePuede()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(CreatePermissionAsync_FaltaDocente_DocentePuede));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+        var docente = await CrearDocenteAsync(context, "docenteok");
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var permission = CreateTeacherAbsence(docente.Id, cutoff.Id);
+        permission.PermissionTypeId = 5;
+        permission.HoursInClassroom = 4;
+        permission.HoursDischarge = 2;
+
+        var id = await service.CreatePermissionAsync(permission, docente.Id);
+
+        var creado = await context.Permissions.SingleAsync(p => p.Id == id);
+        Assert.Equal(PermissionStatusEnum.Pending, (PermissionStatusEnum)creado.PermissionStatusTypeId);
+    }
+
+    [Fact]
+    public async Task CreatePermissionAsync_FaltaDocente_NoDocente_LanzaInvalidOperation()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(CreatePermissionAsync_FaltaDocente_NoDocente_LanzaInvalidOperation));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+        var empleado = await context.Users.FirstAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var permission = CreateTeacherAbsence(empleado.Id, cutoff.Id);
+        permission.PermissionTypeId = 5;
+        permission.HoursInClassroom = 4;
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreatePermissionAsync(permission, empleado.Id));
+        Assert.Contains("DOCENCIA", ex.Message);
+    }
+
+    [Fact]
+    public async Task CreatePermissionAsync_FaltaDocente_RHParaDocente_Permite()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(CreatePermissionAsync_FaltaDocente_RHParaDocente_Permite));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+        var docente = await CrearDocenteAsync(context, "docenterh");
+        var rh = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.HumanResources);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var permission = CreateTeacherAbsence(docente.Id, cutoff.Id);
+        permission.PermissionTypeId = 5;
+        permission.HoursInClassroom = 3;
+        permission.HoursDischarge = 1;
+
+        var id = await service.CreatePermissionAsync(permission, rh.Id);
+        Assert.True(id > 0);
+    }
+
+    [Fact]
+    public async Task CreatePermissionAsync_FaltaDocente_RHParaNoDocente_LanzaInvalidOperation()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(CreatePermissionAsync_FaltaDocente_RHParaNoDocente_LanzaInvalidOperation));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+        var empleado = await context.Users.FirstAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var rh = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.HumanResources);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var permission = CreateTeacherAbsence(empleado.Id, cutoff.Id);
+        permission.PermissionTypeId = 5;
+        permission.HoursInClassroom = 3;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreatePermissionAsync(permission, rh.Id));
+    }
+
     [Fact]
     public async Task DeletePermissionAsync_UsaBorradoLogico()
     {

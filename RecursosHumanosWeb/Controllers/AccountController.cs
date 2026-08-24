@@ -126,20 +126,30 @@ namespace RecursosHumanosWeb.Controllers
         // Returns the current cookie-authenticated user identity so the SPA can
         // read role claims (UserType) that drive menu visibility.
         [HttpGet]
-        public IActionResult Me()
+        public async Task<IActionResult> Me()
         {
             if (User.Identity?.IsAuthenticated != true)
                 return Unauthorized();
 
             var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0";
             var typeClaim = User.FindFirstValue("UserType") ?? "0";
+            var email = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+
+            // Resuelto en BD (no claims) para reflejar cambios de departamento sin re-login.
+            var docenciaId = await _context.Departments.AsNoTracking()
+                .Where(d => d.Description == "DOCENCIA")
+                .Select(d => (int?)d.Id)
+                .FirstOrDefaultAsync();
+            var isDocente = docenciaId.HasValue && await _context.Users.AsNoTracking()
+                .AnyAsync(u => u.Email == email && u.DepartmentId == docenciaId.Value);
 
             return Json(new
             {
                 Id = int.TryParse(idClaim, out var id) ? id : 0,
                 Name = User.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
-                Email = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
-                UserType = int.TryParse(typeClaim, out var type) ? type : 0
+                Email = email,
+                UserType = int.TryParse(typeClaim, out var type) ? type : 0,
+                IsDocente = isDocente
             });
         }
 
