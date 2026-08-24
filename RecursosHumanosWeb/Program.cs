@@ -129,6 +129,7 @@ builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 // Business Services
 builder.Services.AddScoped<IExportService, ExportService>();
+builder.Services.AddScoped<ExcelImportService>();
 builder.Services.AddScoped<ICutoffService, CutoffService>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IUserService, UserService>();

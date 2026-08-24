@@ -10,6 +10,8 @@ namespace RecursosHumanosWeb.Models.DTOs
 
         public string PasswordHash { get; set; } = null!;
 
+        public string? TempPassword { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         public DateTime UpdatedAt { get; set; }

@@ -68,6 +68,12 @@ public partial class User : BaseEntity
     /// </summary>
     public int? ApiKeyId { get; set; }
 
+    /// <summary>
+    /// Plain-text temporary password issued by RH (import or reset).
+    /// Visible to RH until the user logs in with it, then cleared.
+    /// </summary>
+    public string? TempPassword { get; set; }
+
     // ──────────────────────────────────────────────────────────────
     // SPECIFIC NAVIGATION PROPERTIES
     // (BaseEntity already provides CreatedByUser and UpdatedByUser,

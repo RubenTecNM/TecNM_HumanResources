@@ -117,6 +117,12 @@ const routes = [
         meta: { title: 'Auditoría', roles: [1] }
       },
       {
+        path: 'sync',
+        name: 'sync.index',
+        component: () => import('@/views/sync/SyncView.vue'),
+        meta: { title: 'Sincronización de Datos', roles: [1, 3] }
+      },
+      {
         path: 'api-keys',
         name: 'api-keys.index',
         component: () => import('@/views/apikeys/ApiKeysListView.vue'),

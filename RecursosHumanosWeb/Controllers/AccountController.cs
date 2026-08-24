@@ -69,6 +69,13 @@ namespace RecursosHumanosWeb.Controllers
 
                 _loginAttemptTracker.Reset(loginKey);
 
+                // La clave temporal ya fue usada: deja de ser visible para RH.
+                if (!string.IsNullOrEmpty(user.TempPassword))
+                {
+                    user.TempPassword = null;
+                    await _context.SaveChangesAsync();
+                }
+
                 // 3. Crear los Claims para la sesión
                 var claims = new List<Claim>
                 {

@@ -176,6 +176,16 @@
           <div class="detail-row"><span class="detail-label">Área</span><span class="detail-value">{{ detailModal.data?.area || 'N/A' }}</span></div>
           <div class="detail-row"><span class="detail-label">Puesto</span><span class="detail-value">{{ detailModal.data?.position || 'N/A' }}</span></div>
           <div class="detail-row"><span class="detail-label">Tipo de Usuario</span><span class="detail-value">{{ detailModal.data?.userType || 'N/A' }}</span></div>
+          <div v-if="detailModal.data?.tempPassword" class="detail-row">
+            <span class="detail-label">Clave temporal</span>
+            <span class="detail-value temp-password">
+              {{ detailModal.data.tempPassword }}
+              <button type="button" class="temp-copy" title="Copiar" @click="copyTempPassword(detailModal.data!.tempPassword!)">
+                <i class="fa fa-clipboard" aria-hidden="true"></i>
+              </button>
+              <small>(visible hasta que el usuario ingrese)</small>
+            </span>
+          </div>
           <div class="detail-row">
             <span class="detail-label">Estado</span>
             <StatusBadge :variant="detailModal.data?.status ? 'approved' : 'rejected'">
@@ -237,6 +247,11 @@ interface UserDetail {
   createdAt?: string | null
   updatedAt?: string | null
   totalPermissions?: number
+  tempPassword?: string | null
+}
+
+async function copyTempPassword(pwd: string) {
+  try { await navigator.clipboard.writeText(pwd) } catch { /* sin permisos de portapapeles */ }
 }
 
 function formatDateCell(iso?: string | null): string {
@@ -502,5 +517,15 @@ onMounted(() => {
 .detail-value {
   font-size: 0.9rem;
   color: var(--tecnm-text, #111827);
+}
+
+.temp-password { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.temp-password small { color: var(--tecnm-text-secondary); font-weight: 400; }
+.temp-copy {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--tecnm-blue-primary);
+  font-size: 0.85rem;
 }
 </style>

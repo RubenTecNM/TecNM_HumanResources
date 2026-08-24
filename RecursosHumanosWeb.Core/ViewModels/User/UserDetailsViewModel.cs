@@ -31,6 +31,8 @@ namespace RecursosHumanosWeb.Models.ViewModels.User
 
         public int? ApiKeyId { get; set; }
 
+        public string? TempPassword { get; set; }
+
         // Estadísticas de permissions
         public int TotalPermissions { get; set; }
         public int ReviewedPermissions { get; set; }

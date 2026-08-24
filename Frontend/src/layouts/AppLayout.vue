@@ -69,6 +69,12 @@
               <span>Áreas</span>
             </RouterLink>
           </li>
+          <li class="tecnm-sidebar__item" :class="{ active: isActive('sync') }">
+            <RouterLink to="/sync" class="tecnm-sidebar__link">
+              <i class="fa fa-upload" aria-hidden="true"></i>
+              <span>Sincronizar</span>
+            </RouterLink>
+          </li>
         </template>
 
         <template v-if="authStore.isAdmin">

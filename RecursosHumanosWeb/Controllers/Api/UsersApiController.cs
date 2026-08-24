@@ -253,6 +253,7 @@ namespace RecursosHumanosWeb.Controllers.Api
             {
                 // Hash SHA-256 antes de guardar
                 user.PasswordHash = PasswordHasher.HashSha256(model.Password);
+                user.TempPassword = model.Password; // visible para RH hasta que el usuario ingrese
             }
 
             user.UpdatedAt = DateTime.Now;
