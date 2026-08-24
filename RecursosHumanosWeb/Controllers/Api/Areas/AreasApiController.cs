@@ -5,6 +5,7 @@ using RecursosHumanosWeb.Filters;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Models.ViewModels.Areas;
 using RecursosHumanosWeb.Models.DTOs; // Assuming generic DTOs might be here, if not we use anonymous or specific VMs
+using X.PagedList.Extensions;
 
 namespace RecursosHumanosWeb.Controllers.Api.Areas
 {
@@ -26,20 +27,42 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
         // GET: api/Areas
         [HttpGet]
         [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Leer")]
-        public async Task<IActionResult> GetAreas()
+        public async Task<IActionResult> GetAreas(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] bool? status = null)
         {
-            var areas = await _context.Areas
-                .Where(a => a.Status == true)
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 10;
+
+            var query = _context.Areas.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                query = query.Where(a => a.Description.Contains(search));
+
+            if (status.HasValue)
+                query = query.Where(a => a.Status == status.Value);
+
+            var paged = query
+                .OrderBy(a => a.Description)
                 .Select(a => new
                 {
                     a.Id,
-                    a.Description
+                    a.Description,
+                    a.Status,
+                    DepartmentCount = _context.Departments.Count(d => d.AreaId == a.Id && d.IsActive && d.Status)
                 })
-                .ToListAsync();
+                .ToPagedList(page, pageSize);
 
-            if (!areas.Any()) return NotFound("No se encontraron áreas activas.");
-
-            return Ok(areas);
+            return Ok(new
+            {
+                items = paged,
+                totalItems = paged.TotalItemCount,
+                totalPages = paged.PageCount,
+                page = paged.PageNumber,
+                pageSize = paged.PageSize
+            });
         }
 
         // GET: api/Areas/5

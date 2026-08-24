@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using RecursosHumanosWeb.Filters;
 using RecursosHumanosWeb.Models;
 using RecursosHumanosWeb.Models.ViewModels.Departments;
+using X.PagedList.Extensions;
 
 namespace RecursosHumanosWeb.Controllers.Api.Departments
 {
@@ -26,9 +27,15 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
         [HttpGet]
         [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Leer")]
         public async Task<IActionResult> GetDepartments(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
             [FromQuery] string? search = null,
-            [FromQuery] bool? status = null)
+            [FromQuery] bool? status = null,
+            [FromQuery] int? areaId = null)
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 10;
+
             var query = _context.Departments.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -41,21 +48,36 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
                 query = query.Where(d => d.Status == status.Value);
             }
 
-            var departments = await query
+            if (areaId.HasValue)
+            {
+                query = query.Where(d => d.AreaId == areaId.Value);
+            }
+
+            var paged = query
                 .OrderBy(d => d.Description)
                 .Select(d => new
                 {
                     d.Id,
                     d.Description,
                     d.AreaId,
+                    AreaDescription = d.AreaId != null
+                        ? _context.Areas.Where(a => a.Id == d.AreaId).Select(a => a.Description).FirstOrDefault()
+                        : null,
                     d.Status,
                     d.IsActive,
                     d.CreatedAt,
                     d.UpdatedAt
                 })
-                .ToListAsync();
+                .ToPagedList(page, pageSize);
 
-            return Ok(departments);
+            return Ok(new
+            {
+                items = paged,
+                totalItems = paged.TotalItemCount,
+                totalPages = paged.PageCount,
+                page = paged.PageNumber,
+                pageSize = paged.PageSize
+            });
         }
 
         // GET: api/Departments/5
@@ -92,6 +114,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var description = model.Description?.Trim();
+
+            // Validación de relación: el área indicada debe existir y estar activa
+            if (model.AreaId.HasValue &&
+                !await _context.Areas.AnyAsync(a => a.Id == model.AreaId.Value && a.Status))
+                return BadRequest(new { message = "El área especificada no existe o está inactiva." });
 
             // Regla de negocio: descripción única (no duplicados)
             if (await _context.Departments.AnyAsync(d => d.Description == description))
@@ -135,6 +162,11 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
             if (department == null) return NotFound();
 
             var description = model.Description?.Trim();
+
+            // Validación de relación: el área indicada debe existir y estar activa
+            if (model.AreaId.HasValue &&
+                !await _context.Areas.AnyAsync(a => a.Id == model.AreaId.Value && a.Status))
+                return BadRequest(new { message = "El área especificada no existe o está inactiva." });
 
             // Regla de negocio: descripción única (excluyendo al propio departamento)
             if (await _context.Departments.AnyAsync(d => d.Id != id && d.Description == description))

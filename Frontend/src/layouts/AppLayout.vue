@@ -56,17 +56,10 @@
               <span>Usuarios</span>
             </RouterLink>
           </li>
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('departments') }">
-            <RouterLink to="/departments" class="tecnm-sidebar__link">
-              <i class="fa fa-sitemap" aria-hidden="true"></i>
-              <span>Departamentos</span>
-            </RouterLink>
-          </li>
-          
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('areas') }">
-            <RouterLink to="/areas" class="tecnm-sidebar__link">
-              <i class="fa fa-folder" aria-hidden="true"></i>
-              <span>Áreas</span>
+          <li class="tecnm-sidebar__item" :class="{ active: isActive('organization') }">
+            <RouterLink to="/organization" class="tecnm-sidebar__link">
+              <i class="fa fa-object-group" aria-hidden="true"></i>
+              <span>Áreas y Departamentos</span>
             </RouterLink>
           </li>
         </template>

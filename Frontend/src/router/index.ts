@@ -99,16 +99,10 @@ const routes = [
         meta: { title: 'Dashboard Analítico', roles: [1, 3] }
       },
       {
-        path: 'departments',
-        name: 'departments.index',
-        component: () => import('@/views/departments/DepartmentsListView.vue'),
-        meta: { title: 'Gestión de Departamentos', roles: [1, 3] }
-      },
-      {
-        path: 'areas',
-        name: 'areas.index',
-        component: () => import('@/views/areas/AreasListView.vue'),
-        meta: { title: 'Gestión de Áreas', roles: [1, 3] }
+        path: 'organization',
+        name: 'organization.index',
+        component: () => import('@/views/organization/OrganizationView.vue'),
+        meta: { title: 'Áreas y Departamentos', roles: [1, 3] }
       },
       {
         path: 'audit',
