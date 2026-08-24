@@ -8,16 +8,6 @@
       </template>
     </AppPageHeader>
 
-    <details class="tecnm-card legend-box">
-      <summary>
-        <i class="fa fa-question-circle" aria-hidden="true"></i>
-        ¿Cerrar un periodo o invalidarlo?
-      </summary>
-      <p><strong><i class="fa fa-lock" aria-hidden="true"></i> Cerrar periodo</strong> — finaliza de forma normal un corte Abierto (también ocurre automáticamente al vencer). Sus permisos <em>pendientes</em> pasan a Rechazado sin goce, con fecha y responsable del cierre. Los permisos ya revisados no se tocan y todo queda visible como historial de nómina.</p>
-      <p><strong><i class="fa fa-ban" aria-hidden="true"></i> Invalidar periodo</strong> — anula el corte por completo (error de captura, periodo no válido). <em>Todos</em> sus permisos activos pasan a Invalidado por Periodo y se ocultan del listado normal; solo permanecen para efectos de auditoría. Úsalo solo cuando el periodo nunca debió existir.</p>
-      <p class="legend-note"><i class="fa fa-clock-o" aria-hidden="true"></i> Regla práctica: si el periodo ya transcurrió normalmente, ciérralo. Si se capturó por error y sus permisos no deben contar, invalídalo.</p>
-    </details>
-
     <!-- Panel de búsqueda estilo TecNM (idéntico a Permisos) -->
     <section class="tecnm-card tecnm-mb-4">
       <div class="tecnm-card-header tecnm-card-header--premium">
@@ -54,6 +44,16 @@
         </form>
       </div>
     </section>
+
+    <details class="tecnm-card legend-box">
+      <summary>
+        <i class="fa fa-question-circle" aria-hidden="true"></i>
+        ¿Cerrar un periodo o invalidarlo?
+      </summary>
+      <p><strong><i class="fa fa-lock" aria-hidden="true"></i> Cerrar periodo</strong> — finaliza de forma normal un corte Abierto (también ocurre automáticamente al vencer). Sus permisos <em>pendientes</em> pasan a Rechazado sin goce, con fecha y responsable del cierre. Los permisos ya revisados no se tocan y todo queda visible como historial de nómina.</p>
+      <p><strong><i class="fa fa-ban" aria-hidden="true"></i> Invalidar periodo</strong> — anula el corte por completo (error de captura, periodo no válido). <em>Todos</em> sus permisos activos pasan a Invalidado por Periodo y se ocultan del listado normal; solo permanecen para efectos de auditoría. Úsalo solo cuando el periodo nunca debió existir.</p>
+      <p class="legend-note"><i class="fa fa-clock-o" aria-hidden="true"></i> Regla práctica: si el periodo ya transcurrió normalmente, ciérralo. Si se capturó por error y sus permisos no deben contar, invalídalo.</p>
+    </details>
 
     <AppSpinner v-if="loading" />
     <template v-else>
