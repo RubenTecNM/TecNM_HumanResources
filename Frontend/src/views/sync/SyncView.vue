@@ -12,27 +12,101 @@
       </template>
     </AppPageHeader>
 
-    <div v-if="!isAdmin && !isRH" class="sync-denied">
-      No tiene permisos para usar este módulo.
-    </div>
+    <div class="sync-grid">
+      <section v-for="card in CARDS" :key="card.kind" class="sync-card">
+        <div class="sync-card__head">
+          <span class="sync-card__icon" :class="card.icon"></span>
+          <div>
+            <h3 class="sync-card__title">{{ card.title }}</h3>
+            <p class="sync-card__desc">{{ card.description }}</p>
+          </div>
+          <AppButton variant="outline" @click="downloadTemplate(card.kind)">
+            <i class="fa fa-download" aria-hidden="true" style="margin-right:.4rem"></i>
+            Plantilla
+          </AppButton>
+        </div>
 
-    <div v-else class="sync-grid">
-      <SyncCard
-        v-for="card in CARDS"
-        :key="card.kind"
-        v-bind="card.props as any"
-        :state="states[card.kind]"
-        @download="downloadTemplate(card.kind)"
-        @file-selected="(file: File) => onFileSelected(card.kind, file)"
-        @import="onImport(card.kind)"
-        @reset="resetCard(card.kind)"
-      />
+        <ul class="sync-legend">
+          <li v-for="l in LEGENDS[card.kind]" :key="l.col">
+            <strong>{{ l.col }}:</strong> {{ l.desc }}
+          </li>
+        </ul>
+
+        <div class="sync-actions">
+          <label class="sync-file-btn">
+            <input
+              type="file"
+              accept=".xlsx"
+              style="display:none"
+              @change="(e) => onFileSelected(card.kind, e)"
+            />
+            <i class="fa fa-file-excel-o" aria-hidden="true" style="margin-right:.45rem"></i>
+            {{ states[card.kind].file ? states[card.kind].file!.name : 'Elegir archivo .xlsx' }}
+          </label>
+          <button
+            v-if="states[card.kind].file"
+            type="button"
+            class="sync-reset"
+            title="Quitar archivo"
+            @click="resetCard(card.kind)"
+          >
+            <i class="fa fa-times" aria-hidden="true"></i>
+          </button>
+          <AppButton
+            :disabled="!states[card.kind].preview || states[card.kind].preview!.newCount === 0 || states[card.kind].importing"
+            @click="onImport(card.kind)"
+          >
+            {{ states[card.kind].importing
+              ? 'Importando…'
+              : states[card.kind].preview
+                ? `Importar ${states[card.kind].preview!.newCount} nuevo${states[card.kind].preview!.newCount === 1 ? '' : 's'}`
+                : 'Importar' }}
+          </AppButton>
+        </div>
+
+        <p v-if="states[card.kind].validating" class="sync-note">Comparando con la base de datos…</p>
+
+        <div v-if="states[card.kind].error" class="sync-alert sync-alert--error">
+          {{ states[card.kind].error }}
+        </div>
+
+        <div v-if="states[card.kind].summary" class="sync-alert sync-alert--ok">
+          <strong>Carga completada.</strong> {{ summaryText(states[card.kind].summary!) }}
+        </div>
+
+        <div v-if="states[card.kind].preview" class="sync-preview">
+          <div class="sync-chips">
+            <span class="chip chip--new">{{ states[card.kind].preview!.newCount }} nuevos</span>
+            <span class="chip chip--dup">{{ states[card.kind].preview!.duplicateCount }} duplicados (omitidos)</span>
+            <span class="chip chip--err">{{ states[card.kind].preview!.errorCount }} con error</span>
+          </div>
+          <table class="sync-table">
+            <thead>
+              <tr><th>Fila</th><th>Estado</th><th>Detalle</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="r in states[card.kind].preview!.rows.slice(0, 50)" :key="r.row">
+                <td>{{ r.row }}</td>
+                <td>
+                  <span class="chip" :class="`chip--${r.status === 'nuevo' ? 'new' : r.status === 'duplicado' ? 'dup' : 'err'}`">
+                    {{ r.status.charAt(0).toUpperCase() + r.status.slice(1) }}
+                  </span>
+                </td>
+                <td>{{ r.message }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-if="states[card.kind].preview!.rows.length > 50" class="sync-note">
+            Mostrando 50 de {{ states[card.kind].preview!.rows.length }} filas.
+          </p>
+        </div>
+      </section>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, reactive } from 'vue'
+import { reactive } from 'vue'
 import AppPageHeader from '@/components/AppPageHeader.vue'
 import AppButton from '@/components/AppButton.vue'
 import {
@@ -41,13 +115,9 @@ import {
   runImport,
   type SyncKind,
   type SyncPreview,
-  type SyncImportSummary
+  type SyncImportSummary,
+  type SyncRowResult
 } from '@/api/sync'
-import { useAuthStore } from '@/stores/auth'
-
-const auth = useAuthStore()
-const isAdmin = computed(() => auth.user?.userType === 1)
-const isRH = computed(() => auth.user?.userType === 3)
 
 interface CardState {
   file: File | null
@@ -58,23 +128,26 @@ interface CardState {
   error: string
 }
 
+function emptyState(): CardState {
+  return { file: null, validating: false, importing: false, preview: null, summary: null, error: '' }
+}
+
 const states = reactive<Record<SyncKind, CardState>>({
   usuarios: emptyState(),
   permisos: emptyState(),
   autorizadores: emptyState()
 })
 
-function emptyState(): CardState {
-  return { file: null, validating: false, importing: false, preview: null, summary: null, error: '' }
-}
-
 function resetCard(kind: SyncKind) {
   states[kind] = emptyState()
 }
 
-async function onFileSelected(kind: SyncKind, file: File) {
+async function onFileSelected(kind: SyncKind, e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
   resetCard(kind)
   const st = states[kind]
+  if (!file) return
   if (!file.name.toLowerCase().endsWith('.xlsx')) {
     st.error = 'El archivo debe ser .xlsx'
     return
@@ -83,8 +156,8 @@ async function onFileSelected(kind: SyncKind, file: File) {
   st.validating = true
   try {
     st.preview = await validateFile(kind, file)
-  } catch (e: any) {
-    st.error = e.response?.data?.message || 'No se pudo leer el archivo.'
+  } catch (err: any) {
+    st.error = err.response?.data?.message || 'No se pudo leer el archivo.'
   } finally {
     st.validating = false
   }
@@ -98,14 +171,55 @@ async function onImport(kind: SyncKind) {
     st.summary = await runImport(kind, st.file)
     st.preview = null
     st.file = null
-  } catch (e: any) {
-    st.error = e.response?.data?.message || 'La importación falló.'
+  } catch (err: any) {
+    st.error = err.response?.data?.message || 'La importación falló.'
   } finally {
     st.importing = false
   }
 }
 
-// ── Tarjeta por tipo de carga (componente local; evita un archivo más) ──
+function summaryText(s: SyncImportSummary): string {
+  const parts: string[] = []
+  if (s.createdUsers) parts.push(`${s.createdUsers} usuarios creados`)
+  if (s.promotedAuthorizers) parts.push(`${s.promotedAuthorizers} promovidos a autorizador`)
+  if (s.createdCutoffs) parts.push(`${s.createdCutoffs} periodos cerrados creados`)
+  if (s.createdPermissions) parts.push(`${s.createdPermissions} permisos aprobados`)
+  parts.push(`${s.duplicates} duplicados omitidos`)
+  if (s.errors.length) parts.push(`${s.errors.length} filas con error`)
+  return parts.join(' · ') + '.'
+}
+
+interface CardDef {
+  kind: SyncKind
+  title: string
+  icon: string
+  description: string
+}
+
+const CARDS: CardDef[] = [
+  {
+    kind: 'usuarios',
+    title: 'Usuarios',
+    icon: 'fa fa-users',
+    description:
+      'Da de alta personal en bloque. Los correos ya existentes se omiten; los nuevos reciben una clave temporal que RH puede consultar hasta que el usuario ingrese.'
+  },
+  {
+    kind: 'permisos',
+    title: 'Permisos históricos',
+    icon: 'fa fa-file-text-o',
+    description:
+      'Excel con dos hojas (Periodos y Permisos). Los periodos faltantes se crean cerrados; los permisos entran Aprobados (sin goce salvo indicación) respetando las reglas por tipo.'
+  },
+  {
+    kind: 'autorizadores',
+    title: 'Autorizadores',
+    icon: 'fa fa-user-secret',
+    description:
+      'Promueve usuarios existentes o crea nuevos jefes de área. Su área define qué solicitudes pueden autorizar.'
+  }
+]
+
 const LEGENDS: Record<SyncKind, { col: string; desc: string }[]> = {
   usuarios: [
     { col: 'Nombre', desc: 'Nombre completo (obligatorio).' },
@@ -126,154 +240,11 @@ const LEGENDS: Record<SyncKind, { col: string; desc: string }[]> = {
     { col: 'Departamento / Puesto', desc: 'Obligatorios solo si el usuario es nuevo.' }
   ]
 }
-
-const SyncCard = defineComponent({
-  name: 'SyncCard',
-  props: {
-    kind: { type: String as () => SyncKind, required: true },
-    title: { type: String, required: true },
-    icon: { type: String, required: true },
-    description: { type: String, required: true },
-    state: { type: Object, required: true }
-  },
-  emits: ['download', 'file-selected', 'import', 'reset'],
-  setup(props, { emit }) {
-    return () => {
-      const st = props.state as CardState
-      const legend = LEGENDS[props.kind]
-      return h('section', { class: 'sync-card' }, [
-        h('div', { class: 'sync-card__head' }, [
-          h('span', { class: `sync-card__icon ${props.icon}` }),
-          h('div', [
-            h('h3', { class: 'sync-card__title' }, props.title),
-            h('p', { class: 'sync-card__desc' }, props.description)
-          ]),
-          h(AppButton, { variant: 'outline', onClick: () => emit('download') }, () => [
-            h('i', { class: 'fa fa-download', style: 'margin-right:.4rem' }), 'Plantilla'
-          ])
-        ]),
-        h('ul', { class: 'sync-legend' }, legend.map(l =>
-          h('li', { key: l.col }, [h('strong', l.col + ': '), l.desc])
-        )),
-        h('div', { class: 'sync-actions' }, [
-          h('label', { class: 'sync-file-btn' }, [
-            h('input', {
-              type: 'file',
-              accept: '.xlsx',
-              style: 'display:none',
-              onChange: (e: Event) => {
-                const f = (e.target as HTMLInputElement).files?.[0]
-                if (f) emit('file-selected', f)
-              }
-            }),
-            h('i', { class: 'fa fa-file-excel-o', style: 'margin-right:.45rem' }),
-            st.file ? st.file.name : 'Elegir archivo .xlsx'
-          ]),
-          st.file ? h('button', {
-            class: 'sync-reset',
-            onClick: () => emit('reset'),
-            title: 'Quitar archivo'
-          }, h('i', { class: 'fa fa-times' })) : null,
-          h(AppButton, {
-            variant: 'primary',
-            disabled: !st.preview || st.preview.newCount === 0 || st.importing,
-            onClick: () => emit('import')
-          }, () => st.importing ? 'Importando…'
-            : st.preview ? `Importar ${st.preview.newCount} nuevo${st.preview.newCount === 1 ? '' : 's'}`
-            : 'Importar')
-        ]),
-        st.validating ? h('p', { class: 'sync-note' }, 'Comparando con la base de datos…') : null,
-        st.error ? h('div', { class: 'sync-alert sync-alert--error' }, st.error) : null,
-        st.summary ? h(SummaryPanel, { summary: st.summary }) : null,
-        st.preview ? h(PreviewPanel, { preview: st.preview }) : null
-      ])
-    }
-  }
-})
-
-const PreviewPanel = defineComponent({
-  props: { preview: { type: Object as () => SyncPreview, required: true } },
-  setup(props) {
-    return () => {
-      const p = props.preview
-      const visible = p.rows.slice(0, 50)
-      return h('div', { class: 'sync-preview' }, [
-        h('div', { class: 'sync-chips' }, [
-          h('span', { class: 'chip chip--new' }, `${p.newCount} nuevos`),
-          h('span', { class: 'chip chip--dup' }, `${p.duplicateCount} duplicados (omitidos)`),
-          h('span', { class: 'chip chip--err' }, `${p.errorCount} con error`)
-        ]),
-        h('table', { class: 'sync-table' }, [
-          h('thead', null, h('tr', null, [
-            h('th', 'Fila'), h('th', 'Estado'), h('th', 'Detalle')
-          ])),
-          h('tbody', null, visible.map(r => h('tr', { key: r.row }, [
-            h('td', String(r.row)),
-            h('td', h('span', { class: `chip chip--${r.status === 'nuevo' ? 'new' : r.status === 'duplicado' ? 'dup' : 'err'}` },
-              r.status.charAt(0).toUpperCase() + r.status.slice(1))),
-            h('td', r.message)
-          ])))
-        ]),
-        p.rows.length > 50 ? h('p', { class: 'sync-note' }, `Mostrando 50 de ${p.rows.length} filas.`) : null
-      ])
-    }
-  }
-})
-
-const SummaryPanel = defineComponent({
-  props: { summary: { type: Object as () => SyncImportSummary, required: true } },
-  setup(props) {
-    return () => {
-      const s = props.summary
-      const parts: string[] = []
-      if (s.createdUsers) parts.push(`${s.createdUsers} usuarios creados`)
-      if (s.promotedAuthorizers) parts.push(`${s.promotedAuthorizers} promovidos a autorizador`)
-      if (s.createdCutoffs) parts.push(`${s.createdCutoffs} periodos cerrados creados`)
-      if (s.createdPermissions) parts.push(`${s.createdPermissions} permisos aprobados`)
-      parts.push(`${s.duplicates} duplicados omitidos`)
-      return h('div', { class: 'sync-alert sync-alert--ok' }, [
-        h('strong', 'Carga completada. '), parts.join(' · ') + '.',
-        s.errors.length ? h('p', { class: 'sync-note' }, `${s.errors.length} filas no pudieron cargarse.`) : null
-      ])
-    }
-  }
-})
-
-const CARDS: { kind: SyncKind; props: Record<string, string> }[] = [
-  {
-    kind: 'usuarios',
-    props: {
-      title: 'Usuarios',
-      icon: 'fa fa-users',
-      description: 'Da de alta personal en bloque. Los correos ya existentes se omiten; los nuevos reciben una clave temporal que RH puede consultar hasta que el usuario ingrese.'
-    }
-  },
-  {
-    kind: 'permisos',
-    props: {
-      title: 'Permisos históricos',
-      icon: 'fa fa-file-text-o',
-      description: 'Excel con dos hojas (Periodos y Permisos). Los periodos faltantes se crean cerrados; los permisos entran Aprobados (sin goce salvo indicación) respetando las reglas por tipo.'
-    }
-  },
-  {
-    kind: 'autorizadores',
-    props: {
-      title: 'Autorizadores',
-      icon: 'fa fa-user-secret',
-      description: 'Promueve usuarios existentes o crea nuevos jefes de área. Su área define qué solicitudes pueden autorizar.'
-    }
-  }
-]
 </script>
 
 <style scoped>
-.sync-view > * + * { margin-top: 1.4rem; }
-
-.sync-denied {
-  padding: 2rem;
-  text-align: center;
-  color: var(--tecnm-text-secondary);
+.sync-view > * + * {
+  margin-top: 1.4rem;
 }
 
 .sync-grid {
@@ -317,7 +288,13 @@ const CARDS: { kind: SyncKind; props: Record<string, string> }[] = [
 }
 
 .sync-card__title { margin: 0 0 0.15rem; font-size: 1rem; font-weight: 800; }
-.sync-card__desc { margin: 0; font-size: 0.78rem; line-height: 1.35; color: var(--tecnm-text-secondary); }
+
+.sync-card__desc {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--tecnm-text-secondary);
+}
 
 .sync-card__head > :last-child { margin-left: auto; align-self: center; }
 
