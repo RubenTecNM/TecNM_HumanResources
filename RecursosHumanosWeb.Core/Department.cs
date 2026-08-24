@@ -22,6 +22,12 @@ public partial class Department : BaseEntity
     /// </summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Optional organizational area this department belongs to.
+    /// Nullable: legacy rows may not have an assigned area yet.
+    /// </summary>
+    public int? AreaId { get; set; }
+
     // ──────────────────────────────────────────────────────────────
     // COLLECTIONS
     // ──────────────────────────────────────────────────────────────
