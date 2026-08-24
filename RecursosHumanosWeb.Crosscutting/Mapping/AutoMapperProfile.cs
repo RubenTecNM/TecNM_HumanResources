@@ -18,6 +18,17 @@ namespace RecursosHumanosWeb.Mapping
                 .ForMember(dest => dest.AreaDescription, opt => opt.MapFrom(src => src.Area.Description ?? "N/A"))
                 .ForMember(dest => dest.DepartmentDescription, opt => opt.MapFrom(src => src.Department.Description ?? "N/A"))
                 .ForMember(dest => dest.PositionDescription, opt => opt.MapFrom(src => src.Position.Description ?? "N/A"))
+
+                // Campos string planos: sin mapeo explícito, la convención de AutoMapper
+                // aplicaría ToString() sobre la entidad de navegación y produciría el
+                // nombre del tipo ("RecursosHumanosWeb.Models.Area") en lugar del dato.
+                .ForMember(dest => dest.UserType, opt => opt.MapFrom(src => src.UserType.Description ?? ""))
+                .ForMember(dest => dest.Area, opt => opt.MapFrom(src => src.Area.Description ?? ""))
+                .ForMember(dest => dest.Department, opt => opt.MapFrom(src => src.Department.Description ?? ""))
+                .ForMember(dest => dest.Position, opt => opt.MapFrom(src => src.Position.Description ?? ""))
+                .ForMember(dest => dest.CreatedBy, opt => opt.MapFrom(src => src.CreatedByUser.Name ?? "Sistema"))
+                .ForMember(dest => dest.UpdatedBy, opt => opt.MapFrom(src =>
+                    src.UpdatedByUser != null ? src.UpdatedByUser.Name : ""))
                 
                 // Lógica para auditoría: Al usar ProjectTo, esto se traduce a un LEFT JOIN en SQL
                 .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => 
