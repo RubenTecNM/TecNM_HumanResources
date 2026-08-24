@@ -43,11 +43,12 @@ namespace RecursosHumanosWeb.Services
                     .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open && c.EndDate.Date < DateTime.Now.Date)
                     .ToListAsync();
 
+                int rootId = 1; // Root User ID (firma las acciones automáticas del sistema)
+
                 foreach (var activeCutoff in cortesExpirados)
                 {
                     // Usar contexto para activar auditoría de sistema
                     _context._auditOriginOverride = (int)OriginTypeEnum.AutomaticSystem;
-                    int rootId = 1; // Root User ID
 
                     // 1. Rechazar permissions pendientes
                     var pendientes = await _context.Permissions
@@ -72,10 +73,37 @@ namespace RecursosHumanosWeb.Services
                     activeCutoff.CutoffStatusTypeId = (int)CutoffStatusEnum.Closed;
                     activeCutoff.UpdatedAt = DateTime.Now;
                     activeCutoff.UpdatedByUserId = rootId;
-                        
+
                     _context.Update(activeCutoff);
                     await _context.SaveChangesAsync();
                     _logger.LogInformation("Cutoff {Id} cerrado automáticamente por expiración.", activeCutoff.Id);
+                }
+
+                // 2do barrido: pendientes en cortes YA cerrados o invalidados.
+                // Solo puede existir por datos externos al código (SQL directo,
+                // registros previos a la cascada): se invalidan para hacerlos
+                // visibles como anomalía, sin autorizante.
+                var huerfanos = await _context.Permissions
+                    .Where(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending
+                             && p.Status
+                             && (p.Cutoff!.CutoffStatusTypeId == (int)CutoffStatusEnum.Closed
+                              || p.Cutoff!.CutoffStatusTypeId == (int)CutoffStatusEnum.Invalidated))
+                    .ToListAsync();
+
+                if (huerfanos.Any())
+                {
+                    _context._auditOriginOverride = (int)OriginTypeEnum.AutomaticSystem;
+
+                    foreach (var p in huerfanos)
+                    {
+                        p.PermissionStatusTypeId = (int)PermissionStatusEnum.InvalidatedByPeriod;
+                        p.WithPay = false;
+                        p.UpdatedByUserId = rootId;
+                        p.UpdatedAt = DateTime.Now;
+                    }
+                    _context.UpdateRange(huerfanos);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Se invalidaron {Count} permisos pendientes de cortes ya cerrados.", huerfanos.Count);
                 }
             }
             catch (Exception ex)

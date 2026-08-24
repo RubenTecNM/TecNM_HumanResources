@@ -77,6 +77,32 @@ public class CutoffServiceTests
         Assert.True(activo.EndDate >= DateTime.Now.Date);
     }
 
+    [Fact]
+    public async Task AutoCloseCutoffIfNeededAsync_InvalidaHuerfanosDeCorteYaCerrado()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(AutoCloseCutoffIfNeededAsync_InvalidaHuerfanosDeCorteYaCerrado));
+        var service = TestDbContextFactory.CreateCutoffService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+
+        // Corte ya cerrado con un pendiente huérfano (dato externo al código)
+        var cerrado = TestDbContextFactory.CreateCutoff(DateTime.Now.Date.AddMonths(-4), DateTime.Now.Date.AddMonths(-2), CutoffStatusEnum.Closed);
+        context.Cutoffs.Add(cerrado);
+        await context.SaveChangesAsync();
+
+        var huerfano = TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now.AddMonths(-3), DateTime.Now.AddMonths(-3), cerrado.Id, PermissionStatusEnum.Pending);
+        context.Permissions.Add(huerfano);
+        await context.SaveChangesAsync();
+
+        await service.AutoCloseCutoffIfNeededAsync();
+
+        var invalidado = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == huerfano.Id);
+        Assert.Equal(PermissionStatusEnum.InvalidatedByPeriod, (PermissionStatusEnum)invalidado.PermissionStatusTypeId);
+        Assert.False(invalidado.WithPay);
+        Assert.True(invalidado.Status); // sigue visible para auditoría
+        Assert.Null(invalidado.AuthorizingUserId); // no fue una autorización
+    }
+
     // ── Tests nuevos Fase 6 (+6) ─────────────────────────────────────────────
 
     [Fact]

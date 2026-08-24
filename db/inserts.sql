@@ -258,6 +258,13 @@ INSERT INTO Cutoff (StartDate, EndDate, CutoffStatusTypeId, Status, CreatedAt, C
 VALUES ('2026-05-01', '2026-06-30', 1, 1, GETDATE(), 1);
 DECLARE @SeedCutoffId INT = SCOPE_IDENTITY();
 
+-- CLOSED CUTOFF with an orphaned pending permission: exercises the orphan sweep
+-- in AutoCloseCutoffIfNeededAsync (permission becomes Invalidado por Periodo + sin goce
+-- on first app use; the cutoff stays Closed and untouched).
+INSERT INTO Cutoff (StartDate, EndDate, CutoffStatusTypeId, Status, CreatedAt, CreatedByUserId)
+VALUES ('2026-03-01', '2026-04-30', 2, 1, GETDATE(), 1);
+DECLARE @ClosedCutoffId INT = SCOPE_IDENTITY();
+
 -- 3.7 PERMISSION SEEDS
 -- Hours-per-type logic (see funcionalidad/permisos/create.md):
 --   Retardo (1):        HORA_ENTRADA -> StartDate time, EndDate NULL
@@ -283,6 +290,10 @@ INSERT INTO Permission (StartDate, EndDate, Reason, PermissionStatusTypeId, With
 ('2026-05-09T08:00:00', '2026-05-29T13:00:00', 'Necesidades del departamento', 1, 1, @SeedCutoffId, 2, 42, 1, GETDATE(), 1),
 ('2026-06-04T08:18:00', NULL,                   'Personal', 1, 1, @SeedCutoffId, 1, 42, 1, GETDATE(), 1),
 ('2026-06-08T07:00:00', '2026-06-12T15:00:00', 'Apoyo a las necesidades del área', 1, 1, @SeedCutoffId, 4, 65, 1, GETDATE(), 1);
+
+-- Orphaned pending permission inside the already-closed cutoff above.
+INSERT INTO Permission (StartDate, EndDate, Reason, PermissionStatusTypeId, WithPay, CutoffId, PermissionTypeId, RequestingUserId, Status, CreatedAt, CreatedByUserId) VALUES
+('2026-04-10T00:00:00', '2026-04-10T23:59:59', 'Asunto personal pendiente de revisión', 1, 1, @ClosedCutoffId, 3, 20, 1, GETDATE(), 1);
 
 -- 4. SYSTEM AND API TABLES CONFIGURATION
 
