@@ -167,7 +167,7 @@ namespace RecursosHumanosWeb.Services
                 .OrderByDescending(c => c.Id)
                 .FirstOrDefaultAsync();
 
-            if (activeCutoff == null) throw new InvalidOperationException("No se encontró un corte activo.");
+            if (activeCutoff == null) throw new InvalidOperationException("Actualmente no hay un periodo activo para registrar permisos. Recursos Humanos está definiendo el nuevo corte; intenta de nuevo más tarde.");
 
             // Validación de fechas contra el periodo del cutoff
             if (permission.StartDate < activeCutoff.StartDate || (permission.EndDate.HasValue && permission.EndDate > activeCutoff.EndDate))

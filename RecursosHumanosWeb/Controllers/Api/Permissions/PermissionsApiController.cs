@@ -234,7 +234,12 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             if (activeCutoff == null)
             {
                 if (evidencePath != null) _evidenceStorage.Delete(evidencePath);
-                return BadRequest("No hay un corte activo para registrar el permiso.");
+                return BadRequest(new
+                {
+                    success = false,
+                    title = "Periodo no disponible",
+                    message = "Actualmente no hay un periodo activo para registrar permisos. Recursos Humanos está definiendo el nuevo corte; intenta de nuevo más tarde."
+                });
             }
 
             // Validar que la fecha de inicio esté dentro del corte

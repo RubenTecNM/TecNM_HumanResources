@@ -185,7 +185,7 @@ namespace RecursosHumanosWeb.Controllers
                     return Json(new AlertResponseDTO { Success = false, Title = "Validación", Message = "Corrija los errores.", Errors = GetModelStateErrors() });
 
                 var cutoff = await _cutoffService.GetActiveCutoffAsync();
-                if (cutoff == null) return Json(new AlertResponseDTO { Success = false, Message = "No hay corte activo." });
+                if (cutoff == null) return Json(new AlertResponseDTO { Success = false, Title = "Periodo no disponible", Message = "Actualmente no hay un periodo activo. Recursos Humanos está definiendo el nuevo corte; intenta más tarde." });
 
                 if (model.StartDate!.Value.Date < cutoff.StartDate.Date)
                     return Json(new AlertResponseDTO { Success = false, Message = "La fecha de inicio está fuera del corte." });
@@ -533,7 +533,7 @@ namespace RecursosHumanosWeb.Controllers
 
             // Simplified: logic remains largely same but cleaned up
             var cutoff = await _cutoffService.GetActiveCutoffAsync();
-            if (cutoff == null) return Json(new AlertResponseDTO { Success = false, Message = "No hay corte activo." });
+            if (cutoff == null) return Json(new AlertResponseDTO { Success = false, Title = "Periodo no disponible", Message = "Actualmente no hay un periodo activo. Recursos Humanos está definiendo el nuevo corte; intenta más tarde." });
 
             var users = await _context.Users.Where(u => u.Status).Take(10).ToListAsync();
             var autorizadores = await _context.Users.Where(u => u.Status && u.UserTypeId == (int)UserTypeEnum.Authorizer).GroupBy(u => u.AreaId).ToDictionaryAsync(g => g.Key, g => g.First().Id);
