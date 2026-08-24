@@ -65,10 +65,10 @@
         <i class="fa fa-question-circle" aria-hidden="true"></i>
         ¿Qué significa cada estado?
       </summary>
-      <p><strong>Pendiente por Revisar</strong> — el permiso fue solicitado y espera revisión del autorizador o Recursos Humanos. Mientras esté así, se puede editar o cancelar.</p>
-      <p><strong>Revisado / Aprobado</strong> — autorizado. Puede ser <em>con goce</em> (se paga) o <em>sin goce</em>, según lo acordado en la revisión.</p>
-      <p><strong>Revisado / Rechazado</strong> — no autorizado; queda registrado como historial pero sin efecto de pago.</p>
-      <p><strong>Invalidado por Periodo</strong> — el permiso nunca fue revisado porque su periodo ya estaba cerrado cuando el sistema lo detectó (p. ej., datos capturados fuera de línea). Se marca en rojo como anomalía para auditoría y siempre es sin goce.</p>
+      <p><StatusBadge variant="pending">Pendiente por Revisar</StatusBadge> — el permiso fue solicitado y espera revisión del autorizador o Recursos Humanos. Mientras esté así, se puede editar o cancelar.</p>
+      <p><StatusBadge variant="approved">Revisado / Aprobado</StatusBadge> — autorizado. Puede ser <em>con goce</em> (se paga) o <em>sin goce</em>, según lo acordado en la revisión.</p>
+      <p><StatusBadge variant="rejected">Revisado / Rechazado</StatusBadge> — no autorizado; queda registrado como historial pero sin efecto de pago.</p>
+      <p><StatusBadge variant="rejected">Invalidado por Periodo</StatusBadge> — el permiso nunca fue revisado porque su periodo ya estaba cerrado cuando el sistema lo detectó (p. ej., datos capturados fuera de línea). Se marca en rojo como anomalía para auditoría y siempre es sin goce.</p>
       <p class="legend-note"><i class="fa fa-clock-o" aria-hidden="true"></i> Al cerrarse un corte, sus permisos pendientes se resuelven automáticamente: los del corte vencido pasan a Rechazado y los encontrados en cortes ya cerrados pasan a Invalidado por Periodo. Un permiso revisado ya no se puede modificar.</p>
     </details>
 
