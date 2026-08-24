@@ -42,7 +42,6 @@ namespace RecursosHumanosWeb.Services
                 .Include(p => p.RequestingUser)
                 .Include(p => p.PermissionType)
                 .Include(p => p.ShiftType)
-                .Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
                 .AsQueryable();
 
             // Restricciones por tipo de user (Seguridad y Reglas de Negocio)
