@@ -586,6 +586,14 @@ select.tecnm-form-control {
   background: none;
 }
 
+/* Long user names truncate with "..." instead of overflowing the sidebar */
+.profile-btn > span {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .tecnm-sidebar__item .tecnm-sidebar__link:hover {
   background-color: var(--tecnm-gold-light);
   border-color: var(--tecnm-gold-accent);
