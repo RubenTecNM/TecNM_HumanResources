@@ -684,10 +684,6 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.8rem;
 }
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
 
 .kpi-icon {
   width: 40px;
