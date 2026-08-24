@@ -65,9 +65,9 @@
 
     <template v-else-if="cutoff">
       <!-- KPI Cards -->
-      <div class="row g-3 mb-4">
-        <div class="col-12 col-sm-6 col-md-3">
-          <AppCard>
+      <div class="row g-4 mb-4 align-items-stretch">
+        <div class="col-12 col-sm-6 col-lg-3">
+          <AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--blue">
                 <i class="fa fa-file-text" aria-hidden="true"></i>
@@ -80,8 +80,8 @@
             </div>
           </AppCard>
         </div>
-        <div class="col-12 col-sm-6 col-md-3">
-          <AppCard>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--success">
                 <i class="fa fa-money" aria-hidden="true"></i>
@@ -94,8 +94,8 @@
             </div>
           </AppCard>
         </div>
-        <div class="col-12 col-sm-6 col-md-3">
-          <AppCard>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--danger">
                 <i class="fa fa-times-circle" aria-hidden="true"></i>
@@ -108,8 +108,8 @@
             </div>
           </AppCard>
         </div>
-        <div class="col-12 col-sm-6 col-md-3">
-          <AppCard>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <AppCard premium class="h-100">
             <div class="kpi-card">
               <div class="kpi-icon kpi-icon--info">
                 <i class="fa fa-clock-o" aria-hidden="true"></i>
@@ -125,7 +125,7 @@
       </div>
 
       <!-- Tendencia Temporal -->
-      <AppCard class="mb-4">
+      <AppCard premium class="mb-4">
         <template #header>
           <div class="d-flex justify-content-between align-items-center">
             <h4 class="filter-title">
@@ -151,9 +151,9 @@
       </AppCard>
 
       <!-- Distribución por Tipo y Proporción de Pago -->
-      <div class="row g-4 mb-4">
+      <div class="row g-4 mb-4 align-items-stretch">
         <div class="col-12 col-md-6">
-          <AppCard class="h-100">
+          <AppCard premium class="h-100">
             <template #header>
               <h4 class="filter-title">
                 <i class="fa fa-pie-chart me-2" aria-hidden="true"></i>
@@ -169,7 +169,7 @@
           </AppCard>
         </div>
         <div class="col-12 col-md-6">
-          <AppCard class="h-100">
+          <AppCard premium class="h-100">
             <template #header>
               <h4 class="filter-title">
                 <i class="fa fa-adjust me-2" aria-hidden="true"></i>
@@ -187,7 +187,7 @@
       </div>
 
       <!-- Permisos por Área -->
-      <AppCard class="mb-4">
+      <AppCard premium class="mb-4">
         <template #header>
           <h4 class="filter-title">
             <i class="fa fa-sitemap me-2" aria-hidden="true"></i>
@@ -201,7 +201,7 @@
       </AppCard>
 
       <!-- Heatmap de Solicitudes -->
-      <AppCard class="mb-4">
+      <AppCard premium class="mb-4">
         <template #header>
           <h4 class="filter-title">
             <i class="fa fa-calendar-check-o me-2 text-primary" aria-hidden="true"></i>
@@ -237,7 +237,7 @@
       </AppCard>
 
       <!-- Auditoría de Registro -->
-      <AppCard>
+      <AppCard premium>
         <template #header>
           <h4 class="filter-title">
             <i class="fa fa-info-circle me-2 text-primary" aria-hidden="true"></i>
