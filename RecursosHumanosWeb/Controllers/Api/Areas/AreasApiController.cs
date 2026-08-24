@@ -51,7 +51,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Areas
                     a.Id,
                     a.Description,
                     a.Status,
-                    DepartmentCount = _context.Departments.Count(d => d.AreaId == a.Id && d.IsActive && d.Status)
+                    DepartmentCount = _context.Departments.Count(d => d.AreaId == a.Id && d.Status)
                 })
                 .ToPagedList(page, pageSize);
 

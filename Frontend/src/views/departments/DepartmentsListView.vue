@@ -53,17 +53,6 @@
       </div>
     </section>
 
-    <!-- Leyenda: diferencia entre Estado y Vigencia -->
-    <details class="tecnm-card legend-box">
-      <summary>
-        <i class="fa fa-question-circle" aria-hidden="true"></i>
-        ¿Qué significan <strong>Estado</strong> y <strong>Vigencia</strong>?
-      </summary>
-      <p><strong>Estado</strong> — ¿existe el registro? <strong>Activo</strong>: aparece en listados y puede asignarse a usuarios. <strong>Inactivo</strong>: baja lógica; nunca se borra físicamente, solo deja de mostrarse y conserva su información e historial.</p>
-      <p><strong>Vigencia</strong> — ¿es el departamento oficial actual? <strong>Vigente</strong>: forma parte del organigrama vigente. <strong>Reemplazado</strong>: fue renombrado o absorbido por una reestructura; se conserva para no romper el historial de usuarios y permisos que lo referencian.</p>
-      <p class="legend-note"><i class="fa fa-link" aria-hidden="true"></i> Los usuarios asignados conservan su área e historial de permisos aunque el departamento quede Inactivo o Reemplazado. Ninguna acción aquí borra datos físicamente.</p>
-    </details>
-
     <AppSpinner v-if="loading" />
     <template v-else>
       <section class="tecnm-card">
@@ -80,7 +69,6 @@
                 <th class="text-center">Descripción / Nombre del Departamento</th>
                 <th class="text-center">Área</th>
                 <th class="text-center">Estado</th>
-                <th class="text-center">Vigencia</th>
                 <th class="text-center">Acciones</th>
               </tr>
             </thead>
@@ -95,11 +83,6 @@
                   </StatusBadge>
                 </td>
                 <td class="text-center">
-                  <StatusBadge :variant="d.isActive ? 'approved' : 'info'">
-                    {{ d.isActive ? 'Vigente' : 'Reemplazado' }}
-                  </StatusBadge>
-                </td>
-                <td class="text-center">
                   <div class="tecnm-table-actions">
                     <button
                       type="button"
@@ -110,14 +93,6 @@
                       <i class="fa fa-edit" aria-hidden="true"></i>
                     </button>
                     <button
-                      type="button"
-                      class="tecnm-action-btn tecnm-action-btn--toggle"
-                      :title="d.isActive ? 'Marcar como Reemplazado' : 'Marcar como Vigente'"
-                      @click="toggleDepartmentActive(d)"
-                    >
-                      <i :class="d.isActive ? 'fa fa-toggle-on' : 'fa fa-toggle-off'" aria-hidden="true"></i>
-                    </button>
-                    <button
                       v-if="d.status"
                       type="button"
                       class="tecnm-action-btn tecnm-action-btn--delete"
@@ -125,6 +100,15 @@
                       @click="deactivateDepartment(d)"
                     >
                       <i class="fa fa-trash" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      class="tecnm-action-btn tecnm-action-btn--reactivate"
+                      title="Reactivar departamento"
+                      @click="reactivateDepartment(d)"
+                    >
+                      <i class="fa fa-undo" aria-hidden="true"></i>
                     </button>
                   </div>
                 </td>
@@ -202,7 +186,6 @@ interface DepartmentItem {
   areaId: number | null
   areaDescription: string | null
   status?: boolean
-  isActive?: boolean
 }
 
 interface AreaOption {
@@ -349,21 +332,21 @@ async function deactivateDepartment(d: DepartmentItem) {
   }
 }
 
-async function toggleDepartmentActive(d: DepartmentItem) {
-  const action = d.isActive ? 'Reemplazado' : 'Vigente'
+async function reactivateDepartment(d: DepartmentItem) {
   const ok = await askConfirmation({
-    title: `¿Marcar como ${action}?`,
-    text: `El departamento "${d.description}" se marcará como ${action}.`,
-    confirmText: `Sí, marcar como ${action}`,
+    title: '¿Reactivar Departamento?',
+    text: `El departamento "${d.description}" volverá a estar activo y visible en el sistema.`,
+    confirmText: 'Sí, reactivar',
     danger: false
   })
+
   if (!ok) return
   try {
-    await http.put(`/api/Departments/${d.id}/toggle-active`)
-    showToast(`Departamento marcado como ${action}.`, 'success')
+    await http.put(`/api/Departments/${d.id}/activate`)
+    showToast('Departamento reactivado.', 'success')
     fetchDepartments()
   } catch (e: any) {
-    showToast(errMessage(e) || 'No se pudo cambiar el estado.', 'error')
+    showToast(errMessage(e) || 'No se pudo reactivar.', 'error')
   }
 }
 
@@ -380,32 +363,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.legend-box {
-  margin-bottom: 1.5rem;
-  padding: 0.75rem 1rem;
-}
-
-.legend-box summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--tecnm-primary, #0d6efd);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  user-select: none;
-}
-
-.legend-box p {
-  margin: 0.6rem 0 0;
-  font-size: 0.9rem;
-}
-
-.legend-note {
-  background: var(--tecnm-soft-hover);
-  padding: 0.55rem 0.75rem;
-  border-radius: 0.375rem;
-}
-
 .filter-title {
   display: flex;
   align-items: center;
@@ -434,17 +391,17 @@ onMounted(() => {
   border-radius: 9999px;
 }
 
+.tecnm-action-btn--reactivate {
+  color: #16a34a;
+}
+
+.tecnm-action-btn--reactivate:hover {
+  color: #ffffff;
+  border-color: #16a34a;
+  background: #16a34a;
+}
+
 .text-center {
   text-align: center;
-}
-
-.tecnm-action-btn--toggle {
-  color: #d97706;
-}
-
-.tecnm-action-btn--toggle:hover {
-  color: #ffffff;
-  border-color: #d97706;
-  background: #d97706;
 }
 </style>

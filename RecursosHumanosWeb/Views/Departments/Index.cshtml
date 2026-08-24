@@ -80,7 +80,7 @@
         <div class="table-container fade-in">
             <div class="table-inner overflow-x-auto">
                 <table class="data-table" aria-label="Tabla de departamentos">
-                    <thead><tr><th class="text-center">ID</th><th>Departamento</th><th class="text-center">Estado</th><th class="text-center">Estructura</th><th class="text-center">Creación</th><th class="text-center">Acciones</th></tr></thead>
+                    <thead><tr><th class="text-center">ID</th><th>Departamento</th><th class="text-center">Estado</th><th class="text-center">Creación</th><th class="text-center">Acciones</th></tr></thead>
                     <tbody>
                     @foreach (var item in Model)
                     {
@@ -88,11 +88,9 @@
                             <td class="text-center">@item.Id</td>
                             <td><strong>@item.Description</strong></td>
                             <td class="text-center"><span class="v2-badge v2-badge-@(item.Status ? "success" : "danger")"><span class="v2-badge-dot"></span>@(item.Status ? "Activo" : "Inactivo")</span></td>
-                            <td class="text-center"><span class="v2-badge v2-badge-@(item.IsActive ? "success" : "secondary")"><span class="v2-badge-dot"></span>@(item.IsActive ? "Vigente" : "Reemplazado")</span></td>
                             <td class="text-center">@item.CreatedAt.ToString("dd/MM/yyyy")</td>
                             <td class="text-center"><div class="d-flex justify-content-center gap-2">
                                 <a asp-action="Edit" asp-route-id="@item.Id" class="action-btn btn-edit" title="Editar departamento"><i class="fas fa-edit"></i></a>
-                                <a href="#" class="action-btn btn-view" data-action="ToggleIsActiveAjax" data-controller="Departments" data-id="@item.Id" title="@(item.IsActive ? "Marcar como no utilizado" : "Marcar como vigente")" aria-label="@(item.IsActive ? "Marcar como no utilizado" : "Marcar como vigente")"><i class="fas @(item.IsActive ? "fa-toggle-on" : "fa-toggle-off")"></i></a>
                                 @if (item.Status)
                                 {
                                     <a href="#" class="action-btn btn-delete" data-action="DeleteAjax" data-controller="Departments" data-id="@item.Id" title="Eliminar lógicamente" aria-label="Eliminar departamento"><i class="fas fa-trash"></i></a>

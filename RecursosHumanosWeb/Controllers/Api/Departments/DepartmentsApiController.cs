@@ -64,7 +64,6 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
                         ? _context.Areas.Where(a => a.Id == d.AreaId).Select(a => a.Description).FirstOrDefault()
                         : null,
                     d.Status,
-                    d.IsActive,
                     d.CreatedAt,
                     d.UpdatedAt
                 })
@@ -93,7 +92,6 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
                     d.Description,
                     d.AreaId,
                     d.Status,
-                    d.IsActive,
                     d.CreatedAt,
                     d.UpdatedAt,
                     CreatedBy = d.CreatedByUser.Name,
@@ -130,7 +128,6 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
             department.Description = description;
             department.AreaId = model.AreaId;
             department.Status = true;
-            department.IsActive = true;
             department.CreatedAt = DateTime.Now;
             department.UpdatedAt = DateTime.Now;
             department.CreatedByUserId = userId;
@@ -194,27 +191,27 @@ namespace RecursosHumanosWeb.Controllers.Api.Departments
             }
         }
 
-        // PUT: api/Departments/5/toggle-active  (alterna IsActive: Vigente / Reemplazado)
-        [HttpPut("{id}/toggle-active")]
-        [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Actualizar")]
-        public async Task<IActionResult> ToggleActive(int id)
+        // PUT: api/Departments/5/activate  (reactivación lógica: inverso de deactivate)
+        [HttpPut("{id}/activate")]
+        [ApiKeyAuthorize(TargetTable = "Department", RequiredPermission = "Eliminar")]
+        public async Task<IActionResult> ActivateDepartment(int id)
         {
             var department = await _context.Departments.FindAsync(id);
             if (department == null) return NotFound();
 
-            var userId = HttpContext.Items["ApiUserId"] as int? ?? department.UpdatedByUserId;
-            var willBeActive = !department.IsActive;
+            if (department.Status) return BadRequest("El department ya está activo.");
 
-            department.IsActive = willBeActive;
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? department.UpdatedByUserId;
+
+            department.Status = true;
             department.UpdatedAt = DateTime.Now;
-            // Área se mantiene (no cambia al toggle activo/inactivo)
+            // Área se mantiene (no cambia al reactivar)
             department.UpdatedByUserId = userId;
 
             _context.Update(department);
             await _context.SaveChangesAsync();
 
-            var estado = willBeActive ? "Vigente" : "Reemplazado";
-            return Ok(new { message = $"Departamento marcado como {estado}.", isActive = willBeActive });
+            return NoContent();
         }
 
         // PUT: api/Departments/5/deactivate  (borrado LÓGICO: no existe DELETE físico)

@@ -73,7 +73,6 @@ public class DepartmentsController : Controller
         {
             Description = description,
             Status = true,
-            IsActive = true,
             CreatedAt = DateTime.Now,
             CreatedByUserId = currentUserId
         };
@@ -117,54 +116,6 @@ public class DepartmentsController : Controller
 
         TempData["SuccessMessage"] = "El departamento se actualizó correctamente.";
         return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleIsActiveAjax([FromBody] ActionRequestDTO request)
-    {
-        if (request is null || request.Id <= 0)
-        {
-            return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "ID de departamento no válido.", Icon = "error" });
-        }
-
-        var department = await _context.Departments.FirstOrDefaultAsync(d => d.Id == request.Id);
-        if (department is null)
-        {
-            return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "El departamento no fue encontrado.", Icon = "error" });
-        }
-
-        var willBeActive = !department.IsActive;
-        if (!request.Confirmed)
-        {
-            return Json(new AlertResponseDTO
-            {
-                ShowConfirmation = true,
-                Title = willBeActive ? "¿Marcar como vigente?" : "¿Marcar como no utilizado?",
-                Message = willBeActive
-                    ? $"El departamento **{department.Description}** volverá a formar parte de la estructura organizacional."
-                    : $"El departamento **{department.Description}** quedará marcado como no utilizado por la estructura organizacional. Seguirá disponible mientras su estado de aplicación sea activo.",
-                Icon = "warning",
-                ConfirmButtonText = willBeActive ? "Sí, marcar vigente" : "Sí, marcar no utilizado"
-            });
-        }
-
-        department.IsActive = willBeActive;
-        department.UpdatedAt = DateTime.Now;
-        department.UpdatedByUserId = GetCurrentUserId();
-
-        try
-        {
-            await _context.SaveChangesAsync();
-            return Json(new AlertResponseDTO("Departments", willBeActive
-                ? "El departamento fue marcado como vigente."
-                : "El departamento fue marcado como no utilizado."));
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Unable to change IsActive for department {DepartmentId}.", request.Id);
-            return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "No fue posible actualizar el uso estructural del departamento.", Icon = "error" });
-        }
     }
 
     [HttpPost]

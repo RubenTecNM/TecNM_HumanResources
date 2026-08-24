@@ -15,14 +15,6 @@ public partial class Department : BaseEntity
     public string Description { get; set; } = null!;
 
     /// <summary>
-    /// Indicates whether this department is currently active in the organizational structure.
-    /// False means the department has been replaced or eliminated by a restructuring.
-    /// This is distinct from <see cref="BaseEntity.Status"/> which controls whether
-    /// the department is visible/selectable in the application.
-    /// </summary>
-    public bool IsActive { get; set; } = true;
-
-    /// <summary>
     /// Optional organizational area this department belongs to.
     /// Nullable: legacy rows may not have an assigned area yet.
     /// </summary>
