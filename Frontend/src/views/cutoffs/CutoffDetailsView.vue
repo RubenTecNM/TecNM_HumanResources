@@ -16,20 +16,21 @@
           </StatusBadge>
         </span>
 
-        <div class="export-menu" ref="exportMenuEl">
+        <div class="export-menu">
           <button
             type="button"
+            ref="exportToggleEl"
             class="export-toggle"
             :disabled="exporting"
             aria-haspopup="true"
             :aria-expanded="exportOpen"
-            @click="exportOpen = !exportOpen"
+            @click="openExportMenu"
           >
             <i class="fa fa-download" aria-hidden="true"></i>
             <span>{{ exporting ? 'Exportando…' : 'Exportar' }}</span>
             <i class="fa fa-chevron-down export-caret" :class="{ open: exportOpen }" aria-hidden="true"></i>
           </button>
-          <ul v-if="exportOpen" class="export-menu__list" role="menu">
+          <ul v-if="exportOpen" class="export-menu__list" role="menu" :style="exportMenuStyle">
             <li v-for="opt in exportOptions" :key="opt.format" role="none">
               <button type="button" role="menuitem" @click="runExport(opt.format)">
                 <i :class="opt.icon" aria-hidden="true"></i> {{ opt.label }}
@@ -326,7 +327,8 @@ const chartFontFamily = 'Montserrat, Helvetica, Arial, sans-serif'
 
 // ── Menú de exportación (dropdown propio; no dependemos de Bootstrap) ──
 const exportOpen = ref(false)
-const exportMenuEl = ref<HTMLElement | null>(null)
+const exportToggleEl = ref<HTMLElement | null>(null)
+const exportMenuStyle = ref<Record<string, string>>({})
 const exportOptions = [
   { format: 'excel' as const, label: 'Excel (.xlsx)', icon: 'fa fa-file-excel-o export-icon--excel' },
   { format: 'csv' as const, label: 'CSV (.csv)', icon: 'fa fa-file-text-o export-icon--csv' },
@@ -334,8 +336,32 @@ const exportOptions = [
   { format: 'xml' as const, label: 'XML (.xml)', icon: 'fa fa-file-code-o export-icon--xml' }
 ]
 
+function positionExportMenu() {
+  const btn = exportToggleEl.value
+  if (!btn) return
+  const r = btn.getBoundingClientRect()
+  exportMenuStyle.value = {
+    position: 'fixed',
+    top: `${r.bottom + 6}px`,
+    right: `${Math.max(window.innerWidth - r.right, 8)}px`
+  }
+}
+
+function openExportMenu() {
+  if (exporting.value) return
+  exportOpen.value = !exportOpen.value
+  if (exportOpen.value) positionExportMenu()
+}
+
+// El hero tiene overflow:hidden por sus círculos decorativos; el menú flota
+// con position:fixed y se cierra si la página se mueve.
+function closeExportMenuOnMove() {
+  if (exportOpen.value) exportOpen.value = false
+}
+
 function onDocumentClick(e: MouseEvent) {
-  if (exportOpen.value && exportMenuEl.value && !exportMenuEl.value.contains(e.target as Node)) {
+  const target = e.target as HTMLElement
+  if (exportOpen.value && !target.closest('.export-menu')) {
     exportOpen.value = false
   }
 }
@@ -568,6 +594,8 @@ async function exportCutoff(format: 'excel' | 'csv' | 'json' | 'xml') {
 onMounted(() => {
   loadAnalytics()
   document.addEventListener('click', onDocumentClick)
+  window.addEventListener('scroll', closeExportMenuOnMove, true)
+  window.addEventListener('resize', closeExportMenuOnMove)
   themeObserver = new MutationObserver(() => {
     isDark.value = document.documentElement.getAttribute('data-theme') === 'dark'
   })
@@ -576,6 +604,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', onDocumentClick)
+  window.removeEventListener('scroll', closeExportMenuOnMove, true)
+  window.removeEventListener('resize', closeExportMenuOnMove)
   themeObserver?.disconnect()
 })
 </script>
@@ -619,10 +649,7 @@ onUnmounted(() => {
 .export-caret.open { transform: rotate(180deg); }
 
 .export-menu__list {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 60;
+  z-index: 1000;
   margin: 0;
   padding: 0.35rem;
   list-style: none;
