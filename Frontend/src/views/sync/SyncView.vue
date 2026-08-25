@@ -249,12 +249,8 @@ const LEGENDS: Record<SyncKind, { col: string; desc: string }[]> = {
 
 .sync-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
-}
-
-@media (min-width: 1100px) {
-  .sync-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
 }
 
 .sync-card {
