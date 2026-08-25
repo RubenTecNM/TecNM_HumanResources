@@ -248,6 +248,69 @@ public class ExcelImportServiceTests
     }
 
     [Fact]
+    public async Task ImportPermisos_HorasSeparadas_CreaConHorario()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(ImportPermisos_HorasSeparadas_CreaConHorario));
+
+        using var wb = new XLWorkbook();
+        var p = wb.Worksheets.Add("Periodos");
+        p.Cell(1, 1).Value = "Id"; p.Cell(1, 2).Value = "Fecha Inicio"; p.Cell(1, 3).Value = "Fecha Fin";
+        p.Cell(2, 1).Value = 1; p.Cell(2, 2).Value = "01/08/2026"; p.Cell(2, 3).Value = "10/09/2026";
+
+        var m = wb.Worksheets.Add("Permisos");
+        string[] h = { "Correo Solicitante", "TipoPermisoId", "Periodo (Id)", "Fecha Inicio", "Hora Inicio", "Fecha Fin", "Hora Fin" };
+        for (int i = 0; i < h.Length; i++) m.Cell(1, i + 1).Value = h[i];
+        m.Cell(2, 1).Value = "empleado@test.local";
+        m.Cell(2, 2).Value = 1;
+        m.Cell(2, 3).Value = 1;
+        m.Cell(2, 4).Value = "20/08/2026";
+        m.Cell(2, 5).Value = "12:00";
+        m.Cell(2, 6).Value = "21/08/2026";
+        m.Cell(2, 7).Value = "14:00";
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        var summary = await CreateService(context).ImportAsync("permisos", new MemoryStream(ms.ToArray()), 1);
+
+        Assert.True(summary.Errors.Count == 0, string.Join(" | ", summary.Errors.Select(e => e.Message)));
+        Assert.Equal(1, summary.CreatedPermissions);
+        var perm = await context.Permissions.AsNoTracking().SingleAsync(x => x.RequestingUser.Email == "empleado@test.local");
+        Assert.Equal(new DateTime(2026, 8, 20, 12, 0, 0), perm.StartDate);
+        Assert.Equal(new DateTime(2026, 8, 21, 14, 0, 0), perm.EndDate);
+    }
+
+    [Fact]
+    public async Task ImportPermisos_HorasInvalidas_ReportaDetalleDeLectura()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(ImportPermisos_HorasInvalidas_ReportaDetalleDeLectura));
+
+        using var wb = new XLWorkbook();
+        var p = wb.Worksheets.Add("Periodos");
+        p.Cell(1, 1).Value = "Id"; p.Cell(1, 2).Value = "Fecha Inicio"; p.Cell(1, 3).Value = "Fecha Fin";
+        p.Cell(2, 1).Value = 1; p.Cell(2, 2).Value = "01/08/2026"; p.Cell(2, 3).Value = "10/09/2026";
+
+        var m = wb.Worksheets.Add("Permisos");
+        string[] h = { "Correo Solicitante", "TipoPermisoId", "Periodo (Id)", "Fecha Inicio", "Hora Inicio", "Fecha Fin", "Hora Fin" };
+        for (int i = 0; i < h.Length; i++) m.Cell(1, i + 1).Value = h[i];
+        m.Cell(2, 1).Value = "empleado@test.local";
+        m.Cell(2, 2).Value = 1;
+        m.Cell(2, 3).Value = 1;
+        m.Cell(2, 4).Value = "31/02/2026"; // fecha imposible
+        m.Cell(2, 5).Value = "";
+        m.Cell(2, 7).Value = "9:70";       // hora imposible
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        var summary = await CreateService(context).ImportAsync("permisos", new MemoryStream(ms.ToArray()), 1);
+
+        Assert.Equal(0, summary.CreatedPermissions);
+        var msg = Assert.Single(summary.Errors).Message;
+        Assert.Contains("'31/02/2026' no es una fecha válida", msg);
+        Assert.Contains("Hora Inicio: está vacía", msg);
+        Assert.Contains("'9:70' no es una hora válida", msg);
+    }
+
+    [Fact]
     public async Task ImportUsuarios_ResuelveCatalogosPorId()
     {
         using var context = await TestDbContextFactory.SeedAsync(nameof(ImportUsuarios_ResuelveCatalogosPorId));

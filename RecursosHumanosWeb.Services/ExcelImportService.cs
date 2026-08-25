@@ -201,8 +201,7 @@ public class ExcelImportService
         {
             preview.TotalRows++;
             var email = Cell(row, "Correo Solicitante")?.Trim().ToLower();
-            var typeName = Cell(row, "Tipo Permiso")?.Trim();
-            var start = GetDate(row, "Fecha Inicio");
+            var hasSplitHours = row.Col.ContainsKey("Hora Inicio");
 
             if (string.IsNullOrEmpty(email) || !userEmails.TryGetValue(email, out var requesterId))
             {
@@ -224,11 +223,14 @@ public class ExcelImportService
                 continue;
             }
             var typeId = resolvedType.Id;
-            if (!start.HasValue)
+            // Fechas y horas: alertas detallando exactamente lo leído
+            var dateErr = TryReadRangoPermiso(row, hasSplitHours, out var startV, out var endV);
+            if (dateErr != null)
             {
-                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", "La fecha de inicio es obligatoria."));
+                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", dateErr));
                 continue;
             }
+            DateTime? start = startV == default ? null : startV;
 
             // El Id de periodo debe existir en la hoja Periodos
             DateTime? vPeriodIni; DateTime? vPeriodFin;
@@ -279,7 +281,9 @@ public class ExcelImportService
             else
             {
                 existingPerms.Add((requesterId, typeId, start.Value.Date));
-                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "nuevo", $"Se creará permiso '{typeName}' del {start:dd/MM/yyyy}."));
+                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "nuevo", $"Se creará permiso '{resolvedType.Description}' del {start:dd/MM/yyyy}{(hasSplitHours ? $" {start:HH:mm}" : "")}."));
+                if (endV.HasValue && endV != startV)
+                    preview.Rows.Add(new SyncRowResult(row.RowNumber(), "info", $"Termina el {endV:dd/MM/yyyy HH:mm}."));
             }
         }
         return preview;
@@ -460,9 +464,11 @@ public class ExcelImportService
         foreach (var row in ReadRows(wsPerms))
         {
             var email = Cell(row, "Correo Solicitante")?.Trim().ToLower() ?? "";
-            var start = GetDate(row, "Fecha Inicio");
-
-            if (!users.TryGetValue(email, out var requester) || !start.HasValue) continue;
+            var dateErrI = TryReadRangoPermiso(row, row.Col.ContainsKey("Hora Inicio"), out var startVI, out var endI);
+            if (users.ContainsKey(email) && dateErrI != null)
+                summary.Errors.Add(new SyncRowResult(row.RowNumber(), "error", dateErrI));
+            if (!users.TryGetValue(email, out var requester) || dateErrI != null || startVI == default) continue;
+            DateTime? start = startVI;
 
             var tipoRawI = Cell(row, "TipoPermisoId") ?? Cell(row, "Tipo Permiso");
             var ptype = string.IsNullOrWhiteSpace(tipoRawI)
@@ -472,7 +478,7 @@ public class ExcelImportService
                     : typeList.FirstOrDefault(t => t.Description.Trim().Equals(tipoRawI.Trim(), StringComparison.OrdinalIgnoreCase));
             if (ptype == null) continue;
 
-            var end = GetDate(row, "Fecha Fin");
+            DateTime? end = endI;
             DateTime? periodIni;
             DateTime? periodFin;
             if (!TryResolvePeriodo(Cell(row, "Periodo (Id)") ?? Cell(row, "Periodo"), periodRows, out var pi2, out var pf2))
@@ -668,12 +674,14 @@ public class ExcelImportService
                     ("Correo Solicitante", solicitantes.Count > 0 ? solicitantes[0].Email : ""),
                     ("TipoPermisoId", Ej(tiposPermiso.Count > 0 ? tiposPermiso[0].Item1 : null)),
                     ("Periodo (Id)", ""),
-                    ("Fecha Inicio", "15/05/2026 08:00"),
-                    ("Fecha Fin", "(vacío = mismo día)"),
+                    ("Fecha Inicio", "15/05/2026"),
+                    ("Hora Inicio", "08:00"),
+                    ("Fecha Fin", "(vacío = misma fecha)"),
+                    ("Hora Fin", "13:00"),
                     ("Con Goce", "No"),
                     ("Motivo", "Asuntos particulares"),
-                    ("Horas Aula", "4"),
-                    ("Horas Descarga", "2")
+                    ("Horas Aula", "(solo Falta Docente)"),
+                    ("Horas Descarga", "(solo Falta Docente)")
                 });
 
                 // Hoja Periodos: columna Id prellenada; Permisos se relaciona por ese Id
@@ -728,10 +736,11 @@ public class ExcelImportService
                     ("TipoPermisoId", "Número que referencia la hoja 'Tipos de Permiso'."),
                     ("Hoja Periodos", "Cada fila es un periodo con su Id ya asignado; escriba las fechas dd/mm/aaaa junto al Id. El periodo faltante se crea CERRADO."),
                     ("Periodo (Id)", "Desplegable: elija el Id del periodo definido en la hoja Periodos."),
-                    ("Fecha Inicio", "dd/mm/aaaa [hh:mm]. La hora define turno para Falta Docente (<14:00 matutino, ≥16:00 vespertino)."),
+                    ("Fecha Inicio / Hora Inicio", "dd/mm/aaaa y HH:mm por separado. Ambas obligatorias. La hora define turno para Falta Docente (<14:00 matutino, ≥16:00 vespertino)."),
+                    ("Fecha Fin / Hora Fin", "Obligatoria Hora Fin; Fecha Fin vacía = misma fecha de inicio. La Hora Fin debe ser mayor a la Hora Inicio."),
                     ("Con Goce", "Sí/No. Vacío = No. Todos los importados entran como Aprobados."),
                     ("Horas Aula / Horas Descarga", "Solo Falta Docente. Suma entre 1 y 7 (matutino) o 6 (vespertino).")
-                }, "Relaciones: TipoPermisoId → hoja Tipos de Permiso · Periodo (Id) → hoja Periodos. Duplicado = mismo solicitante + tipo + fecha inicio; se omite.");
+                }, "Ejemplos · Día completo: 15/05/2026 08:00 → Fecha Fin vacía, Hora Fin 18:00 · Medio día: 15/05/2026 12:00 → 15/05/2026 14:00 · Falta Docente: 15/05/2026 08:00 → 13:00 más Horas Aula/Descarga. Duplicado = mismo solicitante + tipo + fecha inicio; se omite.");
                 break;
             }
             default:
@@ -879,6 +888,80 @@ public class ExcelImportService
         };
         if (byEnum.HasValue) { id = (int)byEnum.Value; name = clean; return null; }
         return $"'{input}' no es un tipo de usuario válido (Trabajador, Autorizador, HumRes, Administrador).";
+    }
+
+    private static readonly string[] DateFormats = { "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd" };
+
+    // Lectura estricta de fecha/hora: cada problema se reporta citando el valor leído
+    private static string? TryReadFecha(RowReader row, string column, bool required, out DateTime value)
+    {
+        value = default;
+        if (!row.Col.TryGetValue(column, out int n))
+            return required ? $"{column}: falta la columna en el archivo." : null;
+        var cell = row.Row.Cell(n);
+        if (cell.DataType == XLDataType.DateTime) { value = cell.GetDateTime().Date; return null; }
+        var raw = cell.GetString()?.Trim();
+        if (string.IsNullOrWhiteSpace(raw))
+            return required ? $"{column}: está vacía (se esperaba dd/mm/aaaa)." : null;
+        if (!DateTime.TryParseExact(raw, DateFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var d))
+            return $"{column}: '{raw}' no es una fecha válida (formato dd/mm/aaaa).";
+        value = d.Date;
+        return null;
+    }
+
+    private static string? TryReadHora(RowReader row, string column, bool required, out TimeSpan value)
+    {
+        value = default;
+        if (!row.Col.TryGetValue(column, out int n))
+            return required ? $"{column}: falta la columna en el archivo." : null;
+        var cell = row.Row.Cell(n);
+        if (cell.DataType == XLDataType.TimeSpan)
+        {
+            value = cell.GetTimeSpan();
+            if (value >= TimeSpan.Zero && value < TimeSpan.FromHours(24)) return null;
+            return $"{column}: '{value}' fuera del rango 00:00–23:59.";
+        }
+        if (cell.DataType == XLDataType.DateTime) { value = cell.GetDateTime().TimeOfDay; return null; }
+        var raw = cell.GetString()?.Trim();
+        if (string.IsNullOrWhiteSpace(raw))
+            return required ? $"{column}: está vacía (se esperaba HH:mm, ej. 08:30)." : null;
+        if (!TimeSpan.TryParseExact(raw, new[] { @"h\:mm", @"hh\:mm" }, CultureInfo.InvariantCulture, out var t)
+            || t < TimeSpan.Zero || t >= TimeSpan.FromHours(24))
+            return $"{column}: '{raw}' no es una hora válida (HH:mm, rango 00:00–23:59).";
+        value = t;
+        return null;
+    }
+
+    // Lee fechas/horas de una fila de Permisos. Devuelve null si todo es válido;
+    // si hay problemas devuelve un solo mensaje detallando TODOS los hallazgos.
+    private static string? TryReadRangoPermiso(RowReader row, bool hasSplitHours,
+        out DateTime start, out DateTime? end)
+    {
+        start = default; end = null;
+
+        if (!hasSplitHours)
+        {
+            // Formato antiguo: fecha+hora combinadas en una celda
+            start = GetDate(row, "Fecha Inicio") ?? default;
+            end = GetDate(row, "Fecha Fin");
+            if (start == default)
+                return $"Fecha Inicio: '{Cell(row, "Fecha Inicio") ?? "vacía"}' no es una fecha válida (formato dd/mm/aaaa[ hh:mm]).";
+            return null;
+        }
+
+        var problems = new List<string>();
+        var eFi = TryReadFecha(row, "Fecha Inicio", true, out var fi);
+        var eHi = TryReadHora(row, "Hora Inicio", true, out var hi);
+        var eFf = TryReadFecha(row, "Fecha Fin", false, out var ff);
+        var eHf = TryReadHora(row, "Hora Fin", true, out var hf);
+        foreach (var e in new[] { eFi, eHi, eFf, eHf }) if (e != null) problems.Add(e);
+        if (problems.Count > 0) return string.Join(" · ", problems);
+
+        start = fi + hi;
+        end = ff.Date + hf;
+        if (end < start)
+            problems.Add($"El fin ({ff:dd/MM/yyyy} {hf:hh\\:mm}) es anterior al inicio ({fi:dd/MM/yyyy} {hi:hh\\:mm}).");
+        return problems.Count > 0 ? string.Join(" · ", problems) : null;
     }
 
     // Resuelve un valor de celda por Id numérico o por nombre (compatibilidad plantillas antiguas)
