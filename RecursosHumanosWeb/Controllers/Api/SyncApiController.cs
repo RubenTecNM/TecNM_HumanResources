@@ -19,9 +19,9 @@ public class SyncApiController : ControllerBase
 
     /// <summary>Descarga la plantilla Excel con hoja de datos y leyenda.</summary>
     [HttpGet("template/{kind}")]
-    public IActionResult Template(string kind)
+    public async Task<IActionResult> Template(string kind)
     {
-        var file = ExcelImportService.BuildTemplate(kind);
+        var file = await _importService.BuildTemplateAsync(kind);
         return File(file,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"plantilla_{kind}.xlsx");

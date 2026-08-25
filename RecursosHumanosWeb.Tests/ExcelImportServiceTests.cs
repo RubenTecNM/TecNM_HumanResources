@@ -193,4 +193,33 @@ public class ExcelImportServiceTests
         Assert.Equal(0, summary.CreatedPermissions);
         Assert.Contains(summary.Errors, e => e.Message.Contains("DOCENCIA"));
     }
+
+    [Fact]
+    public async Task ImportPermisos_ResuelvePeriodoPorClaveDesplegable()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(ImportPermisos_ResuelvePeriodoPorClaveDesplegable));
+        var service = CreateService(context);
+
+        using var wb = new XLWorkbook();
+        var p = wb.Worksheets.Add("Periodos");
+        p.Cell(1, 1).Value = "Fecha Inicio"; p.Cell(1, 2).Value = "Fecha Fin"; p.Cell(1, 3).Value = "Clave del Periodo";
+        p.Cell(2, 1).Value = "01/08/2026"; p.Cell(2, 2).Value = "10/09/2026";
+        p.Cell(3, 1).FormulaA1 = "TEXT(A2,\"dd/mm/yyyy\")&\" - \"&TEXT(B2,\"dd/mm/yyyy\")";
+
+        var m = wb.Worksheets.Add("Permisos");
+        string[] h = { "Correo Solicitante", "Tipo Permiso", "Periodo", "Fecha Inicio", "Con Goce", "Motivo" };
+        for (int i = 0; i < h.Length; i++) m.Cell(1, i + 1).Value = h[i];
+        m.Cell(2, 1).Value = "empleado@test.local";
+        m.Cell(2, 2).Value = "Permiso General";
+        m.Cell(2, 3).Value = "01/08/2026 - 10/09/2026"; // lo que el usuario elige del desplegable
+        m.Cell(2, 4).Value = "20/08/2026";
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        var summary = await CreateService(context).ImportAsync("permisos", new MemoryStream(ms.ToArray()), 1);
+
+        Assert.Equal(0, summary.Errors.Count);
+        Assert.Equal(1, summary.CreatedCutoffs);
+        Assert.Equal(1, summary.CreatedPermissions);
+    }
 }

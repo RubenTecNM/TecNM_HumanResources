@@ -218,6 +218,23 @@ public class ExcelImportService
                 continue;
             }
 
+            // El periodo declarado debe existir en la hoja Periodos
+            DateTime? vPeriodIni; DateTime? vPeriodFin;
+            var vClave = Cell(row, "Periodo");
+            if (!string.IsNullOrWhiteSpace(vClave) && TryParseClave(vClave, out var vci, out var vcf))
+            { vPeriodIni = vci; vPeriodFin = vcf; }
+            else
+            {
+                vPeriodIni = GetDate(row, "Periodo Inicio");
+                vPeriodFin = GetDate(row, "Periodo Fin");
+            }
+            if (!vPeriodIni.HasValue || !vPeriodFin.HasValue)
+            {
+                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error",
+                    "Indique el periodo con el desplegable (formato dd/mm/aaaa - dd/mm/aaaa)."));
+                continue;
+            }
+
             // Reglas por tipo (misma lógica que el formulario): Falta Docente exige DOCENCIA y horas válidas
             if (typeName.Equals("Falta Docente", StringComparison.OrdinalIgnoreCase))
             {
@@ -431,10 +448,25 @@ public class ExcelImportService
                 || !start.HasValue) continue;
 
             var end = GetDate(row, "Fecha Fin");
-            var periodIni = GetDate(row, "Periodo Inicio");
-            var periodFin = GetDate(row, "Periodo Fin");
-            var cutoff = periodIni.HasValue && periodFin.HasValue && byKey.TryGetValue((periodIni.Value.Date, periodFin.Value.Date), out var c)
-                ? c : byKey.Values.OrderBy(x => Math.Abs((x.StartDate.Date - start.Value.Date).Ticks)).First();
+            DateTime? periodIni;
+            DateTime? periodFin;
+            var clave = Cell(row, "Periodo");
+            if (!string.IsNullOrWhiteSpace(clave) && TryParseClave(clave, out var ci, out var cf))
+            {
+                periodIni = ci; periodFin = cf;
+            }
+            else
+            {
+                periodIni = GetDate(row, "Periodo Inicio");
+                periodFin = GetDate(row, "Periodo Fin");
+            }
+            if (!periodIni.HasValue || !periodFin.HasValue || !byKey.ContainsKey((periodIni.Value.Date, periodFin.Value.Date)))
+            {
+                summary.Errors.Add(new SyncRowResult(row.RowNumber(), "error",
+                    $"El periodo indicado no coincide con ninguna fila de la hoja Periodos ({clave ?? "sin clave"})."));
+                continue;
+            }
+            var cutoff = byKey[(periodIni.Value.Date, periodFin.Value.Date)];
 
             var dupKey = (RequestingUserId: requester.Id, TypeId: ptype.Id, Start: start.Value.Date);
             bool dup = await _context.Permissions.AnyAsync(p =>
@@ -500,66 +532,103 @@ public class ExcelImportService
     }
 
     // ────────────────────────────────────────────────────────────
-    // PLANTILLAS
+    // PLANTILLAS (con catálogos vivos y listas desplegables)
     // ────────────────────────────────────────────────────────────
 
-    public static byte[] BuildTemplate(string kind)
+    public async Task<byte[]> BuildTemplateAsync(string kind)
     {
         var wb = new XLWorkbook();
+
+        var tipos = await _context.PermissionTypes.AsNoTracking()
+            .Select(t => t.Description).OrderBy(t => t).ToListAsync();
+        var areas = await _context.Areas.AsNoTracking()
+            .Where(a => a.Status == true).Select(a => a.Description).OrderBy(a => a).ToListAsync();
+        var departamentos = await _context.Departments.AsNoTracking()
+            .Where(d => d.Status == true).Select(d => d.Description).OrderBy(d => d).ToListAsync();
+        var puestos = await _context.Positions.AsNoTracking()
+            .Where(p => p.Status == true).Select(p => p.Description).OrderBy(p => p).ToListAsync();
+        var solicitantes = await _context.Users.AsNoTracking()
+            .Where(u => u.Status == true).Select(u => u.Email).OrderBy(u => u).ToListAsync();
+
         switch (kind)
         {
             case "usuarios":
-                AddSheet(wb, "Usuarios", new[]
+            {
+                AddCatalogSheet(wb, tipos, areas, departamentos, puestos);
+                var ws = AddSheet(wb, "Usuarios", new[]
                 {
                     ("Nombre", "Juan Pérez López"),
                     ("Correo", "jperez@tecnm.mx"),
                     ("Tipo", "Trabajador"),
-                    ("Área", "Dirección Académica"),
-                    ("Departamento", "DOCENCIA"),
-                    ("Puesto", "Docente")
+                    ("Área", ""),
+                    ("Departamento", ""),
+                    ("Puesto", "")
                 });
+                AddListValidation(wb, ws, "C2:C500", "ListaTipos");
+                AddListValidation(wb, ws, "D2:D500", "ListaAreas");
+                AddListValidation(wb, ws, "E2:E500", "ListaDepartamentos");
+                AddListValidation(wb, ws, "F2:F500", "ListaPuestos");
                 AddLegend(wb, new[]
                 {
                     ("Nombre", "Texto. Nombre completo del usuario."),
-                    ("Correo", "Correo institucional ÚNICO. Es la llave de comparación: si ya existe en la base de datos NO se vuelve a crear."),
-                    ("Tipo", "Trabajador | Autorizador | HumRes | Administrador. Vacío = Trabajador."),
-                    ("Área", "Nombre exacto del catálogo de Áreas."),
-                    ("Departamento", "Nombre exacto del catálogo de Departamentos."),
-                    ("Puesto", "Nombre exacto del catálogo de Puestos.")
-                }, "Los usuarios nuevos reciben una clave temporal aleatoria visible para RH en la vista de Usuarios hasta que el usuario ingresa al sistema.");
+                    ("Correo", "Correo institucional ÚNICO. Es la llave: si ya existe en la base de datos NO se vuelve a crear."),
+                    ("Tipo", "Lista desplegable. Vacío = Trabajador."),
+                    ("Área / Departamento / Puesto", "Listas desplegables con los catálogos vigentes; también puede escribir el nombre exacto."),
+                    ("Hojas ocultas", "'Catalogos' alimenta las listas; no la modifique.")
+                }, "Los usuarios nuevos reciben una clave temporal aleatoria visible para RH hasta que el usuario ingresa al sistema.");
                 break;
-
+            }
             case "autorizadores":
-                AddSheet(wb, "Autorizadores", new[]
+            {
+                AddCatalogSheet(wb, tipos, areas, departamentos, puestos);
+                var ws = AddSheet(wb, "Autorizadores", new[]
                 {
                     ("Nombre", "María González Ruiz"),
                     ("Correo", "mgonzalez@tecnm.mx"),
-                    ("Área", "Planeación y Vinculación"),
-                    ("Departamento", "Recursos Humanos"),
-                    ("Puesto", "Jefa de Departamento")
+                    ("Área", ""),
+                    ("Departamento", ""),
+                    ("Puesto", "")
                 });
+                AddListValidation(wb, ws, "C2:C500", "ListaAreas");
+                AddListValidation(wb, ws, "D2:D500", "ListaDepartamentos");
+                AddListValidation(wb, ws, "E2:E500", "ListaPuestos");
                 AddLegend(wb, new[]
                 {
                     ("Nombre", "Texto. Obligatorio solo si el usuario aún no existe."),
-                    ("Correo", "Llave de comparación. Si existe → se promueve a Autorizador y se actualiza su Área. Si no existe → se crea nuevo usuario tipo Autorizador."),
-                    ("Área", "Nombre exacto del catálogo. Será el área cuyas solicitudes autorizará."),
-                    ("Departamento", "Nombre exacto del catálogo (obligatorio si es nuevo)."),
-                    ("Puesto", "Nombre exacto del catálogo (obligatorio si es nuevo).")
+                    ("Correo", "Llave de comparación. Existe → se promueve a Autorizador y se actualiza su Área. No existe → se crea nuevo Autorizador."),
+                    ("Área", "Lista desplegable con áreas vigentes. Será el área cuyas solicitudes autorizará."),
+                    ("Departamento / Puesto", "Listas desplegables (obligatorios solo si es nuevo).")
                 }, "Los autorizadores no pueden crear ni editar solicitudes (imparcialidad); solo autorizan las de su área.");
                 break;
-
+            }
             case "permisos":
-                AddSheet(wb, "Periodos", new[]
+            {
+                AddCatalogSheet(wb, tipos, areas, departamentos, puestos, includeSolicitantes: true, solicitantes);
+
+                // Hoja Periodos: clave calculada que alimenta el desplegable
+                var wsP = wb.Worksheets.Add("Periodos");
+                wsP.Cell(1, 1).Value = "Fecha Inicio";
+                wsP.Cell(1, 2).Value = "Fecha Fin";
+                wsP.Cell(1, 3).Value = "Clave del Periodo";
+                for (int i = 0; i < 3; i++)
                 {
-                    ("Fecha Inicio", "01/05/2026"),
-                    ("Fecha Fin", "30/06/2026")
-                });
-                AddSheet(wb, "Permisos", new[]
+                    var h = wsP.Cell(1, i + 1);
+                    h.Style.Font.Bold = true;
+                    h.Style.Fill.BackgroundColor = XLColor.FromHtml("#1B396A");
+                    h.Style.Font.FontColor = XLColor.White;
+                    wsP.Column(i + 1).AdjustToContents();
+                }
+                wsP.Cell(2, 1).Value = "01/05/2026";
+                wsP.Cell(2, 2).Value = "30/06/2026";
+                for (int r = 2; r <= 300; r++)
+                    wsP.Cell(r, 3).FormulaA1 = $"IF(A{r}=\"\",\"\",TEXT(A{r},\"dd/mm/yyyy\")&\" - \"&TEXT(B{r},\"dd/mm/yyyy\"))";
+                wsP.SheetView.FreezeRows(1);
+
+                var datos = AddSheet(wb, "Permisos", new[]
                 {
-                    ("Correo Solicitante", "jperez@tecnm.mx"),
-                    ("Tipo Permiso", "Falta Docente"),
-                    ("Periodo Inicio", "01/05/2026"),
-                    ("Periodo Fin", "30/06/2026"),
+                    ("Correo Solicitante", ""),
+                    ("Tipo Permiso", ""),
+                    ("Periodo", ""),
                     ("Fecha Inicio", "15/05/2026 08:00"),
                     ("Fecha Fin", "(vacío = mismo día)"),
                     ("Con Goce", "No"),
@@ -567,18 +636,27 @@ public class ExcelImportService
                     ("Horas Aula", "4"),
                     ("Horas Descarga", "2")
                 });
+                wb.NamedRanges.Add("ListaClavesPeriodo", wsP.Range("C2:C300"));
+                AddListValidation(wb, datos, "A2:A2000", "ListaSolicitantes");
+                AddListValidation(wb, datos, "B2:B2000", "ListaTipos");
+                AddListValidation(wb, datos, "C2:C2000", "ListaClavesPeriodo");
+
+                var dvGoce = datos.Range("F2:F2000").SetDataValidation();
+                dvGoce.AllowedValues = XLAllowedValues.List;
+                dvGoce.Value = "\"Sí,No\"";
+
                 AddLegend(wb, new[]
                 {
-                    ("Hoja Periodos", "Fechas dd/mm/aaaa. Si el periodo no existe se crea como CERRADO antes de cargar sus permisos."),
-                    ("Correo Solicitante", "Debe existir previamente en Usuarios (cargue primero esa plantilla)."),
-                    ("Tipo Permiso", "Nombre exacto del catálogo, p.ej. 'Falta Docente'."),
-                    ("Periodo Inicio / Periodo Fin", "Deben coincidir con una fila de la hoja Periodos."),
+                    ("Hoja Periodos", "Escriba fechas dd/mm/aaaa en A y B; la Clave se calcula sola y aparece en el desplegable de Permisos. Periodo faltante se crea CERRADO."),
+                    ("Correo Solicitante", "Desplegable con usuarios activos. Debe existir previamente (cargue Usuarios primero)."),
+                    ("Tipo Permiso", "Desplegable con el catálogo vigente."),
+                    ("Periodo", "Desplegable: elija una fila de la hoja Periodos (formato dd/mm/aaaa - dd/mm/aaaa)."),
                     ("Fecha Inicio", "dd/mm/aaaa [hh:mm]. La hora define turno para Falta Docente (<14:00 matutino, ≥16:00 vespertino)."),
-                    ("Con Goce", "Sí/No o 1/0. Vacío = No (aprobado sin goce). Todos los importados entran como Aprobados."),
+                    ("Con Goce", "Sí/No. Vacío = No. Todos los importados entran como Aprobados."),
                     ("Horas Aula / Horas Descarga", "Solo Falta Docente. Suma entre 1 y 7 (matutino) o 6 (vespertino).")
-                }, "Duplicado = mismo solicitante + mismo tipo + misma fecha de inicio. Esos registros se omiten.");
+                }, "Duplicado = mismo solicitante + mismo tipo + misma fecha de inicio; esos registros se omiten.");
                 break;
-
+            }
             default:
                 throw new ArgumentException("Tipo de carga desconocido.");
         }
@@ -646,6 +724,18 @@ public class ExcelImportService
         return DateTime.TryParse(raw, new CultureInfo("es-MX"), DateTimeStyles.None, out dt) ? dt : null;
     }
 
+    internal static bool TryParseClave(string clave, out DateTime inicio, out DateTime fin)
+    {
+        inicio = default; fin = default;
+        var parts = clave.Split(" - ");
+        if (parts.Length != 2) return false;
+        string[] formats = { "dd/MM/yyyy", "yyyy-MM-dd" };
+        var mx = new CultureInfo("es-MX");
+        if (!DateTime.TryParseExact(parts[0].Trim(), formats, mx, DateTimeStyles.None, out inicio)) return false;
+        if (!DateTime.TryParseExact(parts[1].Trim(), formats, mx, DateTimeStyles.None, out fin)) return false;
+        return true;
+    }
+
     private static int? GetIntOrNull(RowReader row, string column)
     {
         var raw = Cell(row, column);
@@ -704,7 +794,7 @@ public class ExcelImportService
         return $"'{input}' no es un tipo de usuario válido (Trabajador, Autorizador, HumRes, Administrador).";
     }
 
-    private static void AddSheet(XLWorkbook wb, string sheetName, (string Header, string Example)[] columns)
+    private static IXLWorksheet AddSheet(XLWorkbook wb, string sheetName, (string Header, string Example)[] columns)
     {
         var ws = wb.Worksheets.Add(sheetName);
         for (int i = 0; i < columns.Length; i++)
@@ -718,6 +808,7 @@ public class ExcelImportService
             ws.Column(i + 1).AdjustToContents();
         }
         ws.SheetView.FreezeRows(1);
+        return ws;
     }
 
     private static void AddLegend(XLWorkbook wb, (string Column, string Description)[] entries, string note)
@@ -738,5 +829,37 @@ public class ExcelImportService
         ws.Cell(entries.Length + 3, 2).Value = note;
         ws.Column(1).AdjustToContents();
         ws.Column(2).AdjustToContents();
+    }
+
+    private static void AddCatalogSheet(XLWorkbook wb, List<string> tipos, List<string> areas,
+        List<string> departamentos, List<string> puestos, bool includeSolicitantes = false, List<string>? solicitantes = null)
+    {
+        var ws = wb.Worksheets.Add("Catalogos");
+        void Fill(int col, IEnumerable<string> values)
+        {
+            int row = 1;
+            foreach (var v in values) ws.Cell(row++, col).Value = v;
+            ws.Column(col).AdjustToContents();
+        }
+        Fill(1, tipos);
+        Fill(2, areas);
+        Fill(3, departamentos);
+        Fill(4, puestos);
+        if (includeSolicitantes && solicitantes != null) Fill(5, solicitantes);
+
+        wb.NamedRanges.Add("ListaTipos", ws.Range(1, 1, Math.Max(tipos.Count, 1), 1));
+        wb.NamedRanges.Add("ListaAreas", ws.Range(1, 2, Math.Max(areas.Count, 1), 2));
+        wb.NamedRanges.Add("ListaDepartamentos", ws.Range(1, 3, Math.Max(departamentos.Count, 1), 3));
+        wb.NamedRanges.Add("ListaPuestos", ws.Range(1, 4, Math.Max(puestos.Count, 1), 4));
+        if (includeSolicitantes && solicitantes != null)
+            wb.NamedRanges.Add("ListaSolicitantes", ws.Range(1, 5, Math.Max(solicitantes.Count, 1), 5));
+        ws.Hide();
+    }
+
+    private static void AddListValidation(XLWorkbook wb, IXLWorksheet ws, string range, string namedRange)
+    {
+        var dv = ws.Range(range).SetDataValidation();
+        dv.AllowedValues = XLAllowedValues.List;
+        dv.Value = namedRange;
     }
 }
