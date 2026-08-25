@@ -166,6 +166,7 @@ public class ExcelImportService
 
         var cutoffKeys = (await _context.Cutoffs.ToListAsync())
             .Select(c => (Start: c.StartDate.Date, End: c.EndDate.Date)).ToHashSet();
+        var periodRows = new List<(DateTime Ini, DateTime Fin)>();
         foreach (var row in ReadRows(wsPeriods))
         {
             preview.TotalRows++;
@@ -176,6 +177,7 @@ public class ExcelImportService
                 preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", "Fechas de periodo inválidas."));
                 continue;
             }
+            periodRows.Add((ini.Value.Date, fin.Value.Date));
             if (!cutoffKeys.Add((ini.Value.Date, fin.Value.Date)))
             {
                 preview.Rows.Add(new SyncRowResult(row.RowNumber(), "duplicado", "El periodo ya existe en la base de datos."));
@@ -218,22 +220,21 @@ public class ExcelImportService
                 continue;
             }
 
-            // El periodo declarado debe existir en la hoja Periodos
+            // El Id de periodo debe existir en la hoja Periodos
             DateTime? vPeriodIni; DateTime? vPeriodFin;
-            var vClave = Cell(row, "Periodo");
-            if (!string.IsNullOrWhiteSpace(vClave) && TryParseClave(vClave, out var vci, out var vcf))
-            { vPeriodIni = vci; vPeriodFin = vcf; }
-            else
+            if (!TryResolvePeriodo(Cell(row, "Periodo (Id)") ?? Cell(row, "Periodo"), periodRows, out var vpi, out var vpf))
             {
+                // Compatibilidad con plantillas antiguas: columnas Periodo Inicio / Fin
                 vPeriodIni = GetDate(row, "Periodo Inicio");
                 vPeriodFin = GetDate(row, "Periodo Fin");
+                if (!vPeriodIni.HasValue || !vPeriodFin.HasValue)
+                {
+                    preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error",
+                        "Indique el periodo con el desplegable (Id de la hoja Periodos)."));
+                    continue;
+                }
             }
-            if (!vPeriodIni.HasValue || !vPeriodFin.HasValue)
-            {
-                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error",
-                    "Indique el periodo con el desplegable (formato dd/mm/aaaa - dd/mm/aaaa)."));
-                continue;
-            }
+            else { vPeriodIni = vpi; vPeriodFin = vpf; }
 
             // Reglas por tipo (misma lógica que el formulario): Falta Docente exige DOCENCIA y horas válidas
             if (typeName.Equals("Falta Docente", StringComparison.OrdinalIgnoreCase))
@@ -409,11 +410,13 @@ public class ExcelImportService
         // 1. Periodos: crear los faltantes como CERRADOS antes que sus permisos
         var cutoffs = await _context.Cutoffs.ToListAsync();
         var byKey = cutoffs.ToDictionary(c => (Start: c.StartDate.Date, End: c.EndDate.Date));
+        var periodRows = new List<(DateTime Ini, DateTime Fin)>();
         foreach (var row in ReadRows(wsPeriods))
         {
             var ini = GetDate(row, "Fecha Inicio");
             var fin = GetDate(row, "Fecha Fin");
             if (!ini.HasValue || !fin.HasValue || ini > fin) continue;
+            periodRows.Add((ini.Value.Date, fin.Value.Date));
             var key = (ini.Value.Date, fin.Value.Date);
             if (byKey.ContainsKey(key)) { summary.Duplicates++; continue; }
             var cutoff = new Cutoff
@@ -450,20 +453,22 @@ public class ExcelImportService
             var end = GetDate(row, "Fecha Fin");
             DateTime? periodIni;
             DateTime? periodFin;
-            var clave = Cell(row, "Periodo");
-            if (!string.IsNullOrWhiteSpace(clave) && TryParseClave(clave, out var ci, out var cf))
+            if (!TryResolvePeriodo(Cell(row, "Periodo (Id)") ?? Cell(row, "Periodo"), periodRows, out var pi2, out var pf2))
             {
-                periodIni = ci; periodFin = cf;
-            }
-            else
-            {
+                // Compatibilidad con plantillas antiguas: columnas Periodo Inicio / Fin
                 periodIni = GetDate(row, "Periodo Inicio");
                 periodFin = GetDate(row, "Periodo Fin");
+                if (!periodIni.HasValue || !periodFin.HasValue)
+                {
+                    summary.Errors.Add(new SyncRowResult(row.RowNumber(), "error",
+                        $"El periodo indicado no corresponde a ningún Id de la hoja Periodos ({Cell(row, "Periodo (Id)") ?? Cell(row, "Periodo") ?? "sin Id"})."));
+                    continue;
+                }
             }
-            if (!periodIni.HasValue || !periodFin.HasValue || !byKey.ContainsKey((periodIni.Value.Date, periodFin.Value.Date)))
+            else { periodIni = pi2; periodFin = pf2; }
+            if (!byKey.ContainsKey((periodIni.Value.Date, periodFin.Value.Date)))
             {
-                summary.Errors.Add(new SyncRowResult(row.RowNumber(), "error",
-                    $"El periodo indicado no coincide con ninguna fila de la hoja Periodos ({clave ?? "sin clave"})."));
+                summary.Errors.Add(new SyncRowResult(row.RowNumber(), "error", "El periodo indicado no existe en la base de datos."));
                 continue;
             }
             var cutoff = byKey[(periodIni.Value.Date, periodFin.Value.Date)];
@@ -605,11 +610,11 @@ public class ExcelImportService
             {
                 AddCatalogSheet(wb, tipos, areas, departamentos, puestos, includeSolicitantes: true, solicitantes);
 
-                // Hoja Periodos: clave calculada que alimenta el desplegable
+                // Hoja Periodos: columna Id prellenada; Permisos se relaciona por ese Id
                 var wsP = wb.Worksheets.Add("Periodos");
-                wsP.Cell(1, 1).Value = "Fecha Inicio";
-                wsP.Cell(1, 2).Value = "Fecha Fin";
-                wsP.Cell(1, 3).Value = "Clave del Periodo";
+                wsP.Cell(1, 1).Value = "Id";
+                wsP.Cell(1, 2).Value = "Fecha Inicio";
+                wsP.Cell(1, 3).Value = "Fecha Fin";
                 for (int i = 0; i < 3; i++)
                 {
                     var h = wsP.Cell(1, i + 1);
@@ -618,17 +623,17 @@ public class ExcelImportService
                     h.Style.Font.FontColor = XLColor.White;
                     wsP.Column(i + 1).AdjustToContents();
                 }
-                wsP.Cell(2, 1).Value = "01/05/2026";
-                wsP.Cell(2, 2).Value = "30/06/2026";
+                wsP.Cell(2, 2).Value = "01/05/2026";
+                wsP.Cell(2, 3).Value = "30/06/2026";
                 for (int r = 2; r <= 300; r++)
-                    wsP.Cell(r, 3).FormulaA1 = $"IF(A{r}=\"\",\"\",TEXT(A{r},\"dd/mm/yyyy\")&\" - \"&TEXT(B{r},\"dd/mm/yyyy\"))";
+                    wsP.Cell(r, 1).Value = r - 1;
                 wsP.SheetView.FreezeRows(1);
 
                 var datos = AddSheet(wb, "Permisos", new[]
                 {
                     ("Correo Solicitante", ""),
                     ("Tipo Permiso", ""),
-                    ("Periodo", ""),
+                    ("Periodo (Id)", ""),
                     ("Fecha Inicio", "15/05/2026 08:00"),
                     ("Fecha Fin", "(vacío = mismo día)"),
                     ("Con Goce", "No"),
@@ -636,10 +641,10 @@ public class ExcelImportService
                     ("Horas Aula", "4"),
                     ("Horas Descarga", "2")
                 });
-                wb.NamedRanges.Add("ListaClavesPeriodo", wsP.Range("C2:C300"));
+                wb.NamedRanges.Add("ListaIdsPeriodo", wsP.Range("A2:A300"));
                 AddListValidation(wb, datos, "A2:A2000", "ListaSolicitantes");
                 AddListValidation(wb, datos, "B2:B2000", "ListaTipos");
-                AddListValidation(wb, datos, "C2:C2000", "ListaClavesPeriodo");
+                AddListValidation(wb, datos, "C2:C2000", "ListaIdsPeriodo");
 
                 var dvGoce = datos.Range("F2:F2000").SetDataValidation();
                 dvGoce.AllowedValues = XLAllowedValues.List;
@@ -647,10 +652,10 @@ public class ExcelImportService
 
                 AddLegend(wb, new[]
                 {
-                    ("Hoja Periodos", "Escriba fechas dd/mm/aaaa en A y B; la Clave se calcula sola y aparece en el desplegable de Permisos. Periodo faltante se crea CERRADO."),
+                    ("Hoja Periodos", "Cada fila es un periodo con su Id ya asignado; escriba las fechas dd/mm/aaaa junto al Id. El periodo faltante se crea CERRADO."),
                     ("Correo Solicitante", "Desplegable con usuarios activos. Debe existir previamente (cargue Usuarios primero)."),
                     ("Tipo Permiso", "Desplegable con el catálogo vigente."),
-                    ("Periodo", "Desplegable: elija una fila de la hoja Periodos (formato dd/mm/aaaa - dd/mm/aaaa)."),
+                    ("Periodo (Id)", "Desplegable: elija el Id del periodo definido en la hoja Periodos."),
                     ("Fecha Inicio", "dd/mm/aaaa [hh:mm]. La hora define turno para Falta Docente (<14:00 matutino, ≥16:00 vespertino)."),
                     ("Con Goce", "Sí/No. Vacío = No. Todos los importados entran como Aprobados."),
                     ("Horas Aula / Horas Descarga", "Solo Falta Docente. Suma entre 1 y 7 (matutino) o 6 (vespertino).")
@@ -724,10 +729,20 @@ public class ExcelImportService
         return DateTime.TryParse(raw, new CultureInfo("es-MX"), DateTimeStyles.None, out dt) ? dt : null;
     }
 
-    internal static bool TryParseClave(string clave, out DateTime inicio, out DateTime fin)
+    internal static bool TryResolvePeriodo(string? valor, List<(DateTime Ini, DateTime Fin)> periodRows,
+        out DateTime inicio, out DateTime fin)
     {
         inicio = default; fin = default;
-        var parts = clave.Split(" - ");
+        // Relación por Id: el número referencia la fila n de la hoja Periodos.
+        // Compatibilidad: también acepta una clave "dd/mm/aaaa - dd/mm/aaaa".
+        if (int.TryParse(valor?.Trim(), out var id))
+        {
+            if (id < 1 || id > periodRows.Count) return false;
+            (inicio, fin) = periodRows[id - 1];
+            return true;
+        }
+        if (string.IsNullOrWhiteSpace(valor)) return false;
+        var parts = valor.Split(" - ");
         if (parts.Length != 2) return false;
         string[] formats = { "dd/MM/yyyy", "yyyy-MM-dd" };
         var mx = new CultureInfo("es-MX");
