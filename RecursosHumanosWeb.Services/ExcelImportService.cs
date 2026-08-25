@@ -99,10 +99,10 @@ public class ExcelImportService
                 continue;
             }
 
-            var areaErr = ResolveName(areas, Cell(row, "Área"), "Área", out _)
-                          ?? ResolveName(departments, Cell(row, "Departamento"), "Departamento", out _)
-                          ?? ResolveName(positions, Cell(row, "Puesto"), "Puesto", out _);
-            var typeErr = ResolveUserType(userTypes, Cell(row, "Tipo"), out _, out var typeName);
+            var areaErr = ResolveCatalogRef(areas, Cell(row, "ÁreaId") ?? Cell(row, "Área"), "Área", out _)
+                          ?? ResolveCatalogRef(departments, Cell(row, "DepartamentoId") ?? Cell(row, "Departamento"), "Departamento", out _)
+                          ?? ResolveCatalogRef(positions, Cell(row, "PuestoId") ?? Cell(row, "Puesto"), "Puesto", out _);
+            var typeErr = ResolveUserTypeRef(userTypes, Cell(row, "TipoId") ?? Cell(row, "Tipo"), out _, out var typeName);
             if (areaErr != null || typeErr != null)
             {
                 preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", areaErr ?? typeErr!));
@@ -137,9 +137,9 @@ public class ExcelImportService
                 preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", "Nombre y Correo son obligatorios."));
                 continue;
             }
-            var err = ResolveName(areas, Cell(row, "Área"), "Área", out _)
-                      ?? ResolveName(departments, Cell(row, "Departamento"), "Departamento", out _)
-                      ?? ResolveName(positions, Cell(row, "Puesto"), "Puesto", out _);
+            var err = ResolveCatalogRef(areas, Cell(row, "ÁreaId") ?? Cell(row, "Área"), "Área", out _)
+                      ?? ResolveCatalogRef(departments, Cell(row, "DepartamentoId") ?? Cell(row, "Departamento"), "Departamento", out _)
+                      ?? ResolveCatalogRef(positions, Cell(row, "PuestoId") ?? Cell(row, "Puesto"), "Puesto", out _);
             if (err != null)
             {
                 preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", err));
@@ -188,7 +188,7 @@ public class ExcelImportService
             }
         }
 
-        var permTypes = await _context.PermissionTypes.ToDictionaryAsync(t => t.Description.Trim().ToLower(), t => t.Id);
+        var permTypeList = await _context.PermissionTypes.ToListAsync();
         var userEmails = (await _context.Users.Where(u => u.Status == true)
             .Select(u => new { u.Id, u.Email }).ToListAsync())
             .GroupBy(u => u.Email.ToLower()).ToDictionary(g => g.Key, g => g.First().Id);
@@ -209,11 +209,21 @@ public class ExcelImportService
                 preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", "El solicitante no existe en la base de datos (cárguelo primero en Usuarios)."));
                 continue;
             }
-            if (string.IsNullOrEmpty(typeName) || !permTypes.TryGetValue(typeName.ToLower(), out var typeId))
+            var tipoRaw = Cell(row, "TipoPermisoId") ?? Cell(row, "Tipo Permiso");
+            PermissionType? resolvedType = null;
+            if (!string.IsNullOrWhiteSpace(tipoRaw))
             {
-                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", $"Tipo de permiso '{typeName}' no está en el catálogo."));
+                resolvedType = int.TryParse(tipoRaw.Trim(), out var ptid)
+                    ? permTypeList.FirstOrDefault(t => t.Id == ptid)
+                    : permTypeList.FirstOrDefault(t => t.Description.Trim().Equals(tipoRaw.Trim(), StringComparison.OrdinalIgnoreCase));
+            }
+            if (resolvedType == null)
+            {
+                preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error",
+                    $"El TipoPermisoId '{tipoRaw}' no corresponde a ninguna fila de la hoja Tipos de Permiso."));
                 continue;
             }
+            var typeId = resolvedType.Id;
             if (!start.HasValue)
             {
                 preview.Rows.Add(new SyncRowResult(row.RowNumber(), "error", "La fecha de inicio es obligatoria."));
@@ -237,7 +247,7 @@ public class ExcelImportService
             else { vPeriodIni = vpi; vPeriodFin = vpf; }
 
             // Reglas por tipo (misma lógica que el formulario): Falta Docente exige DOCENCIA y horas válidas
-            if (typeName.Equals("Falta Docente", StringComparison.OrdinalIgnoreCase))
+            if (resolvedType.Description.Trim().Equals("Falta Docente", StringComparison.OrdinalIgnoreCase))
             {
                 var docenciaId = await _context.Departments.AsNoTracking()
                     .Where(d => d.Description == "DOCENCIA").Select(d => (int?)d.Id).FirstOrDefaultAsync();
@@ -304,14 +314,18 @@ public class ExcelImportService
             var key = email.Trim().ToLower();
             if (await _context.Users.AnyAsync(u => u.Email.ToLower() == key)) { summary.Duplicates++; continue; }
 
-            ResolveName(areas, Cell(row, "Área"), "Área", out var areaId);
-            ResolveName(departments, Cell(row, "Departamento"), "Departamento", out var deptId);
-            ResolveName(positions, Cell(row, "Puesto"), "Puesto", out var posId);
-            ResolveUserType(userTypes, Cell(row, "Tipo"), out var typeId, out _);
-            var err = (areaId == 0 ? $"El Área '{Cell(row, "Área")}' no existe en el catálogo." : null)
-                      ?? (deptId == 0 ? $"El Departamento '{Cell(row, "Departamento")}' no existe en el catálogo." : null)
-                      ?? (posId == 0 ? $"El Puesto '{Cell(row, "Puesto")}' no existe en el catálogo." : null)
-                      ?? (typeId == 0 ? $"El Tipo '{Cell(row, "Tipo")}' no es válido (Trabajador, Autorizador, HumRes, Administrador)." : null);
+            var areaRaw = Cell(row, "ÁreaId") ?? Cell(row, "Área");
+            var deptRaw = Cell(row, "DepartamentoId") ?? Cell(row, "Departamento");
+            var posRaw = Cell(row, "PuestoId") ?? Cell(row, "Puesto");
+            var tipoRawU = Cell(row, "TipoId") ?? Cell(row, "Tipo");
+            ResolveCatalogRef(areas, areaRaw, "Área", out var areaId);
+            ResolveCatalogRef(departments, deptRaw, "Departamento", out var deptId);
+            ResolveCatalogRef(positions, posRaw, "Puesto", out var posId);
+            ResolveUserTypeRef(userTypes, tipoRawU, out var typeId, out _);
+            var err = (areaId == 0 ? $"El Área '{areaRaw}' no existe en el catálogo." : null)
+                      ?? (deptId == 0 ? $"El Departamento '{deptRaw}' no existe en el catálogo." : null)
+                      ?? (posId == 0 ? $"El Puesto '{posRaw}' no existe en el catálogo." : null)
+                      ?? (typeId == 0 ? $"El Tipo '{tipoRawU}' no es válido." : null);
             if (err != null)
             {
                 summary.Errors.Add(new SyncRowResult(row.RowNumber(), "error", err));
@@ -352,12 +366,15 @@ public class ExcelImportService
             var email = Cell(row, "Correo");
             if (string.IsNullOrWhiteSpace(email)) continue;
             var key = email.Trim().ToLower();
-            ResolveName(areas, Cell(row, "Área"), "Área", out var areaId);
-            ResolveName(departments, Cell(row, "Departamento"), "Departamento", out var deptId);
-            ResolveName(positions, Cell(row, "Puesto"), "Puesto", out var posId);
-            var err = (areaId == 0 ? $"El Área '{Cell(row, "Área")}' no existe en el catálogo." : null)
-                      ?? (deptId == 0 ? $"El Departamento '{Cell(row, "Departamento")}' no existe en el catálogo." : null)
-                      ?? (posId == 0 ? $"El Puesto '{Cell(row, "Puesto")}' no existe en el catálogo." : null);
+            var areaRaw = Cell(row, "ÁreaId") ?? Cell(row, "Área");
+            var deptRaw = Cell(row, "DepartamentoId") ?? Cell(row, "Departamento");
+            var posRaw = Cell(row, "PuestoId") ?? Cell(row, "Puesto");
+            ResolveCatalogRef(areas, areaRaw, "Área", out var areaId);
+            ResolveCatalogRef(departments, deptRaw, "Departamento", out var deptId);
+            ResolveCatalogRef(positions, posRaw, "Puesto", out var posId);
+            var err = (areaId == 0 ? $"El Área '{areaRaw}' no existe en el catálogo." : null)
+                      ?? (deptId == 0 ? $"El Departamento '{deptRaw}' no existe en el catálogo." : null)
+                      ?? (posId == 0 ? $"El Puesto '{posRaw}' no existe en el catálogo." : null);
             if (err != null)
             {
                 summary.Errors.Add(new SyncRowResult(row.RowNumber(), "error", err));
@@ -438,17 +455,22 @@ public class ExcelImportService
         // 2. Permisos
         var wsPerms = RequireSheet(wb, "Permisos");
         var users = await _context.Users.ToDictionaryAsync(u => u.Email.ToLower(), u => u);
-        var types = await _context.PermissionTypes.ToDictionaryAsync(t => t.Description.Trim().ToLower(), t => t);
+        var typeList = await _context.PermissionTypes.ToListAsync();
 
         foreach (var row in ReadRows(wsPerms))
         {
             var email = Cell(row, "Correo Solicitante")?.Trim().ToLower() ?? "";
-            var typeName = Cell(row, "Tipo Permiso")?.Trim().ToLower() ?? "";
             var start = GetDate(row, "Fecha Inicio");
 
-            if (!users.TryGetValue(email, out var requester)
-                || !types.TryGetValue(typeName, out var ptype)
-                || !start.HasValue) continue;
+            if (!users.TryGetValue(email, out var requester) || !start.HasValue) continue;
+
+            var tipoRawI = Cell(row, "TipoPermisoId") ?? Cell(row, "Tipo Permiso");
+            var ptype = string.IsNullOrWhiteSpace(tipoRawI)
+                ? null
+                : int.TryParse(tipoRawI.Trim(), out var ptidi)
+                    ? typeList.FirstOrDefault(t => t.Id == ptidi)
+                    : typeList.FirstOrDefault(t => t.Description.Trim().Equals(tipoRawI.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (ptype == null) continue;
 
             var end = GetDate(row, "Fecha Fin");
             DateTime? periodIni;
@@ -537,78 +559,122 @@ public class ExcelImportService
     }
 
     // ────────────────────────────────────────────────────────────
-    // PLANTILLAS (con catálogos vivos y listas desplegables)
+    // PLANTILLAS (hojas de catálogo visibles; relación por Id real de la BD)
     // ────────────────────────────────────────────────────────────
 
     public async Task<byte[]> BuildTemplateAsync(string kind)
     {
         var wb = new XLWorkbook();
 
-        var tipos = await _context.PermissionTypes.AsNoTracking()
-            .Select(t => t.Description).OrderBy(t => t).ToListAsync();
-        var areas = await _context.Areas.AsNoTracking()
-            .Where(a => a.Status == true).Select(a => a.Description).OrderBy(a => a).ToListAsync();
-        var departamentos = await _context.Departments.AsNoTracking()
-            .Where(d => d.Status == true).Select(d => d.Description).OrderBy(d => d).ToListAsync();
-        var puestos = await _context.Positions.AsNoTracking()
-            .Where(p => p.Status == true).Select(p => p.Description).OrderBy(p => p).ToListAsync();
-        var solicitantes = await _context.Users.AsNoTracking()
-            .Where(u => u.Status == true).Select(u => u.Email).OrderBy(u => u).ToListAsync();
+        var tiposPermiso = (await _context.PermissionTypes.AsNoTracking()
+            .Where(t => t.Status == true).OrderBy(t => t.Id).ToListAsync())
+            .Select(t => (t.Id, t.Description)).ToList();
+        var areas = (await _context.Areas.AsNoTracking()
+            .Where(a => a.Status == true).OrderBy(a => a.Id).ToListAsync())
+            .Select(a => (a.Id, a.Description)).ToList();
+        var departamentos = (await _context.Departments.AsNoTracking()
+            .Where(d => d.Status == true).OrderBy(d => d.Id).ToListAsync())
+            .Select(d => (d.Id, d.Description)).ToList();
+        var puestos = (await _context.Positions.AsNoTracking()
+            .Where(p => p.Status == true).OrderBy(p => p.Id).ToListAsync())
+            .Select(p => (p.Id, p.Description)).ToList();
+        var solicitantes = (await _context.Users.AsNoTracking()
+            .Where(u => u.Status == true).OrderBy(u => u.Id).ToListAsync())
+            .Select(u => (u.Id, u.Name, u.Email)).ToList();
+
+        static string Ej(int? id) => id.HasValue ? id.Value.ToString() : "";
 
         switch (kind)
         {
             case "usuarios":
             {
-                AddCatalogSheet(wb, tipos, areas, departamentos, puestos);
+                int? primeraArea = areas.Count > 0 ? areas[0].Item1 : null;
+                int? primerDepto = departamentos.Count > 0 ? departamentos[0].Item1 : null;
+                int? primerPuesto = puestos.Count > 0 ? puestos[0].Item1 : null;
+
                 var ws = AddSheet(wb, "Usuarios", new[]
                 {
                     ("Nombre", "Juan Pérez López"),
                     ("Correo", "jperez@tecnm.mx"),
-                    ("Tipo", "Trabajador"),
-                    ("Área", ""),
-                    ("Departamento", ""),
-                    ("Puesto", "")
+                    ("TipoId", Ej(4)),
+                    ("ÁreaId", Ej(primeraArea)),
+                    ("DepartamentoId", Ej(primerDepto)),
+                    ("PuestoId", Ej(primerPuesto))
                 });
-                AddListValidation(wb, ws, "C2:C500", "ListaTipos");
+
+                AddIdCatalog(wb, "Tipos de Usuario", new List<(int, string)> { (1, "Administrador"), (2, "Autorizador"), (3, "HumRes"), (4, "Trabajador") });
+                AddIdCatalog(wb, "Áreas", areas);
+                AddIdCatalog(wb, "Departamentos", departamentos);
+                AddIdCatalog(wb, "Puestos", puestos);
+
+                wb.NamedRanges.Add("ListaTipoUsuario", wb.Worksheet("Tipos de Usuario").Range("A2:A5"));
+                AddNamedRangeForCatalog(wb, "ListaAreas", areas.Count);
+                AddNamedRangeForCatalog(wb, "ListaDepartamentos", departamentos.Count, "Departamentos");
+                AddNamedRangeForCatalog(wb, "ListaPuestos", puestos.Count, "Puestos");
+                AddListValidation(wb, ws, "C2:C500", "ListaTipoUsuario");
                 AddListValidation(wb, ws, "D2:D500", "ListaAreas");
                 AddListValidation(wb, ws, "E2:E500", "ListaDepartamentos");
                 AddListValidation(wb, ws, "F2:F500", "ListaPuestos");
+
                 AddLegend(wb, new[]
                 {
                     ("Nombre", "Texto. Nombre completo del usuario."),
                     ("Correo", "Correo institucional ÚNICO. Es la llave: si ya existe en la base de datos NO se vuelve a crear."),
-                    ("Tipo", "Lista desplegable. Vacío = Trabajador."),
-                    ("Área / Departamento / Puesto", "Listas desplegables con los catálogos vigentes; también puede escribir el nombre exacto."),
-                    ("Hojas ocultas", "'Catalogos' alimenta las listas; no la modifique.")
+                    ("TipoId", "Número que referencia la hoja 'Tipos de Usuario' (1 Administrador · 2 Autorizador · 3 HumRes · 4 Trabajador). Vacío = 4."),
+                    ("ÁreaId / DepartamentoId / PuestoId", "Números que referencian las hojas de catálogo del mismo nombre. Use el desplegable o copie el Id."),
+                    ("Hojas de catálogo", "'Tipos de Usuario', 'Áreas', 'Departamentos' y 'Puestos': consulte ahí los Ids disponibles.")
                 }, "Los usuarios nuevos reciben una clave temporal aleatoria visible para RH hasta que el usuario ingresa al sistema.");
                 break;
             }
             case "autorizadores":
             {
-                AddCatalogSheet(wb, tipos, areas, departamentos, puestos);
+                int? primeraArea = areas.Count > 0 ? areas[0].Item1 : null;
+                int? primerDepto = departamentos.Count > 0 ? departamentos[0].Item1 : null;
+                int? primerPuesto = puestos.Count > 0 ? puestos[0].Item1 : null;
+
                 var ws = AddSheet(wb, "Autorizadores", new[]
                 {
                     ("Nombre", "María González Ruiz"),
                     ("Correo", "mgonzalez@tecnm.mx"),
-                    ("Área", ""),
-                    ("Departamento", ""),
-                    ("Puesto", "")
+                    ("ÁreaId", Ej(primeraArea)),
+                    ("DepartamentoId", Ej(primerDepto)),
+                    ("PuestoId", Ej(primerPuesto))
                 });
+
+                AddIdCatalog(wb, "Áreas", areas);
+                AddIdCatalog(wb, "Departamentos", departamentos);
+                AddIdCatalog(wb, "Puestos", puestos);
+
+                AddNamedRangeForCatalog(wb, "ListaAreas", areas.Count);
+                AddNamedRangeForCatalog(wb, "ListaDepartamentos", departamentos.Count, "Departamentos");
+                AddNamedRangeForCatalog(wb, "ListaPuestos", puestos.Count, "Puestos");
                 AddListValidation(wb, ws, "C2:C500", "ListaAreas");
                 AddListValidation(wb, ws, "D2:D500", "ListaDepartamentos");
                 AddListValidation(wb, ws, "E2:E500", "ListaPuestos");
+
                 AddLegend(wb, new[]
                 {
                     ("Nombre", "Texto. Obligatorio solo si el usuario aún no existe."),
                     ("Correo", "Llave de comparación. Existe → se promueve a Autorizador y se actualiza su Área. No existe → se crea nuevo Autorizador."),
-                    ("Área", "Lista desplegable con áreas vigentes. Será el área cuyas solicitudes autorizará."),
-                    ("Departamento / Puesto", "Listas desplegables (obligatorios solo si es nuevo).")
+                    ("ÁreaId", "Número de la hoja 'Áreas'. Será el área cuyas solicitudes autorizará."),
+                    ("DepartamentoId / PuestoId", "Números de las hojas 'Departamentos' y 'Puestos' (obligatorios solo si es nuevo).")
                 }, "Los autorizadores no pueden crear ni editar solicitudes (imparcialidad); solo autorizan las de su área.");
                 break;
             }
             case "permisos":
             {
-                AddCatalogSheet(wb, tipos, areas, departamentos, puestos, includeSolicitantes: true, solicitantes);
+                var datos = AddSheet(wb, "Permisos", new[]
+                {
+                    ("Correo Solicitante", solicitantes.Count > 0 ? solicitantes[0].Email : ""),
+                    ("TipoPermisoId", Ej(tiposPermiso.Count > 0 ? tiposPermiso[0].Item1 : null)),
+                    ("Periodo (Id)", ""),
+                    ("Fecha Inicio", "15/05/2026 08:00"),
+                    ("Fecha Fin", "(vacío = mismo día)"),
+                    ("Con Goce", "No"),
+                    ("Motivo", "Asuntos particulares"),
+                    ("Horas Aula", "4"),
+                    ("Horas Descarga", "2")
+                });
 
                 // Hoja Periodos: columna Id prellenada; Permisos se relaciona por ese Id
                 var wsP = wb.Worksheets.Add("Periodos");
@@ -629,21 +695,27 @@ public class ExcelImportService
                     wsP.Cell(r, 1).Value = r - 1;
                 wsP.SheetView.FreezeRows(1);
 
-                var datos = AddSheet(wb, "Permisos", new[]
+                // Catálogo visible de solicitantes (Id | Nombre | Correo)
+                var wsSol = wb.Worksheets.Add("Solicitantes");
+                wsSol.Cell(1, 1).Value = "Id"; wsSol.Cell(1, 2).Value = "Nombre"; wsSol.Cell(1, 3).Value = "Correo";
+                StyleCatalogHeader(wsSol, 3);
+                int rSol = 2;
+                foreach (var (id, nombre, correo) in solicitantes)
                 {
-                    ("Correo Solicitante", ""),
-                    ("Tipo Permiso", ""),
-                    ("Periodo (Id)", ""),
-                    ("Fecha Inicio", "15/05/2026 08:00"),
-                    ("Fecha Fin", "(vacío = mismo día)"),
-                    ("Con Goce", "No"),
-                    ("Motivo", "Asuntos particulares"),
-                    ("Horas Aula", "4"),
-                    ("Horas Descarga", "2")
-                });
+                    wsSol.Cell(rSol, 1).Value = id;
+                    wsSol.Cell(rSol, 2).Value = nombre;
+                    wsSol.Cell(rSol, 3).Value = correo;
+                    rSol++;
+                }
+                wsSol.SheetView.FreezeRows(1);
+
+                AddIdCatalog(wb, "Tipos de Permiso", tiposPermiso);
+
                 wb.NamedRanges.Add("ListaIdsPeriodo", wsP.Range("A2:A300"));
+                wb.NamedRanges.Add("ListaSolicitantes", wsSol.Range($"C2:C{Math.Max(rSol - 1, 1)}"));
+                wb.NamedRanges.Add("ListaTiposPermiso", wb.Worksheet("Tipos de Permiso").Range($"A2:A{Math.Max(tiposPermiso.Count, 1) + 1}"));
                 AddListValidation(wb, datos, "A2:A2000", "ListaSolicitantes");
-                AddListValidation(wb, datos, "B2:B2000", "ListaTipos");
+                AddListValidation(wb, datos, "B2:B2000", "ListaTiposPermiso");
                 AddListValidation(wb, datos, "C2:C2000", "ListaIdsPeriodo");
 
                 var dvGoce = datos.Range("F2:F2000").SetDataValidation();
@@ -652,14 +724,14 @@ public class ExcelImportService
 
                 AddLegend(wb, new[]
                 {
+                    ("Correo Solicitante", "Desplegable con usuarios activos (hoja Solicitantes). Debe existir previamente: cargue Usuarios primero."),
+                    ("TipoPermisoId", "Número que referencia la hoja 'Tipos de Permiso'."),
                     ("Hoja Periodos", "Cada fila es un periodo con su Id ya asignado; escriba las fechas dd/mm/aaaa junto al Id. El periodo faltante se crea CERRADO."),
-                    ("Correo Solicitante", "Desplegable con usuarios activos. Debe existir previamente (cargue Usuarios primero)."),
-                    ("Tipo Permiso", "Desplegable con el catálogo vigente."),
                     ("Periodo (Id)", "Desplegable: elija el Id del periodo definido en la hoja Periodos."),
                     ("Fecha Inicio", "dd/mm/aaaa [hh:mm]. La hora define turno para Falta Docente (<14:00 matutino, ≥16:00 vespertino)."),
                     ("Con Goce", "Sí/No. Vacío = No. Todos los importados entran como Aprobados."),
                     ("Horas Aula / Horas Descarga", "Solo Falta Docente. Suma entre 1 y 7 (matutino) o 6 (vespertino).")
-                }, "Duplicado = mismo solicitante + mismo tipo + misma fecha de inicio; esos registros se omiten.");
+                }, "Relaciones: TipoPermisoId → hoja Tipos de Permiso · Periodo (Id) → hoja Periodos. Duplicado = mismo solicitante + tipo + fecha inicio; se omite.");
                 break;
             }
             default:
@@ -809,6 +881,49 @@ public class ExcelImportService
         return $"'{input}' no es un tipo de usuario válido (Trabajador, Autorizador, HumRes, Administrador).";
     }
 
+    // Resuelve un valor de celda por Id numérico o por nombre (compatibilidad plantillas antiguas)
+    private static string? ResolveCatalogRef<T>(List<T> catalog, string? input, string label, out int id) where T : BaseEntity
+    {
+        id = 0;
+        if (string.IsNullOrWhiteSpace(input)) return $"{label} es obligatorio.";
+        var raw = input.Trim();
+        if (int.TryParse(raw, out var refId))
+        {
+            var match = catalog.FirstOrDefault(x => x.Id == refId);
+            if (match == null) return $"{label}: el Id {refId} no existe en el catálogo.";
+            id = match.Id;
+            return null;
+        }
+        return ResolveName(catalog, raw, label, out id);
+    }
+
+    private static string? ResolveUserTypeRef(List<UserType> catalog, string? input, out int id, out string name)
+    {
+        id = 0; name = "";
+        if (!string.IsNullOrWhiteSpace(input) && int.TryParse(input.Trim(), out var tid))
+        {
+            var match = catalog.FirstOrDefault(t => t.Id == tid);
+            if (match != null) { id = match.Id; name = match.Description; return null; }
+            // Fallback por enum (catálogo incompleto): mismos Ids que la hoja 'Tipos de Usuario'
+            var byId = tid switch
+            {
+                1 => (UserTypeEnum?)UserTypeEnum.Administrator,
+                2 => (UserTypeEnum?)UserTypeEnum.Authorizer,
+                3 => (UserTypeEnum?)UserTypeEnum.HumanResources,
+                4 => (UserTypeEnum?)UserTypeEnum.Employee,
+                _ => null
+            };
+            if (byId.HasValue)
+            {
+                id = tid;
+                name = tid switch { 1 => "Administrador", 2 => "Autorizador", 3 => "HumRes", _ => "Trabajador" };
+                return null;
+            }
+            return $"TipoId {tid} no existe en el catálogo de tipos de usuario.";
+        }
+        return ResolveUserType(catalog, input, out id, out name);
+    }
+
     private static IXLWorksheet AddSheet(XLWorkbook wb, string sheetName, (string Header, string Example)[] columns)
     {
         var ws = wb.Worksheets.Add(sheetName);
@@ -846,29 +961,37 @@ public class ExcelImportService
         ws.Column(2).AdjustToContents();
     }
 
-    private static void AddCatalogSheet(XLWorkbook wb, List<string> tipos, List<string> areas,
-        List<string> departamentos, List<string> puestos, bool includeSolicitantes = false, List<string>? solicitantes = null)
+    private static void AddIdCatalog(XLWorkbook wb, string name, IEnumerable<(int Id, string Nombre)> rows)
     {
-        var ws = wb.Worksheets.Add("Catalogos");
-        void Fill(int col, IEnumerable<string> values)
+        var ws = wb.Worksheets.Add(name);
+        ws.Cell(1, 1).Value = "Id";
+        ws.Cell(1, 2).Value = "Nombre";
+        StyleCatalogHeader(ws, 2);
+        int r = 2;
+        foreach (var row in rows)
         {
-            int row = 1;
-            foreach (var v in values) ws.Cell(row++, col).Value = v;
-            ws.Column(col).AdjustToContents();
+            ws.Cell(r, 1).Value = row.Item1;
+            ws.Cell(r, 2).Value = row.Item2;
+            r++;
         }
-        Fill(1, tipos);
-        Fill(2, areas);
-        Fill(3, departamentos);
-        Fill(4, puestos);
-        if (includeSolicitantes && solicitantes != null) Fill(5, solicitantes);
+        ws.SheetView.FreezeRows(1);
+    }
 
-        wb.NamedRanges.Add("ListaTipos", ws.Range(1, 1, Math.Max(tipos.Count, 1), 1));
-        wb.NamedRanges.Add("ListaAreas", ws.Range(1, 2, Math.Max(areas.Count, 1), 2));
-        wb.NamedRanges.Add("ListaDepartamentos", ws.Range(1, 3, Math.Max(departamentos.Count, 1), 3));
-        wb.NamedRanges.Add("ListaPuestos", ws.Range(1, 4, Math.Max(puestos.Count, 1), 4));
-        if (includeSolicitantes && solicitantes != null)
-            wb.NamedRanges.Add("ListaSolicitantes", ws.Range(1, 5, Math.Max(solicitantes.Count, 1), 5));
-        ws.Hide();
+    private static void StyleCatalogHeader(IXLWorksheet ws, int cols)
+    {
+        for (int i = 1; i <= cols; i++)
+        {
+            var h = ws.Cell(1, i);
+            h.Style.Font.Bold = true;
+            h.Style.Fill.BackgroundColor = XLColor.FromHtml("#1B396A");
+            h.Style.Font.FontColor = XLColor.White;
+            ws.Column(i).AdjustToContents();
+        }
+    }
+
+    private static void AddNamedRangeForCatalog(XLWorkbook wb, string rangeName, int count, string sheetName = "Áreas")
+    {
+        wb.NamedRanges.Add(rangeName, wb.Worksheet(sheetName).Range($"A2:A{Math.Max(count, 1) + 1}"));
     }
 
     private static void AddListValidation(XLWorkbook wb, IXLWorksheet ws, string range, string namedRange)

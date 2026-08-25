@@ -246,4 +246,58 @@ public class ExcelImportServiceTests
         Assert.Equal(1, summary.Errors.Count);
         Assert.Equal(0, summary.CreatedPermissions);
     }
+
+    [Fact]
+    public async Task ImportUsuarios_ResuelveCatalogosPorId()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(ImportUsuarios_ResuelveCatalogosPorId));
+
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("Usuarios");
+        string[] h = { "Nombre", "Correo", "TipoId", "ÁreaId", "DepartamentoId", "PuestoId" };
+        for (int i = 0; i < h.Length; i++) ws.Cell(1, i + 1).Value = h[i];
+        ws.Cell(2, 1).Value = "Nuevo Por Id";
+        ws.Cell(2, 2).Value = "porid@test.local";
+        ws.Cell(2, 3).Value = 3; // HumRes
+        ws.Cell(2, 4).Value = 1;
+        ws.Cell(2, 5).Value = 1;
+        ws.Cell(2, 6).Value = 1;
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        var summary = await CreateService(context).ImportAsync("usuarios", new MemoryStream(ms.ToArray()), 1);
+
+        Assert.True(summary.Errors.Count == 0, string.Join(" | ", summary.Errors.Select(e => e.Message)));
+        Assert.Equal(1, summary.CreatedUsers);
+        var user = await context.Users.Include(u => u.Area).FirstAsync(u => u.Email == "porid@test.local");
+        Assert.Equal((int)UserTypeEnum.HumanResources, user.UserTypeId);
+        Assert.Equal("Área General", user.Area!.Description);
+        Assert.False(string.IsNullOrEmpty(user.TempPassword));
+    }
+
+    [Fact]
+    public async Task ImportPermisos_TipoPorIdInvalidoSeReportaEnPreview()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(ImportPermisos_TipoPorIdInvalidoSeReportaEnPreview));
+        var service = CreateService(context);
+
+        using var wb = new XLWorkbook();
+        var p = wb.Worksheets.Add("Periodos");
+        p.Cell(1, 1).Value = "Id"; p.Cell(1, 2).Value = "Fecha Inicio"; p.Cell(1, 3).Value = "Fecha Fin";
+        p.Cell(2, 1).Value = 1; p.Cell(2, 2).Value = "01/08/2026"; p.Cell(2, 3).Value = "10/09/2026";
+
+        var m = wb.Worksheets.Add("Permisos");
+        string[] h = { "Correo Solicitante", "TipoPermisoId", "Periodo (Id)", "Fecha Inicio" };
+        for (int i = 0; i < h.Length; i++) m.Cell(1, i + 1).Value = h[i];
+        m.Cell(2, 1).Value = "empleado@test.local";
+        m.Cell(2, 2).Value = 999; // no existe
+        m.Cell(2, 3).Value = 1;
+        m.Cell(2, 4).Value = "20/08/2026";
+
+        using var ms = new MemoryStream();
+        wb.SaveAs(ms);
+        var preview = await service.ValidateAsync("permisos", new MemoryStream(ms.ToArray()));
+
+        Assert.Contains(preview.Rows, r => r.Status == "error" && r.Message.Contains("999"));
+    }
 }
