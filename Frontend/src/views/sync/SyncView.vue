@@ -12,6 +12,13 @@
       </template>
     </AppPageHeader>
 
+    <div class="sync-intro">
+      <i class="fa fa-info-circle" aria-hidden="true"></i>
+      Orden recomendado: <strong>1) Usuarios</strong> → <strong>2) Autorizadores</strong> → <strong>3) Permisos</strong>.
+      Cada card descarga su plantilla, valida el archivo contra la base de datos y te muestra un preview
+      antes de importar — nada se modifica hasta que pulses <em>Importar</em>.
+    </div>
+
     <div class="sync-grid">
       <section v-for="card in CARDS" :key="card.kind" class="sync-card">
         <div class="sync-card__head">
@@ -31,6 +38,10 @@
             <strong>{{ l.col }}:</strong> {{ l.desc }}
           </li>
         </ul>
+
+        <ol class="sync-steps">
+          <li v-for="(s, i) in card.steps" :key="i">{{ s }}</li>
+        </ol>
 
         <div class="sync-actions">
           <label class="sync-file-btn">
@@ -194,6 +205,7 @@ interface CardDef {
   title: string
   icon: string
   description: string
+  steps: string[]
 }
 
 const CARDS: CardDef[] = [
@@ -202,42 +214,60 @@ const CARDS: CardDef[] = [
     title: 'Usuarios',
     icon: 'fa fa-users',
     description:
-      'Da de alta personal en bloque. Los correos ya existentes se omiten; los nuevos reciben una clave temporal que RH puede consultar hasta que el usuario ingrese.'
-  },
-  {
-    kind: 'permisos',
-    title: 'Permisos históricos',
-    icon: 'fa fa-file-text-o',
-    description:
-      'Excel con dos hojas (Periodos y Permisos). Los periodos faltantes se crean cerrados; los permisos entran Aprobados (sin goce salvo indicación) respetando las reglas por tipo.'
+      'Da de alta personal en bloque. La llave es el correo institucional: los ya existentes se omiten sin modificarse; los nuevos se crean activos y con una clave temporal que RH debe entregarles.',
+    steps: [
+      'Descarga la plantilla con el botón «Plantilla» — trae las hojas de catálogo (Tipos, Áreas, Departamentos, Puestos).',
+      'Llena la hoja Usuarios eligiendo los Id de los desplegables (coinciden con las hojas de catálogo).',
+      'Regresa aquí, elige el archivo y revisa el resultado: verás qué filas se crearán, cuáles se omiten por existir y cuáles tienen errores antes de importar nada.',
+      'Pulsa Importar. Entrega a cada usuario su clave temporal.'
+    ]
   },
   {
     kind: 'autorizadores',
     title: 'Autorizadores',
     icon: 'fa fa-user-secret',
     description:
-      'Promueve usuarios existentes o crea nuevos jefes de área. Su área define qué solicitudes pueden autorizar.'
+      'Define quién autoriza solicitudes. Si el correo ya existe en el sistema se promueve a Autorizador y se actualiza su área; si no existe, se crea nuevo. El área que registres define qué solicitudes podrá autorizar.',
+    steps: [
+      'Descarga la plantilla y llena la hoja Autorizadores (Id de Área, Departamento y Puesto desde los desplegables).',
+      'Elige el archivo y revisa el preview: distingue entre «nuevo» y «promovido» (usuario existente que pasa a autorizar).',
+      'Pulsa Importar. Los cambios aplican de inmediato.'
+    ]
+  },
+  {
+    kind: 'permisos',
+    title: 'Permisos históricos',
+    icon: 'fa fa-file-text-o',
+    description:
+      'Importa permisos ya autorizados desde papel o sistemas previos. Requiere que los solicitantes existan como usuarios: cárgalos primero en la card Usuarios. Todo lo importado entra como Aprobado.',
+    steps: [
+      'Asegúrate de haber cargado primero a los Usuarios (la hoja Solicitantes de esta plantilla solo lista los existentes).',
+      'Descarga la plantilla: trae Periodos (con Id), Solicitantes y Tipos de Permiso de la base de datos real.',
+      'En la hoja Permisos registra fecha y hora de inicio/fin por separado; Fecha Fin vacía = mismo día.',
+      'Revisa el preview — cada fila con error indica exactamente qué celda falló y qué valor se leyó — y pulsa Importar.'
+    ]
   }
 ]
 
 const LEGENDS: Record<SyncKind, { col: string; desc: string }[]> = {
   usuarios: [
     { col: 'Nombre', desc: 'Nombre completo (obligatorio).' },
-    { col: 'Correo', desc: 'Institucional y único. Es la llave: si ya existe, no se vuelve a crear.' },
-    { col: 'Tipo', desc: 'Trabajador | Autorizador | HumRes | Administrador. Vacío = Trabajador.' },
-    { col: 'Área / Departamento / Puesto', desc: 'Nombres exactos de los catálogos.' }
+    { col: 'Correo', desc: 'Institucional (@monclova.tecnm.mx) y único. Es la llave: si ya existe, no se vuelve a crear.' },
+    { col: 'TipoId', desc: 'Id del desplegable: 1 Admin · 2 Autorizador · 3 HumRes · 4 Trabajador.' },
+    { col: 'ÁreaId / DepartamentoId / PuestoId', desc: 'Ids numéricos del desplegable; cada uno coincide con su hoja de catálogo.' },
+    { col: 'Resultado', desc: 'Nuevos → creados con clave temporal. Existentes → omitidos (no se actualizan).' }
   ],
   permisos: [
-    { col: 'Hoja Periodos', desc: 'Fechas dd/mm/aaaa. Los periodos faltantes se crean como CERRADOS.' },
-    { col: 'Correo Solicitante', desc: 'Debe existir en Usuarios. Cargue primero esa plantilla si falta.' },
-    { col: 'Tipo Permiso / Fechas', desc: 'Tipo exacto del catálogo. Fecha Fin vacía = mismo día.' },
-    { col: 'Con Goce', desc: 'Sí/No o 1/0. Vacío = No. Todos entran como Aprobados.' },
-    { col: 'Horas Aula / Descarga', desc: 'Solo Falta Docente: suma 1–7h matutino o 6h vespertino.' }
+    { col: 'Hoja Periodos', desc: 'Viene prellenada con Id 1–300; referencia esos Id en la columna Periodo (Id).' },
+    { col: 'Correo Solicitante', desc: 'Desplegable con usuarios existentes. Si falta alguien, cárgalo antes en Usuarios.' },
+    { col: 'TipoPermisoId', desc: 'Id del desplegable (hoja Tipos de Permiso). Falta Docente exige Horas Aula/Descarga.' },
+    { col: 'Fechas y Horas', desc: 'Inicio y fin separados (dd/mm/aaaa + HH:mm). Hora Fin obligatoria; Fecha Fin vacía = misma fecha.' },
+    { col: 'Con Goce', desc: 'Sí/No. Vacío = No. Todos los permisos importados quedan Aprobados.' }
   ],
   autorizadores: [
-    { col: 'Nombre / Correo', desc: 'Si el correo existe → se promueve a Autorizador y se actualiza su Área. Si no existe → se crea nuevo.' },
-    { col: 'Área', desc: 'Área cuyas solicitudes autorizará (nombre exacto del catálogo).' },
-    { col: 'Departamento / Puesto', desc: 'Obligatorios solo si el usuario es nuevo.' }
+    { col: 'Nombre / Correo', desc: 'Correo existente → se promueve a Autorizador y se actualiza su Área. Correo nuevo → se crea usuario.' },
+    { col: 'ÁreaId', desc: 'Área cuyas solicitudes autorizará (desplegable con Id).' },
+    { col: 'DepartamentoId / PuestoId', desc: 'Obligatorios solo si el usuario es nuevo.' }
   ]
 }
 </script>
@@ -306,6 +336,27 @@ const LEGENDS: Record<SyncKind, { col: string; desc: string }[]> = {
   border-radius: 8px;
 }
 .sync-legend strong { color: var(--tecnm-text-primary); }
+
+.sync-intro {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--tecnm-border, #d8dee9);
+  border-left: 4px solid var(--tecnm-primary, #1b396a);
+  border-radius: 8px;
+  background: var(--tecnm-surface-muted, #f5f7fa);
+  font-size: 0.92rem;
+}
+
+.sync-steps {
+  margin: 0;
+  padding-left: 1.3rem;
+  font-size: 0.88rem;
+  color: var(--tecnm-text-secondary, #55606e);
+}
+.sync-steps li { margin-top: 0.25rem; }
+.sync-steps li::marker { color: var(--tecnm-primary, #1b396a); font-weight: 600; }
 
 .sync-actions {
   display: flex;
