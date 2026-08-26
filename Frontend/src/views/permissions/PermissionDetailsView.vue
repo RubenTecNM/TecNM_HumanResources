@@ -26,38 +26,38 @@
         </div>
         <div class="tecnm-card-body">
           <!-- Identificación -->
-          <section class="detail-group">
-            <h5 class="detail-group-title"><i class="fa fa-user" aria-hidden="true"></i> Identificación</h5>
-            <dl class="detail-grid">
-              <div class="detail-item detail-item--wide detail-item--strong">
-                <dt><i class="fa fa-id-card-o" aria-hidden="true"></i> Solicitante</dt>
-                <dd>{{ permission?.requester || '—' }}</dd>
+          <section class="detail-section">
+            <h5 class="detail-section-header"><i class="fa fa-user" aria-hidden="true"></i> Identificación</h5>
+            <dl class="detail-fields-grid">
+              <div class="detail-field field-span-6">
+                <dt class="detail-field-label">Solicitante</dt>
+                <dd class="field-value-emphasis">{{ permission?.requester || '—' }}</dd>
               </div>
-              <div class="detail-item detail-item--strong">
-                <dt><i class="fa fa-tag" aria-hidden="true"></i> Tipo de permiso</dt>
-                <dd>{{ permission?.type || '—' }}</dd>
+              <div class="detail-field field-span-6">
+                <dt class="detail-field-label">Tipo de permiso</dt>
+                <dd class="field-value-emphasis">{{ permission?.type || '—' }}</dd>
               </div>
             </dl>
           </section>
 
           <!-- Periodo -->
-          <section class="detail-group">
-            <h5 class="detail-group-title"><i class="fa fa-calendar" aria-hidden="true"></i> Periodo y condiciones</h5>
-            <dl class="detail-grid">
-              <div class="detail-item">
-                <dt><i class="fa fa-play" aria-hidden="true"></i> Inicio</dt>
-                <dd>{{ formatTecNMDateTime(permission?.startDate) }}</dd>
+          <section class="detail-section">
+            <h5 class="detail-section-header"><i class="fa fa-calendar" aria-hidden="true"></i> Periodo y condiciones</h5>
+            <dl class="detail-fields-grid">
+              <div class="detail-field field-span-3">
+                <dt class="detail-field-label">Inicio</dt>
+                <dd class="field-value">{{ formatTecNMDateTime(permission?.startDate) }}</dd>
               </div>
-              <div class="detail-item">
-                <dt><i class="fa fa-stop" aria-hidden="true"></i> Fin</dt>
-                <dd>{{ formatTecNMDateTime(permission?.endDate) }}</dd>
+              <div class="detail-field field-span-3">
+                <dt class="detail-field-label">Fin</dt>
+                <dd class="field-value">{{ formatTecNMDateTime(permission?.endDate) }}</dd>
               </div>
-              <div class="detail-item">
-                <dt><i class="fa fa-clock-o" aria-hidden="true"></i> Días</dt>
-                <dd :class="{ 'is-empty': permission?.days == null }">{{ permission?.days ?? 'Sin registrar' }}</dd>
+              <div class="detail-field field-span-3">
+                <dt class="detail-field-label">Días</dt>
+                <dd :class="permission?.days == null ? 'field-value-empty' : 'field-value'">{{ permission?.days ?? 'Sin registrar' }}</dd>
               </div>
-              <div class="detail-item">
-                <dt><i class="fa fa-money" aria-hidden="true"></i> Con goce</dt>
+              <div class="detail-field field-span-3">
+                <dt class="detail-field-label">Con goce</dt>
                 <dd>
                   <StatusBadge :variant="permission?.withPay ? 'approved' : 'info'">
                     {{ permission?.withPay ? 'Sí' : 'No' }}
@@ -65,28 +65,28 @@
                 </dd>
               </div>
               <template v-if="permission?.permissionTypeId === 5">
-                <div class="detail-item">
-                  <dt><i class="fa fa-sun-o" aria-hidden="true"></i> Turno</dt>
-                  <dd :class="{ 'is-empty': !permission?.shiftDescription }">{{ permission?.shiftDescription || 'Sin registrar' }}</dd>
+                <div class="detail-field field-span-4">
+                  <dt class="detail-field-label">Turno</dt>
+                  <dd :class="permission?.shiftDescription ? 'field-value' : 'field-value-empty'">{{ permission?.shiftDescription || 'Sin registrar' }}</dd>
                 </div>
-                <div class="detail-item">
-                  <dt><i class="fa fa-graduation-cap" aria-hidden="true"></i> Horas en aula</dt>
-                  <dd :class="{ 'is-empty': permission?.hoursInClassroom == null }">{{ permission?.hoursInClassroom ?? '—' }}</dd>
+                <div class="detail-field field-span-4">
+                  <dt class="detail-field-label">Horas en aula</dt>
+                  <dd :class="permission?.hoursInClassroom == null ? 'field-value-empty' : 'field-value'">{{ permission?.hoursInClassroom ?? '—' }}</dd>
                 </div>
-                <div class="detail-item">
-                  <dt><i class="fa fa-book" aria-hidden="true"></i> Horas de descarga</dt>
-                  <dd :class="{ 'is-empty': permission?.hoursDischarge == null }">{{ permission?.hoursDischarge ?? '—' }}</dd>
+                <div class="detail-field field-span-4">
+                  <dt class="detail-field-label">Horas de descarga</dt>
+                  <dd :class="permission?.hoursDischarge == null ? 'field-value-empty' : 'field-value'">{{ permission?.hoursDischarge ?? '—' }}</dd>
                 </div>
               </template>
             </dl>
           </section>
 
           <!-- Estado y revisión -->
-          <section class="detail-group">
-            <h5 class="detail-group-title"><i class="fa fa-gavel" aria-hidden="true"></i> Estado y revisión</h5>
-            <dl class="detail-grid">
-              <div class="detail-item">
-                <dt><i class="fa fa-flag" aria-hidden="true"></i> Estado</dt>
+          <section class="detail-section">
+            <h5 class="detail-section-header"><i class="fa fa-gavel" aria-hidden="true"></i> Estado y revisión</h5>
+            <dl class="detail-fields-grid">
+              <div class="detail-field field-span-3">
+                <dt class="detail-field-label">Estado</dt>
                 <dd>
                   <StatusBadge :variant="statusVariant(permission?.status)">
                     {{ statusLabel(permission?.status) }}
@@ -94,17 +94,17 @@
                 </dd>
               </div>
               <template v-if="permission?.status !== PERMISSION_STATUS.PENDING">
-                <div class="detail-item">
-                  <dt><i class="fa fa-user-secret" aria-hidden="true"></i> Autorizado por</dt>
-                  <dd>{{ permission?.authorizedBy || 'Sistema' }}</dd>
+                <div class="detail-field field-span-4">
+                  <dt class="detail-field-label">Autorizado por</dt>
+                  <dd class="field-value">{{ permission?.authorizedBy || 'Sistema' }}</dd>
                 </div>
-                <div class="detail-item">
-                  <dt><i class="fa fa-calendar-check-o" aria-hidden="true"></i> Fecha de revisión</dt>
-                  <dd :class="{ 'is-empty': !formatTecNMDateTime(permission?.authorizedAt) }">{{ formatTecNMDateTime(permission?.authorizedAt) || '—' }}</dd>
+                <div class="detail-field field-span-4">
+                  <dt class="detail-field-label">Fecha de revisión</dt>
+                  <dd :class="formatTecNMDateTime(permission?.authorizedAt) ? 'field-value' : 'field-value-empty'">{{ formatTecNMDateTime(permission?.authorizedAt) || '—' }}</dd>
                 </div>
-                <div class="detail-item detail-item--wide">
-                  <dt><i class="fa fa-comment-o" aria-hidden="true"></i> Comentario de revisión</dt>
-                  <dd :class="permission?.authorizationComment ? 'note-text' : 'is-empty note-text--empty'">
+                <div class="detail-field field-span-12">
+                  <dt class="detail-field-label">Comentario de revisión</dt>
+                  <dd :class="permission?.authorizationComment ? 'note-text field-value' : 'note-text field-value-empty'">
                     {{ permission?.authorizationComment || 'Sin comentario de revisión' }}
                   </dd>
                 </div>
@@ -113,28 +113,28 @@
           </section>
 
           <!-- Motivo -->
-          <section class="detail-group">
-            <h5 class="detail-group-title"><i class="fa fa-file-text-o" aria-hidden="true"></i> Motivo</h5>
-            <p :class="permission?.reason ? 'reason-text' : 'reason-text is-empty'">{{ permission?.reason || 'Sin motivo registrado' }}</p>
+          <section class="detail-section">
+            <h5 class="detail-section-header"><i class="fa fa-file-text-o" aria-hidden="true"></i> Motivo</h5>
+            <p :class="permission?.reason ? 'reason-text field-value' : 'reason-text field-value-empty'">{{ permission?.reason || 'Sin motivo registrado' }}</p>
           </section>
 
           <!-- Metadata -->
-          <section class="detail-group detail-group--meta">
-            <h5 class="detail-group-title"><i class="fa fa-database" aria-hidden="true"></i> Metadata del registro</h5>
-            <dl class="detail-grid">
-              <div class="detail-item">
-                <dt><i class="fa fa-calendar-plus-o" aria-hidden="true"></i> Fecha de creación</dt>
-                <dd>{{ formatTecNMDateTime(permission?.createdAt) }}</dd>
+          <section class="detail-section detail-section--meta">
+            <h5 class="detail-section-header"><i class="fa fa-database" aria-hidden="true"></i> Metadata del registro</h5>
+            <dl class="detail-fields-grid">
+              <div class="detail-field field-span-4">
+                <dt class="detail-field-label">Fecha de creación</dt>
+                <dd class="field-value">{{ formatTecNMDateTime(permission?.createdAt) }}</dd>
               </div>
-              <div class="detail-item">
-                <dt><i class="fa fa-folder-open-o" aria-hidden="true"></i> Corte</dt>
-                <dd :class="{ 'is-empty': !permission?.cutoff }">{{ permission?.cutoff || 'Sin corte asignado' }}</dd>
+              <div class="detail-field field-span-4">
+                <dt class="detail-field-label">Corte</dt>
+                <dd :class="permission?.cutoff ? 'field-value' : 'field-value-empty'">{{ permission?.cutoff || 'Sin corte asignado' }}</dd>
               </div>
             </dl>
           </section>
 
           <div v-if="permission?.evidence" class="tecnm-form-group">
-            <h4 class="detail-section"><i class="fa fa-paperclip" aria-hidden="true"></i> Evidencia</h4>
+            <h4 class="detail-section-header"><i class="fa fa-paperclip" aria-hidden="true"></i> Evidencia</h4>
             <a :href="`/api/Permissions/${permission?.id}/evidence`" target="_blank" class="tecnm-btn tecnm-btn-outline tecnm-btn-sm">
               <i class="fa fa-download" aria-hidden="true"></i> Ver evidencia
             </a>
@@ -184,75 +184,90 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.detail-grid {
+/* ── Grid estandarizado de 12 columnas ─────────────────── */
+.detail-fields-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.9rem 1.5rem;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 24px 32px;
 }
 
-/* Secciones lógicas dentro de la card */
-.detail-group {
-  padding: 1rem 0;
+.field-span-3 { grid-column: span 3; }
+.field-span-4 { grid-column: span 4; }
+.field-span-6 { grid-column: span 6; }
+.field-span-12 { grid-column: span 12; }
+
+/* ── Secciones lógicas ─────────────────────────────────── */
+.detail-section {
+  padding-bottom: 32px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06); /* separador más sutil que el header */
 }
-.detail-group + .detail-group {
-  border-top: 1px solid var(--tecnm-border-light, #eef1f5);
-}
-.detail-group--meta .detail-grid {
-  font-size: 0.92rem;
+.detail-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
-.detail-group-title {
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--tecnm-text-secondary);
-  margin-bottom: 0.7rem;
-}
-.detail-group-title i {
-  color: var(--tecnm-gold-accent);
-  width: 1.2rem;
-  text-align: center;
-}
-
-.detail-item dt {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--tecnm-text-secondary);
+.detail-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 600;
-  margin-bottom: 0.2rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8b6f2f; /* dorado/ámbar, mismo tono que el borde superior de la card */
+  margin-bottom: 16px;
 }
-.detail-item dt i {
-  color: var(--tecnm-text-secondary);
-  opacity: 0.75;
-  width: 1.15rem;
-  text-align: center;
-  font-size: 0.85em;
+.detail-section-header i {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  line-height: 14px;
+  color: #b8935a;
 }
 
-.detail-item dd {
-  margin: 0;
+/* ── Campos ────────────────────────────────────────────── */
+.detail-field {
+  margin-bottom: 0; /* el gap del grid maneja el espaciado */
+}
+
+.detail-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+dl.detail-fields-grid dt { font-size: inherit; } /* neutraliza estilos globales de dl */
+dd.field-value,
+dd.field-value-emphasis,
+dd.field-value-empty,
+.note-text,
+.reason-text { margin: 0; }
+
+/* ── Jerarquía de valores ──────────────────────────────── */
+.field-value {
+  font-size: 14px;
   font-weight: 500;
+  color: #1f2937;
 }
 
-/* Campos clave destacan sobre los secundarios */
-.detail-item--strong dd {
+.field-value-emphasis {
+  font-size: 15px;
   font-weight: 700;
-  font-size: 1.02rem;
-  color: var(--tecnm-blue-dark);
-}
-.detail-item--wide {
-  grid-column: 1 / -1;
+  color: #1e3a5f; /* mismo azul oscuro del header, continuidad visual */
 }
 
-/* Valores vacíos discretos */
-.is-empty {
-  color: var(--tecnm-text-muted, #a3adb8);
+.field-value-empty {
+  color: #9ca3af;
   font-style: italic;
-  font-weight: 400 !important;
+  font-weight: 400;
 }
 
-/* Texto libre largo (motivo, comentarios) */
+/* ── Texto libre largo (motivo, comentarios) ───────────── */
 .reason-text,
 .note-text {
   background-color: var(--tecnm-bg-main);
@@ -265,6 +280,18 @@ onMounted(async () => {
   border-left-color: var(--tecnm-blue-primary);
 }
 
+.detail-section--meta .field-value { font-size: 13px; }
+
+/* ── Responsive: colapsar spans en pantallas chicas ────── */
+@media (max-width: 992px) {
+  .field-span-3, .field-span-4 { grid-column: span 6; }
+}
+@media (max-width: 600px) {
+  .detail-fields-grid { gap: 20px 16px; }
+  .field-span-3, .field-span-4, .field-span-6 { grid-column: span 12; }
+}
+
+/* ── Avatar del header de card (intacto) ───────────────── */
 .details-avatar {
   width: 48px;
   height: 48px;
@@ -282,10 +309,5 @@ onMounted(async () => {
 
 .details-id {
   color: var(--tecnm-text-secondary);
-}
-
-.detail-section {
-  color: var(--tecnm-accent-text);
-  margin-bottom: 0.5rem;
 }
 </style>
