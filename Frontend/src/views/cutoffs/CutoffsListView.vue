@@ -33,7 +33,6 @@
               <option value="">Cualquiera</option>
               <option value="1">Abierto</option>
               <option value="2">Cerrado</option>
-              <option value="3">Invalidado</option>
             </select>
           </div>
 
@@ -48,11 +47,9 @@
     <details class="tecnm-card legend-box">
       <summary>
         <i class="fa fa-question-circle" aria-hidden="true"></i>
-        ¿Cerrar un periodo o invalidarlo?
+        ¿Cerrar un periodo?
       </summary>
-      <p><strong><i class="fa fa-lock" aria-hidden="true"></i> Cerrar periodo</strong> — finaliza de forma normal un corte Abierto (también ocurre automáticamente al vencer). Sus permisos <em>pendientes</em> pasan a Rechazado sin goce, con fecha y responsable del cierre. Los permisos ya revisados no se tocan y todo queda visible como historial de nómina.</p>
-      <p><strong><i class="fa fa-ban" aria-hidden="true"></i> Invalidar periodo</strong> — anula el corte por completo (error de captura, periodo no válido). <em>Todos</em> sus permisos activos pasan a Invalidado por Periodo y se ocultan del listado normal; solo permanecen para efectos de auditoría. Úsalo solo cuando el periodo nunca debió existir.</p>
-      <p class="legend-note"><i class="fa fa-clock-o" aria-hidden="true"></i> Regla práctica: si el periodo ya transcurrió normalmente, ciérralo. Si se capturó por error y sus permisos no deben contar, invalídalo.</p>
+      <p><strong><i class="fa fa-lock" aria-hidden="true"></i> Cerrar periodo</strong> — finaliza de forma normal un corte Abierto (también ocurre automáticamente al vencer). Sus permisos <em>pendientes</em> pasan a Rechazado sin goce, con fecha y responsable del cierre. Los permisos ya revisados no se tocan y todo queda visible como historial de nómina. Solo el recurso humano y el administrador pueden cerrar un periodo.</p>
     </details>
 
     <AppSpinner v-if="loading" />
@@ -133,16 +130,6 @@
                     >
                       <i class="fa fa-lock" aria-hidden="true"></i>
                     </button>
-
-                    <button
-                      v-if="c.cutoffStatusTypeId !== CUTOFF_STATUS.INVALIDATED && authStore.canManageUsers"
-                      type="button"
-                      class="tecnm-action-btn tecnm-action-btn--delete"
-                      title="Invalidar Periodo"
-                      @click="confirmInactivate(c)"
-                    >
-                      <i class="fa fa-times-circle" aria-hidden="true"></i>
-                    </button>
                   </div>
                 </td>
               </tr>
@@ -220,8 +207,7 @@ const totalItems = ref(0)
 
 const CUTOFF_STATUS = {
   OPEN: 1,
-  CLOSED: 2,
-  INVALIDATED: 3
+  CLOSED: 2
 } as const
 
 const filters = reactive({
@@ -234,7 +220,6 @@ function badgeVariant(statusId: number): 'pending' | 'approved' | 'rejected' | '
   switch (statusId) {
     case CUTOFF_STATUS.OPEN: return 'approved'  // Abierto / Activo (verde)
     case CUTOFF_STATUS.CLOSED: return 'rejected'  // Cerrado (rojo)
-    case CUTOFF_STATUS.INVALIDATED: return 'info'      // Invalidado (gris/info)
     default: return 'info'
   }
 }
@@ -294,24 +279,6 @@ async function confirmClose(cutoff: CutoffItem) {
       fetchCutoffs()
     } catch (e: any) {
       showToast(e.response?.data?.message || 'No se pudo cerrar el periodo.', 'error')
-    }
-  }
-}
-
-async function confirmInactivate(cutoff: CutoffItem) {
-  const ok = await askConfirmation({
-    title: '¿Invalidar Periodo?',
-    text: `Esta acción marcará el periodo #${cutoff.id} como invalidado.`,
-    confirmText: 'Sí, invalidar'
-  })
-
-  if (ok) {
-    try {
-      const res = await http.put(`/api/Cutoffs/${cutoff.id}/inactivate`)
-      showToast(res.data.message || 'Periodo invalidado.', 'success')
-      fetchCutoffs()
-    } catch (e: any) {
-      showToast(e.response?.data?.message || 'Error al invalidar.', 'error')
     }
   }
 }

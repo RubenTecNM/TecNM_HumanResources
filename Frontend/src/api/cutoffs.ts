@@ -70,15 +70,13 @@ export async function downloadCutoffExport(id: number, format: CutoffExportForma
 
 export const CUTOFF_STATUS = {
   OPEN: 1,
-  CLOSED: 2,
-  INVALIDATED: 3
+  CLOSED: 2
 } as const
 
 export function cutoffStatusLabel(id: number): string {
   switch (id) {
     case CUTOFF_STATUS.OPEN:        return 'Abierto'
     case CUTOFF_STATUS.CLOSED:      return 'Cerrado'
-    case CUTOFF_STATUS.INVALIDATED: return 'Invalidado'
     default: return 'Desconocido'
   }
 }
@@ -87,7 +85,6 @@ export function cutoffStatusVariant(id: number): 'approved' | 'rejected' | 'info
   switch (id) {
     case CUTOFF_STATUS.OPEN:        return 'approved'
     case CUTOFF_STATUS.CLOSED:      return 'rejected'
-    case CUTOFF_STATUS.INVALIDATED: return 'info'
     default: return 'info'
   }
 }

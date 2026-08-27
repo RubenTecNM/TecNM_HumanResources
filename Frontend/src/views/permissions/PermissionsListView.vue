@@ -34,7 +34,7 @@
               <option value="1">Pendiente por Revisar</option>
               <option value="2">Revisado / Aprobado</option>
               <option value="4">Revisado / Rechazado</option>
-              <option value="3">Invalidado por Periodo</option>
+              <option value="5">Cancelado por el Solicitante</option>
             </select>
           </div>
 
@@ -68,8 +68,8 @@
       <p><StatusBadge variant="pending">Pendiente por Revisar</StatusBadge> — el permiso fue solicitado y espera revisión del autorizador o Recursos Humanos. Mientras esté así, se puede editar o cancelar.</p>
       <p><StatusBadge variant="approved">Revisado / Aprobado</StatusBadge> — autorizado. Puede ser <em>con goce</em> (se paga) o <em>sin goce</em>, según lo acordado en la revisión.</p>
       <p><StatusBadge variant="rejected">Revisado / Rechazado</StatusBadge> — no autorizado; queda registrado como historial pero sin efecto de pago.</p>
-      <p><StatusBadge variant="rejected">Invalidado por Periodo</StatusBadge> — el permiso nunca fue revisado porque su periodo ya estaba cerrado cuando el sistema lo detectó (p. ej., datos capturados fuera de línea). Se marca en rojo como anomalía para auditoría y siempre es sin goce.</p>
-      <p class="legend-note"><i class="fa fa-clock-o" aria-hidden="true"></i> Al cerrarse un corte, sus permisos pendientes se resuelven automáticamente: los del corte vencido pasan a Rechazado y los encontrados en cortes ya cerrados pasan a Invalidado por Periodo. Un permiso revisado ya no se puede modificar.</p>
+      <p><StatusBadge variant="info">Cancelado por el Solicitante</StatusBadge> — el permiso fue cancelado por quien lo solicitó estando pendiente y dentro de un periodo vigente. Solo es visible para su solicitante, Recursos Humanos y el administrador; no para autorizadores ni terceros.</p>
+      <p class="legend-note"><i class="fa fa-clock-o" aria-hidden="true"></i> Al cerrarse un corte, sus permisos pendientes se resuelven automáticamente y pasan a Rechazado. Un permiso revisado ya no se puede modificar, y un permiso solo se cancela estando pendiente dentro de un periodo vigente.</p>
     </details>
 
     <AppSpinner v-if="loading" />
@@ -149,16 +149,17 @@
                         <i :class="p.permissionStatusTypeId === PERMISSION_STATUS.PENDING ? 'fa fa-edit' : 'fa fa-lock'" aria-hidden="true"></i>
                       </button>
 
-                      <!-- Eliminar: admin/RH, no autorizadores -->
+                      <!-- Cancelar: solo el solicitante o RH/Admin, no autorizadores -->
                       <button
+                        v-if="isOwnerOf(p) || authStore.isRHOrAdmin"
                         type="button"
                         class="tecnm-action-btn tecnm-action-btn--delete"
                         :class="{ 'tecnm-action-btn--locked': p.permissionStatusTypeId !== PERMISSION_STATUS.PENDING }"
-                        :title="p.permissionStatusTypeId === PERMISSION_STATUS.PENDING ? 'Eliminar permiso' : 'No se puede eliminar un permiso revisado de un periodo cerrado'"
+                        :title="p.permissionStatusTypeId === PERMISSION_STATUS.PENDING ? 'Cancelar permiso' : 'Solo se cancela un permiso pendiente dentro de un periodo vigente'"
                         :disabled="p.permissionStatusTypeId !== PERMISSION_STATUS.PENDING"
-                        @click="onDelete(p)"
+                        @click="onCancel(p)"
                       >
-                        <i class="fa fa-trash" aria-hidden="true"></i>
+                        <i :class="p.permissionStatusTypeId === PERMISSION_STATUS.PENDING ? 'fa fa-ban' : 'fa fa-lock'" aria-hidden="true"></i>
                       </button>
                     </template>
 
@@ -211,7 +212,7 @@ import StatusBadge from '@/components/StatusBadge.vue'
 import PaginationBar from '@/components/PaginationBar.vue'
 import {
   fetchPermissions,
-  deactivatePermission,
+  cancelPermission,
   statusLabel,
   PERMISSION_STATUS,
   type PermissionListPage,
@@ -301,23 +302,27 @@ function goEdit(id: number) {
   router.push({ name: 'permissions.edit', params: { id: String(id) } })
 }
 
-async function onDelete(p: PermissionListItem) {
+async function onCancel(p: PermissionListItem) {
   const ok = await askConfirmation({
-    title: '¿Eliminar permiso?',
-    text: `Se invalidará el permiso #${p.id} de ${p.requester}. Esta acción no puede revertirse.`,
-    confirmText: 'Sí, eliminar',
+    title: '¿Cancelar permiso?',
+    text: `Se cancelará el permiso #${p.id} de ${p.requester}. Esta acción no puede revertirse.`,
+    confirmText: 'Sí, cancelar',
     danger: true
   })
   if (!ok) return
   try {
-    await deactivatePermission(p.id)
-    showToast('Permiso eliminado correctamente', 'success')
+    await cancelPermission(p.id)
+    showToast('Permiso cancelado correctamente', 'success')
     if (items.value.length === 1 && page.value > 1) page.value -= 1
     load()
   } catch (err) {
-    console.error('Error al eliminar permiso:', err)
-    showToast('No se pudo eliminar el permiso.', 'error')
+    console.error('Error al cancelar permiso:', err)
+    showToast('No se pudo cancelar el permiso.', 'error')
   }
+}
+
+function isOwnerOf(p: PermissionListItem): boolean {
+  return !!p.requestingUserId && p.requestingUserId === authStore.user?.id
 }
 
 function badgeVariant(id: number): 'approved' | 'pending' | 'rejected' | 'info' {
@@ -325,7 +330,7 @@ function badgeVariant(id: number): 'approved' | 'pending' | 'rejected' | 'info' 
     case PERMISSION_STATUS.PENDING:    return 'pending'
     case PERMISSION_STATUS.APPROVED:   return 'approved'
     case PERMISSION_STATUS.REJECTED:   return 'rejected'
-    case PERMISSION_STATUS.INVALIDATED: return 'rejected'
+    case PERMISSION_STATUS.CANCELLED:  return 'info'
     default: return 'info'
   }
 }

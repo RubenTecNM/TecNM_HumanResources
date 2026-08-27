@@ -96,11 +96,10 @@ public class CutoffServiceTests
 
         await service.AutoCloseCutoffIfNeededAsync();
 
-        var invalidado = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == huerfano.Id);
-        Assert.Equal(PermissionStatusEnum.InvalidatedByPeriod, (PermissionStatusEnum)invalidado.PermissionStatusTypeId);
-        Assert.False(invalidado.WithPay);
-        Assert.True(invalidado.Status); // sigue visible para auditoría
-        Assert.Null(invalidado.AuthorizingUserId); // no fue una autorización
+        var pendiente = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == huerfano.Id);
+        // El barrido de huérfanos fue eliminado: un pendiente de un corte ya cerrado permanece Pending (histórico), sin alterar.
+        Assert.Equal(PermissionStatusEnum.Pending, (PermissionStatusEnum)pendiente.PermissionStatusTypeId);
+        Assert.True(pendiente.WithPay);
     }
 
     // ── Tests nuevos Fase 6 (+6) ─────────────────────────────────────────────
@@ -212,32 +211,6 @@ public class CutoffServiceTests
         var permActualizado = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == perm.Id);
         Assert.Equal(PermissionStatusEnum.Rejected, (PermissionStatusEnum)permActualizado.PermissionStatusTypeId);
         Assert.False(permActualizado.WithPay, "Rechazo en cierre fuerza WithPay=false");
-    }
-
-    [Fact]
-    public async Task InactivateCutoffAsync_InvalidatesPermisosEnCascada()
-    {
-        using var context = await TestDbContextFactory.SeedAsync(nameof(InactivateCutoffAsync_InvalidatesPermisosEnCascada));
-        var service = TestDbContextFactory.CreateCutoffService(context);
-
-        var admin = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Administrator);
-        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
-        var cutoff = await context.Cutoffs.SingleAsync();
-
-        var perm = TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Pending);
-        await context.Permissions.AddAsync(perm);
-        await context.SaveChangesAsync();
-
-        var result = await service.InactivateCutoffAsync(cutoff.Id, admin.Id);
-
-        Assert.True(result);
-
-        var invalidado = await context.Cutoffs.AsNoTracking().SingleAsync(c => c.Id == cutoff.Id);
-        Assert.Equal(CutoffStatusEnum.Invalidated, (CutoffStatusEnum)invalidado.CutoffStatusTypeId);
-
-        var permActualizado = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == perm.Id);
-        Assert.Equal(PermissionStatusEnum.InvalidatedByPeriod, (PermissionStatusEnum)permActualizado.PermissionStatusTypeId);
-        Assert.False(permActualizado.Status, "Borrado lógico: Status debe ser false");
     }
 
     [Fact]

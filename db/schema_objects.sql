@@ -199,7 +199,7 @@ GO
 -- 9. TRIGGER: Close Cascade (Cutoff -> Permission)
 -- =============================================
 -- Safety net: mirrors C# CloseCutoffAsync / AutoCloseCutoffIfNeededAsync.
--- Pending permissions → Rejected (4) without pay when corte closes/invalidates.
+-- Pending permissions → Rejected (4) without pay when corte closes.
 CREATE OR ALTER TRIGGER trg_Cutoff_CloseCascade ON Cutoff AFTER UPDATE AS
 BEGIN
     SET NOCOUNT ON;
@@ -213,11 +213,11 @@ BEGIN
             p.UpdatedByUserId = COALESCE(TRY_CAST(SESSION_CONTEXT(N'UserId') AS INT), 1)
         FROM Permission p
         INNER JOIN inserted i ON p.CutoffId = i.Id
-        WHERE i.CutoffStatusTypeId IN (2, 3) -- Closed or Invalidated
+        WHERE i.CutoffStatusTypeId = 2 -- Closed
           AND p.PermissionStatusTypeId = 1    -- Only Pending
           AND p.Status = 1;                    -- Only active records
     END
-END;
+END
 GO
 
 -- =============================================

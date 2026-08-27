@@ -16,18 +16,21 @@ INSERT INTO UserType (Description, CreatedAt, Status, CreatedByUserId) VALUES
 ('Recursos Humanos', GETDATE(), 1, 1),
 ('Trabajador', GETDATE(), 1, 1);
 
--- CutoffStatusType
-INSERT INTO CutoffStatusType (Description, Color, CreatedAt, Status, CreatedByUserId) VALUES 
-('Abierto', 'success', GETDATE(), 1, 1),
-('Cerrado', 'secondary', GETDATE(), 1, 1),
-('Invalidado', 'danger', GETDATE(), 1, 1);
+-- CutoffStatusType (solo Open=1 y Closed=2; el estado Invalidado fue eliminado)
+SET IDENTITY_INSERT CutoffStatusType ON;
+INSERT INTO CutoffStatusType (Id, Description, Color, CreatedAt, Status, CreatedByUserId) VALUES 
+(1, 'Abierto', 'success', GETDATE(), 1, 1),
+(2, 'Cerrado', 'secondary', GETDATE(), 1, 1);
+SET IDENTITY_INSERT CutoffStatusType OFF;
 
--- PermissionStatusType
-INSERT INTO PermissionStatusType (Description, Color, CreatedAt, Status, CreatedByUserId) VALUES 
-('Pendiente por Revisar', 'warning', GETDATE(), 1, 1),
-('Revisado / Aprobado', 'success', GETDATE(), 1, 1),
-('Invalidado por Periodo', 'danger', GETDATE(), 1, 1),
-('Revisado / Rechazado', 'dark', GETDATE(), 1, 1);
+-- PermissionStatusType (Pending=1, Approved=2, Rejected=4, Cancelled=5; Invalidado=3 eliminado)
+SET IDENTITY_INSERT PermissionStatusType ON;
+INSERT INTO PermissionStatusType (Id, Description, Color, CreatedAt, Status, CreatedByUserId) VALUES 
+(1, 'Pendiente por Revisar', 'warning', GETDATE(), 1, 1),
+(2, 'Revisado / Aprobado', 'success', GETDATE(), 1, 1),
+(4, 'Revisado / Rechazado', 'dark', GETDATE(), 1, 1),
+(5, 'Cancelado por el Solicitante', 'secondary', GETDATE(), 1, 1);
+SET IDENTITY_INSERT PermissionStatusType OFF;
 
 -- Area
 INSERT INTO Area (Description, CreatedAt, Status, CreatedByUserId) VALUES 
@@ -259,9 +262,9 @@ INSERT INTO Cutoff (StartDate, EndDate, CutoffStatusTypeId, Status, CreatedAt, C
 VALUES ('2026-05-01', '2026-06-30', 1, 1, GETDATE(), 1);
 DECLARE @SeedCutoffId INT = SCOPE_IDENTITY();
 
--- CLOSED CUTOFF with an orphaned pending permission: exercises the orphan sweep
--- in AutoCloseCutoffIfNeededAsync (permission becomes Invalidado por Periodo + sin goce
--- on first app use; the cutoff stays Closed and untouched).
+-- CLOSED CUTOFF with an orphaned pending permission (data only; the old orphan
+-- sweep that converted such pending passes to "Invalidado por Periodo" was removed,
+-- so this pending row simply stays Pending as legacy historical data).
 INSERT INTO Cutoff (StartDate, EndDate, CutoffStatusTypeId, Status, CreatedAt, CreatedByUserId)
 VALUES ('2026-03-01', '2026-04-30', 2, 1, GETDATE(), 1);
 DECLARE @ClosedCutoffId INT = SCOPE_IDENTITY();

@@ -89,18 +89,18 @@
           <p class="section-label mt-4"><i class="fa fa-building" aria-hidden="true"></i> Datos Organizacionales</p>
           <div class="form-grid">
             <div class="tecnm-form-group">
-              <label class="tecnm-label" for="departmentId">Departamento <span class="required-mark">*</span></label>
-              <select id="departmentId" v-model="form.departmentId" class="tecnm-form-control" required :disabled="submitting">
-                <option :value="null">Seleccione un departamento...</option>
-                <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.description }}</option>
-              </select>
-            </div>
-
-            <div class="tecnm-form-group">
               <label class="tecnm-label" for="areaId">Área <span class="required-mark">*</span></label>
               <select id="areaId" v-model="form.areaId" class="tecnm-form-control" required :disabled="submitting">
                 <option :value="null">Seleccione un área...</option>
                 <option v-for="a in areas" :key="a.id" :value="a.id">{{ a.description }}</option>
+              </select>
+            </div>
+
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="departmentId">Departamento <span class="required-mark">*</span></label>
+              <select id="departmentId" v-model="form.departmentId" class="tecnm-form-control" required :disabled="submitting">
+                <option :value="null">Seleccione un departamento...</option>
+                <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.description }}</option>
               </select>
             </div>
 
@@ -186,7 +186,7 @@ async function fetchCatalogs() {
       http.get('/api/UserTypes')
     ])
     departments.value = depRes.data.items || depRes.data
-    areas.value = areaRes.data
+    areas.value = areaRes.data.items || areaRes.data
     positions.value = posRes.data
     userTypes.value = typeRes.data
   } catch (e) {

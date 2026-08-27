@@ -4,7 +4,7 @@ namespace RecursosHumanosWeb.Models.Enums
     {
         Pending = 1,
         Approved = 2,
-        InvalidatedByPeriod = 3,
-        Rejected = 4
+        Rejected = 4,
+        Cancelled = 5
     }
 }

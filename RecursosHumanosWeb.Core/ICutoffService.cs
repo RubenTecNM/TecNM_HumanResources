@@ -9,7 +9,6 @@ namespace RecursosHumanosWeb.Services
         Task<bool> HasPendingPermissionsAsync(int cutoffId);
         Task AutoCloseCutoffIfNeededAsync();
         Task<bool> CreateCutoffAsync(Cutoff cutoff, int userId);
-        Task<bool> InactivateCutoffAsync(int id, int userId);
         Task<bool> CloseCutoffAsync(int id, int userId);
     }
 }

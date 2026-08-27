@@ -78,33 +78,6 @@ namespace RecursosHumanosWeb.Services
                     await _context.SaveChangesAsync();
                     _logger.LogInformation("Cutoff {Id} cerrado automáticamente por expiración.", activeCutoff.Id);
                 }
-
-                // 2do barrido: pendientes en cortes YA cerrados o invalidados.
-                // Solo puede existir por datos externos al código (SQL directo,
-                // registros previos a la cascada): se invalidan para hacerlos
-                // visibles como anomalía, sin autorizante.
-                var huerfanos = await _context.Permissions
-                    .Where(p => p.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending
-                             && p.Status
-                             && (p.Cutoff!.CutoffStatusTypeId == (int)CutoffStatusEnum.Closed
-                              || p.Cutoff!.CutoffStatusTypeId == (int)CutoffStatusEnum.Invalidated))
-                    .ToListAsync();
-
-                if (huerfanos.Any())
-                {
-                    _context._auditOriginOverride = (int)OriginTypeEnum.AutomaticSystem;
-
-                    foreach (var p in huerfanos)
-                    {
-                        p.PermissionStatusTypeId = (int)PermissionStatusEnum.InvalidatedByPeriod;
-                        p.WithPay = false;
-                        p.UpdatedByUserId = rootId;
-                        p.UpdatedAt = DateTime.Now;
-                    }
-                    _context.UpdateRange(huerfanos);
-                    await _context.SaveChangesAsync();
-                    _logger.LogInformation("Se invalidaron {Count} permisos pendientes de cortes ya cerrados.", huerfanos.Count);
-                }
             }
             catch (Exception ex)
             {
@@ -164,51 +137,6 @@ namespace RecursosHumanosWeb.Services
                     await transaction.RollbackAsync();
                     _logger.LogError(ex, "Error al crear nuevo corte.");
                     throw;
-                }
-            }
-        }
-
-        public async Task<bool> InactivateCutoffAsync(int id, int userId)
-        {
-            var cutoff = await _context.Cutoffs.FindAsync(id);
-            if (cutoff == null) return false;
-
-            using (var transaction = await _context.Database.BeginTransactionAsync())
-            {
-                try
-                {
-                    // 1. Invalidar Periodo
-                    cutoff.CutoffStatusTypeId = (int)CutoffStatusEnum.Invalidated;
-                    cutoff.UpdatedAt = DateTime.Now;
-                    cutoff.UpdatedByUserId = userId;
-                    _context.Update(cutoff);
-
-                    // 2. Invalidar Permissions relacionados (Cambio de estado masivo)
-                    var permissions = await _context.Permissions
-                        .Where(p => p.CutoffId == id && p.Status)
-                        .ToListAsync();
-
-                    if (permissions.Any())
-                    {
-                        foreach (var p in permissions)
-                        {
-                            p.PermissionStatusTypeId = (int)PermissionStatusEnum.InvalidatedByPeriod;
-                            p.Status = false; // Borrado lógico como solicitó el user
-                            p.UpdatedAt = DateTime.Now;
-                            p.UpdatedByUserId = userId;
-                        }
-                        _context.UpdateRange(permissions);
-                    }
-
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error en la inactivación en cascada del periodo {Id}.", id);
-                    await transaction.RollbackAsync();
-                    return false;
                 }
             }
         }

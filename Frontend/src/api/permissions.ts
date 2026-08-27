@@ -3,6 +3,7 @@ import { http } from '@/api/client'
 export interface PermissionListItem {
   id: number
   requester: string
+  requestingUserId?: number
   type: string
   permissionTypeId: number
   startDate: string | null
@@ -33,6 +34,7 @@ export interface PermissionListPage {
 export interface PermissionDetail {
   id: number
   requester: string
+  requestingUserId?: number
   type: string
   permissionTypeId: number
   startDate: string | null
@@ -80,8 +82,8 @@ export interface PermissionSubmitResult {
 export const PERMISSION_STATUS = {
   PENDING: 1,
   APPROVED: 2,
-  INVALIDATED: 3,
-  REJECTED: 4
+  REJECTED: 4,
+  CANCELLED: 5
 } as const
 
 export function statusLabel(id: number | undefined): string {
@@ -89,7 +91,7 @@ export function statusLabel(id: number | undefined): string {
     case PERMISSION_STATUS.PENDING:    return 'Pendiente por Revisar'
     case PERMISSION_STATUS.APPROVED:   return 'Revisado / Aprobado'
     case PERMISSION_STATUS.REJECTED:   return 'Revisado / Rechazado'
-    case PERMISSION_STATUS.INVALIDATED: return 'Invalidado por Periodo'
+    case PERMISSION_STATUS.CANCELLED:  return 'Cancelado por el Solicitante'
     default: return 'Desconocido'
   }
 }
@@ -99,7 +101,7 @@ export function statusVariant(id: number | undefined): 'pending' | 'approved' | 
     case PERMISSION_STATUS.PENDING:    return 'pending'
     case PERMISSION_STATUS.APPROVED:   return 'approved'
     case PERMISSION_STATUS.REJECTED:   return 'rejected'
-    case PERMISSION_STATUS.INVALIDATED: return 'rejected'
+    case PERMISSION_STATUS.CANCELLED:  return 'info'
     default: return 'info'
   }
 }
@@ -128,9 +130,9 @@ export async function updatePermission(id: number, payload: PermissionCreatePayl
   return res.data
 }
 
-export async function deactivatePermission(id: number): Promise<void> {
-  // Borrado LÓGICO vía PUT (la API no expone DELETE físico)
-  await http.put(`/api/Permissions/${id}/invalidate`)
+export async function cancelPermission(id: number): Promise<void> {
+  // Cancelación vía PUT: el solicitante cancela un permiso Pending dentro de un periodo vigente
+  await http.put(`/api/Permissions/${id}/cancel`)
 }
 
 export interface PermissionAuthorizePayload {

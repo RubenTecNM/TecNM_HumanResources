@@ -319,14 +319,21 @@ namespace RecursosHumanosWeb.Controllers
             return View(cutoff);
         }
 
-        // POST: Cutoff/Delete/5 - borrado lógico
+        // POST: Cutoff/Delete/5 - cierre manual del periodo
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
             
-            var success = await _cutoffService.InactivateCutoffAsync(id, userId);
+            if (!User.HasClaim("UserType", ((int)UserTypeEnum.HumanResources).ToString()) &&
+                !User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString()))
+            {
+                TempData["ErrorAlert"] = JsonConvert.SerializeObject(new { icon = "error", title = "Error", text = "No tiene permisos para cerrar cortes." });
+                return RedirectToAction(nameof(Index));
+            }
+
+            var success = await _cutoffService.CloseCutoffAsync(id, userId);
             if (!success)
             {
                 TempData["ErrorAlert"] = JsonConvert.SerializeObject(new { icon = "error", title = "Error", text = "No se puede cerrar el corte o no existe." });
@@ -334,7 +341,7 @@ namespace RecursosHumanosWeb.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // AJAX: Delete via fetch
+        // AJAX: Delete via fetch (cierre manual)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteAjax([FromBody] ActionRequestDTO request)
@@ -342,20 +349,29 @@ namespace RecursosHumanosWeb.Controllers
             if (request == null || request.Id <= 0)
                 return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "ID no válido.", Icon = "error" });
 
-            if (!User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString()))
-                return Json(new AlertResponseDTO { Success = false, Title = "Acceso denegado", Message = "No tiene permisos para eliminar cortes.", Icon = "error" });
+            if (!User.HasClaim("UserType", ((int)UserTypeEnum.HumanResources).ToString()) &&
+                !User.HasClaim("UserType", ((int)UserTypeEnum.Administrator).ToString()))
+                return Json(new AlertResponseDTO { Success = false, Title = "Acceso denegado", Message = "No tiene permisos para cerrar cortes.", Icon = "error" });
 
             var cutoff = await _context.Cutoffs.FindAsync(request.Id);
             if (cutoff == null)
                 return Json(new AlertResponseDTO { Success = false, Title = "No encontrado", Message = "Cutoff no encontrado.", Icon = "error" });
 
+            if (cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open)
+                return Json(new AlertResponseDTO { Success = false, Title = "Estado inválido", Message = "Solo se pueden cerrar periodos que estén Abiertos.", Icon = "warning" });
+
             if (!request.Confirmed)
             {
+                bool hasPending = await _cutoffService.HasPendingPermissionsAsync(request.Id);
+                string extraWarning = hasPending
+                    ? "<br><br><div class='alert alert-danger py-2 small'><i class='fas fa-exclamation-triangle me-1'></i> <strong>¡Atención!</strong> Hay permisos pendientes que serán <strong>RECHAZADOS</strong> automáticamente al cerrar.</div>"
+                    : "";
+
                 return Json(new AlertResponseDTO
                 {
                     ShowConfirmation = true,
-                    Title = "¿Cerrar e Inactivar Periodo?",
-                    Message = $"¿Estás seguro de que deseas cerrar el periodo que inicia **{cutoff.StartDate.ToString("dd/MM/yyyy")}**?<br><br><small class='text-muted'>Esta acción marcará los permisos asociados como procesados.</small>",
+                    Title = "¿Cerrar Periodo?",
+                    Message = $"¿Estás seguro de que deseas cerrar el periodo que inicia **{cutoff.StartDate.ToString("dd/MM/yyyy")}**?{extraWarning}",
                     Icon = "warning",
                     ConfirmButtonText = "Sí, cerrar periodo",
                     CancelButtonText = "Cancelar"
@@ -363,15 +379,15 @@ namespace RecursosHumanosWeb.Controllers
             }
 
             int userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
-            var success = await _cutoffService.InactivateCutoffAsync(request.Id, userId);
+            var success = await _cutoffService.CloseCutoffAsync(request.Id, userId);
 
             if (success)
             {
-                return Json(new AlertResponseDTO { Success = true, Title = "Periodo Closed", Message = "El periodo ha sido inactivado y cerrado correctamente.", Icon = "success", RedirectUrl = "/Cutoff/Index" });
+                return Json(new AlertResponseDTO { Success = true, Title = "Periodo Cerrado", Message = "El periodo ha sido cerrado correctamente.", Icon = "success", RedirectUrl = "/Cutoff/Index" });
             }
             else
             {
-                return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "Ocurrió un error al inactivar.", Icon = "error" });
+                return Json(new AlertResponseDTO { Success = false, Title = "Error", Message = "Ocurrió un error al cerrar.", Icon = "error" });
             }
         }
 
@@ -445,7 +461,7 @@ namespace RecursosHumanosWeb.Controllers
 
             // 2. Obtener los permissions activos para las estadísticas
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == id && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod) // Excluyendo Invalidados
+                .Where(p => p.CutoffId == id)
                 .Include(p => p.PermissionType)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)

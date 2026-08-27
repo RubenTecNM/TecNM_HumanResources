@@ -77,7 +77,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
                     StatusColor = c.CutoffStatusType != null ? c.CutoffStatusType.Color : "#6c757d",
                     CreatedBy = c.CreatedByUser != null ? c.CreatedByUser.Name : "Sistema",
                     UpdatedBy = c.UpdatedByUser != null ? c.UpdatedByUser.Name : null,
-                    PermissionsCount = _context.Permissions.Count(p => p.CutoffId == c.Id && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
+                    PermissionsCount = _context.Permissions.Count(p => p.CutoffId == c.Id)
                 })
                 .ToListAsync();
 
@@ -153,7 +153,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
             if (cutoff == null) return NotFound(new { message = "Periodo no encontrado." });
 
             var permissions = await _context.Permissions
-                .Where(p => p.CutoffId == id && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
+                .Where(p => p.CutoffId == id)
                 .Include(p => p.PermissionType)
                 .Include(p => p.RequestingUser)
                     .ThenInclude(u => u.Area)
@@ -375,24 +375,6 @@ namespace RecursosHumanosWeb.Controllers.Api.Cutoffs
                 return BadRequest(new { message = "No se pudo cerrar el periodo. Verifique que esté en estado abierto." });
 
             return Ok(new { message = "El periodo ha sido cerrado exitosamente." });
-        }
-
-        // PUT: api/Cutoffs/5/inactivate
-        [HttpPut("{id}/inactivate")]
-        [ApiKeyAuthorize(TargetTable = "Cutoff", RequiredPermission = "Eliminar")]
-        public async Task<IActionResult> InactivateCutoff(int id)
-        {
-            var cutoff = await _context.Cutoffs.FindAsync(id);
-            if (cutoff == null) return NotFound(new { message = "Periodo no encontrado." });
-
-            var userId = HttpContext.Items["ApiUserId"] as int? ?? cutoff.UpdatedByUserId;
-
-            // El servicio invalida el periodo y en cascada los permisos asociados (borrado lógico)
-            bool inactivated = await _cutoffService.InactivateCutoffAsync(id, userId ?? 0);
-            if (!inactivated)
-                return BadRequest(new { message = "No se pudo invalidar el periodo." });
-
-            return Ok(new { message = "El periodo ha sido invalidado exitosamente." });
         }
     }
 }

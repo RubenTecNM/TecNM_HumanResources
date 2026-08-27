@@ -62,8 +62,7 @@ namespace RecursosHumanosWeb.Services
                 .ToDictionary(g => g.Key, g => string.Join(", ", g.Select(u => u.Name)));
 
             var permisos = await _context.Permissions.AsNoTracking()
-                .Where(p => p.CutoffId == cutoffId &&
-                            p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
+                .Where(p => p.CutoffId == cutoffId)
                 .Include(p => p.RequestingUser).ThenInclude(u => u!.Area)
                 .Include(p => p.PermissionType)
                 .ToListAsync();

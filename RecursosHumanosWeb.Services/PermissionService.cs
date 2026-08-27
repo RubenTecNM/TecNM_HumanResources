@@ -100,7 +100,7 @@ namespace RecursosHumanosWeb.Services
             if (_cache.TryGetValue(cacheKey, out object? cached) && cached != null)
                 return cached;
 
-            IQueryable<Permission> query = _context.Permissions.Where(p => p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod);
+            IQueryable<Permission> query = _context.Permissions;
 
             if (userType != (int)UserTypeEnum.Administrator && userType != (int)UserTypeEnum.HumanResources)
             {
@@ -221,7 +221,10 @@ namespace RecursosHumanosWeb.Services
             if (existing == null) return false;
             
             // Reglas de negocio
-            if (existing.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending || (existing.Cutoff != null && existing.Cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open))
+            bool corteVigente = existing.Cutoff != null
+                && existing.Cutoff.CutoffStatusTypeId == (int)CutoffStatusEnum.Open
+                && existing.Cutoff.EndDate.Date >= DateTime.Now.Date;
+            if (existing.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending || !corteVigente)
                 return false;
 
             int originalCutoffId = existing.CutoffId;
@@ -230,7 +233,8 @@ namespace RecursosHumanosWeb.Services
             existing.Reason = permission.Reason;
             existing.StartDate = permission.StartDate;
             existing.EndDate = permission.EndDate;
-            existing.PermissionTypeId = permission.PermissionTypeId;
+            // El tipo de permiso NO es editable: se conserva el original (si se equivocó, crea/edita otro permiso)
+            existing.PermissionTypeId = existing.PermissionTypeId;
             existing.Evidence = permission.Evidence;
             existing.WithPay = permission.WithPay;
 
@@ -284,12 +288,21 @@ namespace RecursosHumanosWeb.Services
             return saved;
         }
 
-        public async Task<bool> DeletePermissionAsync(int id, int updatedByUserId)
+        public async Task<bool> CancelPermissionAsync(int id, int updatedByUserId)
         {
-            var permission = await _context.Permissions.FindAsync(id);
+            var permission = await _context.Permissions
+                .Include(p => p.Cutoff)
+                .FirstOrDefaultAsync(p => p.Id == id);
             if (permission == null) return false;
 
-            permission.PermissionStatusTypeId = (int)PermissionStatusEnum.InvalidatedByPeriod;
+            // Solo se cancela un permiso pendiente dentro de un corte vigente y no revisado
+            bool corteVigente = permission.Cutoff != null
+                && permission.Cutoff.CutoffStatusTypeId == (int)CutoffStatusEnum.Open
+                && permission.Cutoff.EndDate.Date >= DateTime.Now.Date;
+            if (permission.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending || !corteVigente)
+                return false;
+
+            permission.PermissionStatusTypeId = (int)PermissionStatusEnum.Cancelled;
             permission.UpdatedByUserId = updatedByUserId;
             permission.UpdatedAt = DateTime.Now;
 
@@ -328,6 +341,10 @@ namespace RecursosHumanosWeb.Services
 
             if (userType == (int)UserTypeEnum.Authorizer)
             {
+                // Un permiso cancelado solo es visible para su solicitante, RH y administrador.
+                if (permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Cancelled)
+                    return false;
+
                 var userArea = _context.Users.AsNoTracking().Where(u => u.Id == userId).Select(u => u.AreaId).FirstOrDefault();
                 if (permission.RequestingUser != null && permission.RequestingUser.AreaId == userArea)
                     return true;

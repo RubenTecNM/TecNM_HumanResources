@@ -39,12 +39,17 @@ export async function fetchPermissionTypes(): Promise<PermissionTypeItem[]> {
 }
 
 export async function fetchAreas(): Promise<AreaItem[]> {
-  const res = await http.get<AreaItem[]>('/api/Areas')
-  return res.data
+  const res = await http.get<{ items: AreaItem[] }>('/api/Areas')
+  return res.data.items ?? []
 }
 
 export async function fetchDepartments(): Promise<CatalogItem[]> {
-  const res = await http.get<CatalogItem[]>('/api/Departments')
+  const res = await http.get<{ items: CatalogItem[] }>('/api/Departments')
+  return res.data.items ?? []
+}
+
+export async function fetchPositions(): Promise<CatalogItem[]> {
+  const res = await http.get<CatalogItem[]>('/api/Positions')
   return res.data
 }
 

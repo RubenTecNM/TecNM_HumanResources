@@ -332,16 +332,16 @@ namespace RecursosHumanosWeb.Controllers
             int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
             var permission = await _context.Permissions.Include(p => p.Cutoff).FirstOrDefaultAsync(p => p.Id == id);
-            if (permission != null && _permissionService.CanUserAccessPermiso(userId, userType, permission))
+            bool isOwner = permission != null && permission.RequestingUserId == userId;
+            bool esRhOrAdmin = userType == (int)UserTypeEnum.HumanResources || userType == (int)UserTypeEnum.Administrator;
+            if (permission != null && (isOwner || esRhOrAdmin))
             {
-                bool isPending = permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending;
-                var cutoff = permission.Cutoff;
-                if (!isPending && (cutoff == null || cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open))
+                bool success = await _permissionService.CancelPermissionAsync(id, userId);
+                if (!success)
                 {
-                    TempData["ErrorAlert"] = GetAlertJson("Error", "No se puede borrar un permiso ya revisado de un corte cerrado.");
+                    TempData["ErrorAlert"] = GetAlertJson("Error", "No se puede cancelar el permiso: debe estar pendiente dentro de un periodo vigente.");
                     return RedirectToAction("Index");
                 }
-                await _permissionService.DeletePermissionAsync(id, userId);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -358,24 +358,26 @@ namespace RecursosHumanosWeb.Controllers
                 int userType = int.Parse(User.FindFirst("UserType")?.Value ?? "0");
 
                 var permission = await _context.Permissions.Include(p => p.RequestingUser).Include(p => p.Cutoff).FirstOrDefaultAsync(p => p.Id == request.Id);
-                if (permission == null || permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Rejected)
+                if (permission == null || permission.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending)
                     return Json(new AlertResponseDTO { Success = false, Message = "No encontrado o ya procesado." });
 
-                if (!_permissionService.CanUserAccessPermiso(userId, userType, permission)) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
+                bool isOwner = permission.RequestingUserId == userId;
+                bool esRhOrAdmin = userType == (int)UserTypeEnum.HumanResources || userType == (int)UserTypeEnum.Administrator;
+                if (!isOwner && !esRhOrAdmin) return Json(new AlertResponseDTO { Success = false, Message = "Denegado." });
 
                 var cutoff = permission.Cutoff;
                 if (cutoff == null || cutoff.CutoffStatusTypeId != (int)CutoffStatusEnum.Open)
-                    return Json(new AlertResponseDTO { Success = false, Message = "El permiso ya no se puede eliminar porque el periodo ya está cerrado o invalidado." });
+                    return Json(new AlertResponseDTO { Success = false, Message = "El permiso ya no se puede cancelar porque el periodo ya está cerrado." });
 
                 if (!request.Confirmed)
                 {
-                    return Json(new AlertResponseDTO { ShowConfirmation = true, Title = "¿Eliminar?", Message = $"¿Borrar solicitud de **{permission.RequestingUser.Name}**?", Icon = "question", ConfirmButtonText = "Sí, eliminar" });
+                    return Json(new AlertResponseDTO { ShowConfirmation = true, Title = "¿Cancelar?", Message = $"¿Cancelar la solicitud de **{permission.RequestingUser.Name}**?", Icon = "question", ConfirmButtonText = "Sí, cancelar" });
                 }
 
-                bool success = await _permissionService.DeletePermissionAsync(request.Id, userId);
-                if (!success) return Json(new AlertResponseDTO { Success = false, Message = "Error al intentar eliminar el registro." });
+                bool success = await _permissionService.CancelPermissionAsync(request.Id, userId);
+                if (!success) return Json(new AlertResponseDTO { Success = false, Message = "Error al intentar cancelar el registro." });
 
-                return Json(new AlertResponseDTO { Success = true, Title = "Eliminado", RedirectUrl = Url.Action("Index", "Permission") });
+                return Json(new AlertResponseDTO { Success = true, Title = "Cancelado", RedirectUrl = Url.Action("Index", "Permission") });
             }
             catch (Exception ex)
             {

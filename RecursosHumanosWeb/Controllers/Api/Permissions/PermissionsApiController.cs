@@ -61,6 +61,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             {
                 p.Id,
                 Requester = p.Name,
+                p.RequestingUserId,
                 Type = p.PermissionType,
                 p.PermissionTypeId,
                 p.StartDate,
@@ -165,6 +166,7 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             {
                 permission.Id,
                 Requester = permission.RequestingUser.Name,
+                permission.RequestingUserId,
                 Type = permission.PermissionType.Description,
                 permission.PermissionTypeId,
                 permission.StartDate,
@@ -426,9 +428,9 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 .Select(u => u.UserTypeId)
                 .FirstOrDefaultAsync();
 
-            // Regla de negocio: solo Admin, RH o Jefe de área pueden autorizar
-            if (actorUserType == (int)UserTypeEnum.Employee)
-                return StatusCode(403, new { error = "Forbidden", message = "Solo los administradores, RH o jefes de área pueden autorizar permisos." });
+            // Regla de negocio: solo Admin o Jefe de área pueden autorizar (RH captura, audita y revisa el flujo, pero NO autoriza)
+            if (actorUserType != (int)UserTypeEnum.Administrator && actorUserType != (int)UserTypeEnum.Authorizer)
+                return StatusCode(403, new { error = "Forbidden", message = "Solo los administradores o jefes de área pueden autorizar permisos." });
 
             // Regla de negocio: solo permisos Pendiente por Revisar pueden autorizarse/rechazarse
             if (permission.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending)
@@ -465,10 +467,10 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
             return null;
         }
 
-        // PUT: api/Permissions/5/invalidate  (borrado LÓGICO: no existe DELETE físico)
-        [HttpPut("{id}/invalidate")]
+        // PUT: api/Permissions/5/cancel — el solicitante cancela su permiso pendiente
+        [HttpPut("{id}/cancel")]
         [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Eliminar")]
-        public async Task<IActionResult> InvalidatePermission(int id)
+        public async Task<IActionResult> CancelPermission(int id)
         {
             var permission = await _context.Permissions.FindAsync(id);
             if (permission == null) return NotFound();
@@ -479,14 +481,18 @@ namespace RecursosHumanosWeb.Controllers.Api.Permissions
                 .Select(u => u.UserTypeId)
                 .FirstOrDefaultAsync();
 
-            // Regla de negocio: acceso al permiso antes de invalidar
-            if (!_permissionService.CanUserAccessPermiso(userId, actorUserType, permission))
-                return StatusCode(403, new { error = "Forbidden", message = "No tiene acceso para eliminar este permiso." });
+            // Regla de negocio: solo el solicitante (o RH/Administrador) puede cancelar.
+            bool isOwner = permission.RequestingUserId == userId;
+            bool esRhOrAdmin = actorUserType == (int)UserTypeEnum.HumanResources || actorUserType == (int)UserTypeEnum.Administrator;
+            if (!isOwner && !esRhOrAdmin)
+                return StatusCode(403, new { error = "Forbidden", message = "No tiene acceso para cancelar este permiso." });
 
-            if (permission.PermissionStatusTypeId == (int)PermissionStatusEnum.InvalidatedByPeriod) return BadRequest("El permiso ya está invalidado.");
+            if (permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Cancelled)
+                return BadRequest(new { message = "El permiso ya está cancelado." });
 
-            bool success = await _permissionService.DeletePermissionAsync(id, userId);
-            if (!success) return NotFound();
+            bool success = await _permissionService.CancelPermissionAsync(id, userId);
+            if (!success)
+                return BadRequest(new { message = "No se pudo cancelar el permiso. Solo es posible cancelarlo estando pendiente dentro de un periodo vigente." });
 
             return NoContent();
         }

@@ -11,6 +11,9 @@
         <AppButton v-if="canAuthorize" variant="accent" icon="fa-check" @click="$router.push({ name: 'permissions.authorize', params: $route.params })">
           Autorizar
         </AppButton>
+        <AppButton v-if="canCancel" variant="danger" icon="fa-ban" @click="onCancel">
+          Cancelar
+        </AppButton>
       </template>
     </AppPageHeader>
 
@@ -152,7 +155,8 @@ import AppPageHeader from '@/components/AppPageHeader.vue'
 import AppButton from '@/components/AppButton.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
-import { fetchPermission, statusLabel, statusVariant, PERMISSION_STATUS, type PermissionDetail } from '@/api/permissions'
+import { fetchPermission, cancelPermission, statusLabel, statusVariant, PERMISSION_STATUS, type PermissionDetail } from '@/api/permissions'
+import { askConfirmation, showToast } from '@/composables/useAlerts'
 import { formatTecNMDate, formatTecNMDateTime } from '@/composables/useDates'
 import { useAuthStore } from '@/stores/auth'
 
@@ -171,6 +175,31 @@ const canEdit = computed(() => {
 const canAuthorize = computed(() => {
   return permission.value?.status === PERMISSION_STATUS.PENDING && (authStore.isAdmin || authStore.isAuthorizer)
 })
+
+const canCancel = computed(() => {
+  if (permission.value?.status !== PERMISSION_STATUS.PENDING) return false
+  const isOwner = permission.value.requestingUserId != null && permission.value.requestingUserId === authStore.user?.id
+  return isOwner || authStore.isRHOrAdmin
+})
+
+async function onCancel() {
+  if (!permission.value) return
+  const ok = await askConfirmation({
+    title: '¿Cancelar permiso?',
+    text: 'Esta acción no puede revertirse.',
+    confirmText: 'Sí, cancelar',
+    danger: true
+  })
+  if (!ok) return
+  try {
+    await cancelPermission(permission.value.id)
+    showToast('Permiso cancelado correctamente', 'success')
+    permission.value = await fetchPermission(permission.value.id)
+  } catch (err) {
+    console.error('Error al cancelar permiso:', err)
+    showToast('No se pudo cancelar el permiso.', 'error')
+  }
+}
 
 onMounted(async () => {
   try {

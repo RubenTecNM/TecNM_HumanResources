@@ -171,9 +171,9 @@ public class PermissionServiceTests
     }
 
     [Fact]
-    public async Task DeletePermissionAsync_UsaBorradoLogico()
+    public async Task CancelPermissionAsync_CancelaPendienteEnCorteVigente()
     {
-        using var context = await TestDbContextFactory.SeedAsync(nameof(DeletePermissionAsync_UsaBorradoLogico));
+        using var context = await TestDbContextFactory.SeedAsync(nameof(CancelPermissionAsync_CancelaPendienteEnCorteVigente));
         var service = TestDbContextFactory.CreatePermissionService(context);
 
         var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
@@ -182,11 +182,11 @@ public class PermissionServiceTests
         await context.Permissions.AddAsync(permission);
         await context.SaveChangesAsync();
 
-        var ok = await service.DeletePermissionAsync(permission.Id, empleado.Id);
+        var ok = await service.CancelPermissionAsync(permission.Id, empleado.Id);
 
         Assert.True(ok);
         var actual = await context.Permissions.AsNoTracking().SingleAsync(p => p.Id == permission.Id);
-        Assert.Equal(PermissionStatusEnum.InvalidatedByPeriod, (PermissionStatusEnum)actual.PermissionStatusTypeId);
+        Assert.Equal(PermissionStatusEnum.Cancelled, (PermissionStatusEnum)actual.PermissionStatusTypeId);
         Assert.True(actual.Status);
     }
 
@@ -358,31 +358,32 @@ public class PermissionServiceTests
     }
 
     [Fact]
-    public async Task GetPermissionsPagedAsync_IncluyeInvalidatedByPeriod()
+    public async Task GetPermissionsPagedAsync_Cancelado_VisibleSoloParaAdminYRH_NoAutorizador()
     {
-        using var context = await TestDbContextFactory.SeedAsync(nameof(GetPermissionsPagedAsync_IncluyeInvalidatedByPeriod));
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetPermissionsPagedAsync_Cancelado_VisibleSoloParaAdminYRH_NoAutorizador));
         var service = TestDbContextFactory.CreatePermissionService(context);
 
         var admin = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Administrator);
+        var rh = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.HumanResources);
         var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var jefe = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Authorizer);
         var cutoff = await context.Cutoffs.SingleAsync();
 
-        // Un permiso normal y uno invalidado (CreatedAt distintos para orden estable)
-        await context.Permissions.AddAsync(TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now.AddMinutes(-10), DateTime.Now, cutoff.Id, PermissionStatusEnum.Approved));
-        await context.Permissions.AddAsync(TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.InvalidatedByPeriod));
+        // Un permiso cancelado por su solicitante
+        await context.Permissions.AddAsync(TestDbContextFactory.CreatePermission(empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Cancelled));
         await context.SaveChangesAsync();
 
-        // Los invalidados por periodo permanecen visibles en el listado (auditoría)
-        var page = await service.GetPermissionsPagedAsync(admin.Id, null, "", null, null, null, 1, 10);
+        // Admin sí lo ve (tiene visibilidad total incluyendo cancelados)
+        var pagAdmin = await service.GetPermissionsPagedAsync(admin.Id, null, "", null, null, (int)PermissionStatusEnum.Cancelled, 1, 10);
+        Assert.Equal(1, pagAdmin.TotalItemCount);
 
-        Assert.Equal(2, page.TotalItemCount);
+        // RH también lo ve
+        var pagRh = await service.GetPermissionsPagedAsync(rh.Id, null, "", null, null, (int)PermissionStatusEnum.Cancelled, 1, 10);
+        Assert.Equal(1, pagRh.TotalItemCount);
 
-        // Nota: no inspeccionamos page.Items porque el provider InMemory devuelve
-        // la página vacía al combinar ProjectTo + Skip/Take entre varios tests del
-        // mismo proceso (en SQL Server funciona); los totales sí provienen del
-        // WHERE real y bastan para validar la inclusión.
-        var soloInvalidados = await service.GetPermissionsPagedAsync(admin.Id, null, "", null, null, (int)PermissionStatusEnum.InvalidatedByPeriod, 1, 10);
-        Assert.Equal(1, soloInvalidados.TotalItemCount);
+        // El autorizador no ve permisos cancelados ajenos (solo lo propio o pendiente de su área)
+        var pagAutorizador = await service.GetPermissionsPagedAsync(jefe.Id, null, "", null, null, (int)PermissionStatusEnum.Cancelled, 1, 10);
+        Assert.Equal(0, pagAutorizador.TotalItemCount);
     }
 
     [Fact]

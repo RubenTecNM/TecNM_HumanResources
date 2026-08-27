@@ -25,13 +25,15 @@
                   type="button"
                   class="permission-type-card"
                   :class="{ selected: form.permissionTypeId === t.id }"
-                  @click="selectType(t.id)"
+                  :disabled="true"
+                  title="El tipo de permiso no es editable"
                 >
                   <span class="type-icon"><i :class="`fa ${typeIcon(t)}`" aria-hidden="true"></i></span>
                   <span class="type-title">{{ t.description }}</span>
                   <span class="type-subtitle">{{ typeSubtitle(t) }}</span>
                 </button>
               </div>
+              <small class="tecnm-form-hint">El tipo de permiso no se puede modificar. Si te equivocaste, cancélalo y crea uno nuevo.</small>
             </div>
 
             <div class="datetime-grid">
@@ -126,7 +128,7 @@
             <div class="form-actions">
               <AppButton type="submit" variant="primary" icon="fa-save" :loading="submitting" :disabled="!formValid">Guardar cambios</AppButton>
               <AppButton type="button" variant="secondary" icon="fa-arrow-left" @click="$router.push({ name: 'permissions.index' })">Volver</AppButton>
-              <AppButton type="button" variant="danger" icon="fa-trash" @click="remove">Eliminar</AppButton>
+              <AppButton type="button" variant="danger" icon="fa-ban" @click="remove">Cancelar</AppButton>
             </div>
           </form>
         </div>
@@ -148,7 +150,7 @@ import {
   type PermissionTypeFieldConfig,
   type PermissionTypeItem
 } from '@/api/catalogs'
-import { deactivatePermission, fetchPermission, updatePermission, type PermissionCreatePayload } from '@/api/permissions'
+import { cancelPermission, fetchPermission, updatePermission, type PermissionCreatePayload } from '@/api/permissions'
 import { combineDateTimeLocal, calculateDays, toDateInputValue, toTimeInputValue } from '@/composables/useDates'
 import { askConfirmation, handleAlertResponse, showToast } from '@/composables/useAlerts'
 import { useAuthStore } from '@/stores/auth'
@@ -279,12 +281,6 @@ function validate() {
   if (!reason) errors.reason = 'El motivo es obligatorio.'
   else if (reason.length > 255) errors.reason = 'El motivo no puede exceder los 255 caracteres.'
   else delete errors.reason
-}
-
-function selectType(id: number) {
-  form.permissionTypeId = id
-  clearDynamicFields()
-  validate()
 }
 
 function clearDynamicFields() {
@@ -434,19 +430,19 @@ async function submit() {
 
 async function remove() {
   const ok = await askConfirmation({
-    title: '¿Eliminar permiso?',
-    text: 'Esta acción invalidará el permiso. No podrá revertirse.',
-    confirmText: 'Sí, eliminar',
+    title: '¿Cancelar permiso?',
+    text: 'Esta acción cancelará el permiso. No podrá revertirse.',
+    confirmText: 'Sí, cancelar',
     danger: true
   })
   if (!ok) return
   try {
-    await deactivatePermission(id)
-    await handleAlertResponse({ success: true, title: 'Eliminado', message: 'El permiso fue invalidado.' })
+    await cancelPermission(id)
+    await handleAlertResponse({ success: true, title: 'Cancelado', message: 'El permiso fue cancelado.' })
     router.push({ name: 'permissions.index' })
   } catch (err) {
     console.error(err)
-    showToast('No se pudo eliminar el permiso.', 'error')
+    showToast('No se pudo cancelar el permiso.', 'error')
   }
 }
 </script>

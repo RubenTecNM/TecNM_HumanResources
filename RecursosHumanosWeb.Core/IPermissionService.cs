@@ -13,7 +13,7 @@ namespace RecursosHumanosWeb.Services
         Task<object> GetStatsAsync(int userId, int userType);
         Task<int> CreatePermissionAsync(Permission permission, int createdByUserId);
         Task<bool> UpdatePermissionAsync(Permission permission, int updatedByUserId);
-        Task<bool> DeletePermissionAsync(int id, int updatedByUserId);
+        Task<bool> CancelPermissionAsync(int id, int updatedByUserId);
         Task<bool> AuthorizePermissionAsync(int id, int authorizingUserId, bool aprobado, bool withPay, string? comment);
         bool CanUserAccessPermiso(int userId, int userType, Permission permission);
     }

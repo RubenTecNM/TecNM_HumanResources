@@ -115,7 +115,7 @@ namespace RecursosHumanosWeb.Services
 
             // Obtener contadores de permissions
             var permissionStats = await _context.Permissions
-                .Where(p => p.RequestingUserId == id && p.PermissionStatusTypeId != (int)PermissionStatusEnum.InvalidatedByPeriod)
+                .Where(p => p.RequestingUserId == id)
                 .GroupBy(p => 1)
                 .Select(g => new
                 {
