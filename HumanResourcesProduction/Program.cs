@@ -217,7 +217,10 @@ using (var scope = app.Services.CreateScope())
 
             {
                 // 4.1 Inserción de Datos Básicos
-                var insertsPath = Path.Combine(AppContext.BaseDirectory, "db", "inserts.sql");
+                var seedBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath }
+                    .FirstOrDefault(dir => File.Exists(Path.Combine(dir, "db", "inserts.sql")))
+                    ?? AppContext.BaseDirectory;
+                var insertsPath = Path.Combine(seedBase, "db", "inserts.sql");
                 if (File.Exists(insertsPath))
                 {
                     logger.LogInformation("Poblando base de datos con datos básicos...");
@@ -226,7 +229,7 @@ using (var scope = app.Services.CreateScope())
                 }
 
                 // 4.2 Creación de Objetos (SPs, Triggers, etc.)
-                var objectsPath = Path.Combine(AppContext.BaseDirectory, "db", "schema_objects.sql");
+                var objectsPath = Path.Combine(seedBase, "db", "schema_objects.sql");
                 if (File.Exists(objectsPath))
                 {
                     logger.LogInformation("Creando procedimientos almacenados y triggers...");

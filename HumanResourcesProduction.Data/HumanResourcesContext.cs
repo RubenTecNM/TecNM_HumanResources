@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using HumanResourcesProduction.Models.DTOs;
 
 namespace HumanResourcesProduction.Models;
@@ -9,6 +11,12 @@ public partial class HumanResourcesContext : DbContext
 {
     private readonly IHttpContextAccessor? _httpContextAccessor;
     public int? _auditOriginOverride; // Allow manual override for system processes
+
+    // Resolved audit context for the current operation (populated by SetSqlSessionContext).
+    // Used by the C#-side INSERT/UPDATE audit in SaveChangesAsync.
+    private int? _auditUserId;
+    private int? _auditApiKeyId;
+    private int _auditOriginTypeId = 3;
 
     public HumanResourcesContext()
     {
@@ -687,13 +695,107 @@ public partial class HumanResourcesContext : DbContext
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await SetSqlSessionContext();
-        return await base.SaveChangesAsync(cancellationToken);
+        var auditEntries = CaptureAuditEntries();
+
+        // Nothing to audit (e.g. no changes, or only Deleted/infrastructure) -> save as-is.
+        if (auditEntries.Count == 0)
+            return await base.SaveChangesAsync(cancellationToken);
+
+        // Audit INSERT/UPDATE atomically with the business changes: if the operation
+        // rolls back, the audit constancia rolls back with it.
+        await using var transaction = await Database.BeginTransactionAsync(cancellationToken);
+        var result = await base.SaveChangesAsync(cancellationToken);
+        await WriteAuditRowsAsync(auditEntries, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
     }
 
     public override int SaveChanges()
     {
         SetSqlSessionContext().GetAwaiter().GetResult();
-        return base.SaveChanges();
+        var auditEntries = CaptureAuditEntries();
+
+        if (auditEntries.Count == 0)
+            return base.SaveChanges();
+
+        using var transaction = Database.BeginTransaction();
+        var result = base.SaveChanges();
+        WriteAuditRows(auditEntries);
+        transaction.Commit();
+        return result;
+    }
+
+    // ── Programmatic INSERT/UPDATE audit ─────────────────────────────────────
+    // Physical DELETEs are NOT captured here: each auditable entity has its own
+    // AFTER DELETE trigger (see upgrade_010), so a delete is audited exactly once
+    // whether it comes from the app or from direct SQL (which C# cannot see).
+    private List<(EntityEntry Entry, int ApiFunctionId, string? PreviousJson)> CaptureAuditEntries()
+    {
+        var result = new List<(EntityEntry, int, string?)>();
+        var registeredTables = DatabaseTables.AsNoTracking().Select(t => t.Description).ToHashSet();
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State != EntityState.Added && entry.State != EntityState.Modified)
+                continue;
+
+            var tableName = entry.Metadata.GetTableName();
+            if (string.IsNullOrEmpty(tableName)) continue;
+            if (tableName == "AuditLog" || tableName == "DatabaseTable") continue; // never audit the audit / infra
+            if (!registeredTables.Contains(tableName)) continue; // not a registered auditable table
+
+            int apiFunction = entry.State == EntityState.Added ? 2 : 3; // INSERT / UPDATE
+            string? previousJson = entry.State == EntityState.Modified ? SerializePrevious(entry) : null;
+            result.Add((entry, apiFunction, previousJson));
+        }
+        return result;
+    }
+
+    private static string? SerializePrevious(EntityEntry entry)
+    {
+        var dict = new Dictionary<string, object?>();
+        foreach (var prop in entry.OriginalValues.Properties)
+        {
+            if (prop.IsShadowProperty()) continue;
+            dict[prop.Name] = entry.OriginalValues[prop];
+        }
+        return dict.Count == 0 ? null : JsonSerializer.Serialize(dict);
+    }
+
+    private async Task WriteAuditRowsAsync(
+        List<(EntityEntry Entry, int ApiFunctionId, string? PreviousJson)> audit,
+        CancellationToken cancellationToken)
+    {
+        var tableIds = await DatabaseTables.AsNoTracking().ToDictionaryAsync(t => t.Description, t => t.Id, cancellationToken);
+        WriteAuditRowsCore(audit, tableIds);
+    }
+
+    private void WriteAuditRows(List<(EntityEntry Entry, int ApiFunctionId, string? PreviousJson)> audit)
+    {
+        var tableIds = DatabaseTables.AsNoTracking().ToDictionary(t => t.Description, t => t.Id);
+        WriteAuditRowsCore(audit, tableIds);
+    }
+
+    private void WriteAuditRowsCore(
+        List<(EntityEntry Entry, int ApiFunctionId, string? PreviousJson)> audit,
+        Dictionary<string, int> tableIds)
+    {
+        int userId = _auditUserId ?? 1;
+        int originTypeId = _auditOriginTypeId;
+
+        foreach (var (entry, apiFunction, previousJson) in audit)
+        {
+            var tableName = entry.Metadata.GetTableName();
+            if (tableName == null || !tableIds.TryGetValue(tableName, out var tableId)) continue;
+
+            var recordId = ((BaseEntity)entry.Entity).Id;
+            var previousParam = (object?)previousJson ?? DBNull.Value;
+
+            Database.ExecuteSqlRaw(
+                "INSERT INTO AuditLog (TableId, RecordId, ApiFunctionId, OriginTypeId, PreviousData, CreatedByUserId, CreatedAt, Status) " +
+                "VALUES ({0},{1},{2},{3},{4},{5},GETDATE(),1)",
+                tableId, recordId, apiFunction, originTypeId, previousParam, userId);
+        }
     }
 
     private async Task SetSqlSessionContext()
@@ -710,6 +812,9 @@ public partial class HumanResourcesContext : DbContext
             userId = id;
         else if (httpContext.Items["ApiUserId"] is int apiUserId) 
             userId = apiUserId;
+
+        _auditUserId = userId;
+        _auditApiKeyId = apiKeyId;
 
         if (!userId.HasValue && !apiKeyId.HasValue) return;
 
@@ -746,6 +851,8 @@ public partial class HumanResourcesContext : DbContext
         {
             originTypeId = 1; // Web Interface (Default)
         }
+
+        _auditOriginTypeId = originTypeId;
 
         // Always write OriginTypeId so web (1), API (2) and automatic (3) origins are
         // recorded precisely. The older guard ("only write when != 1") let the DB trigger
