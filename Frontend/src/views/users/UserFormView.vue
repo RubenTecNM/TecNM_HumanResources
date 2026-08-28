@@ -174,7 +174,8 @@ const form = reactive({
   departmentId: null as number | null,
   areaId: null as number | null,
   positionId: null as number | null,
-  userTypeId: null as number | null
+  userTypeId: null as number | null,
+  status: true
 })
 
 async function fetchCatalogs() {
@@ -206,6 +207,7 @@ async function fetchUserDetail() {
     form.areaId = data.areaId
     form.positionId = data.positionId
     form.userTypeId = data.userTypeId
+    form.status = data.status
   } catch (e) {
     console.error(e)
   }

@@ -22,8 +22,9 @@ namespace RecursosHumanosWeb.Models.ViewModels.User
         public string Email { get; set; } = string.Empty;
 
         // La clave es opcional en la actualización. Si se envía, se actualiza; si no, se ignora.
-        // Validación: entre 6 y 12 caracteres
-        [StringLength(12, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 12 caracteres.")]
+        // NO se valida con StringLength aquí: el frontend envía "" cuando no se cambia, y una
+        // cadena vacía (Longitud 0) rompería la validación (error 400) aunque no se quiera cambiar.
+        // La validación de la clave (6-12) solo se aplica en el controlador cuando viene llena.
         [DataType(DataType.Password)]
         [Display(Name = "Nueva Contraseña")]
         public string? Password { get; set; }

@@ -240,6 +240,11 @@ namespace RecursosHumanosWeb.Controllers.Api
             if (!string.IsNullOrEmpty(email) && await _context.Users.AnyAsync(u => u.Id != id && u.Email == email))
                 return BadRequest(new { message = "Ya existe otro usuario registrado con ese correo." });
 
+            // Validación de clave solo cuando se envía un valor real (no cadena vacía):
+            // la regla de 6-12 caracteres no debe romper una edición sin cambio de clave.
+            if (!string.IsNullOrWhiteSpace(model.Password) && (model.Password.Length < 6 || model.Password.Length > 12))
+                return BadRequest(new { message = "La contraseña debe tener entre 6 y 12 caracteres." });
+
             // Mapear campos desde el ViewModel al entity usando AutoMapper
             _mapper.Map(model, user);
             
