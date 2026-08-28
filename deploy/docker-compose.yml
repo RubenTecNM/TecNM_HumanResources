@@ -1,21 +1,23 @@
+name: deploy
+
 services:
   api_permisos:
     build:
       context: ..
       dockerfile: deploy/Dockerfile
+    image: itsmrh_gestion_permisos_api:main
     container_name: itsmrh_gestion_permisos_api
     restart: unless-stopped
     ports:
-      - "5011:8080"
+      - "5013:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__HumanResourcesContext=Server=nexsmart_central_db_sql;Database=DB_Production_HumanResources;User Id=sa;Password=${SQL_SA_PASSWORD:?Defina SQL_SA_PASSWORD en el archivo .env};Encrypt=False;TrustServerCertificate=True;
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
-      - Evidences__UploadsPath=/app/evidences
+      - ConnectionStrings__HumanResourcesContext=Server=nexsmart_central_db_sql;Database=HumanResourcesProduction;User Id=sa;Password=${SQL_SA_PASSWORD:?Defina SQL_SA_PASSWORD en el archivo .env};Encrypt=False;TrustServerCertificate=True;
     volumes:
       - itsmrh_dataprotection_keys:/app/keys
-      - itsmrh_evidences:/app/evidences
+      - itsmrh_evidences:/app/App_Data/Evidences
     networks:
       - nexsmart_network
 
@@ -23,9 +25,7 @@ volumes:
   itsmrh_dataprotection_keys:
   itsmrh_evidences:
 
-
 networks:
   nexsmart_network:
     external: true
     name: nexsmart_shared_network
-
