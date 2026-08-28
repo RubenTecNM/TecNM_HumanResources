@@ -37,6 +37,18 @@
       </div>
     </section>
 
+    <!-- Leyenda de Origen de la operación -->
+    <section class="tecnm-card tecnm-mb-4 origin-legend">
+      <div class="tecnm-card-body">
+        <h4 class="legend-title"><i class="fa fa-info-circle" aria-hidden="true"></i> ¿Qué significa cada origen?</h4>
+        <ul class="legend-list">
+          <li><span class="legend-swatch" style="background: var(--tecnm-success, #2e7d32)"></span><strong>Interfaz Web</strong> — operación realizada por un usuario desde el sistema (login, edición, autorización, etc.).</li>
+          <li><span class="legend-swatch" style="background: var(--tecnm-accent, #1565c0)"></span><strong>API Externa</strong> — operación entrante vía invocación con API Key (<code>X-API-KEY</code>).</li>
+          <li><span class="legend-swatch" style="background: var(--tecnm-warning, #9e9e9e)"></span><strong>Sistema Automático</strong> — proceso del sistema (ej. cierre de corte o tarea programada), no lo ejecutó un usuario.</li>
+        </ul>
+      </div>
+    </section>
+
     <AppSpinner v-if="loading" />
     <template v-else>
       <section class="tecnm-card">
@@ -301,6 +313,50 @@ onMounted(() => {
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   border: 1px solid var(--tecnm-border);
+}
+
+.origin-legend .tecnm-card-body {
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+.legend-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+}
+
+.legend-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.legend-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--tecnm-text-secondary);
+}
+
+.legend-list code {
+  background: var(--tecnm-bg-light);
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+.legend-swatch {
+  flex: 0 0 auto;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 .audit-info-grid {

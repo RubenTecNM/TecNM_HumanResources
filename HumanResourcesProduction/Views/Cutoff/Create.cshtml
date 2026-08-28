@@ -1,0 +1,110 @@
+@model HumanResourcesProduction.Models.ViewModels.CutoffCreateViewModel
+@{
+    ViewData["Title"] = "Crear Periodo";
+}
+
+@section Styles {
+    <!-- Corte Create uses global components from v2-site.css -->
+}
+
+<div class="details-container fade-in">
+    <!-- Header separado -->
+    <div class="permission-header">
+        <div class="header-content">
+            <h1 class="page-title text-gradient">
+                <i class="fas fa-calendar-plus"></i>
+                Configurar Nuevo Periodo
+            </h1>
+            <p class="page-subtitle">Defina el límite de cierre para el ciclo de permisos</p>
+        </div>
+        <div class="header-decoration">
+            
+        </div>
+    </div>
+
+    <!-- Card del formulario -->
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden mb-5">
+        <div class="card-body p-4 p-md-5 bg-white">
+            <form asp-action="Create" id="createCutoffForm">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-4 justify-content-center">
+                    
+                    <div class="col-12 col-lg-10">
+                        <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                            <i class="fas fa-clock text-primary"></i>
+                            Periodo Laboral
+                        </h3>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="info-card info-card-indigo p-3 rounded-3 h-100">
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="icon-circle indigo-circle">
+                                            <i class="fas fa-play small"></i>
+                                        </div>
+                                        <label asp-for="StartDate" class="small fw-medium text-secondary text-uppercase mb-0">Fecha de Inicio (Automático)</label>
+                                    </div>
+                                    <input asp-for="StartDate" class="form-control border-0 bg-light shadow-sm mt-2" type="date" readonly />
+                                    <span asp-validation-for="StartDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="info-card info-card-purple p-3 rounded-3 h-100">
+                                    <div class="d-flex align-items-center gap-3 mb-2">
+                                        <div class="icon-circle purple-circle">
+                                            <i class="fas fa-stop small"></i>
+                                        </div>
+                                        <label asp-for="EndDate" class="small fw-medium text-secondary text-uppercase mb-0">Fecha de Término</label>
+                                    </div>
+                                    <input asp-for="EndDate" class="form-control border-0 bg-white shadow-sm mt-2" type="date" required />
+                                    <span asp-validation-for="EndDate" class="text-danger small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-3 border-start border-info border-3 bg-light rounded-end">
+                            <p class="small text-secondary mb-0">
+                                <i class="fas fa-info-circle text-info me-1"></i> 
+                                Asegúrese de que el rango de fechas no se traslape con periodos creados previamente.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 pt-4 border-top d-flex flex-column flex-md-row justify-content-end align-items-center gap-3">
+                    <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill shadow-sm fw-bold">
+                        <i class="fas fa-save me-2"></i> Crear Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
+    <script>
+        document.getElementById('createCutoffForm').addEventListener('submit', function(e) {
+            const inicia = new Date(document.querySelector('input[name="StartDate"]').value);
+            const termina = new Date(document.querySelector('input[name="EndDate"]').value);
+
+            if (termina <= inicia) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Rango Inválido',
+                    text: 'La fecha de término debe ser estrictamente posterior a la de inicio.',
+                    icon: 'warning',
+                    confirmButtonColor: '#3b82f6',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-4 shadow-lg',
+                        confirmButton: 'rounded-pill px-4'
+                    }
+                });
+            }
+        });
+    </script>
+}

@@ -13,17 +13,17 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore
-COPY ["RecursosHumanosWeb/RecursosHumanosWeb.csproj", "RecursosHumanosWeb/"]
-RUN dotnet restore "RecursosHumanosWeb/RecursosHumanosWeb.csproj"
+COPY ["HumanResourcesProduction/HumanResourcesProduction.csproj", "HumanResourcesProduction/"]
+RUN dotnet restore "HumanResourcesProduction/HumanResourcesProduction.csproj"
 
 # Copy everything and build
 COPY . .
-WORKDIR "/src/RecursosHumanosWeb"
-RUN dotnet build "RecursosHumanosWeb.csproj" -c Release -o /app/build
+WORKDIR "/src/HumanResourcesProduction"
+RUN dotnet build "HumanResourcesProduction.csproj" -c Release -o /app/build
 
 # Stage 3: Publish
 FROM build AS publish
-RUN dotnet publish "RecursosHumanosWeb.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "HumanResourcesProduction.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Stage 4: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
@@ -37,4 +37,4 @@ COPY db/upgrade ./db/upgrade
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "RecursosHumanosWeb.dll"]
+ENTRYPOINT ["dotnet", "HumanResourcesProduction.dll"]

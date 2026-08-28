@@ -1,0 +1,75 @@
+@model HumanResourcesProduction.Models.Permission
+@{
+    ViewData["Title"] = "Eliminar Permiso";
+}
+
+<div class="details-container fade-in">
+    <div class="permission-header">
+        <div class="header-content">
+            <h1 class="page-title text-gradient">
+                <i class="fas fa-trash-alt"></i>
+                Eliminar Permiso #@Model.Id
+            </h1>
+            <p class="page-subtitle">¿Está seguro de que desea eliminar esta solicitud?</p>
+        </div>
+    </div>
+
+    <div class="card details-card rounded-3 shadow-sm border-0">
+        <div class="card-body p-4 text-center">
+            <div class="mb-4">
+                <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                <h3 class="h5 fw-bold">Atención</h3>
+                <p class="text-muted">Esta acción eliminará definitivamente la solicitud de permiso. Esta operación no se puede deshacer.</p>
+            </div>
+
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-8">
+                    <div class="text-start border rounded p-3 bg-light">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <p class="mb-1 fw-bold text-secondary">Solicitante:</p>
+                                <p class="mb-0">@(Model.RequestingUser?.Name ?? "Desconocido")</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-1 fw-bold text-secondary">Tipo de permiso:</p>
+                                <p class="mb-0">@(Model.PermissionType?.Description ?? "-")</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-1 fw-bold text-secondary">Inicio:</p>
+                                <p class="mb-0">@Model.StartDate?.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-1 fw-bold text-secondary">Fin:</p>
+                                <p class="mb-0">@Model.EndDate?.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-1 fw-bold text-secondary">Goce de sueldo:</p>
+                                <p class="mb-0">@(Model.WithPay ? "Con goce" : "Sin goce")</p>
+                            </div>
+                            <div class="col-6">
+                                <p class="mb-1 fw-bold text-secondary">Creado:</p>
+                                <p class="mb-0">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                            </div>
+                            <div class="col-12">
+                                <p class="mb-1 fw-bold text-secondary">Motivo:</p>
+                                <p class="mb-0">@Model.Reason</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="Delete">
+                <input type="hidden" asp-for="Id" />
+                <div class="d-flex justify-content-center gap-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i> Volver al listado
+                    </a>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm">
+                        <i class="fas fa-trash-alt me-2"></i> Confirmar Eliminación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

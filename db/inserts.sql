@@ -64,7 +64,8 @@ INSERT INTO Department (Description, AreaId, CreatedAt, Status, IsActive, Create
 (N'SERVICIOS ESCOLARES', 3, GETDATE(), 1, 1, 1),
 (N'SUBDIRECCIÓN DE PLANEACIÓN', 3, GETDATE(), 1, 1, 1),
 (N'TRABAJO SOCIAL', 4, GETDATE(), 1, 1, 1),
-(N'VINCULACIÓN', 3, GETDATE(), 1, 1, 1);
+(N'VINCULACIÓN', 3, GETDATE(), 1, 1, 1),
+(N'Maestros', 4, GETDATE(), 1, 1, 1);
 
 -- Position
 INSERT INTO Position (Description, TabularCode, CreatedAt, Status, CreatedByUserId) VALUES 
@@ -105,6 +106,8 @@ INSERT INTO Position (Description, TabularCode, CreatedAt, Status, CreatedByUser
 -- are the only two that overlap with the prior seed placeholder data.
 -- IMPORTANT: After replacing users, re-run the 16 Permission seeds referencing
 -- the new official user IDs (10→CAVAZOS SANCHEZ EDITH ALICIA, 86→ESCOBEDO, 111→MARTINEZ RAMIREZ, etc.)
+-- NOTE: Also includes app-created rows backfilled from production:
+--       User id 211 (Juan Pérez López) and Department 'Maestros' (AreaId 4).
 
 -- 3.5 OFFICIAL USERS from Formato_Permisos(Usuarios de sistema).csv (IDs 1-141)
 -- AreaId derived from the department's area (Catalogo de Departamentos.csv).
@@ -254,7 +257,8 @@ INSERT INTO [User] (Id, Name, Email, PasswordHash, CreatedAt, Status, UserTypeId
 (141, N'ZERTUCHE ZUÑIGA HOMERO', N'homero.zz@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 4, 4, 14, 1, 1),
        (142, N'DE LA GARZA DE LUNA JESUS ROBERTO', N'jesus.delagarza@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 4, 1, 1, 1, 1),
 (200, N'root',      N'controlpermisos@monclova.tecnm.mx', '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 1, 1, 1, 1, 1),
-(201, N'Axel Ruiz', N'axel.ruiz@monclova.tecnm.mx',       '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 1, 1, 1, 1, 1);
+(201, N'Axel Ruiz', N'axel.ruiz@monclova.tecnm.mx',       '82B6BDD3DD40EF86540D219A0F69D5B3FB8BBCE414FC0EC7844211FBC1AF14F3', GETDATE(), 1, 1, 1, 1, 1, 1),
+(211, N'Juan Pérez López', N'jperez@tecnm.mx', '1A174C4A86D5CC39FC5F5DE88778E72C8FC16A4867BE05456A2E1E682F642A73', GETDATE(), 1, 4, 1, 1, 1, 2);
 SET IDENTITY_INSERT [dbo].[User] OFF;
 
 -- 3.6 ACTIVE CUTOFF (Permission.CutoffId is NOT NULL; permissions below belong to this cutoff)

@@ -1,0 +1,222 @@
+@model HumanResourcesProduction.Models.ApiKey
+@using System.Globalization
+@{
+    ViewData["Title"] = "Detalles de API Key";
+    
+    var culture = new CultureInfo("es-MX");
+    
+    string FormatFullDate(DateTime date)
+    {
+        return date.ToString("dd 'de' MMMM 'del' yyyy, hh:mm tt", culture).ToUpper();
+    }
+
+    // Cargar permisos asignados
+    var assignedPermissions = ViewBag.AssignedPermissions as List<dynamic> ?? new List<dynamic>();
+}
+
+<div class="details-container">
+    <div class="card details-card shadow-lg rounded-3 overflow-hidden">
+        
+        <div class="details-header-v2 text-white px-4 px-md-5 py-4">
+            <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="details-avatar rounded-circle d-flex align-items-center justify-content-center text-white fs-3 fw-bold shadow-sm">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div>
+                        <h2 class="h4 fw-bold mb-1">Detalles de API Key #@Model.Id</h2>
+                        <div class="ms-1 d-flex align-items-center gap-2 opacity-75 small">
+                             <i class="fas fa-shield-alt"></i> Información completa de la clave de acceso
+                        </div>
+                    </div>
+                </div>
+                <div class="status-glass rounded-pill shadow-sm px-4 py-2 d-flex align-items-center">
+                    <span class="status-dot @(Model.Status ? "dot-active" : "dot-closed")"></span>
+                    <span class="small text-uppercase fw-bold">
+                        @(Model.Status ? "Key Activa" : "Key Inactiva")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+            <div class="row g-5">
+                
+                <!-- COLUMNA IZQUIERDA: INFORMACION DE LA CLAVE -->
+                <div class="col-12 col-lg-7">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                        <i class="fas fa-info-circle text-primary"></i>
+                        Información de la Key
+                    </h3>
+
+                    <div class="mb-4">
+                        <div class="info-card p-4 rounded-4 shadow-sm border" style="background: var(--surface-alt);">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="icon-circle bg-primary-subtle text-primary">
+                                    <i class="fas fa-key"></i>
+                                </div>
+                                <span class="small fw-bold text-dark text-uppercase">Key API</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <code id="apiKeyValue" class="flex-grow-1 p-3 rounded-3 text-break" style="background: var(--white); border: 1px solid var(--primary-200); color: var(--primary-800); font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 600; font-size: 0.9rem;">@Model.Key</code>
+                                <button type="button" class="action-btn btn-view" onclick="copyApiKey()" title="Copiar clave" style="width: 45px; height: 45px; font-size: 1.2rem;">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h3 class="h6 fw-bold text-dark text-uppercase mb-4 d-flex align-items-center gap-2 mt-5">
+                            <i class="fas fa-shield-alt text-primary"></i> Permisos Asignados
+                        </h3>
+                        
+                        @if (assignedPermissions.Any())
+                        {
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var grupo in assignedPermissions)
+                                {
+                                    <div class="info-card p-4 rounded-4 shadow-sm border">
+                                        <div class="d-flex align-items-center gap-3 mb-3">
+                                            <div class="icon-circle bg-gray-100 text-gray-500">
+                                                <i class="fas fa-table"></i>
+                                            </div>
+                                            <span class="small fw-bold text-dark text-uppercase">Tabla: @grupo.DatabaseTable</span>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-2 ms-5">
+                                            @foreach (var permission in grupo.Permissions)
+                                            {
+                                                <div class="v2-badge v2-badge-primary">
+                                                    <span class="v2-badge-dot"></span>
+                                                    @permission
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info rounded-4 border-0 shadow-sm d-flex align-items-center gap-3 p-4">
+                                <i class="fas fa-info-circle fs-4 text-primary"></i>
+                                <div>
+                                    <p class="mb-0 fw-bold">Sin permisos asignados</p>
+                                    <p class="small mb-0 opacity-75">Esta API Key no tiene privilegios de acceso configurados.</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- COLUMNA DERECHA: AUDITORIA -->
+                <div class="col-12 col-lg-5">
+                    <h3 class="section-title h5 text-dark d-flex align-items-center gap-2 mb-4">
+                        <i class="fas fa-history text-primary"></i>
+                        Bitácora de Registro
+                    </h3>
+
+                    <div class="detail-grid d-flex flex-column gap-3">
+                        <div class="p-4 border-start border-success border-4 bg-light rounded-4 shadow-sm">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <div class="icon-circle bg-success-subtle text-success">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <span class="small fw-bold text-dark text-uppercase">Creado por</span>
+                            </div>
+                            <p class="small fw-bold text-dark mb-0 ms-5">
+                                @(Model.CreatedByUser?.Name ?? "Sistema")
+                            </p>
+                            <p class="small text-muted mb-0 ms-5 opacity-75">
+                                @FormatFullDate(Model.CreatedAt)
+                            </p>
+                        </div>
+
+                        @if (Model.UpdatedByUser != null)
+                        {
+                            <div class="p-4 border-start border-warning border-4 bg-light rounded-4 shadow-sm">
+                                <div class="d-flex align-items-center gap-3 mb-2">
+                                    <div class="icon-circle bg-warning-subtle text-warning">
+                                        <i class="fas fa-user-edit"></i>
+                                    </div>
+                                    <span class="small fw-bold text-dark text-uppercase">Última Modificación</span>
+                                </div>
+                                <p class="small fw-bold text-dark mb-0 ms-5">
+                                    @Model.UpdatedByUser.Name
+                                </p>
+                                <p class="small text-muted mb-0 ms-5 opacity-75">
+                                    @(Model.UpdatedAt.HasValue ? FormatFullDate(Model.UpdatedAt.Value) : "N/A")
+                                </p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer py-4 px-5 bg-light border-top d-flex justify-content-between align-items-center">
+            <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4 fw-bold">
+                <i class="fas fa-arrow-left me-2"></i> Volver al Listado
+            </a>
+            
+            <div class="d-flex gap-2">
+                @if (User.HasClaim("UserType", "1"))
+                {
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="v2-btn btn-primary shadow-sm">
+                        <i class="fas fa-edit"></i> Editar API Key
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function copyApiKey() {
+            const apiKeyValue = document.getElementById('apiKeyValue').value;
+            navigator.clipboard.writeText(apiKeyValue).then(function() {
+                if (typeof showToast === 'function') showToast('✅ Key API copiada al portapapeles', 'success');
+                else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Copiado!',
+                        text: 'La clave API ha sido copiada al portapapeles',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            }, function(err) {
+                if (typeof showToast === 'function') showToast('❌ Error al copiar', 'error');
+                else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'No se pudo copiar la clave',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animación de entrada para las secciones
+            const sections = document.querySelectorAll('.form-section');
+            sections.forEach((section, index) => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+
+                setTimeout(() => {
+                    section.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                    section.style.opacity = '1';
+                    section.style.transform = 'translateY(0)';
+                }, 100 * (index + 1));
+            });
+        });
+    </script>
+}
+
+@section Styles {
+    <!-- ApiKey Details uses global components from v2-site.css -->
+}

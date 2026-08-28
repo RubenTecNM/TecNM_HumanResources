@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - HumanResourcesProduction</title>
+    
+    <script src="~/lib/sweetalert2/dist/sweetalert2.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <link rel="stylesheet" href="~/lib/animate.css/animate.min.css" />
+    <link rel="stylesheet" href="~/lib/aos/dist/aos.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/lib/font-awesome/css/all.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/cssv2/v2-site.css?v=@DateTime.Now.Ticks" asp-append-version="true" />
+    <link href="~/lib/select2/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/HumanResourcesProduction.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/flatpickr/dist/flatpickr.min.css">
+    
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <!-- Background animado minimalista -->
+    <!-- Modern Web Background -->
+    <div class="modern-bg">
+        <div class="gradient-overlay"></div>
+        <div class="dot-mesh"></div>
+        <div class="glow-spots">
+            <div class="glow glow-1"></div>
+            <div class="glow glow-2"></div>
+        </div>
+        <div class="wave-container">
+            <svg class="wave wave-1" viewBox="0 0 1200 600" preserveAspectRatio="none">
+                <path d="M0,300 Q300,250 600,300 T1200,300" />
+            </svg>
+            <svg class="wave wave-2" viewBox="0 0 1200 600" preserveAspectRatio="none">
+                <path d="M0,320 Q300,370 600,320 T1200,320" />
+            </svg>
+        </div>
+        <div class="particles" id="particlesContainer"></div>
+    </div>
+
+    @{
+        var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+        var currentCtrl = ViewContext.RouteData.Values["Controller"]?.ToString();
+        var sidebarExpanded = Context.Request.Cookies["sidebar-expanded"] == "true";
+    }
+
+    @if (isAuthenticated)
+    {
+        <!-- Mobile Top Header (Fixed) -->
+        <header class="mobile-header bg-white border-bottom shadow-sm">
+            <div class="mobile-header__container d-flex align-items-center px-3 h-100 gap-3">
+                <button type="button" class="mobile-header__menu-btn btn shadow-none p-0" data-bs-toggle="offcanvas" data-bs-target="#mobileDrawer">
+                    <i class="fas fa-bars-staggered"></i>
+                </button>
+                <div class="mobile-header__title flex-grow-1 overflow-hidden">
+                    <span class="fw-bold">@ViewData["Title"]</span>
+                </div>
+                <!-- Account Actions (Mobile) -->
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Profile Avatar -->
+                    <a asp-controller="User" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="mobile-header__profile">
+                        <div class="user-avatar-circle shadow-sm" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                            @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                        </div>
+                    </a>
+                    <!-- Quick Logout -->
+                    <a href="javascript:document.getElementById('logoutFormMobileHeader').submit()" class="btn btn-link text-danger p-1" title="Cerrar Sesión">
+                        <i class="fas fa-power-off"></i>
+                    </a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" id="logoutFormMobileHeader" style="display:none;"></form>
+                </div>
+            </div>
+        </header>
+
+        <!-- Mobile Side Drawer (Offcanvas) -->
+        <div class="offcanvas offcanvas-start mobile-drawer" tabindex="-1" id="mobileDrawer" aria-labelledby="mobileDrawerLabel">
+            <div class="offcanvas-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="user-avatar-circle shadow-sm" style="width: 48px; height: 48px; border: 2px solid rgba(27, 57, 106, 0.2); background: rgba(27, 57, 106, 0.1); color: var(--primary-dark);">
+                        @(User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U")
+                    </div>
+                    <div>
+                        <h5 class="offcanvas-title fw-bold" id="mobileDrawerLabel">@User.Identity?.Name</h5>
+                        <span class="small text-muted">Gestión de RRHH</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-0">
+                <ul class="drawer-menu">
+                    <li class="drawer-section">Navegación</li>
+                    <li>
+                        <a asp-controller="Permission" asp-action="Index" class="drawer-link @(currentCtrl == "Permission" ? "active" : "")">
+                            <i class="fas fa-file-contract"></i> Permisos
+                        </a>
+                    </li>
+                    <authorize-section policy="RHOrAdmin">
+                        <li>
+                            <a asp-controller="Cutoff" asp-action="Index" class="drawer-link @(currentCtrl == "Cutoff" ? "active" : "")">
+                                <i class="fas fa-calendar-check"></i> Periodos
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="User" asp-action="Index" class="drawer-link @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                                <i class="fas fa-users-cog"></i> Usuarios
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="Departments" asp-action="Index" class="drawer-link @(currentCtrl == "Departments" ? "active" : "")">
+                                <i class="fas fa-sitemap"></i> Departamentos
+                            </a>
+                        </li>
+                    </authorize-section>
+
+                    <authorize-section policy="AdminOnly">
+                        <li class="drawer-section">Administración</li>
+                        <li>
+                            <a asp-controller="AuditLog" asp-action="Index" class="drawer-link @(currentCtrl == "AuditLog" ? "active" : "")">
+                                <i class="fas fa-history"></i> Auditoría
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="ApiKey" asp-action="Index" class="drawer-link @(currentCtrl == "ApiKey" ? "active" : "")">
+                                <i class="fas fa-key"></i> API Keys
+                            </a>
+                        </li>
+                    </authorize-section>
+                    
+                    <li class="drawer-section">Cuenta</li>
+                    <li>
+                        <a asp-controller="User" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="drawer-link @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
+                            <i class="fas fa-user-circle"></i> Mi Perfil
+                        </a>
+                    </li>
+                    <li class="mt-4 px-3">
+                        <form asp-controller="Account" asp-action="Logout" method="post" id="logoutFormMobile">
+                            <button type="submit" class="btn w-100 rounded-pill py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2" 
+                                    style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none;">
+                                <i class="fas fa-power-off"></i> Cerrar Sesión
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <aside class="navbar-side @(sidebarExpanded ? "navbar-side--expanded" : "")" id="desktopSidebar">
+            <div class="navbar-side__brand" style="display: flex; justify-content: center; padding: 1.25rem 0; border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 0.75rem;">
+                <button type="button" id="sidebarToggle" class="navbar-side__toggle" aria-label="Expandir menú lateral" aria-expanded="false" title="Expandir menú lateral">
+                    <i class="fas fa-layer-group"></i>
+                </button>
+            </div>
+
+            <ul class="navbar-side__menu">
+                <li class="navbar-side__item @(currentCtrl == "Permission" ? "active" : "")">
+                    <a asp-controller="Permission" asp-action="Index" class="navbar-side__link">
+                        <i class="fas fa-file-contract"></i>
+                        <span>Permisos</span>
+                    </a>
+                </li>
+
+                <authorize-section policy="RHOrAdmin">
+                    <li class="navbar-side__item @(currentCtrl == "Cutoff" ? "active" : "")">
+                        <a asp-controller="Cutoff" asp-action="Index" class="navbar-side__link">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Periodos</span>
+                        </a>
+                    </li>
+                    <li class="navbar-side__item @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")">
+                        <a asp-controller="User" asp-action="Index" class="navbar-side__link">
+                            <i class="fas fa-users-cog"></i>
+                            <span>Usuarios</span>
+                        </a>
+                    </li>
+                    <li class="navbar-side__item @(currentCtrl == "Departments" ? "active" : "")">
+                        <a asp-controller="Departments" asp-action="Index" class="navbar-side__link">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Departamentos</span>
+                        </a>
+                    </li>
+                </authorize-section>
+
+                <authorize-section policy="AdminOnly">
+                    <li class="navbar-side__item d-none d-lg-block @(currentCtrl == "AuditLog" ? "active" : "")">
+                        <a asp-controller="AuditLog" asp-action="Index" class="navbar-side__link">
+                            <i class="fas fa-history"></i>
+                            <span>Auditoría</span>
+                        </a>
+                    </li>
+                    <li class="navbar-side__item d-none d-lg-block @(currentCtrl == "ApiKey" ? "active" : "")">
+                        <a asp-controller="ApiKey" asp-action="Index" class="navbar-side__link">
+                            <i class="fas fa-key"></i>
+                            <span>API Keys</span>
+                        </a>
+                    </li>
+                </authorize-section>
+
+                <!-- Hamburger Trigger (Visible only on mobile) -->
+                <li class="navbar-side__item d-lg-none">
+                    <a href="javascript:void(0)" class="navbar-side__link" data-bs-toggle="offcanvas" data-bs-target="#mobileDrawer">
+                        <i class="fas fa-bars"></i>
+                        <span>Más</span>
+                    </a>
+                </li>
+            </ul>
+ 
+            <!-- Sidebar Footer (Account Actions) -->
+            <div class="navbar-side__footer mt-auto pt-3 border-top">
+                <ul class="navbar-side__menu mb-0">
+                    <li class="navbar-side__item @(currentCtrl == "User" && ViewContext.RouteData.Values["Action"]?.ToString() == "Details" ? "active" : "")">
+                        <a asp-controller="User" asp-action="Details" asp-route-id="@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value" class="navbar-side__link">
+                            <i class="fas fa-user-circle"></i>
+                            <span>Perfil</span>
+                        </a>
+                    </li>
+                    <li class="navbar-side__item">
+                        <form asp-controller="Account" asp-action="Logout" method="post" id="logoutForm" style="display:none;"></form>
+                        <a href="javascript:document.getElementById('logoutForm').submit()" class="navbar-side__link text-danger">
+                            <i class="fas fa-power-off"></i>
+                            <span>Salir</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+    }
+
+    <div id="mainContent" class="container @(isAuthenticated ? "main-content-shifted" : "mt-4") @(isAuthenticated && sidebarExpanded ? "main-content-shifted--expanded" : "")">
+        <main role="main" class="main-content">
+            @if (TempData["ErrorAlert"] != null)
+            {
+                <div data-error-alert='@TempData["ErrorAlert"]' style="display:none;"></div>
+            }
+            @if (TempData["SuccessAlert"] != null)
+            {
+                <div data-success-alert='@TempData["SuccessAlert"]' style="display:none;"></div>
+            }
+            
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/select2/dist/js/select2.min.js"></script>
+    <script src="~/lib/aos/dist/aos.js"></script>
+    <script src="~/lib/flatpickr/dist/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/dist/l10n/es.js"></script>
+    <script src="~/lib/cleave.js/dist/cleave.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('desktopSidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const mainContent = document.getElementById('mainContent');
+
+            if (sidebar && sidebarToggle && mainContent) {
+                const cookieName = 'sidebar-expanded';
+                const readCookie = (name) => {
+                    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+                    return match ? decodeURIComponent(match[2]) : null;
+                };
+                const setSidebarState = (expanded) => {
+                    sidebar.classList.toggle('navbar-side--expanded', expanded);
+                    mainContent.classList.toggle('main-content-shifted--expanded', expanded);
+                    sidebarToggle.setAttribute('aria-expanded', expanded.toString());
+                    sidebarToggle.setAttribute('aria-label', expanded ? 'Contraer menú lateral' : 'Expandir menú lateral');
+                    sidebarToggle.setAttribute('title', expanded ? 'Contraer menú lateral' : 'Expandir menú lateral');
+                    document.cookie = cookieName + '=' + expanded + ';path=/;max-age=31536000;samesite=lax';
+                };
+
+                setSidebarState(readCookie(cookieName) === 'true');
+                sidebarToggle.addEventListener('click', () => {
+                    setSidebarState(!sidebar.classList.contains('navbar-side--expanded'));
+                });
+            }
+
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+            window.scrollTo(0, 0);
+
+            AOS.init({ duration: 800, once: true });
+
+            // Lógica para el botón de 100K (Mantenida)
+            const generateBtn = document.getElementById('generateTestDataBtn');
+            if (generateBtn) {
+                generateBtn.onclick = async () => {
+                    const confirm = await Swal.fire({
+                        title: '¿Generar 100,000 registros?',
+                        text: "Esta acción llenará la base de datos para pruebas de rendimiento.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#10B981',
+                        confirmButtonText: 'Sí, generar'
+                    });
+
+                    if (confirm.isConfirmed) {
+                        Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                        try {
+                            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                            const response = await fetch('/Permission/GenerateTestData', {
+                                method: 'POST',
+                                headers: { 'RequestVerificationToken': token }
+                            });
+                            const data = await response.json();
+                            Swal.fire(data.success ? 'Éxito' : 'Error', data.message, data.success ? 'success' : 'error');
+                            if(data.success) location.reload();
+                        } catch (e) {
+                            Swal.fire('Error', 'Hubo un problema de conexión', 'error');
+                        }
+                    }
+                }
+            }
+
+            // Prevenir animación del drawer durante resize
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                const mobileDrawer = document.getElementById('mobileDrawer');
+                if (mobileDrawer) {
+                    mobileDrawer.classList.add('resizing');
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(function() {
+                        mobileDrawer.classList.remove('resizing');
+                    }, 100);
+                }
+            });
+        });
+
+        // Optimized particle generation - reduced count
+        function createParticles() {
+            const container = document.getElementById('particlesContainer');
+            if (!container) return; // Guard clause
+            const particleCount = 15; // Optimized for performance
+            const fragment = document.createDocumentFragment();
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = (Math.random() * 18) + 's';
+                particle.style.animationDuration = (15 + Math.random() * 6) + 's';
+                fragment.appendChild(particle);
+            }
+
+            container.appendChild(fragment);
+        }
+
+        // Initialize particles on load
+        document.addEventListener('DOMContentLoaded', createParticles);
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
