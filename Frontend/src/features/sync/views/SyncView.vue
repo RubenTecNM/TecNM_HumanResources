@@ -118,6 +118,8 @@
 
 <script setup lang="ts">
 import { reactive } from 'vue'
+import { confirmImportWithWarnings } from '../composables/useSyncWarnings'
+import { showToast } from '@/shared/composables/useAlerts'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import {
@@ -177,11 +179,16 @@ async function onFileSelected(kind: SyncKind, e: Event) {
 async function onImport(kind: SyncKind) {
   const st = states[kind]
   if (!st.file || st.importing) return
+  if (st.preview) {
+    const proceed = await confirmImportWithWarnings(kind, st.preview)
+    if (!proceed) return
+  }
   st.importing = true
   try {
     st.summary = await runImport(kind, st.file)
     st.preview = null
     st.file = null
+    showToast("Importación completada exitosamente", "success")
   } catch (err: any) {
     st.error = err.response?.data?.message || 'La importación falló.'
   } finally {

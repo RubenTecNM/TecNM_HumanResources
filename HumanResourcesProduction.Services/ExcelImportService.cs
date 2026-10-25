@@ -509,6 +509,16 @@ public class ExcelImportService
 
             bool withPay = ParseBoolOrDefault(Cell(row, "Con Goce"), defaultValue: false);
 
+            // Regla de negocio: si el corte está abierto (vigente), los permisos permanecen Pendientes
+            // para revisión por el jefe de área, salvo que vengan explícitamente autorizados con goce.
+            bool isCutoffOpen = cutoff.CutoffStatusTypeId == (int)CutoffStatusEnum.Open;
+            int initialStatusId = isCutoffOpen && !withPay
+                ? (int)PermissionStatusEnum.Pending
+                : (int)PermissionStatusEnum.Approved;
+            DateTime? initialAuthorizedAt = initialStatusId == (int)PermissionStatusEnum.Approved
+                ? DateTime.Now
+                : null;
+
             var perm = new Permission
             {
                 RequestingUserId = requester.Id,
@@ -518,8 +528,8 @@ public class ExcelImportService
                 Reason = string.IsNullOrWhiteSpace(Cell(row, "Motivo")) ? "Carga masiva" : Cell(row, "Motivo").Trim(),
                 WithPay = withPay,
                 CutoffId = cutoff.Id,
-                PermissionStatusTypeId = (int)PermissionStatusEnum.Approved,
-                AuthorizedAt = DateTime.Now,
+                PermissionStatusTypeId = initialStatusId,
+                AuthorizedAt = initialAuthorizedAt,
                 CreatedAt = DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 CreatedByUserId = actorUserId,

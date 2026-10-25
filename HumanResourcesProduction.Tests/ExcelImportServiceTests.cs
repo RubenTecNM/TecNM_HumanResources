@@ -363,4 +363,54 @@ public class ExcelImportServiceTests
 
         Assert.Contains(preview.Rows, r => r.Status == "error" && r.Message.Contains("999"));
     }
+
+    [Fact]
+    public async Task ImportPermisos_PeriodoAbiertoVigente_PermisosPermanecenPendientesPorRevisar()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(ImportPermisos_PeriodoAbiertoVigente_PermisosPermanecenPendientesPorRevisar));
+        var service = CreateService(context);
+
+        // Creamos un corte ABIERTO (vigente, sin auditoría de cierre)
+        var openCutoff = new Cutoff
+        {
+            StartDate = new DateTime(2026, 10, 1),
+            EndDate = new DateTime(2026, 10, 31),
+            CutoffStatusTypeId = (int)CutoffStatusEnum.Open,
+            CreatedAt = DateTime.Now,
+            CreatedByUserId = 1
+        };
+        context.Cutoffs.Add(openCutoff);
+        await context.SaveChangesAsync();
+
+        using (var wb = new XLWorkbook())
+        {
+            var p = wb.Worksheets.Add("Periodos");
+            p.Cell(1, 1).Value = "Fecha Inicio"; p.Cell(1, 2).Value = "Fecha Fin";
+            p.Cell(2, 1).Value = "01/10/2026"; p.Cell(2, 2).Value = "31/10/2026";
+
+            var m = wb.Worksheets.Add("Permisos");
+            string[] h = { "Correo Solicitante", "Tipo Permiso", "Periodo Inicio", "Periodo Fin", "Fecha Inicio", "Con Goce", "Motivo" };
+            for (int i = 0; i < h.Length; i++) m.Cell(1, i + 1).Value = h[i];
+            m.Cell(2, 1).Value = "empleado@test.local";
+            m.Cell(2, 2).Value = "Permiso General";
+            m.Cell(2, 3).Value = "01/10/2026";
+            m.Cell(2, 4).Value = "31/10/2026";
+            m.Cell(2, 5).Value = "15/10/2026";
+            m.Cell(2, 6).Value = "NO"; // sin goce explícito
+            m.Cell(2, 7).Value = "Asunto personal vigente";
+
+            using var ms = new MemoryStream();
+            wb.SaveAs(ms);
+            var summary = await service.ImportAsync("permisos", new MemoryStream(ms.ToArray()), 1);
+            Assert.Equal(1, summary.CreatedPermissions);
+        }
+
+        var perm = await context.Permissions
+            .SingleAsync(p => p.RequestingUser.Email == "empleado@test.local" && p.CutoffId == openCutoff.Id);
+
+        // Regla: al pertenecer a un corte vigente (Open), debe permanecer PENDIENTE para revisión de jefatura
+        Assert.Equal((int)PermissionStatusEnum.Pending, perm.PermissionStatusTypeId);
+        Assert.Null(perm.AuthorizedAt);
+        Assert.False(perm.WithPay);
+    }
 }
