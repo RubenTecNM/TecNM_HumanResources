@@ -6,6 +6,23 @@
 :root {
   /* Institutional Brand Colors */
   --tecnm-blue-primary: #1B396A;
+  /* Sidebar TecNM Design Tokens */
+  --navy: #1b3a6b;
+  --navy-d: #142c54;
+  --gold: #c9a24d;
+  --gold-s: rgba(201, 162, 77, 0.28);
+  --cream: #f7f2e5;
+  --bg: #ffffff;
+  --page: #f3f5f9;
+  --line: #e6e9ef;
+  --tx: #1e2f55;
+  --mut: #64748b;
+  --hover: #eef3fb;
+  --red: #d92d2d;
+  --red-bg: #fff1f1;
+  --red-l: #f6caca;
+  --inp: #f1f4f9;
+
   --tecnm-blue-dark: #0F2548;
   --tecnm-blue-hover: #244B88;
   --tecnm-gold-accent: #C5A059;
@@ -64,7 +81,7 @@
 
   /* Layout: collapsible sidebar */
   --tecnm-nav-width: 88px;
-  --tecnm-nav-width-expanded: 240px;
+  --tecnm-nav-width-expanded: 260px;
   --tecnm-header-height: 64px;
 
   /* Spacing scale */
@@ -92,6 +109,17 @@
    Reuses the deep-blue + gold palette of the login `tecnm-modern-bg`
    ============================================================ */
 [data-theme='dark'] {
+  --bg: #0f172a;
+  --page: #0b1120;
+  --line: rgba(148, 163, 184, 0.16);
+  --tx: #f1f5f9;
+  --mut: #94a3b8;
+  --hover: rgba(255, 255, 255, 0.06);
+  --cream: rgba(201, 162, 77, 0.18);
+  --inp: #1e293b;
+  --red-bg: rgba(217, 45, 45, 0.15);
+  --red-l: rgba(217, 45, 45, 0.35);
+
   --tecnm-blue-primary: #2C4E8C;
   --tecnm-blue-dark: #0A1A33;
   --tecnm-blue-hover: #3B62A8;
