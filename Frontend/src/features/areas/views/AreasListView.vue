@@ -119,26 +119,30 @@
       </section>
     </template>
 
-    <!-- Modal Formulario Reactivo (Crear / Editar Área) -->
+    <!-- Modal Formulario Reactivo (Crear / Editar Área - Guía TecNM 4.3) -->
     <AppModal
       v-model:show="showModal"
       :title="editingArea ? `Editar Área #${editingArea.id}` : 'Nueva Área'"
-      icon="fa-folder"
+      :eyebrow="editingArea ? `ÁREA #${editingArea.id}` : 'ÁREAS'"
+      header-variant="plain"
+      size="md"
       :loading="submitting"
       :confirm-text="editingArea ? 'Actualizar' : 'Guardar'"
       @confirm="saveArea"
     >
-      <div class="tecnm-form-group">
-        <label class="tecnm-label" for="areaDescription">Nombre del Área <span class="text-danger">*</span></label>
+      <label class="field">
+        <span class="lbl">NOMBRE DEL ÁREA *</span>
         <input
           id="areaDescription"
           v-model="modalForm.description"
           type="text"
-          class="tecnm-form-control"
+          class="in"
           placeholder="Ej. Dirección, Recursos Humanos..."
           maxlength="100"
+          autofocus
         />
-      </div>
+        <span class="help">Máximo 100 caracteres.</span>
+      </label>
     </AppModal>
   </div>
 </template>

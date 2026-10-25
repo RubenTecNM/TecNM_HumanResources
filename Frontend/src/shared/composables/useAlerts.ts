@@ -127,7 +127,7 @@ export async function confirmOrExecute(
   return undefined
 }
 
-// Simple confirmation dialog without a prior server round-trip
+// Simple confirmation dialog without a prior server round-trip (Guía TecNM 4.4 y 4.5)
 export async function askConfirmation(params: {
   title: string
   text?: string
@@ -139,9 +139,17 @@ export async function askConfirmation(params: {
     text: params.text || '',
     icon: params.danger ? 'warning' : 'question',
     showCancelButton: true,
-    confirmButtonColor: params.danger ? '#d33' : '#3085d6',
-    cancelButtonColor: '#a0aec0',
-    confirmButtonText: params.confirmText || 'Sí, continuar',
+    buttonsStyling: false,
+    focusCancel: params.danger === true,
+    customClass: {
+      popup: 'modal modal--sm tecnm-swal-popup',
+      title: 'tecnm-swal-title',
+      htmlContainer: 'tecnm-swal-text',
+      confirmButton: params.danger ? 'btn btn-danger' : 'btn btn-primary',
+      cancelButton: 'btn btn-ghost',
+      actions: 'ft ft--split tecnm-swal-actions'
+    },
+    confirmButtonText: params.confirmText || (params.danger ? 'Eliminar' : 'Aceptar'),
     cancelButtonText: 'Cancelar'
   })
   return result.isConfirmed

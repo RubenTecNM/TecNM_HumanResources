@@ -1364,3 +1364,299 @@ select.tecnm-form-control {
   }
   .tecnm-animated-bg { display: none !important; }
 }
+
+/* ============================================================
+   MODALES TECNM (Estándar guía-modales-tecnm.md)
+   ============================================================ */
+
+/* Tokens de modales */
+:root {
+  --soft: #f5f7fb;
+  --chip: #eaf0fa;
+  --chip-h: #d9e5f7;
+  --ok: #1c7a46;
+  --ok-bg: #eaf7ef;
+  --r-modal: 16px;
+  --r-ctl: 10px;
+  --r-chip: 10px;
+}
+
+[data-theme="dark"] {
+  --soft: #162444;
+  --chip: #1e335e;
+  --chip-h: #2a4680;
+  --ok-bg: rgba(28, 122, 70, 0.2);
+}
+
+/* 3.3 Título de sección */
+.sec, h3.sec, h4.sec {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--mut, #64748b);
+  text-transform: uppercase;
+}
+
+.sec::before, h3.sec::before, h4.sec::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold, #c9a24d);
+  flex-shrink: 0;
+}
+
+.sec::after, h3.sec::after, h4.sec::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line, #e6e9ef);
+}
+
+/* 3.4 Fila de dato (solo lectura) */
+.bd .row, .modal .row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line, #e6e9ef);
+  margin: 0;
+}
+
+.bd .row:last-child, .modal .row:last-child {
+  border-bottom: 0;
+}
+
+.bd .ic, .modal .ic {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-chip, 10px);
+  background: var(--chip, #eaf0fa);
+  display: grid;
+  place-items: center;
+  color: #2c4a7c;
+}
+
+.bd .ic svg, .modal .ic svg {
+  width: 18px;
+  height: 18px;
+  stroke: #2c4a7c;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.bd .ic i, .modal .ic i {
+  font-size: 16px;
+  color: #2c4a7c;
+}
+
+.bd .tx, .modal .tx {
+  min-width: 0;
+  flex: 1;
+}
+
+.bd .tx small, .modal .tx small {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--mut, #64748b);
+  text-transform: uppercase;
+}
+
+.bd .tx span, .modal .tx span {
+  display: block;
+  margin-top: 2px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--tx, #1e2f55);
+  overflow-wrap: anywhere;
+}
+
+[data-theme="dark"] .bd .tx span,
+[data-theme="dark"] .modal .tx span {
+  color: #f1f5f9;
+}
+
+/* Botón de acción en fila (ej. Copiar) */
+.cp, .btn-copy {
+  flex: none;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #d3dae7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--navy, #1b3a6b);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cp:hover, .btn-copy:hover {
+  background: var(--chip, #eaf0fa);
+  border-color: #c9d6ee;
+}
+
+/* 3.5 Campos de formulario */
+.field {
+  display: block;
+  margin: 14px 0;
+}
+
+.lbl {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--mut, #64748b);
+  text-transform: uppercase;
+}
+
+.in {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--r-ctl, 10px);
+  background: #f1f4f9;
+  color: var(--tx, #1e2f55);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .in {
+  background: #142342;
+  color: #f1f5f9;
+}
+
+select.in {
+  cursor: pointer;
+}
+
+textarea.in {
+  height: auto;
+  min-height: 88px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.in:hover {
+  border-color: #d3dae7;
+}
+
+.in:focus {
+  border-color: var(--gold, #c9a24d);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px var(--gold-s, rgba(201, 162, 77, 0.28));
+}
+
+[data-theme="dark"] .in:focus {
+  background: #182a4d;
+}
+
+.help {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--mut, #64748b);
+}
+
+.field.err .in {
+  border-color: var(--red, #d92d2d);
+  background: var(--red-bg, #fff1f1);
+}
+
+.field.err .in:focus {
+  box-shadow: 0 0 0 4px rgba(217, 45, 45, 0.15);
+}
+
+.field.err .help {
+  color: var(--red, #d92d2d);
+}
+
+/* 3.7 Insignias de estado */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge--pend {
+  background: rgba(201, 162, 77, 0.2);
+  color: #8a6a1f;
+}
+
+.badge--ok {
+  background: var(--ok-bg, #eaf7ef);
+  color: var(--ok, #1c7a46);
+}
+
+.badge--no {
+  background: var(--red-bg, #fff1f1);
+  color: var(--red, #d92d2d);
+}
+
+/* 4.4 y 4.5 Confirmación SweetAlert2 */
+.tecnm-swal-popup {
+  border-radius: var(--r-modal, 16px) !important;
+  border: 1px solid var(--line, #e6e9ef) !important;
+  box-shadow: 0 24px 60px -12px rgba(20, 44, 84, 0.45) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+.swal2-container .tecnm-swal-popup .swal2-icon {
+  margin: 28px auto 0 !important;
+  border-width: 2px !important;
+}
+
+.tecnm-swal-title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--tx, #1e2f55) !important;
+  margin: 14px 24px 6px !important;
+  padding: 0 !important;
+}
+
+.tecnm-swal-text {
+  font-size: 14px !important;
+  color: var(--mut, #64748b) !important;
+  line-height: 1.5 !important;
+  margin: 0 24px 20px !important;
+  padding: 0 !important;
+}
+
+.tecnm-swal-actions {
+  margin: 0 !important;
+  padding: 14px 24px !important;
+  background: var(--soft, #f5f7fb) !important;
+  border-top: 1px solid var(--line, #e6e9ef) !important;
+  display: flex !important;
+  gap: 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.tecnm-swal-actions .btn {
+  flex: 1 !important;
+}

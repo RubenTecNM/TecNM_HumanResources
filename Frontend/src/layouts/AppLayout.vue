@@ -145,22 +145,89 @@
         </div>
       </div>
 
-      <!-- User Profile Modal -->
+      <!-- User Profile Modal (Estándar Guía de Modales TecNM Sección 4.1) -->
       <AppModal
         v-model:show="showProfile"
-        title="Mi perfil"
-        icon="fa-user"
+        :title="authStore.user?.name || 'Mi perfil'"
+        eyebrow="MI PERFIL"
+        header-variant="identity"
+        :avatar-initial="authStore.initial"
+        :pill="roleLabel"
+        size="md"
         :show-cancel="false"
         confirm-text="Cerrar"
         @confirm="showProfile = false"
       >
-        <div class="user-detail-grid" v-if="authStore.user">
-          <div class="detail-row"><span class="detail-label">Nombre</span><span class="detail-value">{{ authStore.user.name }}</span></div>
-          <div class="detail-row"><span class="detail-label">Correo</span><span class="detail-value">{{ authStore.user.email }}</span></div>
-          <div class="detail-row"><span class="detail-label">Tipo de Usuario</span><span class="detail-value">{{ roleLabel }}</span></div>
-          <div v-if="authStore.user.position" class="detail-row"><span class="detail-label">Puesto</span><span class="detail-value">{{ authStore.user.position }}</span></div>
-          <div v-if="authStore.user.department" class="detail-row"><span class="detail-label">Departamento</span><span class="detail-value">{{ authStore.user.department }}</span></div>
-          <div v-if="authStore.user.area" class="detail-row"><span class="detail-label">Área</span><span class="detail-value">{{ authStore.user.area }}</span></div>
+        <div v-if="authStore.user">
+          <h3 class="sec">CONTACTO</h3>
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>CORREO INSTITUCIONAL</small>
+              <span>{{ authStore.user.email }}</span>
+            </div>
+          </div>
+
+          <h3 class="sec">ADSCRIPCIÓN</h3>
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>TIPO DE USUARIO</small>
+              <span>{{ roleLabel }}</span>
+            </div>
+          </div>
+
+          <div v-if="authStore.user.position" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>PUESTO</small>
+              <span>{{ authStore.user.position }}</span>
+            </div>
+          </div>
+
+          <div v-if="authStore.user.department" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="5" rx="1" />
+                <rect x="2" y="16" width="6" height="5" rx="1" />
+                <rect x="16" y="16" width="6" height="5" rx="1" />
+                <path d="M12 8v4M5 16v-4h14v4" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>DEPARTAMENTO</small>
+              <span>{{ authStore.user.department }}</span>
+            </div>
+          </div>
+
+          <div v-if="authStore.user.area" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>ÁREA</small>
+              <span>{{ authStore.user.area }}</span>
+            </div>
+          </div>
         </div>
       </AppModal>
     </aside>

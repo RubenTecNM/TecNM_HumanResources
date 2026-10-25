@@ -158,51 +158,160 @@
         </div>
       </section>
     </template>
-    <!-- Modal de detalle de usuario -->
+    <!-- Modal de detalle de usuario (Guía TecNM Sección 4.1 y 4.2) -->
     <AppModal
       :show="detailModal.open"
-      :title="`Ficha de Usuario #${detailModal.id}`"
+      :title="detailModal.data?.name || `Usuario #${detailModal.id}`"
+      eyebrow="FICHA DE USUARIO"
+      header-variant="identity"
+      :avatar-initial="detailModal.data?.name ? detailModal.data.name.charAt(0).toUpperCase() : 'U'"
+      :pill="`#${detailModal.id} · ${detailModal.data?.userType || 'Empleado'}`"
+      size="md"
       @close="detailModal.open = false"
     >
       <template #default>
         <AppSpinner v-if="detailModal.loading" />
-        <div v-else-if="detailModal.error" class="alert alert-danger">
-          <i class="fa fa-exclamation-triangle me-2"></i>{{ detailModal.error }}
+        <div v-else-if="detailModal.error" class="field err">
+          <div class="help"><i class="fa fa-exclamation-triangle me-2"></i>{{ detailModal.error }}</div>
         </div>
-        <div v-else class="user-detail-grid">
-          <div class="detail-row"><span class="detail-label">Nombre</span><span class="detail-value">{{ detailModal.data?.name }}</span></div>
-          <div class="detail-row"><span class="detail-label">Correo</span><span class="detail-value">{{ detailModal.data?.email }}</span></div>
-          <div class="detail-row"><span class="detail-label">Departamento</span><span class="detail-value">{{ detailModal.data?.department || 'N/A' }}</span></div>
-          <div class="detail-row"><span class="detail-label">Área</span><span class="detail-value">{{ detailModal.data?.area || 'N/A' }}</span></div>
-          <div class="detail-row"><span class="detail-label">Puesto</span><span class="detail-value">{{ detailModal.data?.position || 'N/A' }}</span></div>
-          <div class="detail-row"><span class="detail-label">Tipo de Usuario</span><span class="detail-value">{{ detailModal.data?.userType || 'N/A' }}</span></div>
-          <div v-if="detailModal.data?.tempPassword" class="detail-row">
-            <span class="detail-label">Clave temporal</span>
-            <span class="detail-value temp-password">
-              {{ detailModal.data.tempPassword }}
-              <button type="button" class="temp-copy" title="Copiar" @click="copyTempPassword(detailModal.data!.tempPassword!)">
-                <i class="fa fa-clipboard" aria-hidden="true"></i>
-              </button>
-              <small>(visible hasta que el usuario ingrese)</small>
-            </span>
+        <div v-else>
+          <h3 class="sec">CONTACTO Y ACCESO</h3>
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>CORREO INSTITUCIONAL</small>
+              <span>{{ detailModal.data?.email }}</span>
+            </div>
           </div>
-          <div class="detail-row">
-            <span class="detail-label">Estado</span>
-            <StatusBadge :variant="detailModal.data?.status ? 'approved' : 'rejected'">
-              {{ detailModal.data?.status ? 'Activo' : 'Inactivo' }}
-            </StatusBadge>
+
+          <div v-if="detailModal.data?.tempPassword" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>CLAVE TEMPORAL</small>
+              <span>{{ detailModal.data.tempPassword }}</span>
+            </div>
+            <button type="button" class="cp" title="Copiar clave temporal" @click="copyTempPassword(detailModal.data!.tempPassword!)">
+              <i class="fa fa-clipboard" aria-hidden="true"></i> Copiar
+            </button>
           </div>
-          <div class="detail-row"><span class="detail-label">Alta en sistema</span><span class="detail-value">{{ formatDateCell(detailModal.data?.createdAt) }}</span></div>
-          <div class="detail-row" v-if="detailModal.data?.updatedAt"><span class="detail-label">Última modificación</span><span class="detail-value">{{ formatDateCell(detailModal.data?.updatedAt) }}</span></div>
-          <div class="detail-row" v-if="detailModal.data?.totalPermissions != null">
-            <span class="detail-label">Total de permisos</span>
-            <span class="detail-value">{{ detailModal.data.totalPermissions }}</span>
+
+          <h3 class="sec">ADSCRIPCIÓN</h3>
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="5" rx="1" />
+                <rect x="2" y="16" width="6" height="5" rx="1" />
+                <rect x="16" y="16" width="6" height="5" rx="1" />
+                <path d="M12 8v4M5 16v-4h14v4" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>DEPARTAMENTO</small>
+              <span>{{ detailModal.data?.department || 'N/A' }}</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>ÁREA</small>
+              <span>{{ detailModal.data?.area || 'N/A' }}</span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>PUESTO</small>
+              <span>{{ detailModal.data?.position || 'N/A' }}</span>
+            </div>
+          </div>
+
+          <h3 class="sec">ESTADO Y ACTIVIDAD</h3>
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>ESTADO DE CUENTA</small>
+              <span>
+                <span class="badge" :class="detailModal.data?.status ? 'badge--ok' : 'badge--no'">
+                  {{ detailModal.data?.status ? 'Activo' : 'Inactivo' }}
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>ALTA EN SISTEMA</small>
+              <span>{{ formatDateCell(detailModal.data?.createdAt) }}</span>
+            </div>
+          </div>
+
+          <div v-if="detailModal.data?.updatedAt" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>ÚLTIMA MODIFICACIÓN</small>
+              <span>{{ formatDateCell(detailModal.data?.updatedAt) }}</span>
+            </div>
+          </div>
+
+          <div v-if="detailModal.data?.totalPermissions != null" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>TOTAL DE PERMISOS REGISTRADOS</small>
+              <span>{{ detailModal.data.totalPermissions }}</span>
+            </div>
           </div>
         </div>
       </template>
       <template #footer>
-        <AppButton variant="secondary" @click="detailModal.open = false">Cerrar</AppButton>
-        <AppButton variant="primary" icon="fa-edit" @click="$router.push({ name: 'users.edit', params: { id: detailModal.id } })">Editar</AppButton>
+        <button type="button" class="btn btn-ghost" @click="detailModal.open = false">Cerrar</button>
+        <button type="button" class="btn btn-primary" @click="$router.push({ name: 'users.edit', params: { id: detailModal.id } })">
+          <i class="fa fa-edit me-1" aria-hidden="true"></i> Editar Usuario
+        </button>
       </template>
     </AppModal>
   </div>

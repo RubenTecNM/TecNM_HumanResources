@@ -114,138 +114,179 @@
       </section>
     </template>
 
-    <!-- Modal Formulario Reactivo (Nueva API Key) -->
+    <!-- Modal Formulario Reactivo (Nueva API Key - Guía TecNM 4.3) -->
     <AppModal
       v-model:show="showCreateModal"
       title="Nueva API Key"
+      eyebrow="SEGURIDAD"
       icon="fa-key"
+      header-variant="icon"
+      size="md"
       :loading="submitting"
       confirm-text="Generar Clave"
       @confirm="generateApiKey"
     >
-      <div class="tecnm-form-group">
-        <label class="tecnm-label" for="apiKeyUserId">Usuario Propietario <span class="text-danger">*</span></label>
-        <select id="apiKeyUserId" v-model="selectedUserId" class="tecnm-form-control">
+      <label class="field">
+        <span class="lbl">USUARIO PROPIETARIO *</span>
+        <select id="apiKeyUserId" v-model="selectedUserId" class="in" autofocus>
           <option :value="null">Seleccione un usuario...</option>
           <option v-for="u in users" :key="u.id" :value="u.id">
             {{ u.name }} ({{ u.email }})
           </option>
         </select>
-        <p class="small text-muted mt-2 mb-0">Asigna las reglas de acceso por tabla. Si no asignas ninguna, la clave nace sin permisos.</p>
-        <div class="mt-3">
-          <button type="button" class="btn btn-sm btn-outline-secondary" @click="toggleCreateRules">
-            <i class="fa" :class="showCreateRules ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
-            {{ showCreateRules ? 'Ocultar' : 'Asignar' }} reglas por tabla
-          </button>
-          <div v-if="showCreateRules" class="mt-2">
-            <ApiKeyRulesEditor v-if="catalogsReady" v-model="createRules" :tables="tables" :permissions="apiPermissions" />
-          </div>
+        <span class="help">Asigna las reglas de acceso por tabla. Si no asignas ninguna, la clave nace sin permisos.</span>
+      </label>
+
+      <div class="mt-3">
+        <button type="button" class="btn btn-ghost" @click="toggleCreateRules">
+          <i class="fa" :class="showCreateRules ? 'fa-chevron-up' : 'fa-chevron-down'" aria-hidden="true"></i>
+          {{ showCreateRules ? 'Ocultar' : 'Asignar' }} reglas por tabla
+        </button>
+        <div v-if="showCreateRules" class="mt-2">
+          <ApiKeyRulesEditor v-if="catalogsReady" v-model="createRules" :tables="tables" :permissions="apiPermissions" />
         </div>
       </div>
     </AppModal>
 
-    <!-- Modal de Resultado / Exhibición del Token Generado -->
+    <!-- Modal de Resultado / Exhibición del Token Generado (Guía TecNM 4.7) -->
     <AppModal
       v-model:show="showResultModal"
       title="API Key Generada Exitosamente"
+      eyebrow="CREDENCIAL CREADA"
       icon="fa-check-circle"
+      header-variant="icon"
       size="md"
       :show-cancel="false"
       confirm-text="Entendido"
       @confirm="showResultModal = false"
     >
-      <div class="text-center py-2">
-        <p class="mb-3">Copia y guarda esta clave. Por seguridad, no se podrá visualizar completa nuevamente:</p>
-        <div class="token-result-box">
-          <code>{{ generatedToken }}</code>
-          <AppButton size="sm" variant="outline" icon="fa-copy" @click="copyKey(generatedToken)">Copiar Token</AppButton>
+      <div class="py-2">
+        <p class="mb-3 text-muted">Copia y guarda esta clave en un lugar seguro. Por seguridad, no se podrá visualizar completa nuevamente:</p>
+        <div class="token-result-box d-flex align-items-center justify-content-between p-2 rounded" style="background: var(--soft); border: 1px solid var(--line);">
+          <code style="word-break: break-all; font-weight: 600; color: var(--navy);">{{ generatedToken }}</code>
+          <button type="button" class="cp ms-2" @click="copyKey(generatedToken)">
+            <i class="fa fa-clipboard" aria-hidden="true"></i> Copiar
+          </button>
         </div>
       </div>
     </AppModal>
 
-    <!-- Modal de Edición de Reglas por Tabla -->
+    <!-- Modal de Edición de Reglas por Tabla (Guía TecNM 4.3) -->
     <AppModal
       v-model:show="showRulesModal"
       :title="rulesKey ? `Reglas de acceso — API Key #${rulesKey.id}` : 'Reglas de acceso'"
+      eyebrow="CONTROL DE ACCESO"
       icon="fa-shield"
+      header-variant="icon"
       size="lg"
       :loading="submitting"
       confirm-text="Guardar Reglas"
       @confirm="saveRules"
     >
-      <p class="small text-muted mb-2">Marca qué operaciones (Leer / Escribir / Actualizar / Eliminar) se permiten sobre cada tabla para esta API Key.</p>
+      <p class="help mb-3">Marca qué operaciones (Leer / Escribir / Actualizar / Eliminar) se permiten sobre cada tabla para esta API Key.</p>
       <ApiKeyRulesEditor v-if="catalogsReady" v-model="editRules" :tables="tables" :permissions="apiPermissions" />
     </AppModal>
 
-    <!-- Modal de Edición de Propietario -->
+    <!-- Modal de Edición de Propietario (Guía TecNM 4.3) -->
     <AppModal
       v-model:show="showEditModal"
       title="Editar Propietario de API Key"
+      eyebrow="REASIGNACIÓN"
       icon="fa-edit"
+      header-variant="plain"
+      size="md"
       :loading="submitting"
       confirm-text="Guardar Cambios"
       @confirm="saveEditKey"
     >
-      <div class="tecnm-form-group">
-        <label class="tecnm-label" for="editKeyUserId">Nuevo Usuario Propietario <span class="text-danger">*</span></label>
-        <select id="editKeyUserId" v-model="selectedUserId" class="tecnm-form-control">
+      <label class="field">
+        <span class="lbl">NUEVO USUARIO PROPIETARIO *</span>
+        <select id="editKeyUserId" v-model="selectedUserId" class="in" autofocus>
           <option :value="null">Seleccione un usuario...</option>
           <option v-for="u in users" :key="u.id" :value="u.id">
             {{ u.name }} ({{ u.email }})
           </option>
         </select>
-      </div>
+      </label>
     </AppModal>
 
-    <!-- Modal de Ver Detalles -->
+    <!-- Modal de Ver Detalles (Guía TecNM 4.2) -->
     <AppModal
       v-model:show="showDetailsModal"
-      :title="selectedKey ? `API Key #${selectedKey.id} — ${selectedKey.user}` : 'Detalles de API Key'"
-      icon="fa-eye"
+      :title="selectedKey ? `API Key #${selectedKey.id}` : 'Detalles de API Key'"
+      eyebrow="DETALLE DE CLAVE"
+      :pill="selectedKey ? (selectedKey.status ? 'Activa' : 'Inactiva') : undefined"
+      icon="fa-key"
+      header-variant="icon"
       size="md"
       :show-cancel="false"
       confirm-text="Cerrar"
       @confirm="showDetailsModal = false"
     >
       <div v-if="selectedKey" class="key-details-content">
-        <div class="audit-info-grid mb-3">
-          <div><strong>Propietario:</strong> {{ selectedKey.user }}</div>
-          <div><strong>Estado:</strong> {{ selectedKey.status ? 'Activa' : 'Inactiva' }}</div>
-          <div><strong>Creación:</strong> {{ formatDateCell(selectedKey.createdAt) }}</div>
-          <div><strong>Modificación:</strong> {{ formatDateCell(selectedKey.updatedAt) }}</div>
+        <h3 class="sec">INFORMACIÓN GENERAL</h3>
+        <div class="row">
+          <div class="ic"><i class="fa fa-user" aria-hidden="true"></i></div>
+          <div class="tx"><small>PROPIETARIO</small><span>{{ selectedKey.user }}</span></div>
         </div>
-        <div class="json-box">
-          <span class="json-box-title">Token (enmascarado):</span>
-          <div class="token-result-box">
+
+        <div class="row">
+          <div class="ic"><i class="fa fa-shield" aria-hidden="true"></i></div>
+          <div class="tx">
+            <small>ESTADO</small>
+            <span>
+              <span class="badge" :class="selectedKey.status ? 'badge--ok' : 'badge--no'">
+                {{ selectedKey.status ? 'Activa' : 'Inactiva' }}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="ic"><i class="fa fa-calendar" aria-hidden="true"></i></div>
+          <div class="tx"><small>CREACIÓN</small><span>{{ formatDateCell(selectedKey.createdAt) }}</span></div>
+        </div>
+
+        <div v-if="selectedKey.updatedAt" class="row">
+          <div class="ic"><i class="fa fa-history" aria-hidden="true"></i></div>
+          <div class="tx"><small>MODIFICACIÓN</small><span>{{ formatDateCell(selectedKey.updatedAt) }}</span></div>
+        </div>
+
+        <h3 class="sec">TOKEN</h3>
+        <div class="row">
+          <div class="ic"><i class="fa fa-lock" aria-hidden="true"></i></div>
+          <div class="tx">
+            <small>TOKEN ENMASCARADO</small>
             <code>{{ maskKey(selectedKey.key) }}</code>
-            <AppButton size="sm" variant="outline" icon="fa-copy" @click="copyKey(selectedKey.key)">Copiar</AppButton>
           </div>
+          <button type="button" class="cp" @click="copyKey(selectedKey.key)">
+            <i class="fa fa-clipboard" aria-hidden="true"></i> Copiar
+          </button>
         </div>
-        <div class="json-box mt-3">
-          <span class="json-box-title">Reglas por Tabla ({{ detailPermissions.length }}):</span>
-          <div v-if="loadingDetail" class="text-center py-3">
-            <i class="fas fa-spinner fa-spin text-primary"></i>
-          </div>
-          <div v-else-if="detailPermissions.length === 0" class="small text-muted">
-            Esta API Key no tiene reglas de acceso asignadas.
-          </div>
-          <table v-else class="tecnm-table tecnm-table-sm mt-2">
-            <thead>
-              <tr>
-                <th>Tabla</th>
-                <th class="text-center">Permiso</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(r, i) in detailPermissions" :key="i">
-                <td class="fw-semibold">{{ r.tableName }}</td>
-                <td class="text-center">
-                  <span class="rules-badge"><i class="fa fa-check-circle text-success" aria-hidden="true"></i> {{ r.permissionName }}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+
+        <h3 class="sec">REGLAS POR TABLA ({{ detailPermissions.length }})</h3>
+        <div v-if="loadingDetail" class="text-center py-3">
+          <i class="fa fa-circle-o-notch fa-spin text-primary"></i>
         </div>
+        <div v-else-if="detailPermissions.length === 0" class="help my-2">
+          Esta API Key no tiene reglas de acceso asignadas.
+        </div>
+        <table v-else class="tecnm-table tecnm-table-sm mt-2">
+          <thead>
+            <tr>
+              <th>Tabla</th>
+              <th class="text-center">Permiso</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(r, i) in detailPermissions" :key="i">
+              <td class="fw-semibold">{{ r.tableName }}</td>
+              <td class="text-center">
+                <span class="badge badge--ok"><i class="fa fa-check" aria-hidden="true"></i> {{ r.permissionName }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </AppModal>
   </div>

@@ -136,34 +136,39 @@
       </section>
     </template>
 
-    <!-- Modal Formulario Reactivo (Crear / Editar Departamento) -->
+    <!-- Modal Formulario Reactivo (Crear / Editar Departamento - Guía TecNM 4.3) -->
     <AppModal
       v-model:show="showModal"
       :title="editingDepartment ? `Editar Departamento #${editingDepartment.id}` : 'Nuevo Departamento'"
-      icon="fa-sitemap"
+      :eyebrow="editingDepartment ? `DEPARTAMENTO #${editingDepartment.id}` : 'DEPARTAMENTOS'"
+      header-variant="plain"
+      size="md"
       :loading="submitting"
       :confirm-text="editingDepartment ? 'Actualizar' : 'Guardar'"
       @confirm="saveDepartment"
     >
-      <div class="tecnm-form-group">
-        <label class="tecnm-label" for="deptDescription">Nombre del Departamento <span class="text-danger">*</span></label>
+      <label class="field">
+        <span class="lbl">NOMBRE DEL DEPARTAMENTO *</span>
         <input
           id="deptDescription"
           v-model="modalForm.description"
           type="text"
-          class="tecnm-form-control"
+          class="in"
           placeholder="Ej. Recursos Humanos"
           maxlength="50"
+          autofocus
         />
-      </div>
-      <div class="tecnm-form-group">
-        <label class="tecnm-label" for="deptAreaSelect">Área a la que pertenece</label>
-        <select id="deptAreaSelect" v-model="modalForm.areaId" class="tecnm-form-control">
+        <span class="help">Máximo 50 caracteres.</span>
+      </label>
+
+      <label class="field">
+        <span class="lbl">ÁREA A LA QUE PERTENECE</span>
+        <select id="deptAreaSelect" v-model="modalForm.areaId" class="in">
           <option value="">— Sin área asignada —</option>
           <option v-for="a in areaOptions" :key="a.id" :value="String(a.id)">{{ a.description }}</option>
         </select>
-        <small class="text-muted">La relación determina el área del departamento y de sus usuarios.</small>
-      </div>
+        <span class="help">La relación determina el área del departamento y de sus usuarios.</span>
+      </label>
     </AppModal>
   </div>
 </template>

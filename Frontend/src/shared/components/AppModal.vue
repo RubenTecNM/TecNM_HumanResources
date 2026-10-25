@@ -1,57 +1,96 @@
 <template>
   <Teleport to="body">
-    <Transition name="modal-fade">
+    <Transition name="modal-pop">
       <div v-if="show" class="tecnm-modal-backdrop" @click.self="handleBackdropClick">
         <div
           ref="containerEl"
-          class="tecnm-modal-container"
-          :class="[`tecnm-modal--${size}`]"
+          class="modal tecnm-modal-container"
+          :class="[`modal--${size}`, `tecnm-modal--${size}`]"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="titleId"
         >
-          <!-- Header -->
-          <div class="tecnm-modal-header">
-            <h3 :id="titleId" class="tecnm-modal-title">
-              <i v-if="icon" :class="`fa ${icon}`" aria-hidden="true"></i>
-              {{ title }}
-            </h3>
+          <!-- Header (Guía TecNM: Variantes A Identidad, B Icono, C Simple) -->
+          <div v-if="computedHeaderVariant !== 'none'" class="hd" :class="[`hd--${computedHeaderVariant}`]">
+            <!-- Variante A: Identidad (perfiles, usuarios) -->
+            <template v-if="computedHeaderVariant === 'identity'">
+              <div v-if="eyebrow" class="eyebrow">{{ eyebrow }}</div>
+              <div class="who">
+                <div class="av">{{ avatarInitial || (title ? title.charAt(0).toUpperCase() : 'U') }}</div>
+                <div>
+                  <h2 :id="titleId">{{ title }}</h2>
+                  <span v-if="pill || subtitle" class="pill">{{ pill || subtitle }}</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Variante B: Icono + título (detalle de registro, formularios con icono) -->
+            <template v-else-if="computedHeaderVariant === 'icon'">
+              <div v-if="eyebrow" class="eyebrow">{{ eyebrow }}</div>
+              <div class="who">
+                <div class="hic">
+                  <i v-if="icon && !icon.includes('<svg')" :class="['fa', icon]" aria-hidden="true"></i>
+                  <span v-else-if="icon" v-html="icon"></span>
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="3" y="3" width="18" height="18" rx="3" />
+                    <path d="M9 12h6M12 9v6" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 :id="titleId">{{ title }}</h2>
+                  <span v-if="pill || subtitle" class="pill">{{ pill || subtitle }}</span>
+                </div>
+              </div>
+            </template>
+
+            <!-- Variante C: Simple (solo título) -->
+            <template v-else>
+              <h2 :id="titleId">{{ title }}</h2>
+            </template>
+
+            <!-- Botón X estandarizado en rojo claro sobre fondo marino -->
             <button
               ref="closeBtnEl"
               type="button"
-              class="tecnm-modal-close"
-              aria-label="Cerrar modal"
+              class="x"
+              aria-label="Cerrar"
               @click="close"
             >
-              <i class="fa fa-times" aria-hidden="true"></i>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
             </button>
           </div>
 
-          <!-- Body -->
-          <div class="tecnm-modal-body">
+          <!-- Cuerpo (con scroll propio) -->
+          <div class="bd tecnm-modal-body">
             <slot />
           </div>
 
-          <!-- Footer -->
-          <div v-if="$slots.footer || showDefaultFooter" class="tecnm-modal-footer">
+          <!-- Footer estandarizado: secundario a la izquierda, primario a la derecha -->
+          <div v-if="$slots.footer || showDefaultFooter" class="ft tecnm-modal-footer">
             <slot name="footer">
-              <AppButton
+              <button
                 v-if="showCancel"
-                variant="secondary"
+                type="button"
+                class="btn btn-ghost"
                 :disabled="loading"
                 @click="close"
               >
                 {{ cancelText }}
-              </AppButton>
+              </button>
 
-              <AppButton
+              <button
                 v-if="showConfirm"
-                :variant="confirmVariant"
-                :loading="loading"
+                type="button"
+                class="btn"
+                :class="confirmBtnClass"
+                :disabled="loading"
                 @click="$emit('confirm')"
               >
+                <i v-if="loading" class="fa fa-circle-o-notch fa-spin me-1" aria-hidden="true"></i>
                 {{ confirmText }}
-              </AppButton>
+              </button>
             </slot>
           </div>
         </div>
@@ -61,22 +100,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onUnmounted, useId, nextTick } from 'vue'
-import AppButton from '@/shared/components/AppButton.vue'
+import { ref, computed, watch, onUnmounted, useId, nextTick } from 'vue'
 
 const props = withDefaults(
   defineProps<{
     show: boolean
     title: string
+    subtitle?: string
+    eyebrow?: string
     icon?: string
     size?: 'sm' | 'md' | 'lg' | 'xl'
+    headerVariant?: 'identity' | 'icon' | 'plain' | 'none'
+    avatarInitial?: string
+    pill?: string
     loading?: boolean
     showDefaultFooter?: boolean
     showCancel?: boolean
     showConfirm?: boolean
     confirmText?: string
     cancelText?: string
-    confirmVariant?: 'primary' | 'accent' | 'secondary' | 'outline' | 'danger'
+    confirmVariant?: 'primary' | 'secondary' | 'danger' | 'accent' | 'outline'
     closeOnBackdrop?: boolean
   }>(),
   {
@@ -102,6 +145,18 @@ const titleId = useId()
 const containerEl = ref<HTMLElement | null>(null)
 const closeBtnEl = ref<HTMLButtonElement | null>(null)
 let previousFocus: HTMLElement | null = null
+
+const computedHeaderVariant = computed<'identity' | 'icon' | 'plain' | 'none'>(() => {
+  if (props.headerVariant) return props.headerVariant
+  if (props.avatarInitial) return 'identity'
+  if (props.icon || props.eyebrow || props.pill) return 'icon'
+  return 'plain'
+})
+
+const confirmBtnClass = computed(() => {
+  if (props.confirmVariant === 'danger') return 'btn-danger'
+  return 'btn-primary'
+})
 
 function getFocusableElements(): HTMLElement[] {
   if (!containerEl.value) return []
@@ -176,117 +231,281 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* Backdrop */
 .tecnm-modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(4px);
+  background: rgba(14, 28, 54, 0.5);
+  backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1050;
-  padding: 1rem;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
-.tecnm-modal-container {
-  background: var(--tecnm-surface-white);
-  border: 1px solid var(--tecnm-border-color);
-  border-radius: 12px;
-  box-shadow: var(--tecnm-shadow-lg);
-  width: 100%;
-  max-height: 90vh;
+/* Base Modal (Guía TecNM Sección 2) */
+.modal {
+  width: min(480px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  padding: 0;
+  border: 1px solid var(--line, #e6e9ef);
+  border-radius: var(--r-modal, 16px);
+  background: #ffffff;
+  color: var(--tx, #1e2f55);
+  overflow: hidden;
+  box-shadow: 0 24px 60px -12px rgba(20, 44, 84, 0.45);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  color: var(--tecnm-text-primary);
+  box-sizing: border-box;
 }
 
-.tecnm-modal--sm { max-width: 400px; }
-.tecnm-modal--md { max-width: 560px; }
-.tecnm-modal--lg { max-width: 800px; }
-.tecnm-modal--xl { max-width: 1100px; }
+/* Tamaños estándar */
+.modal--sm { width: min(400px, calc(100% - 32px)); }
+.modal--md { width: min(480px, calc(100% - 32px)); }
+.modal--lg { width: min(640px, calc(100% - 32px)); }
+.modal--xl { width: min(800px, calc(100% - 32px)); }
 
-.tecnm-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, var(--tecnm-navy, #1b396a) 0%, var(--tecnm-blue-dark, #0f2744) 100%);
-  color: #ffffff;
+/* Header Institucional TecNM */
+.hd {
+  position: relative;
+  flex: none;
+  padding: 18px 24px 22px;
+  background: linear-gradient(135deg, var(--navy, #1b3a6b), var(--navy-d, #142c54));
+  border-bottom: 3px solid var(--gold, #c9a24d);
+  box-sizing: border-box;
 }
 
-.tecnm-modal-title {
+.hd h2 {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
 }
 
-.tecnm-modal-close {
+.hd--plain {
+  padding: 20px 56px 20px 24px;
+}
+
+.hd--plain h2 {
+  font-size: 18px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold, #c9a24d);
+  text-transform: uppercase;
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+/* Avatar de Identidad */
+.av {
+  flex: none;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--cream, #f7f2e5);
+  color: var(--navy, #1b3a6b);
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(201, 162, 77, 0.55);
+}
+
+/* Ficha de Icono de Registro */
+.hic {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  font-size: 22px;
+}
+
+.hic svg {
+  width: 26px;
+  height: 26px;
+  stroke: #ffffff;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.pill {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: rgba(201, 162, 77, 0.2);
+  color: #f0d9a0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Botón Cerrar (X) */
+.x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
   background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1.2rem;
+  color: #ff8a8a;
   cursor: pointer;
-  padding: 0.5rem;
-  min-width: 44px;
-  min-height: 44px;
+  transition: background 0.25s, color 0.25s;
+}
+
+.x:hover {
+  background: rgba(255, 123, 123, 0.18);
+  color: #ffb3b3;
+}
+
+.x svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* Cuerpo */
+.bd {
+  overflow-y: auto;
+  padding: 16px 24px 20px;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+/* Footer */
+.ft {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px;
+  background: var(--soft, #f5f7fb);
+  border-top: 1px solid var(--line, #e6e9ef);
+  box-sizing: border-box;
+}
+
+/* Botones del modal */
+.btn {
+  height: 40px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--r-ctl, 10px);
+  font: 600 14px system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.25s, box-shadow 0.25s, border-color 0.25s;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  gap: 8px;
 }
 
-.tecnm-modal-close:hover {
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--gold-s, rgba(201, 162, 77, 0.28));
+}
+
+.btn-primary {
+  background: var(--navy, #1b3a6b);
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.15);
 }
 
-.tecnm-modal-body {
-  padding: 1.25rem;
-  overflow-y: auto;
-  flex: 1;
+.btn-primary:hover {
+  background: var(--navy-d, #142c54);
+  transform: translateY(-1px);
 }
 
-.tecnm-modal-footer {
-  padding: 1rem 1.25rem;
-  background: var(--tecnm-soft-hover);
-  border-top: 1px solid var(--tecnm-border-color);
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
+.btn-ghost {
+  background: #ffffff;
+  color: var(--navy, #1b3a6b);
+  border: 1px solid #d3dae7;
 }
 
-/* Transiciones CSS */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
+.btn-ghost:hover {
+  background: var(--chip, #eaf0fa);
+  border-color: #c9d6ee;
+}
+
+.btn-danger {
+  background: var(--red, #d92d2d);
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #b92323;
+  transform: translateY(-1px);
+}
+
+.btn-danger:focus-visible {
+  box-shadow: 0 0 0 4px rgba(217, 45, 45, 0.2);
+}
+
+/* Animaciones */
+.modal-pop-enter-active {
   transition: opacity 0.3s ease;
 }
 
-.modal-fade-enter-from,
-.modal-fade-leave-to {
+.modal-pop-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.modal-pop-enter-from,
+.modal-pop-leave-to {
   opacity: 0;
 }
 
-.modal-fade-enter-active .tecnm-modal-container {
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+.modal-pop-enter-active .modal {
+  animation: pop 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.modal-fade-leave-active .tecnm-modal-container {
-  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1);
+.modal-pop-leave-active .modal {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 1, 1), opacity 0.25s ease;
+  transform: translateY(10px) scale(0.97);
+  opacity: 0;
 }
 
-.modal-fade-enter-from .tecnm-modal-container {
-  transform: scale(0.95) translateY(-10px);
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.modal-fade-leave-to .tecnm-modal-container {
-  transform: scale(0.95) translateY(10px);
+@media (prefers-reduced-motion: reduce) {
+  .modal-pop-enter-active .modal,
+  .modal-pop-leave-active .modal {
+    animation: none;
+    transition: none;
+  }
 }
 </style>
