@@ -8,49 +8,51 @@
       </template>
     </AppPageHeader>
 
-    <!-- Panel de búsqueda estilo TecNM -->
-    <section class="tecnm-card tecnm-mb-4">
+    <!-- Panel de búsqueda estilo TecNM (con footer interno estandarizado) -->
+    <section class="tecnm-card tecnm-mb-4 filter-card">
       <div class="tecnm-card-header tecnm-card-header--premium">
         <h4 class="filter-title">
           <i class="fa fa-filter" aria-hidden="true"></i> Panel de Búsqueda
         </h4>
       </div>
-      <div class="tecnm-card-body">
-        <form @submit.prevent="applyFilters" class="filter-grid">
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="searchQuery">Nombre del Departamento</label>
-            <input
-              id="searchQuery"
-              v-model="filters.search"
-              type="text"
-              class="tecnm-form-control"
-              placeholder="Buscar por departamento..."
-            />
-          </div>
+      <form @submit.prevent="applyFilters" class="filter-form">
+        <div class="tecnm-card-body">
+          <div class="filter-grid">
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="searchQuery">Nombre del Departamento</label>
+              <input
+                id="searchQuery"
+                v-model="filters.search"
+                type="text"
+                class="tecnm-form-control"
+                placeholder="Buscar por departamento..."
+              />
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="areaFilter">Área</label>
-            <select id="areaFilter" v-model="filters.areaId" class="tecnm-form-control">
-              <option value="">Todas las áreas</option>
-              <option v-for="a in areaOptions" :key="a.id" :value="String(a.id)">{{ a.description }}</option>
-            </select>
-          </div>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="areaFilter">Área</label>
+              <select id="areaFilter" v-model="filters.areaId" class="tecnm-form-control">
+                <option value="">Todas las áreas</option>
+                <option v-for="a in areaOptions" :key="a.id" :value="String(a.id)">{{ a.description }}</option>
+              </select>
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="statusFilter">Estado</label>
-            <select id="statusFilter" v-model="filters.status" class="tecnm-form-control">
-              <option value="">Cualquiera</option>
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
-            </select>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="statusFilter">Estado</label>
+              <select id="statusFilter" v-model="filters.status" class="tecnm-form-control">
+                <option value="">Cualquiera</option>
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+            </div>
           </div>
+        </div>
 
-          <div class="tecnm-form-group filter-actions">
-            <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
-            <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar</AppButton>
-          </div>
-        </form>
-      </div>
+        <div class="filter-card-footer">
+          <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar Filtros</AppButton>
+          <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
+        </div>
+      </form>
     </section>
 
     <AppSpinner v-if="loading" />

@@ -8,40 +8,42 @@
       </template>
     </AppPageHeader>
 
-    <!-- Panel de búsqueda estilo TecNM (idéntico a Permisos) -->
-    <section class="tecnm-card tecnm-mb-4">
+    <!-- Panel de búsqueda estilo TecNM (con footer interno estandarizado) -->
+    <section class="tecnm-card tecnm-mb-4 filter-card">
       <div class="tecnm-card-header tecnm-card-header--premium">
         <h4 class="filter-title">
           <i class="fa fa-filter" aria-hidden="true"></i> Panel de Búsqueda
         </h4>
       </div>
-<div class="tecnm-card-body">
-          <form @submit.prevent="applyFilters" class="filter-grid">
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="dateFrom">Fecha Inicio Desde</label>
-            <input id="dateFrom" v-model="filters.dateFrom" type="date" class="tecnm-form-control" />
-          </div>
+      <form @submit.prevent="applyFilters" class="filter-form">
+        <div class="tecnm-card-body">
+          <div class="filter-grid">
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="dateFrom">Fecha Inicio Desde</label>
+              <input id="dateFrom" v-model="filters.dateFrom" type="date" class="tecnm-form-control" />
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="dateTo">Fecha Fin Hasta</label>
-            <input id="dateTo" v-model="filters.dateTo" type="date" class="tecnm-form-control" />
-          </div>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="dateTo">Fecha Fin Hasta</label>
+              <input id="dateTo" v-model="filters.dateTo" type="date" class="tecnm-form-control" />
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="statusFilter">Estado</label>
-            <select id="statusFilter" v-model="filters.statusId" class="tecnm-form-control">
-              <option value="">Cualquiera</option>
-              <option value="1">Abierto</option>
-              <option value="2">Cerrado</option>
-            </select>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="statusFilter">Estado</label>
+              <select id="statusFilter" v-model="filters.statusId" class="tecnm-form-control">
+                <option value="">Cualquiera</option>
+                <option value="1">Abierto</option>
+                <option value="2">Cerrado</option>
+              </select>
+            </div>
           </div>
+        </div>
 
-          <div class="tecnm-form-group filter-actions">
-            <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
-            <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar</AppButton>
-          </div>
-        </form>
-      </div>
+        <div class="filter-card-footer">
+          <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar Filtros</AppButton>
+          <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
+        </div>
+      </form>
     </section>
 
     <details class="tecnm-card legend-box">

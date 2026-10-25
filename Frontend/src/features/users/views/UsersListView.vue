@@ -8,48 +8,50 @@
       </template>
     </AppPageHeader>
 
-    <!-- Panel de búsqueda estilo TecNM -->
-    <section class="tecnm-card tecnm-mb-4">
+    <!-- Panel de búsqueda estilo TecNM (con footer interno estandarizado) -->
+    <section class="tecnm-card tecnm-mb-4 filter-card">
       <div class="tecnm-card-header tecnm-card-header--premium">
         <h4 class="filter-title">
           <i class="fa fa-filter" aria-hidden="true"></i> Panel de Búsqueda
         </h4>
       </div>
-      <div class="tecnm-card-body">
-        <form @submit.prevent="applyFilters" class="filter-grid">
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="userName">Nombre / Apellido</label>
-            <input id="userName" v-model="filters.name" type="text" class="tecnm-form-control" placeholder="Buscar por nombre..." />
-          </div>
+      <form @submit.prevent="applyFilters" class="filter-form">
+        <div class="tecnm-card-body">
+          <div class="filter-grid">
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="userName">Nombre / Apellido</label>
+              <input id="userName" v-model="filters.name" type="text" class="tecnm-form-control" placeholder="Buscar por nombre..." />
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="userEmail">Correo Electrónico</label>
-            <input id="userEmail" v-model="filters.email" type="text" class="tecnm-form-control" placeholder="Buscar por correo..." />
-          </div>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="userEmail">Correo Electrónico</label>
+              <input id="userEmail" v-model="filters.email" type="text" class="tecnm-form-control" placeholder="Buscar por correo..." />
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="departmentFilter">Departamento</label>
-            <select id="departmentFilter" v-model="filters.departmentId" class="tecnm-form-control">
-              <option value="">Todos</option>
-              <option v-for="dept in departments" :key="dept.id" :value="dept.id">{{ dept.description }}</option>
-            </select>
-          </div>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="departmentFilter">Departamento</label>
+              <select id="departmentFilter" v-model="filters.departmentId" class="tecnm-form-control">
+                <option value="">Todos</option>
+                <option v-for="dept in departments" :key="dept.id" :value="dept.id">{{ dept.description }}</option>
+              </select>
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="statusFilter">Estado</label>
-            <select id="statusFilter" v-model="filters.status" class="tecnm-form-control">
-              <option value="">Cualquiera</option>
-              <option value="true">Activo</option>
-              <option value="false">Inactivo</option>
-            </select>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="statusFilter">Estado</label>
+              <select id="statusFilter" v-model="filters.status" class="tecnm-form-control">
+                <option value="">Cualquiera</option>
+                <option value="true">Activo</option>
+                <option value="false">Inactivo</option>
+              </select>
+            </div>
           </div>
+        </div>
 
-          <div class="tecnm-form-group filter-actions">
-            <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
-            <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar</AppButton>
-          </div>
-        </form>
-      </div>
+        <div class="filter-card-footer">
+          <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar Filtros</AppButton>
+          <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
+        </div>
+      </form>
     </section>
 
     <AppSpinner v-if="loading" />

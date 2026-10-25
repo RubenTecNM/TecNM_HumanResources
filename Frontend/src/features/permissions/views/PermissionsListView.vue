@@ -8,55 +8,57 @@
       </template>
     </AppPageHeader>
 
-    <!-- Filter panel (igual que el original: Panel de Búsqueda) -->
-    <section class="tecnm-card tecnm-mb-4">
+    <!-- Filter panel (Panel de Búsqueda con footer interno estandarizado) -->
+    <section class="tecnm-card tecnm-mb-4 filter-card">
       <div class="tecnm-card-header tecnm-card-header--premium">
         <h4 class="filter-title">
           <i class="fa fa-filter" aria-hidden="true"></i> Panel de Búsqueda
         </h4>
       </div>
-      <div class="tecnm-card-body">
-        <form @submit.prevent="applyFilters" class="filter-grid">
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="dateFrom">Vigencia Desde</label>
-            <input id="dateFrom" v-model="filters.fromDay" type="date" class="tecnm-form-control" />
-          </div>
+      <form @submit.prevent="applyFilters" class="filter-form">
+        <div class="tecnm-card-body">
+          <div class="filter-grid">
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="dateFrom">Vigencia Desde</label>
+              <input id="dateFrom" v-model="filters.fromDay" type="date" class="tecnm-form-control" />
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="dateTo">Vigencia Hasta</label>
-            <input id="dateTo" v-model="filters.toDay" type="date" class="tecnm-form-control" />
-          </div>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="dateTo">Vigencia Hasta</label>
+              <input id="dateTo" v-model="filters.toDay" type="date" class="tecnm-form-control" />
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="statusFilter">Estado</label>
-            <select id="statusFilter" v-model="filters.statusId" class="tecnm-form-control">
-              <option value="">Cualquiera</option>
-              <option value="1">Pendiente por Revisar</option>
-              <option value="2">Revisado / Aprobado</option>
-              <option value="4">Revisado / Rechazado</option>
-              <option value="5">Cancelado por el Solicitante</option>
-            </select>
-          </div>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="statusFilter">Estado</label>
+              <select id="statusFilter" v-model="filters.statusId" class="tecnm-form-control">
+                <option value="">Cualquiera</option>
+                <option value="1">Pendiente por Revisar</option>
+                <option value="2">Revisado / Aprobado</option>
+                <option value="4">Revisado / Rechazado</option>
+                <option value="5">Cancelado por el Solicitante</option>
+              </select>
+            </div>
 
-          <div class="tecnm-form-group">
-            <label class="tecnm-label" for="userFilter">Creado por</label>
-            <input id="userFilter" v-model="filters.userName" type="text" class="tecnm-form-control" placeholder="Nombre del usuario" />
-          </div>
+            <div class="tecnm-form-group">
+              <label class="tecnm-label" for="userFilter">Creado por</label>
+              <input id="userFilter" v-model="filters.userName" type="text" class="tecnm-form-control" placeholder="Nombre del usuario" />
+            </div>
 
-          <div v-if="authStore.canManageUsers" class="tecnm-form-group">
-            <label class="tecnm-label" for="areaFilter">Área</label>
-            <select id="areaFilter" v-model="filters.areaId" class="tecnm-form-control">
-              <option value="">Todas</option>
-              <option v-for="area in areas" :key="area.id" :value="area.id">{{ area.description }}</option>
-            </select>
+            <div v-if="authStore.canManageUsers" class="tecnm-form-group">
+              <label class="tecnm-label" for="areaFilter">Área</label>
+              <select id="areaFilter" v-model="filters.areaId" class="tecnm-form-control">
+                <option value="">Todas</option>
+                <option v-for="area in areas" :key="area.id" :value="area.id">{{ area.description }}</option>
+              </select>
+            </div>
           </div>
+        </div>
 
-          <div class="tecnm-form-group filter-actions">
-            <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
-            <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar</AppButton>
-          </div>
-        </form>
-      </div>
+        <div class="filter-card-footer">
+          <AppButton type="button" variant="secondary" icon="fa-undo" @click="clearFilters">Limpiar Filtros</AppButton>
+          <AppButton type="submit" variant="primary" icon="fa-search">Buscar</AppButton>
+        </div>
+      </form>
     </section>
 
     <!-- Leyenda de estados -->
