@@ -128,7 +128,7 @@ import {
   type SyncPreview,
   type SyncImportSummary,
   type SyncRowResult
-} from "@/features/sync/api/sync"'
+} from "@/features/sync/api/sync"
 
 interface CardState {
   file: File | null

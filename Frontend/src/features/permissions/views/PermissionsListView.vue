@@ -217,12 +217,12 @@ import {
   PERMISSION_STATUS,
   type PermissionListPage,
   type PermissionListItem
-} from "@/features/permissions/api/permissions"'
+} from "@/features/permissions/api/permissions"
 import { formatTecNMDate } from '@/shared/composables/useDates'
 import { showToast } from '@/shared/composables/useAlerts'
 import { askConfirmation } from '@/shared/composables/useAlerts'
-import { useAuthStore } from '@/stores/auth'
-import { fetchAreas, type AreaItem } from '@/api/catalogs'
+import { useAuthStore } from '@/features/auth/stores/auth'
+import { fetchAreas, type AreaItem } from '@/features/departments/api/catalogs'
 
 const router = useRouter()
 const authStore = useAuthStore()

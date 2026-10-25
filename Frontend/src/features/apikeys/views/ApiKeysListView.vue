@@ -253,7 +253,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { http } from "@/shared/api/client"'
+import { http } from "@/shared/api/client"
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import AppSpinner from '@/shared/components/AppSpinner.vue'
@@ -277,7 +277,7 @@ import {
   type ApiPermissionItem,
   type ApiTableItem,
   type PermissionAssignment
-} from "@/features/apikeys/api/apikeys"'
+} from "@/features/apikeys/api/apikeys"
 
 function formatDateCell(iso?: string | null): string {
   if (!iso) return '—'

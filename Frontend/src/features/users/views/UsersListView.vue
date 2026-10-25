@@ -210,7 +210,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { http } from "@/shared/api/client"'
+import { http } from "@/shared/api/client"
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import AppModal from '@/shared/components/AppModal.vue'
@@ -220,7 +220,7 @@ import StatusBadge from '@/shared/components/StatusBadge.vue'
 import PaginationBar from '@/shared/components/PaginationBar.vue'
 import { formatTecNMDate } from '@/shared/composables/useDates'
 import { askConfirmation, showToast } from '@/shared/composables/useAlerts'
-import { fetchDepartments, type CatalogItem } from '@/api/catalogs'
+import { fetchDepartments, type CatalogItem } from '@/features/departments/api/catalogs'
 
 interface UserItem {
   id: number

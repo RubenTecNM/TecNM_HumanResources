@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useTheme, type ThemeOption } from '@/composables/useTheme'
+import { useTheme, type ThemeOption } from '@/shared/composables/useTheme'
 
 const props = defineProps<{ collapsed?: boolean }>()
 

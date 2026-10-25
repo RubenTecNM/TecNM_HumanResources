@@ -1,23 +1,23 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/features/auth/stores/auth'
 
 const routes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/views/LoginView.vue'),
+    component: () => import('@/features/auth/views/LoginView.vue'),
     meta: { public: true, title: 'Iniciar Sesión' }
   },
   {
     path: '/forgot-password',
     name: 'forgot-password',
-    component: () => import('@/views/auth/ForgotPasswordView.vue'),
+    component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
     meta: { public: true, title: 'Recuperar Contraseña' }
   },
   {
     path: '/reset-password',
     name: 'reset-password',
-    component: () => import('@/views/auth/ResetPasswordView.vue'),
+    component: () => import('@/features/auth/views/ResetPasswordView.vue'),
     meta: { public: true, title: 'Restablecer Contraseña' }
   },
   {

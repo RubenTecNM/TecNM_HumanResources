@@ -78,14 +78,15 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             options.Cookie.SameSite = SameSiteMode.Lax;
     });
 
-// Relajar SameSite del token antiforgery en desarrollo para el proxy de Vite
-if (builder.Environment.IsDevelopment())
+// Registro del servicio de Antiforgery para AccountController y protección de formularios
+builder.Services.AddAntiforgery(options =>
 {
-    builder.Services.AddAntiforgery(options =>
+    options.HeaderName = "X-XSRF-TOKEN";
+    if (builder.Environment.IsDevelopment())
     {
         options.Cookie.SameSite = SameSiteMode.Lax;
-    });
-}
+    }
+});
 
 // Persistencia de llaves para evitar errores de Antiforgery en Docker
 var keysPath = builder.Environment.IsDevelopment() 

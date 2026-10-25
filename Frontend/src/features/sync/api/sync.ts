@@ -1,4 +1,4 @@
-import { http as client } from './client'
+import { http as client } from '@/shared/api/client'
 
 export interface SyncRowResult {
   row: number

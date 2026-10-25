@@ -41,9 +41,18 @@ namespace HumanResourcesProduction.Features.Auth
         }
 
         [HttpPost("Login")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login([FromForm] LoginViewModel model)
         {
+            try
+            {
+                await _antiforgery.ValidateRequestAsync(HttpContext);
+            }
+            catch (AntiforgeryValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación Antiforgery fallida en Login.");
+                return BadRequest(new { success = false, title = "Error de Seguridad", message = "Token de seguridad antiforgery inválido o ausente." });
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(new { success = false, title = "Error", message = "Datos de inicio de sesión incompletos." });
@@ -123,9 +132,17 @@ namespace HumanResourcesProduction.Features.Auth
         }
 
         [HttpPost("Logout")]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            try
+            {
+                await _antiforgery.ValidateRequestAsync(HttpContext);
+            }
+            catch (AntiforgeryValidationException ex)
+            {
+                _logger.LogWarning(ex, "Validación Antiforgery fallida en Logout (procediendo con cierre).");
+            }
+
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return Ok(new { success = true, message = "Sesión cerrada correctamente." });
         }

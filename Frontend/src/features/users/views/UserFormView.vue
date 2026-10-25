@@ -145,7 +145,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { http } from "@/shared/api/client"'
+import { http } from "@/shared/api/client"
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import { showToast } from '@/shared/composables/useAlerts'

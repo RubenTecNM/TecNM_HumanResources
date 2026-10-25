@@ -87,7 +87,7 @@ import { useRoute, useRouter } from 'vue-router'
 import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppSpinner from '@/shared/components/AppSpinner.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
-import { fetchCutoff, updateCutoff, cutoffStatusVariant, type CutoffDetail } from "@/features/cutoffs/api/cutoffs"'
+import { fetchCutoff, updateCutoff, cutoffStatusVariant, type CutoffDetail } from "@/features/cutoffs/api/cutoffs"
 import { showToast } from '@/shared/composables/useAlerts'
 
 const route = useRoute()

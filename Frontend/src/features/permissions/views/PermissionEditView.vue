@@ -161,7 +161,7 @@ import {
 } from '@/features/permissions/api/permissions'
 import { combineDateTimeLocal, calculateDays, toDateInputValue, toTimeInputValue } from '@/shared/composables/useDates'
 import { askConfirmation, handleAlertResponse, showToast } from '@/shared/composables/useAlerts'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/features/auth/stores/auth'
 
 const route = useRoute()
 const router = useRouter()

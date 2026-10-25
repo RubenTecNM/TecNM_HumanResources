@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted, useId, nextTick } from 'vue'
-import AppButton from '@/components/AppButton.vue'
+import AppButton from '@/shared/components/AppButton.vue'
 
 const props = withDefaults(
   defineProps<{

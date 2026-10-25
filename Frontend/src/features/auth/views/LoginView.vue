@@ -83,7 +83,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from "@/features/auth/stores/auth"'
+import { useAuthStore } from "@/features/auth/stores/auth"
 import { useTheme } from '@/shared/composables/useTheme'
 import { showToast } from '@/shared/composables/useAlerts'
 import AnimatedBackground from '@/shared/components/AnimatedBackground.vue'

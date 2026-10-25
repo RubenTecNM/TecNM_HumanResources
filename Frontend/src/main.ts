@@ -2,7 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from '@/router'
 import App from '@/App.vue'
-import { useTheme } from '@/composables/useTheme'
+import { useTheme } from '@/shared/composables/useTheme'
 
 import '@/assets/css/tecnm-theme.css'
 import '@/assets/css/main.css'

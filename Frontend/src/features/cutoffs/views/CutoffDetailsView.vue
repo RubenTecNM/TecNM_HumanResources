@@ -274,7 +274,7 @@ import AppCard from '@/shared/components/AppCard.vue'
 import AppSpinner from '@/shared/components/AppSpinner.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
 import apexchart from 'vue3-apexcharts'
-import { fetchCutoffAnalytics, downloadCutoffExport, cutoffStatusVariant, type CutoffDetail, type CutoffKpis } from "@/features/cutoffs/api/cutoffs"'
+import { fetchCutoffAnalytics, downloadCutoffExport, cutoffStatusVariant, type CutoffDetail, type CutoffKpis } from "@/features/cutoffs/api/cutoffs"
 import { formatTecNMDate } from '@/shared/composables/useDates'
 
 const route = useRoute()

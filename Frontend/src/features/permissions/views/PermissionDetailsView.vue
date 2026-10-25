@@ -155,10 +155,10 @@ import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import AppSpinner from '@/shared/components/AppSpinner.vue'
 import StatusBadge from '@/shared/components/StatusBadge.vue'
-import { fetchPermission, cancelPermission, statusLabel, statusVariant, PERMISSION_STATUS, type PermissionDetail } from "@/features/permissions/api/permissions"'
+import { fetchPermission, cancelPermission, statusLabel, statusVariant, PERMISSION_STATUS, type PermissionDetail } from "@/features/permissions/api/permissions"
 import { askConfirmation, showToast } from '@/shared/composables/useAlerts'
 import { formatTecNMDate, formatTecNMDateTime } from '@/shared/composables/useDates'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/features/auth/stores/auth'
 
 const route = useRoute()
 const authStore = useAuthStore()

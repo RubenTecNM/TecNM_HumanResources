@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ApiPermissionItem, ApiTableItem } from "@/features/apikeys/api/apikeys"'
+import type { ApiPermissionItem, ApiTableItem } from "@/features/apikeys/api/apikeys"
 
 const props = defineProps<{
   tables: ApiTableItem[]

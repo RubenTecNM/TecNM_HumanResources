@@ -138,12 +138,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore, USER_TYPE } from '@/stores/auth'
-import { useTheme } from '@/composables/useTheme'
-import { askConfirmation } from '@/composables/useAlerts'
-import AnimatedBackground from '@/components/AnimatedBackground.vue'
-import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
-import AppModal from '@/components/AppModal.vue'
+import { useAuthStore, USER_TYPE } from '@/features/auth/stores/auth'
+import { useTheme } from '@/shared/composables/useTheme'
+import { askConfirmation } from '@/shared/composables/useAlerts'
+import AnimatedBackground from '@/shared/components/AnimatedBackground.vue'
+import ThemeSwitcher from '@/shared/components/ThemeSwitcher.vue'
+import AppModal from '@/shared/components/AppModal.vue'
 
 const route = useRoute()
 const router = useRouter()
