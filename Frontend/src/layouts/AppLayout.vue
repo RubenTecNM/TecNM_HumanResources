@@ -236,7 +236,6 @@ const IconCortes = createSvg('<rect x="3" y="5" width="18" height="16" rx="2"/><
 const IconUsuarios = createSvg('<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 14c3 0 5 2 5 5"/>')
 const IconDepartamentos = createSvg('<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M5 16v-4h14v4"/>')
 const IconAreas = createSvg('<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')
-const IconAuditoria = createSvg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 8v4l3 2"/>')
 const IconApiKeys = createSvg('<circle cx="8" cy="8" r="4"/><path d="m11 11 9 9m-3-3 2-2m-5-1 2-2"/>')
 const IconSync = createSvg('<path d="M12 14V4m-4 4 4-4 4 4M4 15v4h16v-4"/>')
 
@@ -297,15 +296,7 @@ const navItems: NavItem[] = [
     visible: () => authStore.isRHOrAdmin,
     match: 'areas',
   },
-  {
-    id: 'auditoria',
-    label: 'Auditoría',
-    to: '/audit',
-    icon: IconAuditoria,
-    section: 'administracion',
-    visible: () => authStore.isAdmin,
-    match: 'audit',
-  },
+
   {
     id: 'api-keys',
     label: 'API Keys',

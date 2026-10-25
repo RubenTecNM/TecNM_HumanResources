@@ -17,5 +17,4 @@ public partial class OriginType : BaseEntity
     // ──────────────────────────────────────────────────────────────
     // COLLECTIONS
     // ──────────────────────────────────────────────────────────────
-    public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 }

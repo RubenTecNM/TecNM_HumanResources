@@ -1,3 +1,4 @@
+using HumanResourcesProduction.Crosscutting.Logging;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -40,11 +41,13 @@ builder.Services.AddOpenApi(options => {
     });
 });
 
+var logsPath = Path.Combine(builder.Environment.ContentRootPath, "logs");
 builder.Services.AddLogging(logging =>
 {
     logging.AddConsole();
     logging.AddDebug();
-    logging.SetMinimumLevel(LogLevel.Debug);
+    logging.AddFile(logsPath);
+    logging.SetMinimumLevel(LogLevel.Information);
 });
 
 builder.Services.AddProblemDetails();

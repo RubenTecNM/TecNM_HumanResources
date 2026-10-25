@@ -110,12 +110,7 @@ const routes = [
         component: () => import('@/features/areas/views/AreasListView.vue'),
         meta: { title: 'Gestión de Áreas', roles: [1, 3] }
       },
-      {
-        path: 'audit',
-        name: 'audit.index',
-        component: () => import('@/features/audit/views/AuditLogListView.vue'),
-        meta: { title: 'Auditoría', roles: [1] }
-      },
+      
       {
         path: 'sync',
         name: 'sync.index',

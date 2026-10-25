@@ -18,12 +18,14 @@ services:
     volumes:
       - itsmrh_dataprotection_keys:/app/keys
       - itsmrh_evidences:/app/App_Data/Evidences
+      - itsmrh_logs:/app/logs
     networks:
       - nexsmart_network
 
 volumes:
   itsmrh_dataprotection_keys:
   itsmrh_evidences:
+  itsmrh_logs:
 
 networks:
   nexsmart_network:

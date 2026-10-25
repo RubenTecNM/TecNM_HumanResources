@@ -1,7 +1,8 @@
 using System.Globalization;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using HumanResourcesProduction.Helpers;
 using HumanResourcesProduction.Models;
 using HumanResourcesProduction.Models.Enums;
@@ -39,14 +40,16 @@ public class SyncImportSummary
 public class ExcelImportService
 {
     private readonly HumanResourcesContext _context;
+    private readonly ILogger<ExcelImportService> _logger;
 
     // ponytail: generador de claves con Random no cripto; suficiente para claves temporales de 10 chars que RH comunica
     private static readonly Random Rnd = new();
     private const string PwdChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
-    public ExcelImportService(HumanResourcesContext context)
+    public ExcelImportService(HumanResourcesContext context, ILogger<ExcelImportService>? logger = null)
     {
         _context = context;
+        _logger = logger ?? NullLogger<ExcelImportService>.Instance;
     }
 
     public static string GenerateTempPassword()
@@ -62,14 +65,18 @@ public class ExcelImportService
 
     public async Task<SyncPreview> ValidateAsync(string kind, Stream excelStream)
     {
+        _logger.LogInformation("[ExcelSync] Validando archivo Excel para '{Kind}'", kind);
         using var wb = new XLWorkbook(excelStream);
-        return kind switch
+        var preview = kind switch
         {
             "usuarios" => await ValidateUsers(wb),
             "autorizadores" => await ValidateAuthorizers(wb),
             "permisos" => await ValidatePermissions(wb),
             _ => throw new ArgumentException("Tipo de carga desconocido.")
         };
+        _logger.LogInformation("[ExcelSync] Validación '{Kind}' completada: Total={Total}, Nuevos={New}, Duplicados={Dup}, Errores={Err}",
+            kind, preview.TotalRows, preview.NewCount, preview.DuplicateCount, preview.ErrorCount);
+        return preview;
     }
 
     private async Task<SyncPreview> ValidateUsers(XLWorkbook wb)
@@ -295,14 +302,29 @@ public class ExcelImportService
 
     public async Task<SyncImportSummary> ImportAsync(string kind, Stream excelStream, int actorUserId)
     {
+        _logger.LogInformation("[ExcelSync] Inicio de importación '{Kind}' solicitada por usuario {ActorId}", kind, actorUserId);
         using var wb = new XLWorkbook(excelStream);
-        return kind switch
+        var summary = kind switch
         {
             "usuarios" => await ImportUsers(wb, actorUserId),
             "autorizadores" => await ImportAuthorizers(wb, actorUserId),
             "permisos" => await ImportPermissions(wb, actorUserId),
             _ => throw new ArgumentException("Tipo de carga desconocido.")
         };
+
+        _logger.LogInformation("[ExcelSync] Fin de importación '{Kind}': Creados={Created}, Duplicados={Dup}, Errores={Err}",
+            kind,
+            summary.CreatedUsers + summary.PromotedAuthorizers + summary.CreatedCutoffs + summary.CreatedPermissions,
+            summary.Duplicates,
+            summary.Errors.Count);
+
+        foreach (var err in summary.Errors)
+        {
+            _logger.LogWarning("[ExcelSync] [{Kind}] Fila {Row} rechazada: {Message} ({Detail})",
+                kind, err.Row, err.Message, err.Detail ?? "N/A");
+        }
+
+        return summary;
     }
 
     private async Task<SyncImportSummary> ImportUsers(XLWorkbook wb, int actorUserId)

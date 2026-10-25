@@ -339,7 +339,6 @@ INSERT INTO DatabaseTable (Description, CreatedAt, Status, CreatedByUserId) VALU
 ('UserType', GETDATE(), 1, 1),
 ('User', GETDATE(), 1, 1),
 ('ResetPasswordToken', GETDATE(), 1, 1),
-('AuditLog', GETDATE(), 1, 1),
 ('OriginType', GETDATE(), 1, 1),
 ('CutoffStatusType', GETDATE(), 1, 1),
 ('PermissionStatusType', GETDATE(), 1, 1),

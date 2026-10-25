@@ -101,13 +101,7 @@ namespace HumanResourcesProduction.Mapping
             CreateMap<HumanResourcesProduction.Models.ViewModels.Permissions.PermissionApiCreateViewModel, Permission>();
             CreateMap<HumanResourcesProduction.Models.ViewModels.Permissions.PermissionApiUpdateViewModel, Permission>();
 
-            // 12. AuditLog
-            CreateMap<AuditLog, AuditLogDTO>()
-                .ForMember(d => d.DatabaseTable, o => o.MapFrom(s => s.Table.Description))
-                .ForMember(d => d.Accion, o => o.MapFrom(s => s.ApiFunction.Description))
-                .ForMember(d => d.User, o => o.MapFrom(s => s.CreatedByUser.Name))
-                .ForMember(d => d.ApiKeyDescription, o => o.MapFrom(s => s.ApiKey != null ? (s.ApiKey.Key.Length >= 8 ? s.ApiKey.Key.Substring(0, 8) + "..." : s.ApiKey.Key) : "N/A"))
-                .ForMember(d => d.OriginTypeDescription, o => o.MapFrom(s => s.OriginType.Description));
+            
         }
     }
 }
