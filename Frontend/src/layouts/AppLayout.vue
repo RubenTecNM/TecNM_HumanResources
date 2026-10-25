@@ -19,9 +19,6 @@
         <b class="tecnm-brand-title">TECNOLÓGICO NACIONAL DE MÉXICO</b>
         <span class="tecnm-brand-subtitle">Sistema de Permisos</span>
       </div>
-      <div class="tecnm-topbar__actions">
-        <ThemeSwitcher />
-      </div>
     </header>
 
     <!-- Mobile overlay -->
@@ -173,7 +170,6 @@ import { useAuthStore, USER_TYPE } from '@/features/auth/stores/auth'
 import { useTheme } from '@/shared/composables/useTheme'
 import { askConfirmation } from '@/shared/composables/useAlerts'
 import AnimatedBackground from '@/shared/components/AnimatedBackground.vue'
-import ThemeSwitcher from '@/shared/components/ThemeSwitcher.vue'
 import AppModal from '@/shared/components/AppModal.vue'
 
 const route = useRoute()
