@@ -4,16 +4,26 @@
 
     <!-- Persistent Topbar Header -->
     <header class="tecnm-topbar">
-      <button class="tecnm-topbar__menu-btn" aria-label="Abrir menú" @click="mobileOpen = true">
-        <i class="fa fa-bars" aria-hidden="true"></i>
-      </button>
       <button
         class="tecnm-sidebar__toggle"
-        aria-label="Expandir o contraer menú lateral"
-        :title="expanded ? 'Contraer menú lateral' : 'Expandir menú lateral'"
+        aria-label="Alternar menú lateral"
+        :title="expanded ? 'Ocultar menú lateral' : 'Mostrar menú lateral'"
         @click="toggleSidebar"
       >
-        <i class="fa fa-layer-group" aria-hidden="true"></i>
+        <svg
+          class="tecnm-hamburger-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
       </button>
       <div class="tecnm-topbar__brand">
         <b class="tecnm-brand-title">TECNOLÓGICO NACIONAL DE MÉXICO</b>
@@ -27,7 +37,7 @@
     <!-- Sidebar -->
     <aside class="tecnm-sidebar" aria-label="Menú principal">
       <!-- Live Search in sidebar (shown when expanded) -->
-      <div v-if="expanded" class="sidebar-search">
+      <div class="sidebar-search">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
@@ -48,60 +58,60 @@
       <nav ref="navEl" class="sidebar-nav" @keydown="handleNavKeydown">
         <!-- Section: NAVEGACIÓN -->
         <div v-if="hasVisibleItems('navegacion')" class="sidebar-sec">
-          <h6 v-if="expanded">NAVEGACIÓN</h6>
+          <h6>NAVEGACIÓN</h6>
           <RouterLink
             v-for="item in sectionItems('navegacion')"
             :key="item.id"
             :to="item.to"
             class="sidebar-item"
             :class="{ active: isActive(item.match), hide: !itemMatches(item) }"
-            :title="!expanded ? item.label : undefined"
+            
             @click="mobileOpen = false"
           >
             <component :is="item.icon" />
-            <span v-if="expanded" v-html="highlight(item.label, searchQuery)"></span>
-            <em v-if="expanded && item.badge" class="sidebar-badge">{{ item.badge }}</em>
+            <span v-html="highlight(item.label, searchQuery)"></span>
+            <em v-if="item.badge" class="sidebar-badge">{{ item.badge }}</em>
           </RouterLink>
         </div>
 
         <!-- Section: GESTIÓN -->
         <div v-if="authStore.isRHOrAdmin && hasVisibleItems('gestion')" class="sidebar-sec">
-          <h6 v-if="expanded">GESTIÓN</h6>
+          <h6>GESTIÓN</h6>
           <RouterLink
             v-for="item in sectionItems('gestion')"
             :key="item.id"
             :to="item.to"
             class="sidebar-item"
             :class="{ active: isActive(item.match), hide: !itemMatches(item) }"
-            :title="!expanded ? item.label : undefined"
+            
             @click="mobileOpen = false"
           >
             <component :is="item.icon" />
-            <span v-if="expanded" v-html="highlight(item.label, searchQuery)"></span>
-            <em v-if="expanded && item.badge" class="sidebar-badge">{{ item.badge }}</em>
+            <span v-html="highlight(item.label, searchQuery)"></span>
+            <em v-if="item.badge" class="sidebar-badge">{{ item.badge }}</em>
           </RouterLink>
         </div>
 
         <!-- Section: ADMINISTRACIÓN -->
         <div v-if="authStore.isAdmin && hasVisibleItems('administracion')" class="sidebar-sec">
-          <h6 v-if="expanded">ADMINISTRACIÓN</h6>
+          <h6>ADMINISTRACIÓN</h6>
           <RouterLink
             v-for="item in sectionItems('administracion')"
             :key="item.id"
             :to="item.to"
             class="sidebar-item"
             :class="{ active: isActive(item.match), hide: !itemMatches(item) }"
-            :title="!expanded ? item.label : undefined"
+            
             @click="mobileOpen = false"
           >
             <component :is="item.icon" />
-            <span v-if="expanded" v-html="highlight(item.label, searchQuery)"></span>
-            <em v-if="expanded && item.badge" class="sidebar-badge">{{ item.badge }}</em>
+            <span v-html="highlight(item.label, searchQuery)"></span>
+            <em v-if="item.badge" class="sidebar-badge">{{ item.badge }}</em>
           </RouterLink>
         </div>
 
         <!-- Empty search results state -->
-        <div v-if="expanded && totalVisibleItems === 0" class="sidebar-empty">
+        <div v-if="totalVisibleItems === 0" class="sidebar-empty">
           Sin resultados para “<b>{{ searchQuery }}</b>”
         </div>
       </nav>
@@ -116,7 +126,7 @@
             :title="authStore.user?.name ? `Perfil: ${authStore.user.name}` : 'Mi perfil'"
           >
             <div class="sidebar-av">{{ authStore.initial }}</div>
-            <div v-if="expanded" class="sidebar-user-info">
+            <div class="sidebar-user-info">
               <b>{{ authStore.user?.name || 'Usuario' }}</b>
               <small>{{ roleLabel }}</small>
             </div>
@@ -193,8 +203,12 @@ const ROLE_LABELS: Record<number, string> = {
 const roleLabel = computed(() => ROLE_LABELS[authStore.userType ?? 0] ?? 'Empleado')
 
 function toggleSidebar() {
-  expanded.value = !expanded.value
-  localStorage.setItem('sidebar-expanded', String(expanded.value))
+  if (typeof window !== 'undefined' && window.innerWidth < 992) {
+    mobileOpen.value = !mobileOpen.value
+  } else {
+    expanded.value = !expanded.value
+    localStorage.setItem('sidebar-expanded', String(expanded.value))
+  }
 }
 
 function isActive(match: string): boolean {

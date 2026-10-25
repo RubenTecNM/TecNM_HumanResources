@@ -425,16 +425,16 @@ select.tecnm-form-control {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  border: 1px solid rgba(201, 162, 77, 0.3);
+  border: 1px solid rgba(201, 162, 77, 0.4);
   border-radius: 9px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  font-size: 1.15rem;
   cursor: pointer;
   transition: all 0.25s ease;
+  flex-shrink: 0;
 }
 
 .tecnm-sidebar__toggle:hover,
@@ -443,20 +443,27 @@ select.tecnm-form-control {
   color: var(--navy-d, #142c54);
   border-color: var(--gold, #c9a24d);
   outline: none;
-  transform: rotate(180deg);
+  box-shadow: 0 0 12px rgba(201, 162, 77, 0.35);
+}
+
+.tecnm-hamburger-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .tecnm-main {
   flex: 1;
   min-width: 0;
-  margin-left: var(--tecnm-nav-width);
+  width: 100%;
+  margin-left: 0;
   padding: calc(var(--tecnm-header-height) + var(--tecnm-space-6)) var(--tecnm-space-6) var(--tecnm-space-6);
-  transition: margin-left var(--tecnm-transition);
+  transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s ease;
   box-sizing: border-box;
 }
 
 .tecnm-app.is-sidebar-expanded .tecnm-main {
-  margin-left: var(--tecnm-nav-width-expanded);
+  margin-left: var(--tecnm-nav-width-expanded, 260px);
 }
 
 /* ---------- Sidebar TecNM ---------- */
@@ -465,19 +472,22 @@ select.tecnm-form-control {
   top: var(--tecnm-header-height);
   left: 0;
   height: calc(100vh - var(--tecnm-header-height));
-  width: var(--tecnm-nav-width);
+  width: var(--tecnm-nav-width-expanded, 260px);
   background: var(--bg, #ffffff);
   border-right: 1px solid var(--line, #e6e9ef);
   display: flex;
   flex-direction: column;
   box-shadow: 6px 0 24px -12px rgba(20, 44, 84, 0.18);
   z-index: 1000;
-  transition: width var(--tecnm-transition);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s ease;
   overflow-x: clip;
 }
 
 .tecnm-app.is-sidebar-expanded .tecnm-sidebar {
-  width: var(--tecnm-nav-width-expanded, 260px);
+  transform: translateX(0);
+  visibility: visible;
 }
 
 /* Sidebar Search */
@@ -748,23 +758,7 @@ select.tecnm-form-control {
   padding: 24px 12px;
 }
 
-/* Collapsed mode adjustments */
-:not(.is-sidebar-expanded) > .tecnm-sidebar .sidebar-nav {
-  padding: 12px 6px;
-}
-
-:not(.is-sidebar-expanded) > .tecnm-sidebar .sidebar-item {
-  justify-content: center;
-  padding: 8px 0;
-}
-
-:not(.is-sidebar-expanded) > .tecnm-sidebar .sidebar-sec h6 {
-  display: none;
-}
-
-:not(.is-sidebar-expanded) > .tecnm-sidebar .sidebar-sec {
-  margin-top: 8px;
-}
+/* Collapsed mode removed - sidebar hides completely */
 
 /* Sidebar Footer */
 .sidebar-foot {
@@ -851,21 +845,7 @@ select.tecnm-form-control {
   flex: none;
 }
 
-:not(.is-sidebar-expanded) > .tecnm-sidebar .sidebar-profile {
-  flex-direction: column;
-  gap: 8px;
-  padding: 4px 0;
-}
 
-:not(.is-sidebar-expanded) > .tecnm-sidebar .sidebar-user-btn {
-  justify-content: center;
-  padding: 4px 0;
-}
-
-:not(.is-sidebar-expanded) > .tecnm-sidebar .sidebar-foot-actions {
-  flex-direction: column;
-  gap: 6px;
-}
 
 .sidebar-out-btn {
   flex: none;
@@ -923,21 +903,24 @@ select.tecnm-form-control {
 @media (max-width: 991.98px) {
   .tecnm-sidebar {
     transform: translateX(-100%);
+    visibility: hidden;
+    z-index: 1050;
   }
 
   .tecnm-app.is-sidebar-open .tecnm-sidebar {
     transform: translateX(0);
-    width: var(--tecnm-nav-width-expanded);
+    visibility: visible;
+    width: var(--tecnm-nav-width-expanded, 260px);
     box-shadow: var(--tecnm-shadow-xl);
   }
 
   .tecnm-main {
-    margin-left: 0;
+    margin-left: 0 !important;
     padding-top: calc(var(--tecnm-header-height) + var(--tecnm-space-4));
   }
 
   .tecnm-app.is-sidebar-expanded .tecnm-main {
-    margin-left: 0;
+    margin-left: 0 !important;
   }
 
   .tecnm-topbar__menu-btn {
