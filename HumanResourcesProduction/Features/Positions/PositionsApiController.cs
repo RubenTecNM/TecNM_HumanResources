@@ -25,19 +25,25 @@ namespace HumanResourcesProduction.Features.Positions
         // GET: api/Positions
         [HttpGet]
         [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Leer")]
-        public async Task<IActionResult> GetPositions()
+        public async Task<IActionResult> GetPositions([FromQuery] bool? all = false)
         {
-            var positions = await _context.Positions
-                .Where(p => p.Status == true)
+            var query = _context.Positions.AsQueryable();
+            if (all != true)
+            {
+                query = query.Where(p => p.Status == true);
+            }
+
+            var positions = await query
+                .OrderBy(p => p.Description)
                 .Select(p => new
                 {
                     p.Id,
                     p.TabularCode,
-                    p.Description
+                    p.Description,
+                    p.Status,
+                    UserCount = _context.Users.Count(u => u.PositionId == p.Id && u.Status)
                 })
                 .ToListAsync();
-
-            if (!positions.Any()) return NotFound("No se encontraron positions activos.");
 
             return Ok(positions);
         }
@@ -136,11 +142,33 @@ namespace HumanResourcesProduction.Features.Positions
             var position = await _context.Positions.FindAsync(id);
             if (position == null) return NotFound();
 
-            if (!position.Status) return BadRequest("El position ya está inactivo.");
+            if (!position.Status) return BadRequest("El puesto ya está inactivo.");
 
             var userId = HttpContext.Items["ApiUserId"] as int? ?? position.UpdatedByUserId;
 
             position.Status = false;
+            position.UpdatedAt = DateTime.Now;
+            position.UpdatedByUserId = userId;
+
+            _context.Update(position);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // PUT: api/Positions/5/activate  (reactivación LÓGICA)
+        [HttpPut("{id}/activate")]
+        [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> ActivatePosition(int id)
+        {
+            var position = await _context.Positions.FindAsync(id);
+            if (position == null) return NotFound();
+
+            if (position.Status) return BadRequest("El puesto ya está activo.");
+
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? position.UpdatedByUserId;
+
+            position.Status = true;
             position.UpdatedAt = DateTime.Now;
             position.UpdatedByUserId = userId;
 
