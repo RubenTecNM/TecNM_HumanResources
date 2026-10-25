@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using HumanResourcesProduction.Models.Enums;
 using HumanResourcesProduction.Models;
 using HumanResourcesProduction.Services;
+using HumanResourcesProduction.Core.Dtos;
 using Xunit;
 
 namespace HumanResourcesProduction.Tests;
@@ -407,5 +408,171 @@ public class PermissionServiceTests
         var result = await service.UpdatePermissionAsync(permUpdate, empleado.Id);
 
         Assert.False(result, "No se debe poder editar un permiso ya Approved");
+    }
+
+    // ── Tests de Fase 1 & 3: Create-Config, Edit-Config y Authorize-Config ─────
+
+    [Fact]
+    public async Task GetCreateConfigurationAsync_EmpleadoComun_NoTieneTipoDocente()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetCreateConfigurationAsync_EmpleadoComun_NoTieneTipoDocente));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+
+        var config = await service.GetCreateConfigurationAsync(empleado.Id, empleado.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.DoesNotContain(config.AvailableTypes, t => t.Id == 5);
+        Assert.False(config.CanChooseRequester);
+    }
+
+    [Fact]
+    public async Task GetEditConfigurationAsync_PropietarioPermisoPendiente_PuedeEditar()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetEditConfigurationAsync_PropietarioPermisoPendiente_PuedeEditar));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var perm = TestDbContextFactory.CreatePermission(
+            empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Pending);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var config = await service.GetEditConfigurationAsync(perm.Id, empleado.Id, empleado.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.True(config.CanEdit);
+        Assert.Null(config.BlockReason);
+        Assert.NotEmpty(config.AvailableTypes);
+        Assert.Equal(perm.Id, config.Id);
+    }
+
+    [Fact]
+    public async Task GetEditConfigurationAsync_PermisoYaAprobado_NoPuedeEditar()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetEditConfigurationAsync_PermisoYaAprobado_NoPuedeEditar));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var perm = TestDbContextFactory.CreatePermission(
+            empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Approved);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var config = await service.GetEditConfigurationAsync(perm.Id, empleado.Id, empleado.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.False(config.CanEdit);
+        Assert.Contains("Pendiente", config.BlockReason);
+    }
+
+    [Fact]
+    public async Task GetEditConfigurationAsync_PermisoInexistente_DevuelveCanEditFalse()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetEditConfigurationAsync_PermisoInexistente_DevuelveCanEditFalse));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+
+        var config = await service.GetEditConfigurationAsync(999999, empleado.Id, empleado.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.False(config.CanEdit);
+        Assert.Contains("no encontrado", config.BlockReason);
+    }
+
+    [Fact]
+    public async Task GetAuthorizeConfigurationAsync_AutorizadorDeMismaArea_PuedeAutorizar()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetAuthorizeConfigurationAsync_AutorizadorDeMismaArea_PuedeAutorizar));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var jefe = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Authorizer);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var perm = TestDbContextFactory.CreatePermission(
+            empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Pending);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var config = await service.GetAuthorizeConfigurationAsync(perm.Id, jefe.Id, jefe.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.True(config.CanAuthorize);
+        Assert.False(config.CanChangeWithPay); // Solo admin puede cambiar goce
+        Assert.Equal(2, config.WithPayOptions.Count);
+    }
+
+    [Fact]
+    public async Task GetAuthorizeConfigurationAsync_AutorizadorDeOtraArea_NoPuedeAutorizar()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetAuthorizeConfigurationAsync_AutorizadorDeOtraArea_NoPuedeAutorizar));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        // Jefe en Área 2 (empleado está en Área 1)
+        var jefeOtraArea = TestDbContextFactory.CreateUser("jefe2", UserTypeEnum.Authorizer, areaId: 2);
+        await context.Users.AddAsync(jefeOtraArea);
+
+        var perm = TestDbContextFactory.CreatePermission(
+            empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Pending);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var config = await service.GetAuthorizeConfigurationAsync(perm.Id, jefeOtraArea.Id, jefeOtraArea.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.False(config.CanAuthorize);
+    }
+
+    [Fact]
+    public async Task GetAuthorizeConfigurationAsync_Admin_PuedeAutorizarYCambiarWithPay()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetAuthorizeConfigurationAsync_Admin_PuedeAutorizarYCambiarWithPay));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var admin = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Administrator);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var perm = TestDbContextFactory.CreatePermission(
+            empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Pending);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var config = await service.GetAuthorizeConfigurationAsync(perm.Id, admin.Id, admin.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.True(config.CanAuthorize);
+        Assert.True(config.CanChangeWithPay);
+    }
+
+    [Fact]
+    public async Task GetAuthorizeConfigurationAsync_PermisoYaProcesado_NoPuedeAutorizar()
+    {
+        using var context = await TestDbContextFactory.SeedAsync(nameof(GetAuthorizeConfigurationAsync_PermisoYaProcesado_NoPuedeAutorizar));
+        var service = TestDbContextFactory.CreatePermissionService(context);
+
+        var empleado = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Employee);
+        var admin = await context.Users.SingleAsync(u => u.UserTypeId == (int)UserTypeEnum.Administrator);
+        var cutoff = await context.Cutoffs.SingleAsync();
+
+        var perm = TestDbContextFactory.CreatePermission(
+            empleado.Id, DateTime.Now, DateTime.Now, cutoff.Id, PermissionStatusEnum.Approved);
+        await context.Permissions.AddAsync(perm);
+        await context.SaveChangesAsync();
+
+        var config = await service.GetAuthorizeConfigurationAsync(perm.Id, admin.Id, admin.UserTypeId);
+
+        Assert.NotNull(config);
+        Assert.False(config.CanAuthorize);
     }
 }

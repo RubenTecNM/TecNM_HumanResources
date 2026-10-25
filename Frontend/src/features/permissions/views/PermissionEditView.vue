@@ -10,6 +10,11 @@
 
     <AppSpinner v-if="loading" />
     <template v-else>
+      <div v-if="config && !config.canEdit" class="tecnm-alert tecnm-alert-warning tecnm-mb-4">
+        <i class="fa fa-lock" aria-hidden="true"></i>
+        <span>{{ config.blockReason || 'Este permiso no se encuentra en estado editable.' }}</span>
+      </div>
+
       <section class="tecnm-card">
         <div class="tecnm-card-header tecnm-card-header--premium">
           <h4 class="filter-title"><i class="fa fa-edit" aria-hidden="true"></i> Datos del Permiso</h4>
@@ -38,36 +43,36 @@
 
             <div class="datetime-grid">
               <AppFormField v-if="date1Config.show" :label="date1Config.label" :error="errors.startDate">
-                <input v-model="form.startDate" type="date" class="tecnm-form-control" :required="date1Config.required" />
+                <input v-model="form.startDate" type="date" class="tecnm-form-control" :required="date1Config.required" :disabled="config && !config.canEdit" />
               </AppFormField>
 
               <AppFormField v-if="time1Config.show" :label="time1Config.label" :error="errors.startTime">
-                <input v-model="form.startTime" type="time" class="tecnm-form-control" :required="time1Config.required" />
+                <input v-model="form.startTime" type="time" class="tecnm-form-control" :required="time1Config.required" :disabled="config && !config.canEdit" />
               </AppFormField>
 
               <AppFormField v-if="date2Config.show" :label="date2Config.label" :error="errors.endDate">
-                <input v-model="form.endDate" type="date" class="tecnm-form-control" :required="date2Config.required" />
+                <input v-model="form.endDate" type="date" class="tecnm-form-control" :required="date2Config.required" :disabled="config && !config.canEdit" />
                 <span v-if="datesInverted" class="tecnm-form-error">{{ errors.datesInverted }}</span>
               </AppFormField>
 
               <AppFormField v-if="time2Config.show" :label="time2Config.label" :error="errors.endTime">
-                <input v-model="form.endTime" type="time" class="tecnm-form-control" :required="time2Config.required" />
+                <input v-model="form.endTime" type="time" class="tecnm-form-control" :required="time2Config.required" :disabled="config && !config.canEdit" />
               </AppFormField>
 
               <AppFormField v-if="canSeeWithPay" label="Con goce de sueldo">
                 <label class="switch-row">
-                  <input v-model="form.withPay" type="checkbox" />
+                  <input v-model="form.withPay" type="checkbox" :disabled="config && !config.canEdit" />
                   <span>El permiso es con goce de sueldo</span>
                 </label>
               </AppFormField>
 
               <template v-if="isTeacherAbsence">
                 <AppFormField label="Horas en aula" :error="errors.hours">
-                  <input v-model.number="form.hoursInClassroom" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" />
+                  <input v-model.number="form.hoursInClassroom" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" :disabled="config && !config.canEdit" />
                 </AppFormField>
 
                 <AppFormField label="Horas de descarga">
-                  <input v-model.number="form.hoursDischarge" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" />
+                  <input v-model.number="form.hoursDischarge" type="number" min="0" max="8" class="tecnm-form-control" placeholder="0" :disabled="config && !config.canEdit" />
                 </AppFormField>
 
                 <div v-if="totalHours > 0" class="tecnm-form-group">
@@ -88,6 +93,7 @@
                 class="tecnm-form-control"
                 rows="3"
                 maxlength="255"
+                :disabled="config && !config.canEdit"
               ></textarea>
               <span v-if="errors.reason" class="tecnm-form-error">{{ errors.reason }}</span>
               <small class="char-counter" :class="counterClass">{{ form.reason.length }}/255</small>
@@ -96,7 +102,7 @@
             <div class="tecnm-form-group">
               <label class="tecnm-label" for="evidenceFile">Evidencia (PDF opcional)</label>
               <div class="file-upload-area" :class="{ 'drag-over': dragOver }" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
-                <input id="evidenceFile" ref="fileInputRef" type="file" accept=".pdf,application/pdf" class="file-input" @change="onFileChange" />
+                <input id="evidenceFile" ref="fileInputRef" type="file" accept=".pdf,application/pdf" class="file-input" :disabled="config && !config.canEdit" @change="onFileChange" />
                 <div v-if="!evidenceFile && !existingEvidence" class="file-upload-content">
                   <div class="file-upload-icon"><i class="fa fa-cloud-upload-alt" aria-hidden="true"></i></div>
                   <p class="file-upload-text">Subir PDF</p>
@@ -107,7 +113,7 @@
                     <i class="fa fa-file-pdf file-icon" aria-hidden="true"></i>
                     {{ evidenceFile ? evidenceFile.name : existingEvidenceName }}
                   </span>
-                  <button type="button" class="remove-file" title="Eliminar archivo" @click="removeFile">
+                  <button v-if="!config || config.canEdit" type="button" class="remove-file" title="Eliminar archivo" @click="removeFile">
                     <i class="fa fa-times" aria-hidden="true"></i>
                   </button>
                 </div>
@@ -126,9 +132,9 @@
             </div>
 
             <div class="form-actions">
-              <AppButton type="submit" variant="primary" icon="fa-save" :loading="submitting" :disabled="!formValid">Guardar cambios</AppButton>
+              <AppButton type="submit" variant="primary" icon="fa-save" :loading="submitting" :disabled="!formValid || (config && !config.canEdit)">Guardar cambios</AppButton>
               <AppButton type="button" variant="secondary" icon="fa-arrow-left" @click="$router.push({ name: 'permissions.index' })">Volver</AppButton>
-              <AppButton type="button" variant="danger" icon="fa-ban" @click="remove">Cancelar</AppButton>
+              <AppButton type="button" variant="danger" icon="fa-ban" :disabled="config && !config.canEdit" @click="remove">Cancelar</AppButton>
             </div>
           </form>
         </div>
@@ -145,12 +151,14 @@ import AppButton from '@/shared/components/AppButton.vue'
 import AppFormField from '@/shared/components/AppFormField.vue'
 import AppSpinner from '@/shared/components/AppSpinner.vue'
 import {
-  fetchPermissionTypes,
-  type PermissionTypeCardConfig,
-  type PermissionTypeFieldConfig,
-  type PermissionTypeItem
-} from '@/api/catalogs'
-import { cancelPermission, fetchPermission, updatePermission, type PermissionCreatePayload } from "@/features/permissions/api/permissions"'
+  cancelPermission,
+  fetchEditConfig,
+  updatePermission,
+  type PermissionCreatePayload,
+  type PermissionEditConfigDto,
+  type PermissionTypeEditConfigDto,
+  type PermissionTypeFieldConfigDto
+} from '@/features/permissions/api/permissions'
 import { combineDateTimeLocal, calculateDays, toDateInputValue, toTimeInputValue } from '@/shared/composables/useDates'
 import { askConfirmation, handleAlertResponse, showToast } from '@/shared/composables/useAlerts'
 import { useAuthStore } from '@/stores/auth'
@@ -160,7 +168,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const id = Number(route.params.id)
 
-const permissionTypes = ref<PermissionTypeItem[]>([])
+const config = ref<PermissionEditConfigDto | null>(null)
 const loading = ref(true)
 const submitting = ref(false)
 const errorGeneral = ref('')
@@ -183,18 +191,10 @@ const form = reactive({
   hoursDischarge: undefined as number | undefined
 })
 
-const defaultTypeConfig: PermissionTypeCardConfig = {
-  icon: 'fa-file-alt',
-  subtitle: '',
-  date1: { show: true, label: 'Fecha de inicio', required: true },
-  date2: { show: true, label: 'Fecha de fin', required: false },
-  time1: { show: false, label: 'Hora de entrada', required: false },
-  time2: { show: false, label: 'Hora de salida', required: false }
-}
+const permissionTypes = computed<PermissionTypeEditConfigDto[]>(() => config.value?.availableTypes ?? [])
 
-const selectedConfig = computed<PermissionTypeCardConfig>(() => {
-  const type = permissionTypes.value.find((t) => t.id === form.permissionTypeId)
-  return type?.config ?? defaultTypeConfig
+const selectedConfig = computed<PermissionTypeEditConfigDto | null>(() => {
+  return config.value?.availableTypes.find((t) => t.id === form.permissionTypeId) ?? null
 })
 
 const isTeacherAbsence = computed(() => form.permissionTypeId === 5)
@@ -203,10 +203,10 @@ const totalHours = computed(() => (form.hoursInClassroom ?? 0) + (form.hoursDisc
 
 const canSeeWithPay = computed(() => authStore.isAuthorizer || authStore.isAdmin || authStore.isRH)
 
-const date1Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.date1)
-const date2Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.date2)
-const time1Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.time1)
-const time2Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.time2)
+const date1Config = computed<PermissionTypeFieldConfigDto>(() => selectedConfig.value?.date1 ?? { show: true, label: 'Fecha de inicio', required: true })
+const date2Config = computed<PermissionTypeFieldConfigDto>(() => selectedConfig.value?.date2 ?? { show: true, label: 'Fecha de fin', required: false })
+const time1Config = computed<PermissionTypeFieldConfigDto>(() => selectedConfig.value?.time1 ?? { show: false, label: 'Hora de entrada', required: false })
+const time2Config = computed<PermissionTypeFieldConfigDto>(() => selectedConfig.value?.time2 ?? { show: false, label: 'Hora de salida', required: false })
 
 const days = computed(() => {
   const start = combineDateTimeLocal(form.startDate, form.startTime)
@@ -270,44 +270,37 @@ function validate() {
     else delete errors.endTime
   }
   if (datesInverted.value) {
-    errors.datesInverted = 'La fecha de fin no puede ser anterior a la de inicio.'
+    errors.datesInverted = 'La fecha de fin debe ser posterior a la fecha de inicio.'
   }
   if (isTeacherAbsence.value) {
     const th = totalHours.value
-    if (th < 1 || th > 8) errors.hours = 'Las horas totales deben ser entre 1 y 8.'
+    if (th < 1) errors.hours = 'Debes capturar al menos 1 hora.'
+    else if (th > 8) errors.hours = 'El total de horas no puede superar 8.'
     else delete errors.hours
   }
   const reason = form.reason.trim()
   if (!reason) errors.reason = 'El motivo es obligatorio.'
-  else if (reason.length > 255) errors.reason = 'El motivo no puede exceder los 255 caracteres.'
+  else if (reason.length > 255) errors.reason = 'El motivo no puede exceder 255 caracteres.'
   else delete errors.reason
 }
 
-function clearDynamicFields() {
-  if (!date1Config.value.show) form.startDate = ''
-  if (!date2Config.value.show) form.endDate = ''
-  if (!time1Config.value.show) form.startTime = ''
-  if (!time2Config.value.show) form.endTime = ''
-  if (!isTeacherAbsence.value) {
-    form.hoursInClassroom = undefined
-    form.hoursDischarge = undefined
-  }
+function typeIcon(t: PermissionTypeEditConfigDto): string {
+  return t.icon || 'fa-file-alt'
 }
 
-function typeIcon(t: PermissionTypeItem): string {
-  return t.config?.icon || 'fa-file-alt'
-}
-
-function typeSubtitle(t: PermissionTypeItem): string {
-  return t.config?.subtitle || `Permiso de tipo ${t.description}`
+function typeSubtitle(t: PermissionTypeEditConfigDto): string {
+  return t.subtitle || `Permiso de tipo ${t.description}`
 }
 
 function validateEvidence(file: File): string | null {
-  if (!/\.pdf$/i.test(file.name) && file.type && file.type !== 'application/pdf') {
-    return 'Solo se permiten archivos PDF.'
+  const maxMb = config.value?.maxFileSizeMB ?? 5
+  const allowed = config.value?.allowedEvidenceExtensions ?? ['.pdf']
+  const isAllowed = allowed.some((ext) => file.name.toLowerCase().endsWith(ext.toLowerCase()))
+  if (!isAllowed) {
+    return `Solo se permiten archivos: ${allowed.join(', ')}`
   }
-  if (file.size > 5 * 1024 * 1024) {
-    return 'El archivo no debe superar los 5MB.'
+  if (file.size > maxMb * 1024 * 1024) {
+    return `El archivo no debe superar los ${maxMb}MB.`
   }
   return null
 }
@@ -356,23 +349,27 @@ function removeFile() {
 
 onMounted(async () => {
   try {
-    const [pts, detail] = await Promise.all([fetchPermissionTypes(), fetchPermission(id)])
-    permissionTypes.value = pts
-    const type = pts.find((t) => t.description === detail.type)
-    form.permissionTypeId = type?.id ?? undefined
-    form.startDate = toDateInputValue(detail.startDate)
-    form.startTime = toTimeInputValue(detail.startDate)
-    form.endDate = toDateInputValue(detail.endDate)
-    form.endTime = toTimeInputValue(detail.endDate)
-    form.withPay = detail.withPay
-    form.reason = detail.reason || ''
-    form.hoursInClassroom = detail.hoursInClassroom ?? undefined
-    form.hoursDischarge = detail.hoursDischarge ?? undefined
-    existingEvidence.value = detail.evidence || null
+    const editConfig = await fetchEditConfig(id)
+    config.value = editConfig
+
+    if (!editConfig.canEdit && editConfig.blockReason) {
+      showToast(editConfig.blockReason, 'warning')
+    }
+
+    form.permissionTypeId = editConfig.permissionTypeId
+    form.startDate = toDateInputValue(editConfig.startDate)
+    form.startTime = toTimeInputValue(editConfig.startDate)
+    form.endDate = toDateInputValue(editConfig.endDate)
+    form.endTime = toTimeInputValue(editConfig.endDate)
+    form.withPay = editConfig.withPay
+    form.reason = editConfig.reason || ''
+    form.hoursInClassroom = editConfig.hoursInClassroom || undefined
+    form.hoursDischarge = editConfig.hoursDischarge || undefined
+    existingEvidence.value = editConfig.evidenceUrl || null
     clearEvidence.value = false
   } catch (err) {
     console.error(err)
-    showToast('No se pudo cargar el permiso.', 'error')
+    showToast('No se pudo cargar la configuración del permiso.', 'error')
     router.push({ name: 'permissions.index' })
   } finally {
     loading.value = false
@@ -380,6 +377,10 @@ onMounted(async () => {
 })
 
 async function submit() {
+  if (config.value && !config.value.canEdit) {
+    showToast(config.value.blockReason || 'Este permiso no es editable.', 'error')
+    return
+  }
   errorGeneral.value = ''
   validate()
   if (Object.keys(errors).length > 0) return
@@ -551,38 +552,37 @@ async function remove() {
 }
 
 .char-counter.success {
-  color: var(--tecnm-text-secondary);
+  color: var(--tecnm-success);
 }
 
 .char-counter.warning {
-  color: var(--tecnm-status-pending-text);
+  color: var(--tecnm-warning);
 }
 
 .char-counter.error {
   color: var(--tecnm-danger);
 }
 
-/* Evidence upload */
 .file-upload-area {
-  position: relative;
   border: 2px dashed var(--tecnm-border-color);
-  border-radius: var(--tecnm-radius-lg, 1rem);
-  background: var(--tecnm-soft-hover);
-  padding: 2rem 1.5rem;
+  border-radius: var(--tecnm-radius-md);
+  padding: 1.5rem;
   text-align: center;
   cursor: pointer;
+  position: relative;
   transition: var(--tecnm-transition);
+  background-color: var(--tecnm-bg-main);
 }
 
+.file-upload-area:hover,
 .file-upload-area.drag-over {
-  background: var(--tecnm-gold-light);
-  border-color: var(--tecnm-gold-accent);
+  border-color: var(--tecnm-accent-text);
+  background-color: var(--tecnm-surface-white);
 }
 
 .file-input {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   opacity: 0;
@@ -596,72 +596,57 @@ async function remove() {
 }
 
 .file-upload-text {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--tecnm-heading-color);
+  font-weight: 600;
+  margin: 0 0 0.25rem;
 }
 
 .file-upload-hint {
   font-size: 0.8rem;
   color: var(--tecnm-text-secondary);
+  margin: 0;
 }
 
 .file-preview {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  background: var(--tecnm-surface-white);
-  border: 1px solid var(--tecnm-border-color);
+  padding: 0.5rem 0.75rem;
+  background-color: var(--tecnm-surface-white);
   border-radius: var(--tecnm-radius-sm);
-  padding: 0.7rem 1rem;
+  border: 1px solid var(--tecnm-border-color);
 }
 
 .file-info {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 0.85rem;
-  color: var(--tecnm-text-primary);
-  word-break: break-all;
-  text-align: left;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
-.file-info .file-icon {
+.file-icon {
   color: var(--tecnm-danger);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .remove-file {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--tecnm-status-rejected-bg);
-  color: var(--tecnm-danger);
+  background: none;
   border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--tecnm-text-secondary);
   cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--tecnm-radius-sm);
   transition: var(--tecnm-transition);
 }
 
 .remove-file:hover {
-  background: var(--tecnm-danger);
-  color: #ffffff;
+  color: var(--tecnm-danger);
 }
 
 .form-actions {
   display: flex;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  margin-top: 1.5rem;
   flex-wrap: wrap;
-}
-
-@media (max-width: 640px) {
-  .datetime-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

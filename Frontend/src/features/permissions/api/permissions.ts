@@ -1,4 +1,4 @@
-import { http } from "@/shared/api/client"'
+import { http } from '@/shared/api/client'
 
 export interface PermissionListItem {
   id: number
@@ -161,6 +161,7 @@ function buildPermissionForm(payload: PermissionCreatePayload): FormData {
   if (payload.hoursDischarge != null) form.append('hoursDischarge', String(payload.hoursDischarge))
   return form
 }
+
 // ============================================================================
 // Configuración de creación de permiso (servida por el backend como única autoridad)
 // ============================================================================
@@ -198,6 +199,92 @@ export interface PermissionCreateConfigDto {
  * qué corte está activo y si puede elegir solicitante.
  */
 export async function fetchPermissionConfig(): Promise<PermissionCreateConfigDto> {
-  const res = await http.get<PermissionCreateConfigDto>(/api/permissions/create-config)
+  const res = await http.get<PermissionCreateConfigDto>('/api/Permissions/create-config')
+  return res.data
+}
+
+// ============================================================================
+// Configuración de edición de permiso (servida por el backend)
+// ============================================================================
+
+export interface PermissionTypeEditConfigDto {
+  id: number
+  description: string
+  icon: string
+  subtitle: string
+  isCurrent: boolean
+  date1: PermissionTypeFieldConfigDto
+  date2: PermissionTypeFieldConfigDto
+  time1: PermissionTypeFieldConfigDto
+  time2: PermissionTypeFieldConfigDto
+}
+
+export interface PermissionEditConfigDto {
+  id: number
+  permissionTypeId: number
+  description: string
+  canEdit: boolean
+  blockReason: string | null
+  activeCutoffId: number | null
+  activeCutoffStartDate: string | null
+  activeCutoffEndDate: string | null
+  startDate: string | null
+  endDate: string | null
+  reason: string | null
+  withPay: boolean
+  hoursInClassroom: number
+  hoursDischarge: number
+  evidenceUrl: string
+  maxFileSizeMB: number
+  allowedEvidenceExtensions: string[]
+  availableTypes: PermissionTypeEditConfigDto[]
+}
+
+/**
+ * Obtiene la configuración completa para editar un permiso existente.
+ * El backend define si es editable (estado Pending, corte abierto, propietario)
+ * y los campos activos según el tipo de permiso.
+ */
+export async function fetchEditConfig(id: number): Promise<PermissionEditConfigDto> {
+  const res = await http.get<PermissionEditConfigDto>(`/api/Permissions/${id}/edit-config`)
+  return res.data
+}
+
+// ============================================================================
+// Configuración de autorización de permiso (servida por el backend)
+// ============================================================================
+
+export interface WithPayOptionDto {
+  value: boolean
+  label: string
+  description: string
+  isCurrent: boolean
+}
+
+export interface PermissionAuthorizeConfigDto {
+  id: number
+  permissionTypeId: number
+  description: string
+  requester: string
+  requesterId: number
+  reason: string
+  statusDescription: string
+  statusColor: string
+  withPay: boolean
+  cutoffId: number
+  cutoffRange: string
+  canAuthorize: boolean
+  blockReason: string | null
+  canChangeWithPay: boolean
+  withPayOptions: WithPayOptionDto[]
+}
+
+/**
+ * Obtiene la configuración completa para autorizar/rechazar un permiso.
+ * El backend valida roles (Autorizador por área o Administrador) y si
+ * el permiso sigue pendiente.
+ */
+export async function fetchAuthorizeConfig(id: number): Promise<PermissionAuthorizeConfigDto> {
+  const res = await http.get<PermissionAuthorizeConfigDto>(`/api/Permissions/${id}/authorize-config`)
   return res.data
 }

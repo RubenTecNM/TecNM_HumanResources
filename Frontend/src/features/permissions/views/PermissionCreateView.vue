@@ -143,9 +143,9 @@ import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import AppFormField from '@/shared/components/AppFormField.vue'
 import AppAutocomplete, { type AutocompleteItem } from '@/shared/components/AppAutocomplete.vue'
-import { searchUsers } from @/features/departments/api/catalogs
-import { fetchPermissionConfig, type PermissionCreateConfigDto } from @/features/permissions/api/permissions
-import { createPermission, type PermissionCreatePayload } from "@/features/permissions/api/permissions"
+import { searchUsers } from '@/features/departments/api/catalogs'
+import { fetchPermissionConfig, type PermissionCreateConfigDto } from '@/features/permissions/api/permissions'
+import { createPermission, type PermissionCreatePayload } from '@/features/permissions/api/permissions'
 import { combineDateTimeLocal, calculateDays } from '@/shared/composables/useDates'
 import { handleAlertResponse, showToast } from '@/shared/composables/useAlerts'
 
