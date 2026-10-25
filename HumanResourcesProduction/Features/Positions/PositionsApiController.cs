@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using HumanResourcesProduction.Filters;
 using HumanResourcesProduction.Models;
 using HumanResourcesProduction.Models.ViewModels.Positions;
+using X.PagedList.Extensions;
 
 namespace HumanResourcesProduction.Features.Positions
 {
@@ -25,15 +26,34 @@ namespace HumanResourcesProduction.Features.Positions
         // GET: api/Positions
         [HttpGet]
         [ApiKeyAuthorize(TargetTable = "Position", RequiredPermission = "Leer")]
-        public async Task<IActionResult> GetPositions([FromQuery] bool? all = false)
+        public async Task<IActionResult> GetPositions(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] bool? status = null,
+            [FromQuery] bool? all = false)
         {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 100) pageSize = 10;
+
             var query = _context.Positions.AsQueryable();
-            if (all != true)
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim();
+                query = query.Where(p => p.Description.Contains(s) || p.TabularCode.Contains(s));
+            }
+
+            if (status.HasValue)
+            {
+                query = query.Where(p => p.Status == status.Value);
+            }
+            else if (all != true)
             {
                 query = query.Where(p => p.Status == true);
             }
 
-            var positions = await query
+            var paged = query
                 .OrderBy(p => p.Description)
                 .Select(p => new
                 {
@@ -43,9 +63,16 @@ namespace HumanResourcesProduction.Features.Positions
                     p.Status,
                     UserCount = _context.Users.Count(u => u.PositionId == p.Id && u.Status)
                 })
-                .ToListAsync();
+                .ToPagedList(page, pageSize);
 
-            return Ok(positions);
+            return Ok(new
+            {
+                items = paged,
+                totalItems = paged.TotalItemCount,
+                totalPages = paged.PageCount,
+                page = paged.PageNumber,
+                pageSize = paged.PageSize
+            });
         }
 
         // GET: api/Positions/5
@@ -80,9 +107,23 @@ namespace HumanResourcesProduction.Features.Positions
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            var trimmedCode = model.TabularCode?.Trim().ToUpper();
+            var trimmedDesc = model.Description?.Trim();
+
+            if (string.IsNullOrWhiteSpace(trimmedCode)) return BadRequest("La clave tabular es obligatoria.");
+            if (string.IsNullOrWhiteSpace(trimmedDesc)) return BadRequest("La descripción del puesto es obligatoria.");
+
+            var existsCode = await _context.Positions.AnyAsync(p => p.TabularCode.ToUpper() == trimmedCode);
+            if (existsCode) return BadRequest($"Ya existe un puesto con la clave tabular '{trimmedCode}'.");
+
+            var existsDesc = await _context.Positions.AnyAsync(p => p.Description.ToLower() == trimmedDesc.ToLower());
+            if (existsDesc) return BadRequest($"Ya existe un puesto con el nombre '{trimmedDesc}'.");
+
             var userId = HttpContext.Items["ApiUserId"] as int? ?? 1;
 
             var position = _mapper.Map<Position>(model);
+            position.TabularCode = trimmedCode;
+            position.Description = trimmedDesc;
             position.Status = true;
             position.CreatedAt = DateTime.Now;
             position.UpdatedAt = DateTime.Now;
@@ -110,6 +151,19 @@ namespace HumanResourcesProduction.Features.Positions
         public async Task<IActionResult> PutPosition(int id, [FromBody] PositionUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var trimmedCode = model.TabularCode?.Trim().ToUpper();
+            var trimmedDesc = model.Description?.Trim();
+
+            if (string.IsNullOrWhiteSpace(trimmedCode)) return BadRequest("La clave tabular es obligatoria.");
+            if (string.IsNullOrWhiteSpace(trimmedDesc)) return BadRequest("La descripción del puesto es obligatoria.");
+
+            var existsCode = await _context.Positions.AnyAsync(p => p.Id != id && p.TabularCode.ToUpper() == trimmedCode);
+            if (existsCode) return BadRequest($"Ya existe otro puesto con la clave tabular '{trimmedCode}'.");
+
+            var existsDesc = await _context.Positions.AnyAsync(p => p.Id != id && p.Description.ToLower() == trimmedDesc.ToLower());
+            if (existsDesc) return BadRequest($"Ya existe otro puesto con el nombre '{trimmedDesc}'.");
 
             var position = await _context.Positions.FindAsync(id);
             if (position == null) return NotFound();
@@ -117,6 +171,8 @@ namespace HumanResourcesProduction.Features.Positions
             var userId = HttpContext.Items["ApiUserId"] as int? ?? position.UpdatedByUserId;
 
             _mapper.Map(model, position);
+            position.TabularCode = trimmedCode;
+            position.Description = trimmedDesc;
             position.UpdatedAt = DateTime.Now;
             position.UpdatedByUserId = userId;
 

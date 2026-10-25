@@ -116,6 +116,12 @@ const routes = [
         component: () => import('@/features/organization/views/OrganizationStructureView.vue'),
         meta: { title: 'Estructura Organizacional', roles: [1, 3] }
       },
+      {
+        path: 'positions',
+        name: 'positions.index',
+        component: () => import('@/features/positions/views/PositionsListView.vue'),
+        meta: { title: 'Gestión de Puestos', roles: [1, 3] }
+      },
       
       {
         path: 'sync',

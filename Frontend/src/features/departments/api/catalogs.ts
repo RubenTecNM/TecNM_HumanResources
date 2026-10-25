@@ -49,8 +49,8 @@ export async function fetchDepartments(): Promise<CatalogItem[]> {
 }
 
 export async function fetchPositions(): Promise<CatalogItem[]> {
-  const res = await http.get<CatalogItem[]>('/api/Positions')
-  return res.data
+  const res = await http.get<any>('/api/Positions?pageSize=100')
+  return res.data?.items ?? res.data ?? []
 }
 
 export async function fetchUsers(): Promise<CatalogItem[]> {

@@ -3,7 +3,7 @@
     <!-- Encabezado de Página Institucional -->
     <AppPageHeader
       title="Estructura Organizacional"
-      subtitle="Gestión centralizada e interactiva de Áreas, Departamentos y Puestos del TecNM"
+      subtitle="Jerarquía centralizada e interactiva de Áreas y Departamentos del TecNM"
       icon="fa-sitemap"
     />
 
@@ -13,7 +13,7 @@
         <div class="org-topbar__info">
           <h2 class="org-topbar__title">Jerarquía Institucional</h2>
           <p class="org-topbar__desc">
-            Las Áreas agrupan Departamentos, y los Departamentos coordinan Puestos y colaboradores.
+            Las Áreas (Direcciones) agrupan y coordinan los Departamentos operativos institucionales.
           </p>
         </div>
 
@@ -41,19 +41,6 @@
             <i class="fa fa-sitemap" aria-hidden="true"></i>
             <span>{{ selectedDept ? selectedDept.description : 'Todos los Departamentos' }}</span>
           </button>
-
-          <template v-if="selectedPos">
-            <i class="fa fa-chevron-right org-path__sep" aria-hidden="true"></i>
-            <button
-              type="button"
-              class="org-path__chip org-path__chip--active"
-              @click="selectedPosId = null"
-              title="Puesto seleccionado"
-            >
-              <i class="fa fa-id-badge" aria-hidden="true"></i>
-              <span>{{ selectedPos.description }} ({{ selectedPos.tabularCode }})</span>
-            </button>
-          </template>
         </div>
       </div>
     </section>
@@ -61,7 +48,7 @@
     <!-- Spinner de Carga General -->
     <AppSpinner v-if="loading" />
 
-    <!-- Grid de 3 Columnas Centralizadas -->
+    <!-- Grid de 2 Columnas Centralizadas (Áreas y Departamentos) -->
     <div v-else class="org-cols">
       <!-- ================================================================= -->
       <!-- COLUMNA 1: ÁREAS                                                  -->
@@ -72,7 +59,7 @@
             <i class="fa fa-layer-group" aria-hidden="true"></i>
           </div>
           <div class="org-col__titles">
-            <h3 class="org-col__title">Áreas</h3>
+            <h3 class="org-col__title">Áreas (Direcciones)</h3>
             <small class="org-col__subtitle">{{ areas.length }} área(s) en total</small>
           </div>
           <AppButton
@@ -116,7 +103,7 @@
             <div class="org-item__body">
               <b class="org-item__title">{{ a.description }}</b>
               <small class="org-item__meta">
-                {{ a.departmentCount ?? 0 }} departamento(s)
+                {{ a.departmentCount ?? 0 }} departamento(s) adscrito(s)
                 <span v-if="!a.status" class="org-tag org-tag--inactive">Inactiva</span>
               </small>
             </div>
@@ -169,7 +156,7 @@
           <div class="org-col__titles">
             <h3 class="org-col__title">Departamentos</h3>
             <small class="org-col__subtitle">
-              {{ selectedArea ? `${filteredDepartments.length} en ${selectedArea.description}` : `${departments.length} en total` }}
+              {{ selectedArea ? `${filteredDepartments.length} departamento(s) en ${selectedArea.description}` : `${departments.length} en total` }}
             </small>
           </div>
           <AppButton
@@ -245,7 +232,6 @@
                 <i class="fa fa-undo" aria-hidden="true"></i>
               </button>
             </div>
-            <i class="fa fa-chevron-right org-item__arrow" aria-hidden="true"></i>
           </div>
 
           <div v-if="!filteredDepartments.length" class="org-empty">
@@ -256,100 +242,6 @@
             </p>
             <p v-else-if="queryDept">Sin resultados para la búsqueda.</p>
             <p v-else>No hay departamentos registrados.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ================================================================= -->
-      <!-- COLUMNA 3: PUESTOS                                                -->
-      <!-- ================================================================= -->
-      <section class="tecnm-card org-col">
-        <div class="org-col__header">
-          <div class="org-col__icon org-col__icon--pos">
-            <i class="fa fa-id-badge" aria-hidden="true"></i>
-          </div>
-          <div class="org-col__titles">
-            <h3 class="org-col__title">Puestos</h3>
-            <small class="org-col__subtitle">{{ positions.length }} puesto(s) tabulares</small>
-          </div>
-          <AppButton
-            variant="primary"
-            icon="fa-plus"
-            class="org-col__btn-new"
-            @click="openPosModal()"
-          >
-            Nuevo
-          </AppButton>
-        </div>
-
-        <div class="org-col__search">
-          <div class="org-search-wrap">
-            <i class="fa fa-search org-search-icon" aria-hidden="true"></i>
-            <input
-              v-model="queryPos"
-              type="text"
-              class="org-search-input"
-              placeholder="Buscar puesto o clave…"
-              aria-label="Buscar puesto"
-            />
-          </div>
-        </div>
-
-        <div class="org-col__list" role="listbox">
-          <div
-            v-for="p in filteredPositions"
-            :key="p.id"
-            class="org-item"
-            :class="{ 'org-item--selected': selectedPosId === p.id, 'org-item--inactive': !p.status }"
-            tabindex="0"
-            role="option"
-            :aria-selected="selectedPosId === p.id"
-            @click="pickPos(p.id)"
-            @keydown.enter="pickPos(p.id)"
-          >
-            <div class="org-item__icon org-col__icon--pos">
-              <i class="fa fa-id-badge" aria-hidden="true"></i>
-            </div>
-            <div class="org-item__body">
-              <b class="org-item__title">{{ p.description }}</b>
-              <small class="org-item__meta">
-                Clave: <code>{{ p.tabularCode }}</code> · {{ p.userCount ?? 0 }} colaborador(es)
-                <span v-if="!p.status" class="org-tag org-tag--inactive">Inactivo</span>
-              </small>
-            </div>
-            <div class="org-item__actions">
-              <button
-                type="button"
-                class="org-item__btn"
-                title="Editar puesto"
-                @click.stop="openPosModal(p)"
-              >
-                <i class="fa fa-edit" aria-hidden="true"></i>
-              </button>
-              <button
-                v-if="p.status"
-                type="button"
-                class="org-item__btn org-item__btn--danger"
-                title="Desactivar puesto (borrado lógico)"
-                @click.stop="deactivatePos(p)"
-              >
-                <i class="fa fa-trash" aria-hidden="true"></i>
-              </button>
-              <button
-                v-else
-                type="button"
-                class="org-item__btn org-item__btn--reactivate"
-                title="Reactivar puesto"
-                @click.stop="reactivatePos(p)"
-              >
-                <i class="fa fa-undo" aria-hidden="true"></i>
-              </button>
-            </div>
-          </div>
-
-          <div v-if="!filteredPositions.length" class="org-empty">
-            <i class="fa fa-id-badge org-empty__icon" aria-hidden="true"></i>
-            <p>{{ queryPos ? 'Sin resultados para la búsqueda.' : 'No hay puestos registrados.' }}</p>
           </div>
         </div>
       </section>
@@ -436,47 +328,6 @@
         <span class="help">El departamento quedará adscrito a esta área organizacional.</span>
       </label>
     </AppModal>
-
-    <!-- ================================================================= -->
-    <!-- MODAL 3: FORMULARIO DE PUESTO                                     -->
-    <!-- ================================================================= -->
-    <AppModal
-      v-model:show="showPosModal"
-      :title="editingPos ? `Editar Puesto #${editingPos.id}` : 'Nuevo Puesto'"
-      :eyebrow="editingPos ? `PUESTO TABULAR #${editingPos.id}` : 'CATÁLOGO DE PUESTOS'"
-      header-variant="icon"
-      icon="fa-id-badge"
-      size="md"
-      :loading="submitting"
-      :confirm-text="editingPos ? 'Actualizar Puesto' : 'Guardar Puesto'"
-      @confirm="savePos"
-    >
-      <label class="field tecnm-mb-3">
-        <span class="lbl">CLAVE TABULAR *</span>
-        <input
-          v-model="posForm.tabularCode"
-          type="text"
-          class="in"
-          placeholder="Ej. A03004, CF12027, E13001..."
-          maxlength="10"
-          autofocus
-        />
-        <span class="help">Clave tabular oficial registrada ante TecNM (máx. 10 caracteres).</span>
-      </label>
-
-      <label class="field">
-        <span class="lbl">NOMBRE / DESCRIPCIÓN DEL PUESTO *</span>
-        <input
-          v-model="posForm.description"
-          type="text"
-          class="in"
-          placeholder="Ej. ALMACENISTA, INGENIERO EN SISTEMAS..."
-          maxlength="50"
-          @keyup.enter="savePos"
-        />
-        <span class="help">Denominación del puesto de trabajo (máx. 50 caracteres).</span>
-      </label>
-    </AppModal>
   </div>
 </template>
 
@@ -505,14 +356,6 @@ interface DepartmentItem {
   status: boolean
 }
 
-interface PositionItem {
-  id: number
-  tabularCode: string
-  description: string
-  status: boolean
-  userCount?: number
-}
-
 interface Paged<T> {
   items: T[]
   totalItems: number
@@ -526,17 +369,14 @@ const submitting = ref(false)
 
 const areas = ref<AreaItem[]>([])
 const departments = ref<DepartmentItem[]>([])
-const positions = ref<PositionItem[]>([])
 
-// Selección interactiva de los 3 niveles
+// Selección interactiva
 const selectedAreaId = ref<number | null>(null)
 const selectedDeptId = ref<number | null>(null)
-const selectedPosId = ref<number | null>(null)
 
-// Filtros de búsqueda por columna
+// Filtros de búsqueda
 const queryArea = ref('')
 const queryDept = ref('')
-const queryPos = ref('')
 
 // Modales reactivos
 const showAreaModal = ref(false)
@@ -547,15 +387,9 @@ const showDeptModal = ref(false)
 const editingDept = ref<DepartmentItem | null>(null)
 const deptForm = reactive({ description: '', areaId: '' as string | number })
 
-const showPosModal = ref(false)
-const editingPos = ref<PositionItem | null>(null)
-const posForm = reactive({ tabularCode: '', description: '' })
-
 // --- Propiedades Computadas ---
 const selectedArea = computed(() => areas.value.find(a => a.id === selectedAreaId.value) || null)
 const selectedDept = computed(() => departments.value.find(d => d.id === selectedDeptId.value) || null)
-const selectedPos = computed(() => positions.value.find(p => p.id === selectedPosId.value) || null)
-
 const activeAreas = computed(() => areas.value.filter(a => a.status))
 
 const filteredAreas = computed(() => {
@@ -578,31 +412,17 @@ const filteredDepartments = computed(() => {
   return list.sort((a, b) => a.description.localeCompare(b.description, 'es'))
 })
 
-const filteredPositions = computed(() => {
-  const q = queryPos.value.trim().toLowerCase()
-  let list = [...positions.value]
-  if (q) {
-    list = list.filter(p =>
-      p.description.toLowerCase().includes(q) ||
-      p.tabularCode.toLowerCase().includes(q)
-    )
-  }
-  return list.sort((a, b) => a.description.localeCompare(b.description, 'es'))
-})
-
 // --- Carga de Datos ---
 async function fetchAllData() {
   loading.value = true
   try {
-    const [resAreas, resDepts, resPositions] = await Promise.all([
+    const [resAreas, resDepts] = await Promise.all([
       http.get<Paged<AreaItem>>('/api/Areas', { params: { pageSize: 100 } }),
-      http.get<Paged<DepartmentItem>>('/api/Departments', { params: { pageSize: 100 } }),
-      http.get<PositionItem[]>('/api/Positions', { params: { all: true } })
+      http.get<Paged<DepartmentItem>>('/api/Departments', { params: { pageSize: 100 } })
     ])
 
     areas.value = resAreas.data.items || []
     departments.value = resDepts.data.items || []
-    positions.value = resPositions.data || []
 
     // Inicializar selección en la primera área si no hay una activa
     if (selectedAreaId.value === null && areas.value.length > 0) {
@@ -619,17 +439,12 @@ async function fetchAllData() {
 function pickArea(id: number) {
   if (selectedAreaId.value === id) return
   selectedAreaId.value = id
-  // Al cambiar de área, seleccionar el primer departamento disponible de esa área
   const firstDept = departments.value.find(d => d.areaId === id)
   selectedDeptId.value = firstDept ? firstDept.id : null
 }
 
 function pickDept(id: number) {
   selectedDeptId.value = id
-}
-
-function pickPos(id: number) {
-  selectedPosId.value = id
 }
 
 function clearAreaSelection() {
@@ -815,103 +630,6 @@ async function reactivateDept(d: DepartmentItem) {
   }
 }
 
-// =====================================================================
-// OPERACIONES CRUD: PUESTOS
-// =====================================================================
-function openPosModal(p?: PositionItem) {
-  if (p) {
-    editingPos.value = p
-    posForm.tabularCode = p.tabularCode
-    posForm.description = p.description
-  } else {
-    editingPos.value = null
-    posForm.tabularCode = ''
-    posForm.description = ''
-  }
-  showPosModal.value = true
-}
-
-async function savePos() {
-  const code = posForm.tabularCode.trim().toUpperCase()
-  const desc = posForm.description.trim()
-
-  if (!code) {
-    showToast('La clave tabular es obligatoria.', 'warning')
-    return
-  }
-  if (!desc) {
-    showToast('El nombre del puesto es obligatorio.', 'warning')
-    return
-  }
-
-  submitting.value = true
-  try {
-    const payload = {
-      tabularCode: code,
-      description: desc
-    }
-
-    if (editingPos.value) {
-      await http.put(`/api/Positions/${editingPos.value.id}`, {
-        id: editingPos.value.id,
-        ...payload
-      })
-      showToast('Puesto actualizado.', 'success')
-    } else {
-      const res = await http.post('/api/Positions', payload)
-      showToast('Puesto registrado exitosamente.', 'success')
-      if (res.data?.id) selectedPosId.value = res.data.id
-    }
-    showPosModal.value = false
-    await fetchAllData()
-  } catch (e: any) {
-    showToast(errMessage(e) || 'No se pudo guardar el puesto.', 'error')
-  } finally {
-    submitting.value = false
-  }
-}
-
-async function deactivatePos(p: PositionItem) {
-  const hasUsers = (p.userCount && p.userCount > 0)
-  const message = hasUsers
-    ? `Atención: Este puesto tiene ${p.userCount} colaborador(es) activos asignados. ¿Deseas desactivarlo?`
-    : `Esta acción marcará inactivo el puesto "${p.description}". Podrás reactivarlo después.`
-
-  const ok = await askConfirmation({
-    title: '¿Desactivar Puesto?',
-    text: message,
-    confirmText: 'Sí, desactivar',
-    danger: true
-  })
-
-  if (!ok) return
-  try {
-    await http.put(`/api/Positions/${p.id}/deactivate`)
-    showToast('Puesto desactivado.', 'success')
-    await fetchAllData()
-  } catch (e: any) {
-    showToast(errMessage(e) || 'No se pudo desactivar el puesto.', 'error')
-  }
-}
-
-async function reactivatePos(p: PositionItem) {
-  const ok = await askConfirmation({
-    title: '¿Reactivar Puesto?',
-    text: `El puesto "${p.description}" volverá a estar activo y elegible para colaboradores.`,
-    confirmText: 'Sí, reactivar',
-    danger: false
-  })
-
-  if (!ok) return
-  try {
-    await http.put(`/api/Positions/${p.id}/activate`)
-    showToast('Puesto reactivado.', 'success')
-    await fetchAllData()
-  } catch (e: any) {
-    showToast(errMessage(e) || 'No se pudo reactivar el puesto.', 'error')
-  }
-}
-
 function errMessage(e: any): string {
   const d = e?.response?.data
   if (typeof d === 'string') return d
@@ -1000,10 +718,10 @@ onMounted(() => {
   color: var(--tecnm-gold, #C9A24D);
 }
 
-/* --- 3 Column Layout --- */
+/* --- 2 Column Layout (Simétrico y Amplio) --- */
 .org-cols {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.25rem;
 }
 
@@ -1042,11 +760,6 @@ onMounted(() => {
 .org-col__icon--dept {
   background: rgba(201, 162, 77, 0.15);
   color: #926d1a;
-}
-
-.org-col__icon--pos {
-  background: rgba(14, 165, 233, 0.12);
-  color: #0284c7;
 }
 
 .org-col__titles {
@@ -1117,7 +830,7 @@ onMounted(() => {
 .org-col__list {
   padding: 0.5rem 0.75rem 1rem;
   overflow-y: auto;
-  max-height: 480px;
+  max-height: 520px;
   min-height: 300px;
   display: flex;
   flex-direction: column;
@@ -1130,7 +843,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.55rem 0.75rem;
+  padding: 0.6rem 0.85rem;
   border-radius: var(--tecnm-radius-md, 8px);
   border: 1px solid transparent;
   cursor: pointer;
@@ -1181,12 +894,12 @@ onMounted(() => {
 
 .org-item__icon {
   flex: none;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 6px;
   display: grid;
   place-items: center;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .org-item--selected .org-item__icon {
@@ -1201,7 +914,7 @@ onMounted(() => {
 
 .org-item__title {
   display: block;
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--tecnm-text-primary);
   overflow-wrap: anywhere;
@@ -1209,7 +922,7 @@ onMounted(() => {
 
 .org-item__meta {
   display: block;
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   color: var(--tecnm-text-secondary);
   margin-top: 2px;
 }
@@ -1242,8 +955,8 @@ onMounted(() => {
 }
 
 .org-item__btn {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   border: 0;
@@ -1251,7 +964,7 @@ onMounted(() => {
   background: transparent;
   color: var(--tecnm-text-secondary);
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   transition: all 0.2s ease;
 }
 
@@ -1277,7 +990,7 @@ onMounted(() => {
 }
 
 .org-empty {
-  padding: 2.5rem 1rem;
+  padding: 3rem 1rem;
   text-align: center;
   color: var(--tecnm-text-secondary);
   font-size: 0.85rem;
@@ -1285,7 +998,7 @@ onMounted(() => {
 }
 
 .org-empty__icon {
-  font-size: 2rem;
+  font-size: 2.2rem;
   opacity: 0.3;
   margin-bottom: 0.5rem;
   display: block;

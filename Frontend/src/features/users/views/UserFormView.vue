@@ -188,7 +188,7 @@ async function fetchCatalogs() {
     ])
     departments.value = depRes.data.items || depRes.data
     areas.value = areaRes.data.items || areaRes.data
-    positions.value = posRes.data
+    positions.value = posRes.data?.items || posRes.data || []
     userTypes.value = typeRes.data
   } catch (e) {
     console.error(e)
