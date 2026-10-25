@@ -177,7 +177,7 @@ const isTeacherAbsence = computed(() => form.permissionTypeId === 5)
 
 const totalHours = computed(() => (form.hoursInClassroom ?? 0) + (form.hoursDischarge ?? 0))
 
-const canChooseRequester = computed(() => authStore.isAdmin || authStore.isRH)
+const canChooseRequester = computed(() => config.value?.canChooseRequester ?? false)
 
 async function searchRequester(term: string): Promise<AutocompleteItem[]> {
   const results = await searchUsers(term)
@@ -188,26 +188,16 @@ async function searchRequester(term: string): Promise<AutocompleteItem[]> {
   }))
 }
 
-const defaultTypeConfig: PermissionTypeCardConfig = {
-  icon: 'fa-file-alt',
-  subtitle: '',
-  date1: { show: true, label: 'Fecha de inicio', required: true },
-  date2: { show: true, label: 'Fecha de fin', required: false },
-  time1: { show: false, label: 'Hora de entrada', required: false },
-  time2: { show: false, label: 'Hora de salida', required: false }
-}
-
-const selectedConfig = computed<PermissionTypeCardConfig>(() => {
-  const type = permissionTypes.value.find((t) => t.id === form.permissionTypeId)
-  return type?.config ?? defaultTypeConfig
+const selectedTypeConfig = computed(() => {
+  if (!config.value || !form.permissionTypeId) return null
+  return config.value.availableTypes.find((t) => t.id === form.permissionTypeId) ?? null
 })
-
 const selectedType = computed<number | null>(() => form.permissionTypeId ?? null)
 
-const date1Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.date1)
-const date2Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.date2)
-const time1Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.time1)
-const time2Config = computed<PermissionTypeFieldConfig>(() => selectedConfig.value.time2)
+const date1Config = computed<PermissionTypeFieldConfig>(() => selectedTypeConfig.value?.date1)
+const date2Config = computed<PermissionTypeFieldConfig>(() => selectedTypeConfig.value?.date2)
+const time1Config = computed<PermissionTypeFieldConfig>(() => selectedTypeConfig.value?.time1)
+const time2Config = computed<PermissionTypeFieldConfig>(() => selectedTypeConfig.value?.time2)
 
 const days = computed(() => {
   const start = combineDateTimeLocal(form.startDate, form.startTime)
