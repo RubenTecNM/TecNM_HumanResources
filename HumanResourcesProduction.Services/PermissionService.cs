@@ -439,6 +439,145 @@ namespace HumanResourcesProduction.Services
             };
         }
 
+        public async Task<PermissionEditConfigDto> GetEditConfigurationAsync(int id, int userId, int userType)
+        {
+            var permission = await _context.Permissions
+                .Include(p => p.PermissionType)
+                .Include(p => p.Cutoff)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permission == null)
+                return new PermissionEditConfigDto { Id = id, CanEdit = false, BlockReason = "Permiso no encontrado." };
+
+            var activeCutoff = await _context.Cutoffs
+                .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open)
+                .OrderByDescending(c => c.Id)
+                .FirstOrDefaultAsync();
+
+            var user = await _context.Users.FindAsync(userId);
+            var userAreaId = user?.AreaId;
+            var canEdit = CanUserAccessPermiso(userId, userType, permission);
+
+            bool corteVigente = permission.Cutoff != null
+                && permission.Cutoff.CutoffStatusTypeId == (int)CutoffStatusEnum.Open
+                && permission.Cutoff.EndDate.Date >= DateTime.Now.Date;
+
+            bool isPending = permission.PermissionStatusTypeId == (int)PermissionStatusEnum.Pending;
+
+            // Reglas de negocio para edición
+            if (!canEdit)
+                return new PermissionEditConfigDto { Id = id, CanEdit = false, BlockReason = "No tiene permiso para editar esta solicitud." };
+            if (!isPending)
+                return new PermissionEditConfigDto { Id = id, CanEdit = false, BlockReason = "Solo se pueden editar permisos en estado Pendiente." };
+            if (corteVigente == false)
+                return new PermissionEditConfigDto { Id = id, CanEdit = false, BlockReason = "El periodo ya está cerrado o invalidado." };
+
+            var maxFileSizeMB = _configuration.GetValue<int>("BusinessRules:Uploads:MaxFileSizeMB", 5);
+
+            var types = await _context.PermissionTypes
+                .Where(t => t.Status)
+                .OrderBy(t => t.Id)
+                .ToListAsync();
+
+            var availableTypes = new List<PermissionTypeEditConfigDto>();
+            foreach (var type in types)
+            {
+                var cardConfig = PermissionTypeConfig.CardConfigs.TryGetValue(type.Id, out var cfg)
+                    ? cfg
+                    : new PermissionTypeCardConfig();
+
+                availableTypes.Add(new PermissionTypeEditConfigDto
+                {
+                    Id = type.Id,
+                    Description = type.Description,
+                    Icon = cardConfig.Icon,
+                    Subtitle = cardConfig.Subtitle,
+                    IsCurrent = type.Id == permission.PermissionTypeId,
+                    Date1 = new PermissionTypeFieldConfigDto { Show = cardConfig.Date1.Show, Label = cardConfig.Date1.Label, Required = cardConfig.Date1.Required },
+                    Date2 = new PermissionTypeFieldConfigDto { Show = cardConfig.Date2.Show, Label = cardConfig.Date2.Label, Required = cardConfig.Date2.Required },
+                    Time1 = new PermissionTypeFieldConfigDto { Show = cardConfig.Time1.Show, Label = cardConfig.Time1.Label, Required = cardConfig.Time1.Required },
+                    Time2 = new PermissionTypeFieldConfigDto { Show = cardConfig.Time2.Show, Label = cardConfig.Time2.Label, Required = cardConfig.Time2.Required }
+                });
+            }
+
+            return new PermissionEditConfigDto
+            {
+                Id = permission.Id,
+                PermissionTypeId = permission.PermissionTypeId,
+                Description = permission.PermissionType?.Description ?? string.Empty,
+                CanEdit = true,
+                ActiveCutoffId = activeCutoff?.Id,
+                ActiveCutoffStartDate = activeCutoff?.StartDate,
+                ActiveCutoffEndDate = activeCutoff?.EndDate,
+                StartDate = permission.StartDate.HasValue ? permission.StartDate.Value.ToString("yyyy-MM-dd") : null,
+                EndDate = permission.EndDate.HasValue ? permission.EndDate.Value.ToString("yyyy-MM-dd") : null,
+                Reason = permission.Reason,
+                WithPay = permission.WithPay,
+                HoursInClassroom = permission.HoursInClassroom ?? 0,
+                HoursDischarge = permission.HoursDischarge ?? 0,
+                EvidenceUrl = permission.Evidence ?? string.Empty,
+                MaxFileSizeMB = maxFileSizeMB,
+                AllowedEvidenceExtensions = new[] { ".pdf" },
+                AvailableTypes = availableTypes
+            };
+        }
+
+        public async Task<PermissionAuthorizeConfigDto> GetAuthorizeConfigurationAsync(int id, int userId, int userType)
+        {
+            var permission = await _context.Permissions
+                .Include(p => p.PermissionType)
+                .Include(p => p.Cutoff)
+                .Include(p => p.RequestingUser)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (permission == null)
+                return new PermissionAuthorizeConfigDto { Id = id, CanAuthorize = false, BlockReason = "Permiso no encontrado." };
+
+            var userAreaId = await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.AreaId)
+                .FirstOrDefaultAsync();
+
+            bool canAuthorize = userType == (int)UserTypeEnum.Administrator || userType == (int)UserTypeEnum.Authorizer;
+
+            // Autorizador solo puede autorizar permisos de su área
+            if (userType == (int)UserTypeEnum.Authorizer)
+            {
+                if (permission.RequestingUser?.AreaId != userAreaId)
+                    canAuthorize = false;
+            }
+
+            // No se puede autorizar un permiso que ya fue procesado
+            if (permission.PermissionStatusTypeId != (int)PermissionStatusEnum.Pending)
+                canAuthorize = false;
+
+            var maxFileSizeMB = _configuration.GetValue<int>("BusinessRules:Uploads:MaxFileSizeMB", 5);
+
+            var withPayOptions = new List<WithPayOptionDto>
+            {
+                new WithPayOptionDto { Value = true, Label = "Con goce", Description = "El permiso se paga normalmente", IsCurrent = permission.WithPay },
+                new WithPayOptionDto { Value = false, Label = "Sin goce", Description = "El permiso se descuenta del sueldo", IsCurrent = !permission.WithPay }
+            };
+
+            return new PermissionAuthorizeConfigDto
+            {
+                Id = permission.Id,
+                PermissionTypeId = permission.PermissionTypeId,
+                Description = permission.PermissionType?.Description ?? string.Empty,
+                Requester = permission.RequestingUser?.Name ?? string.Empty,
+                RequesterId = permission.RequestingUserId,
+                Reason = permission.Reason,
+                StatusDescription = permission.PermissionStatusType?.Description ?? string.Empty,
+                StatusColor = permission.PermissionStatusType?.Color ?? "secondary",
+                WithPay = permission.WithPay,
+                CutoffId = permission.CutoffId,
+                CutoffRange = permission.Cutoff != null ? $"{permission.Cutoff.StartDate:dd/MM/yyyy} - {permission.Cutoff.EndDate:dd/MM/yyyy}" : string.Empty,
+                CanAuthorize = canAuthorize,
+                CanChangeWithPay = userType == (int)UserTypeEnum.Administrator, // Solo admin puede cambiar goce
+                WithPayOptions = withPayOptions
+            };
+        }
+
         private void BumpStatsVersion()
         {
             _cache.Set(StatsVersionKey, _cache.Get<int>(StatsVersionKey) + 1, StatsCacheDuration);

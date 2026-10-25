@@ -18,5 +18,7 @@ namespace HumanResourcesProduction.Services
         Task<bool> AuthorizePermissionAsync(int id, int authorizingUserId, bool aprobado, bool withPay, string? comment);
         bool CanUserAccessPermiso(int userId, int userType, Permission permission);
         Task<PermissionCreateConfigDto> GetCreateConfigurationAsync(int userId, int userType);
+        Task<PermissionEditConfigDto> GetEditConfigurationAsync(int id, int userId, int userType);
+        Task<PermissionAuthorizeConfigDto> GetAuthorizeConfigurationAsync(int id, int userId, int userType);
     }
 }

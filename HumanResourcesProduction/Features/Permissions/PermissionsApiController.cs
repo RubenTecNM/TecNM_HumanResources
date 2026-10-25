@@ -126,6 +126,37 @@ public async Task<IActionResult> GetCreateConfig()
     return Ok(config);
 }
 
+// GET: api/Permissions/5/edit-config  (configuración para editar un permiso)
+[HttpGet("{id}/edit-config")]
+[ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Leer")]
+public async Task<IActionResult> GetEditConfig(int id)
+{
+    var userId = HttpContext.Items["ApiUserId"] as int? ?? 0;
+    var userType = await _context.Users.AsNoTracking()
+        .Where(u => u.Id == userId)
+        .Select(u => u.UserTypeId)
+        .FirstOrDefaultAsync();
+
+    var config = await _permissionService.GetEditConfigurationAsync(id, userId, userType);
+    return Ok(config);
+}
+
+// GET: api/Permissions/5/authorize-config  (configuración para autorizar un permiso)
+[HttpGet("{id}/authorize-config")]
+[ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Leer")]
+public async Task<IActionResult> GetAuthorizeConfig(int id)
+{
+    var userId = HttpContext.Items["ApiUserId"] as int? ?? 0;
+    var userType = await _context.Users.AsNoTracking()
+        .Where(u => u.Id == userId)
+        .Select(u => u.UserTypeId)
+        .FirstOrDefaultAsync();
+
+    var config = await _permissionService.GetAuthorizeConfigurationAsync(id, userId, userType);
+    return Ok(config);
+}
+
+
         // GET: api/Permissions/5/evidence  (descarga del PDF adjunto)
         [HttpGet("{id}/evidence")]
         [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Leer")]
