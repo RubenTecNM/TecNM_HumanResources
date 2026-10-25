@@ -1,9 +1,9 @@
 <template>
   <div>
-    <AppPageHeader title="Gestión de Áreas" subtitle="Administra el catálogo de áreas organizacionales" icon="fa-folder">
+    <AppPageHeader title="Gestión de Áreas" subtitle="Administra el catálogo de áreas organizacionales" icon="fa-layer-group">
       <template #actions>
         <AppButton variant="primary" icon="fa-plus" @click="openCreateModal">
-          Nuevo Área
+          Nueva Área
         </AppButton>
       </template>
     </AppPageHeader>
@@ -50,8 +50,8 @@
     <AppSpinner v-if="loading" />
     <template v-else>
       <section class="tecnm-card">
-        <div class="tecnm-card-header tecnm-card-header--premium">
-          <h4 class="filter-title">Listado de Áreas</h4>
+        <div class="tecnm-card-header tecnm-d-flex tecnm-justify-between tecnm-items-center">
+          <h3 class="tecnm-card-title">Listado de Áreas</h3>
           <span class="count-badge">{{ totalItems }} registro(s)</span>
         </div>
 
@@ -59,18 +59,22 @@
           <table class="tecnm-table tecnm-table-striped">
             <thead>
               <tr>
-                <th class="text-center">ID</th>
-                <th class="text-center">Descripción / Nombre del Área</th>
-                <th class="text-center">Departamentos</th>
-                <th class="text-center">Estado</th>
-                <th class="text-center">Acciones</th>
+                <th class="text-center" style="width: 80px;">ID</th>
+                <th>Nombre del Área</th>
+                <th class="text-center" style="width: 170px;">Departamentos</th>
+                <th class="text-center" style="width: 140px;">Estado</th>
+                <th class="text-center" style="width: 120px;">Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="a in areas" :key="a.id">
                 <td class="text-center"><strong>#{{ a.id }}</strong></td>
                 <td><strong>{{ a.description }}</strong></td>
-                <td class="text-center">{{ a.departmentCount }}</td>
+                <td class="text-center">
+                  <span class="dept-badge">
+                    <i class="fa fa-sitemap" aria-hidden="true"></i> {{ a.departmentCount ?? 0 }}
+                  </span>
+                </td>
                 <td class="text-center">
                   <StatusBadge :variant="a.status ? 'approved' : 'rejected'">
                     {{ a.status ? 'Activa' : 'Inactiva' }}
@@ -81,25 +85,40 @@
                     <button
                       type="button"
                       class="tecnm-action-btn tecnm-action-btn--edit"
-                      title="Editar nombre"
+                      title="Editar área"
                       @click="openEditModal(a)"
                     >
                       <i class="fa fa-edit" aria-hidden="true"></i>
                     </button>
+
+                    <!-- Borrado Lógico: Desactivar si está activa / Reactivar si está inactiva -->
                     <button
                       v-if="a.status"
                       type="button"
                       class="tecnm-action-btn tecnm-action-btn--delete"
-                      title="Desactivar área"
+                      title="Desactivar área (borrado lógico)"
                       @click="deactivateArea(a)"
                     >
                       <i class="fa fa-trash" aria-hidden="true"></i>
+                    </button>
+                    <button
+                      v-else
+                      type="button"
+                      class="tecnm-action-btn tecnm-action-btn--reactivate"
+                      title="Reactivar área"
+                      @click="reactivateArea(a)"
+                    >
+                      <i class="fa fa-undo" aria-hidden="true"></i>
                     </button>
                   </div>
                 </td>
               </tr>
               <tr v-if="!areas.length">
-                <td colspan="5"><EmptyState message="No hay áreas registradas"><span>Crea un nuevo área para organizar los departamentos</span></EmptyState></td>
+                <td colspan="5">
+                  <EmptyState message="No hay áreas registradas">
+                    <span>Crea una nueva área para organizar y agrupar los departamentos institucionales</span>
+                  </EmptyState>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -121,17 +140,32 @@
       </section>
     </template>
 
-    <!-- Modal Formulario Reactivo (Crear / Editar Área - Guía TecNM 4.3) -->
+    <!-- Modal Formulario Reactivo (Crear / Editar Área - Guía TecNM 4.2 / 4.3) -->
     <AppModal
       v-model:show="showModal"
       :title="editingArea ? `Editar Área #${editingArea.id}` : 'Nueva Área'"
-      :eyebrow="editingArea ? `ÁREA #${editingArea.id}` : 'ÁREAS'"
-      header-variant="plain"
+      :eyebrow="editingArea ? `ÁREA ORGANIZACIONAL #${editingArea.id}` : 'CATÁLOGO DE ÁREAS'"
+      header-variant="icon"
+      icon="fa-layer-group"
       size="md"
       :loading="submitting"
-      :confirm-text="editingArea ? 'Actualizar' : 'Guardar'"
+      :confirm-text="editingArea ? 'Actualizar Área' : 'Guardar Área'"
       @confirm="saveArea"
     >
+      <!-- Resumen en edición -->
+      <div v-if="editingArea" class="sec tecnm-mb-3">
+        <div class="row">
+          <i class="fa fa-sitemap ic" aria-hidden="true"></i>
+          <div class="tx">
+            <strong>Departamentos Vinculados</strong>
+            <small>{{ editingArea.departmentCount ?? 0 }} departamento(s) activos asociados a esta área</small>
+          </div>
+          <span :class="editingArea.status ? 'badge--ok' : 'badge--no'">
+            {{ editingArea.status ? 'Activa' : 'Inactiva' }}
+          </span>
+        </div>
+      </div>
+
       <label class="field">
         <span class="lbl">NOMBRE DEL ÁREA *</span>
         <input
@@ -139,11 +173,12 @@
           v-model="modalForm.description"
           type="text"
           class="in"
-          placeholder="Ej. Dirección, Recursos Humanos..."
+          placeholder="Ej. ADMINISTRACIÓN Y FINANZAS, DIRECCIÓN ACADÉMICA..."
           maxlength="100"
           autofocus
+          @keyup.enter="saveArea"
         />
-        <span class="help">Máximo 100 caracteres.</span>
+        <span class="help">Ingresa el nombre oficial del área organizacional (máx. 100 caracteres).</span>
       </label>
     </AppModal>
   </div>
@@ -210,7 +245,7 @@ async function fetchAreas() {
     totalPages.value = res.data.totalPages || 1
     totalItems.value = res.data.totalItems
   } catch {
-    showToast('Error cargando áreas.', 'error')
+    showToast('Error cargando áreas organizacionales.', 'error')
   } finally {
     loading.value = false
   }
@@ -240,7 +275,8 @@ function openEditModal(a: AreaItem) {
 }
 
 async function saveArea() {
-  if (!modalForm.description.trim()) {
+  const desc = modalForm.description.trim()
+  if (!desc) {
     showToast('Debes ingresar un nombre válido para el área.', 'warning')
     return
   }
@@ -250,12 +286,12 @@ async function saveArea() {
     if (editingArea.value) {
       await http.put(`/api/Areas/${editingArea.value.id}`, {
         id: editingArea.value.id,
-        description: modalForm.description.trim()
+        description: desc
       })
       showToast('Área actualizada correctamente.', 'success')
     } else {
       await http.post('/api/Areas', {
-        description: modalForm.description.trim()
+        description: desc
       })
       showToast('Área registrada correctamente.', 'success')
     }
@@ -269,28 +305,50 @@ async function saveArea() {
 }
 
 async function deactivateArea(a: AreaItem) {
+  const hasDepts = (a.departmentCount && a.departmentCount > 0)
+  const message = hasDepts
+    ? `Atención: Esta área tiene ${a.departmentCount} departamento(s) activos vinculados. Al desactivarla, permanecerán en la base de datos pero el área figurará como Inactiva.`
+    : `Esta acción marcará inactiva el área "${a.description}". Podrás reactivarla en cualquier momento.`
+
   const ok = await askConfirmation({
     title: '¿Desactivar Área?',
-    text: `Esta acción marcará inactivo el área "${a.description}".`,
+    text: message,
     confirmText: 'Sí, desactivar',
     danger: true
   })
 
-  if (ok) {
-    try {
-      await http.put(`/api/Areas/${a.id}/deactivate`)
-      showToast('Área desactivada.', 'success')
-      fetchAreas()
-    } catch (e: any) {
-      showToast(errMessage(e) || 'No se pudo desactivar.', 'error')
-    }
+  if (!ok) return
+  try {
+    await http.put(`/api/Areas/${a.id}/deactivate`)
+    showToast('Área desactivada exitosamente.', 'success')
+    fetchAreas()
+  } catch (e: any) {
+    showToast(errMessage(e) || 'No se pudo desactivar el área.', 'error')
+  }
+}
+
+async function reactivateArea(a: AreaItem) {
+  const ok = await askConfirmation({
+    title: '¿Reactivar Área?',
+    text: `El área "${a.description}" volverá a estar activa y disponible para vincular departamentos y usuarios.`,
+    confirmText: 'Sí, reactivar',
+    danger: false
+  })
+
+  if (!ok) return
+  try {
+    await http.put(`/api/Areas/${a.id}/activate`)
+    showToast('Área reactivada exitosamente.', 'success')
+    fetchAreas()
+  } catch (e: any) {
+    showToast(errMessage(e) || 'No se pudo reactivar el área.', 'error')
   }
 }
 
 function errMessage(e: any): string {
   const d = e?.response?.data
   if (typeof d === 'string') return d
-  return d?.message || ''
+  return d?.message || d?.error || ''
 }
 
 onMounted(() => {
@@ -306,18 +364,6 @@ onMounted(() => {
   margin: 0;
 }
 
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0 1.25rem;
-}
-
-.filter-actions {
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
 .count-badge {
   font-size: 0.82rem;
   font-weight: 600;
@@ -325,6 +371,18 @@ onMounted(() => {
   background: var(--tecnm-soft-hover);
   padding: 0.2rem 0.6rem;
   border-radius: 9999px;
+}
+
+.dept-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--tecnm-text-secondary);
+  background: var(--tecnm-soft-hover);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--tecnm-radius-sm);
 }
 
 .text-center {

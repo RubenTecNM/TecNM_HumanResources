@@ -96,9 +96,18 @@ namespace HumanResourcesProduction.Features.Areas
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            var trimmedDesc = model.Description?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedDesc))
+                return BadRequest("La descripción del área es requerida.");
+
+            var exists = await _context.Areas.AnyAsync(a => a.Description.ToLower() == trimmedDesc.ToLower());
+            if (exists)
+                return BadRequest($"Ya existe un área con el nombre '{trimmedDesc}'.");
+
             var userId = HttpContext.Items["ApiUserId"] as int? ?? 1;
 
             var area = _mapper.Map<Area>(model);
+            area.Description = trimmedDesc;
             area.Status = true;
             area.CreatedAt = DateTime.Now;
             area.UpdatedAt = DateTime.Now;
@@ -126,6 +135,15 @@ namespace HumanResourcesProduction.Features.Areas
         public async Task<IActionResult> PutArea(int id, [FromBody] AreaUpdateViewModel model)
         {
             if (id != model.Id) return BadRequest("El ID de la URL no coincide con el del cuerpo.");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var trimmedDesc = model.Description?.Trim();
+            if (string.IsNullOrWhiteSpace(trimmedDesc))
+                return BadRequest("La descripción del área es requerida.");
+
+            var exists = await _context.Areas.AnyAsync(a => a.Id != id && a.Description.ToLower() == trimmedDesc.ToLower());
+            if (exists)
+                return BadRequest($"Ya existe otra área con el nombre '{trimmedDesc}'.");
 
             var area = await _context.Areas.FindAsync(id);
             if (area == null) return NotFound();
@@ -133,6 +151,7 @@ namespace HumanResourcesProduction.Features.Areas
             var userId = HttpContext.Items["ApiUserId"] as int? ?? area.UpdatedByUserId;
 
             _mapper.Map(model, area);
+            area.Description = trimmedDesc;
             area.UpdatedAt = DateTime.Now;
             area.UpdatedByUserId = userId;
 
@@ -165,6 +184,28 @@ namespace HumanResourcesProduction.Features.Areas
             area.Status = false;
             area.UpdatedAt = DateTime.Now;
             area.UpdatedByUserId = userId; // Soft delete attribution
+
+            _context.Update(area);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // PUT: api/Areas/5/activate (reactivación LÓGICA)
+        [HttpPut("{id}/activate")]
+        [ApiKeyAuthorize(TargetTable = "Area", RequiredPermission = "Actualizar")]
+        public async Task<IActionResult> ActivateArea(int id)
+        {
+            var area = await _context.Areas.FindAsync(id);
+            if (area == null) return NotFound();
+
+            if (area.Status) return BadRequest("El área ya está activa.");
+
+            var userId = HttpContext.Items["ApiUserId"] as int? ?? area.UpdatedByUserId;
+
+            area.Status = true;
+            area.UpdatedAt = DateTime.Now;
+            area.UpdatedByUserId = userId;
 
             _context.Update(area);
             await _context.SaveChangesAsync();
