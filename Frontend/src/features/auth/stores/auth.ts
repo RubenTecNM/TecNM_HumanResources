@@ -52,7 +52,7 @@ export const useAuthStore = defineStore('auth', {
       state.user?.userType === USER_TYPE.ADMINISTRADOR ||
       state.user?.userType === USER_TYPE.RECURSOS_HUMANOS ||
       state.user?.userType === USER_TYPE.AUTORIZADOR,
-    initial: (state) => (state.user?.name?.charAt(0) ?? 'U').toUpperCase()
+    initial: (state) => (state.user?.name?.charAt(0) || "U").toUpperCase()
   },
 
   actions: {

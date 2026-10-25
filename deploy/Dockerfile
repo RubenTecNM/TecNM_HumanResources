@@ -2,10 +2,20 @@
 FROM node:22-alpine AS frontend-build
 RUN corepack enable && corepack prepare pnpm@9 --activate
 WORKDIR /app/Frontend
-COPY Frontend/package.json Frontend/pnpm-lock.yaml ./
+COPY Frontend/package.json Frontend/pnpm-lock.yaml Frontend/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY Frontend/src ./src
-COPY Frontend/index.html Frontend/tsconfig.json Frontend/vite.config.ts Frontend/.env* ./
+COPY Frontend/index.html Frontend/tsconfig* Frontend/vite.config.ts Frontend/vitest.config.ts* Frontend/.env* ./
+
+# Flag condicional: por defecto NO corre tests en build de produccion
+ARG RUN_FRONTEND_TESTS=false
+RUN if [ "$RUN_FRONTEND_TESTS" = "true" ]; then \
+      echo "🧪 Ejecutando pruebas unitarias de Frontend..." && \
+      pnpm test:run; \
+    else \
+      echo "⏭️ Tests de Frontend omitidos (RUN_FRONTEND_TESTS=false)"; \
+    fi
+
 RUN pnpm build
 
 # Stage 2: Build .NET backend
