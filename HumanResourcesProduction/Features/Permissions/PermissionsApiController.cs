@@ -110,6 +110,22 @@ namespace HumanResourcesProduction.Features.Permissions
             return Ok(stats);
         }
 
+
+// GET: api/Permissions/create-config  (configuración para el formulario de creación)
+[HttpGet("create-config")]
+[ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Leer")]
+public async Task<IActionResult> GetCreateConfig()
+{
+    var userId = HttpContext.Items["ApiUserId"] as int? ?? 0;
+    var userType = await _context.Users.AsNoTracking()
+        .Where(u => u.Id == userId)
+        .Select(u => u.UserTypeId)
+        .FirstOrDefaultAsync();
+
+    var config = await _permissionService.GetCreateConfigurationAsync(userId, userType);
+    return Ok(config);
+}
+
         // GET: api/Permissions/5/evidence  (descarga del PDF adjunto)
         [HttpGet("{id}/evidence")]
         [ApiKeyAuthorize(TargetTable = "Permission", RequiredPermission = "Leer")]

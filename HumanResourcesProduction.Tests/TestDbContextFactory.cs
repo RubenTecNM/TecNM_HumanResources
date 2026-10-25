@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using HumanResourcesProduction.Mapping;
 using HumanResourcesProduction.Models;
@@ -30,11 +31,18 @@ public static class TestDbContextFactory
 
     public static PermissionService CreatePermissionService(HumanResourcesContext context)
     {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["BusinessRules:Uploads:MaxFileSizeMB"] = "5"
+            })
+            .Build();
         return new PermissionService(
             context,
             CreateMapper(),
             NullLogger<PermissionService>.Instance,
-            new MemoryCache(new MemoryCacheOptions()));
+            new MemoryCache(new MemoryCacheOptions()),
+            configuration);
     }
 
     public static CutoffService CreateCutoffService(HumanResourcesContext context)

@@ -2,9 +2,12 @@ using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using HumanResourcesProduction.Models;
 using HumanResourcesProduction.Models.DTOs;
 using HumanResourcesProduction.Models.Enums;
+using HumanResourcesProduction.Core.Permissions;
+using HumanResourcesProduction.Core.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,13 +27,15 @@ namespace HumanResourcesProduction.Services
         private readonly IMapper _mapper;
         private readonly ILogger<PermissionService> _logger;
         private readonly IMemoryCache _cache;
+        private readonly IConfiguration _configuration;
 
-        public PermissionService(HumanResourcesContext context, IMapper mapper, ILogger<PermissionService> logger, IMemoryCache cache)
+        public PermissionService(HumanResourcesContext context, IMapper mapper, ILogger<PermissionService> logger, IMemoryCache cache, IConfiguration configuration)
         {
             _context = context;
             _mapper = mapper;
             _logger = logger;
             _cache = cache;
+            _configuration = configuration;
         }
 
         public async Task<IPagedList<PermissionsDTO>> GetPermissionsPagedAsync(int userId, int? areaId, string userName, DateTime? fromDay, DateTime? toDay, int? statusId, int page, int pageSize)
@@ -355,6 +360,83 @@ namespace HumanResourcesProduction.Services
             }
             
             return false;
+        }
+
+        public async Task<PermissionCreateConfigDto> GetCreateConfigurationAsync(int userId, int userType)
+        {
+            var user = await _context.Users
+                .Include(u => u.Department)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            var isDocente = user?.Department != null && user.Department.Description == "DOCENCIA";
+
+            var activeCutoff = await _context.Cutoffs
+                .Where(c => c.CutoffStatusTypeId == (int)CutoffStatusEnum.Open)
+                .OrderByDescending(c => c.Id)
+                .FirstOrDefaultAsync();
+
+            var maxFileSizeMB = _configuration.GetValue<int>("BusinessRules:Uploads:MaxFileSizeMB", 5);
+
+            var types = await _context.PermissionTypes
+                .Where(t => t.Status)
+                .OrderBy(t => t.Id)
+                .ToListAsync();
+
+            var availableTypes = new List<PermissionTypeCreateConfigDto>();
+
+            foreach (var type in types)
+            {
+                // Regla de negocio: Falta de docente (tipo 5) solo para personal docente
+                if (type.Id == 5 && !isDocente)
+                    continue;
+
+                var cardConfig = PermissionTypeConfig.CardConfigs.TryGetValue(type.Id, out var cfg)
+                    ? cfg
+                    : new PermissionTypeCardConfig();
+
+                availableTypes.Add(new PermissionTypeCreateConfigDto
+                {
+                    Id = type.Id,
+                    Description = type.Description,
+                    Icon = cardConfig.Icon,
+                    Subtitle = cardConfig.Subtitle,
+                    Date1 = new PermissionTypeFieldConfigDto
+                    {
+                        Show = cardConfig.Date1.Show,
+                        Label = cardConfig.Date1.Label,
+                        Required = cardConfig.Date1.Required
+                    },
+                    Date2 = new PermissionTypeFieldConfigDto
+                    {
+                        Show = cardConfig.Date2.Show,
+                        Label = cardConfig.Date2.Label,
+                        Required = cardConfig.Date2.Required
+                    },
+                    Time1 = new PermissionTypeFieldConfigDto
+                    {
+                        Show = cardConfig.Time1.Show,
+                        Label = cardConfig.Time1.Label,
+                        Required = cardConfig.Time1.Required
+                    },
+                    Time2 = new PermissionTypeFieldConfigDto
+                    {
+                        Show = cardConfig.Time2.Show,
+                        Label = cardConfig.Time2.Label,
+                        Required = cardConfig.Time2.Required
+                    }
+                });
+            }
+
+            return new PermissionCreateConfigDto
+            {
+                AvailableTypes = availableTypes,
+                CanChooseRequester = userType == (int)UserTypeEnum.Administrator || userType == (int)UserTypeEnum.HumanResources,
+                ActiveCutoffId = activeCutoff?.Id,
+                ActiveCutoffStartDate = activeCutoff?.StartDate,
+                ActiveCutoffEndDate = activeCutoff?.EndDate,
+                MaxFileSizeMB = maxFileSizeMB,
+                AllowedEvidenceExtensions = new[] { ".pdf" }
+            };
         }
 
         private void BumpStatsVersion()

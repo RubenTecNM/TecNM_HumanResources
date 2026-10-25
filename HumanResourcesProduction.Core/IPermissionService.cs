@@ -1,5 +1,6 @@
 using HumanResourcesProduction.Models;
 using HumanResourcesProduction.Models.DTOs;
+using HumanResourcesProduction.Core.Dtos;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,5 +17,6 @@ namespace HumanResourcesProduction.Services
         Task<bool> CancelPermissionAsync(int id, int updatedByUserId);
         Task<bool> AuthorizePermissionAsync(int id, int authorizingUserId, bool aprobado, bool withPay, string? comment);
         bool CanUserAccessPermiso(int userId, int userType, Permission permission);
+        Task<PermissionCreateConfigDto> GetCreateConfigurationAsync(int userId, int userType);
     }
 }
