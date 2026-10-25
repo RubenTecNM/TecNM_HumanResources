@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { http } from "@/shared/api/client"'
+import { http } from "@/shared/api/client"
 import type { AlertResponse } from '@/shared/composables/useAlerts'
 
 export interface AuthUser {

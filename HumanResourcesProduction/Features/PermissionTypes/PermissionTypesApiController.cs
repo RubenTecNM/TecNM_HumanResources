@@ -1,5 +1,5 @@
 using AutoMapper;
-using HumanResourcesProduction.Features.Permissions;
+using HumanResourcesProduction.Core.Permissions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HumanResourcesProduction.Filters;
@@ -39,7 +39,7 @@ namespace HumanResourcesProduction.Features.PermissionTypes
             {
                 t.Id,
                 t.Description,
-                Config = PermissionController.PermissionTypeCardConfigs.TryGetValue(t.Id, out var cfg)
+                Config = PermissionTypeConfig.CardConfigs.TryGetValue(t.Id, out var cfg)
                     ? new
                     {
                         cfg.Icon,

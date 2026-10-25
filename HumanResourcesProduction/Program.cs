@@ -50,9 +50,8 @@ builder.Services.AddLogging(logging =>
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services.AddControllersWithViews(options =>
+builder.Services.AddControllers(options =>
 {
-    options.Filters.Add<AuthenticationDataAttribute>();
     options.Filters.Add<ApiExceptionFilter>();
 })
 .AddJsonOptions(options =>
@@ -300,9 +299,7 @@ app.Use(async (context, next) =>
     await next(context);
 });
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller}/{action}/{id?}");
+app.MapControllers();
 
 // SPA fallback: serve index.html for Vue Router routes that don't match MVC controllers
 app.MapFallbackToFile("index.html");

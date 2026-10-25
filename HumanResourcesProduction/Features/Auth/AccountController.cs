@@ -1,45 +1,53 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HumanResourcesProduction.Models;
 using HumanResourcesProduction.Models.ViewModels;
 using HumanResourcesProduction.Services;
 using System.Security.Claims;
-using System.Security.Cryptography; // Necesario para SHA256
-using System.Text; // Necesario para Encoding
 
 namespace HumanResourcesProduction.Features.Auth
 {
-    public class AccountController : Controller
+    [ApiController]
+    [Route("Account")]
+    public class AccountController : ControllerBase
     {
         private readonly HumanResourcesContext _context;
         private readonly ILogger<AccountController> _logger;
         private readonly ILoginAttemptTracker _loginAttemptTracker;
+        private readonly IAntiforgery _antiforgery;
 
-        public AccountController(HumanResourcesContext context, ILogger<AccountController> logger, ILoginAttemptTracker loginAttemptTracker)
+        public AccountController(
+            HumanResourcesContext context,
+            ILogger<AccountController> logger,
+            ILoginAttemptTracker loginAttemptTracker,
+            IAntiforgery antiforgery)
         {
             _context = context;
             _logger = logger;
             _loginAttemptTracker = loginAttemptTracker;
+            _antiforgery = antiforgery;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Login(string? returnUrl = null)
+        [HttpGet("Login")]
+        public IActionResult Login(string? returnUrl = null)
         {
-            if (User.Identity?.IsAuthenticated == true)
-                return RedirectToAction("Index", "Permission");
-
-
-            return View(new LoginViewModel { ReturnUrl = returnUrl });
+            var tokens = _antiforgery.GetAndStoreTokens(HttpContext);
+            // Returns minimal HTML containing the __RequestVerificationToken input for authStore extraction
+            var html = $@"<!DOCTYPE html><html><body><form id=""loginForm""><input type=""hidden"" name=""__RequestVerificationToken"" value=""{tokens.RequestToken}"" /></form></body></html>";
+            return Content(html, "text/html");
         }
 
-        [HttpPost]
+        [HttpPost("Login")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login([FromForm] LoginViewModel model)
         {
             if (!ModelState.IsValid)
-                return View(model);
+            {
+                return BadRequest(new { success = false, title = "Error", message = "Datos de inicio de sesión incompletos." });
+            }
 
             try
             {
@@ -48,8 +56,7 @@ namespace HumanResourcesProduction.Features.Auth
                 if (_loginAttemptTracker.IsLockedOut(loginKey))
                 {
                     _logger.LogWarning("Intento de inicio de sesión bloqueado para {Email}.", model.Email);
-                    ModelState.AddModelError(string.Empty, "Demasiados intentos fallidos. Inténtelo nuevamente más tarde.");
-                    return View(model);
+                    return BadRequest(new { success = false, title = "Bloqueado", message = "Demasiados intentos fallidos. Inténtelo nuevamente más tarde." });
                 }
 
                 // 1. Encriptar la clave recibida del formulario usando el Helper unificado
@@ -63,8 +70,7 @@ namespace HumanResourcesProduction.Features.Auth
                 if (user == null)
                 {
                     _loginAttemptTracker.RegisterFailure(loginKey);
-                    ModelState.AddModelError(string.Empty, "Email o contraseña incorrectos");
-                    return View(model);
+                    return BadRequest(new { success = false, title = "Error", message = "Email o contraseña incorrectos." });
                 }
 
                 _loginAttemptTracker.Reset(loginKey);
@@ -101,38 +107,38 @@ namespace HumanResourcesProduction.Features.Auth
 
                 _logger.LogInformation("User {Email} inició sesión correctamente.", model.Email);
 
-                if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
+                return Ok(new
                 {
-                    return Redirect(model.ReturnUrl);
-                }
-
-                return RedirectToAction("Index", "Permission");
+                    success = true,
+                    title = "¡Éxito!",
+                    message = "Sesión iniciada correctamente.",
+                    redirectUrl = !string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl) ? model.ReturnUrl : "/"
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error crítico en el login para {Email}", model.Email);
-                ModelState.AddModelError(string.Empty, "Error interno al procesar el inicio de sesión");
-                return View(model);
+                return StatusCode(500, new { success = false, title = "Error Interno", message = "Error interno al procesar el inicio de sesión." });
             }
         }
 
-        [HttpPost]
+        [HttpPost("Logout")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            return RedirectToAction("Login", "Account");
+            return Ok(new { success = true, message = "Sesión cerrada correctamente." });
         }
 
-        [HttpGet]
+        [HttpGet("AccessDenied")]
         public IActionResult AccessDenied()
         {
-            return View();
+            return StatusCode(403, new { success = false, title = "Acceso Denegado", message = "No tiene permisos para acceder a este recurso." });
         }
 
         // Returns the current cookie-authenticated user identity so the SPA can
         // read role claims (UserType) that drive menu visibility.
-        [HttpGet]
+        [HttpGet("Me")]
         public async Task<IActionResult> Me()
         {
             if (User.Identity?.IsAuthenticated != true)
@@ -154,7 +160,7 @@ namespace HumanResourcesProduction.Features.Auth
                 .FirstOrDefaultAsync();
             var isDocente = info != null && info.Department == "DOCENCIA";
 
-            return Json(new
+            return Ok(new
             {
                 Id = int.TryParse(idClaim, out var id) ? id : 0,
                 Name = User.FindFirstValue(ClaimTypes.Name) ?? string.Empty,
@@ -165,24 +171,6 @@ namespace HumanResourcesProduction.Features.Auth
                 Department = info?.Department ?? string.Empty,
                 Position = info?.Position ?? string.Empty
             });
-        }
-
-        // Función auxiliar para encriptar en SHA256
-        private string ConvertirSha256(string texto)
-        {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                // Computar el hash a partir de los bytes del texto
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(texto));
-
-                // Convertir el array de bytes a una cadena hexadecimal
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-                return builder.ToString();
-            }
         }
     }
 }
