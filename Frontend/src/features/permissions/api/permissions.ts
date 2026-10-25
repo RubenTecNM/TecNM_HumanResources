@@ -161,3 +161,43 @@ function buildPermissionForm(payload: PermissionCreatePayload): FormData {
   if (payload.hoursDischarge != null) form.append('hoursDischarge', String(payload.hoursDischarge))
   return form
 }
+// ============================================================================
+// Configuración de creación de permiso (servida por el backend como única autoridad)
+// ============================================================================
+
+export interface PermissionTypeFieldConfigDto {
+  show: boolean
+  label: string
+  required: boolean
+}
+
+export interface PermissionTypeCreateConfigDto {
+  id: number
+  description: string
+  icon: string
+  subtitle: string
+  date1: PermissionTypeFieldConfigDto
+  date2: PermissionTypeFieldConfigDto
+  time1: PermissionTypeFieldConfigDto
+  time2: PermissionTypeFieldConfigDto
+}
+
+export interface PermissionCreateConfigDto {
+  availableTypes: PermissionTypeCreateConfigDto[]
+  canChooseRequester: boolean
+  activeCutoffId: number | null
+  activeCutoffStartDate: string | null
+  activeCutoffEndDate: string | null
+  maxFileSizeMB: number
+  allowedEvidenceExtensions: string[]
+}
+
+/**
+ * Obtiene la configuración completa para crear un permiso.
+ * El backend es la única autoridad sobre qué tipos puede ver el usuario,
+ * qué corte está activo y si puede elegir solicitante.
+ */
+export async function fetchPermissionConfig(): Promise<PermissionCreateConfigDto> {
+  const res = await http.get<PermissionCreateConfigDto>(/api/permissions/create-config)
+  return res.data
+}

@@ -8,7 +8,7 @@
       </div>
       <div class="tecnm-card-body">
         <form @submit.prevent="submit" novalidate>
-          <div v-if="canChooseRequester" class="tecnm-form-group">
+          <div v-if="config?.canChooseRequester" class="tecnm-form-group">
             <label class="tecnm-label">
               Solicitante <span class="required-mark">*</span>
             </label>
@@ -26,7 +26,7 @@
             <label class="tecnm-label">Tipo de permiso <span class="required-mark">*</span></label>
             <div class="permission-types">
               <button
-                v-for="t in visiblePermissionTypes"
+                v-for="t in config?.availableTypes ?? []"
                 :key="t.id"
                 type="button"
                 class="permission-type-card"
@@ -143,27 +143,16 @@ import AppPageHeader from '@/shared/components/AppPageHeader.vue'
 import AppButton from '@/shared/components/AppButton.vue'
 import AppFormField from '@/shared/components/AppFormField.vue'
 import AppAutocomplete, { type AutocompleteItem } from '@/shared/components/AppAutocomplete.vue'
-import {
-  fetchPermissionTypes,
-  searchUsers,
-  type PermissionTypeCardConfig,
-  type PermissionTypeFieldConfig,
-  type PermissionTypeItem
-} from '@/api/catalogs'
-import { createPermission, type PermissionCreatePayload } from "@/features/permissions/api/permissions"'
+import { searchUsers } from @/features/departments/api/catalogs
+import { fetchPermissionConfig, type PermissionCreateConfigDto } from @/features/permissions/api/permissions
+import { createPermission, type PermissionCreatePayload } from "@/features/permissions/api/permissions"
 import { combineDateTimeLocal, calculateDays } from '@/shared/composables/useDates'
 import { handleAlertResponse, showToast } from '@/shared/composables/useAlerts'
-import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const config = ref<PermissionCreateConfigDto | null>(null)
 
-const permissionTypes = ref<PermissionTypeItem[]>([])
 // Falta Docente (5): solo visible para personal DOCENCIA; el backend revalida.
-const TEACHER_ABSENCE_TYPE_ID = 5
-const visiblePermissionTypes = computed(() =>
-  authStore.user?.isDocente ? permissionTypes.value : permissionTypes.value.filter((t) => t.id !== TEACHER_ABSENCE_TYPE_ID)
-)
 const submitting = ref(false)
 const errorGeneral = ref('')
 const errors = reactive<Record<string, string>>({})
@@ -241,11 +230,11 @@ const counterClass = computed(() => {
   return 'success'
 })
 
-function typeIcon(t: PermissionTypeItem): string {
+function typeIcon(t: { icon?: string }): string {
   return t.config?.icon || 'fa-file-alt'
 }
 
-function typeSubtitle(t: PermissionTypeItem): string {
+function typeSubtitle(t: { subtitle?: string; description?: string }): string {
   return t.config?.subtitle || `Permiso de tipo ${t.description}`
 }
 
@@ -391,7 +380,7 @@ async function submit() {
     endDate: date2Config.value.show ? (combineDateTimeLocal(form.endDate, form.endTime, true) as string) : undefined,
     permissionTypeId: form.permissionTypeId as number,
     withPay: form.withPay,
-    requestingUserId: canChooseRequester.value ? form.requestingUserId : authStore.user?.id,
+    requestingUserId: canChooseRequester.value ? form.requestingUserId : undefined,
     evidence: evidenceFile.value,
     hoursInClassroom: isTeacherAbsence.value ? form.hoursInClassroom : undefined,
     hoursDischarge: isTeacherAbsence.value ? form.hoursDischarge : undefined
@@ -438,7 +427,7 @@ function handleCreated(result: { id?: number }) {
 
 onMounted(async () => {
   try {
-    permissionTypes.value = await fetchPermissionTypes()
+    config.value = await fetchPermissionConfig()
   } catch (err) {
     console.error('Error cargando catálogos:', err)
     showToast('No se pudieron cargar los datos de apoyo.', 'error')
