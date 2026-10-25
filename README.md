@@ -78,13 +78,26 @@ itsmRH_GestionPermisos/
 
 ## ⚡ Instalación rápida
 
+El script `db/setup.sh` guía paso a paso con confirmaciones interactivas `[s/N]` en cada etapa:
+
 ```bash
 git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
 cd itsmRH_GestionPermisos/db
+
+# Modo interactivo (valida [s/N] antes de cada acción):
 sudo bash setup.sh
+
+# Modo desatendido (ejecuta todo sin preguntar):
+sudo bash setup.sh -y
 ```
 
-El script instala automáticamente: **dependencias del sistema**, **.NET 10 SDK**, **Docker Engine**, y despliega **SQL Server 2025 Express** como demonio `systemd`, inicializando la base de datos completa.
+El script ofrece validación individual para:
+1. **Dependencias del sistema** (`curl`, `wget`, `ca-certificates`, `libicu`, `libssl`)
+2. **.NET 10 SDK** (en `/usr/share/dotnet` con variables globales en `profile.d`)
+3. **Docker Engine** (repositorio oficial Debian/Ubuntu)
+4. **SQL Server 2025 Express** en contenedor Docker (`nexsmart_central_db_sql`)
+5. **Inicialización de base de datos** (`schema_objects.sql` e `inserts.sql`)
+6. **Compilación y despliegue del contenedor de la aplicación** (`itsmrh_gestion_permisos_api`)
 
 ---
 
