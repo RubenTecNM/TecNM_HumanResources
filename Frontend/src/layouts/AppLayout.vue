@@ -19,6 +19,9 @@
         <b class="tecnm-brand-title">TECNOLÓGICO NACIONAL DE MÉXICO</b>
         <span class="tecnm-brand-subtitle">Sistema de Permisos</span>
       </div>
+      <div class="tecnm-topbar__actions">
+        <ThemeSwitcher />
+      </div>
     </header>
 
     <!-- Mobile overlay -->
@@ -106,7 +109,7 @@
         </div>
       </nav>
 
-      <!-- Sidebar Footer -->
+      <!-- Sidebar Footer (Sin el selectlist de temas, 100% fiel al Sidebar TecNM) -->
       <div class="sidebar-foot">
         <div class="sidebar-profile">
           <button
@@ -121,20 +124,17 @@
               <small>{{ roleLabel }}</small>
             </div>
           </button>
-          <div class="sidebar-foot-actions">
-            <ThemeSwitcher :collapsed="!expanded" />
-            <button
-              type="button"
-              class="sidebar-out-btn"
-              @click="logout"
-              title="Cerrar sesión"
-              aria-label="Cerrar sesión"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M12 3v8M6.3 6.5a8 8 0 1 0 11.4 0" />
-              </svg>
-            </button>
-          </div>
+          <button
+            type="button"
+            class="sidebar-out-btn"
+            @click="logout"
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M12 3v8M6.3 6.5a8 8 0 1 0 11.4 0" />
+            </svg>
+          </button>
         </div>
       </div>
 
