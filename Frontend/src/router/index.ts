@@ -29,103 +29,103 @@ const routes = [
       {
         path: 'permissions',
         name: 'permissions.index',
-        component: () => import('@/views/permissions/PermissionsListView.vue'),
+        component: () => import('@/features/permissions/views/PermissionsListView.vue'),
         meta: { title: 'Gestión de Permisos' }
       },
       {
         path: 'permissions/create',
         name: 'permissions.create',
-        component: () => import('@/views/permissions/PermissionCreateView.vue'),
+        component: () => import('@/features/permissions/views/PermissionCreateView.vue'),
         meta: { title: 'Nuevo Permiso', roles: [1, 3, 4] }
       },
       {
         path: 'permissions/:id',
         name: 'permissions.details',
-        component: () => import('@/views/permissions/PermissionDetailsView.vue'),
+        component: () => import('@/features/permissions/views/PermissionDetailsView.vue'),
         meta: { title: 'Detalle de Permiso' }
       },
       {
         path: 'permissions/:id/edit',
         name: 'permissions.edit',
-        component: () => import('@/views/permissions/PermissionEditView.vue'),
+        component: () => import('@/features/permissions/views/PermissionEditView.vue'),
         meta: { title: 'Editar Permiso', roles: [1, 3] }
       },
       {
         path: 'permissions/:id/authorize',
         name: 'permissions.authorize',
-        component: () => import('@/views/permissions/PermissionAuthorizeView.vue'),
+        component: () => import('@/features/permissions/views/PermissionAuthorizeView.vue'),
         meta: { title: 'Autorizar Permiso', roles: [1, 2] }
       },
       {
         path: 'users',
         name: 'users.index',
-        component: () => import('@/views/users/UsersListView.vue'),
+        component: () => import('@/features/users/views/UsersListView.vue'),
         meta: { title: 'Gestión de Usuarios', roles: [1, 3] }
       },
       {
         path: 'users/create',
         name: 'users.create',
-        component: () => import('@/views/users/UserFormView.vue'),
+        component: () => import('@/features/users/views/UserFormView.vue'),
         meta: { title: 'Nuevo Usuario', roles: [1, 3] }
       },
       {
         path: 'users/:id/edit',
         name: 'users.edit',
-        component: () => import('@/views/users/UserFormView.vue'),
+        component: () => import('@/features/users/views/UserFormView.vue'),
         meta: { title: 'Editar Usuario', roles: [1, 3] }
       },
       {
         path: 'cutoffs',
         name: 'cutoffs.index',
-        component: () => import('@/views/cutoffs/CutoffsListView.vue'),
+        component: () => import('@/features/cutoffs/views/CutoffsListView.vue'),
         meta: { title: 'Gestión de Cortes', roles: [1, 3] }
       },
       {
         path: 'cutoffs/create',
         name: 'cutoffs.create',
-        component: () => import('@/views/cutoffs/CutoffCreateView.vue'),
+        component: () => import('@/features/cutoffs/views/CutoffCreateView.vue'),
         meta: { title: 'Nuevo Periodo de Corte', roles: [1, 3] }
       },
       {
         path: 'cutoffs/:id/edit',
         name: 'cutoffs.edit',
-        component: () => import('@/views/cutoffs/CutoffEditView.vue'),
+        component: () => import('@/features/cutoffs/views/CutoffEditView.vue'),
         meta: { title: 'Editar Periodo de Corte', roles: [1, 3] }
       },
       {
         path: 'cutoffs/:id',
         name: 'cutoffs.details',
-        component: () => import('@/views/cutoffs/CutoffDetailsView.vue'),
+        component: () => import('@/features/cutoffs/views/CutoffDetailsView.vue'),
         meta: { title: 'Dashboard Analítico', roles: [1, 3] }
       },
       {
         path: 'departments',
         name: 'departments.index',
-        component: () => import('@/views/departments/DepartmentsListView.vue'),
+        component: () => import('@/features/departments/views/DepartmentsListView.vue'),
         meta: { title: 'Gestión de Departamentos', roles: [1, 3] }
       },
       {
         path: 'areas',
         name: 'areas.index',
-        component: () => import('@/views/areas/AreasListView.vue'),
+        component: () => import('@/features/areas/views/AreasListView.vue'),
         meta: { title: 'Gestión de Áreas', roles: [1, 3] }
       },
       {
         path: 'audit',
         name: 'audit.index',
-        component: () => import('@/views/audit/AuditLogListView.vue'),
+        component: () => import('@/features/audit/views/AuditLogListView.vue'),
         meta: { title: 'Auditoría', roles: [1] }
       },
       {
         path: 'sync',
         name: 'sync.index',
-        component: () => import('@/views/sync/SyncView.vue'),
+        component: () => import('@/features/sync/views/SyncView.vue'),
         meta: { title: 'Sincronización de Datos', roles: [1, 3] }
       },
       {
         path: 'api-keys',
         name: 'api-keys.index',
-        component: () => import('@/views/apikeys/ApiKeysListView.vue'),
+        component: () => import('@/features/apikeys/views/ApiKeysListView.vue'),
         meta: { title: 'API Keys', roles: [1] }
       }
     ]
@@ -133,13 +133,13 @@ const routes = [
   {
     path: '/403',
     name: 'forbidden',
-    component: () => import('@/views/ForbiddenView.vue'),
+    component: () => import('@/features/auth/views/ForbiddenView.vue'),
     meta: { public: true, title: 'Acceso Denegado' }
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'notfound',
-    component: () => import('@/views/NotFoundView.vue'),
+    component: () => import('@/shared/components/NotFoundView.vue'),
     meta: { public: true, title: 'No Encontrado' }
   }
 ]

@@ -39,7 +39,7 @@
                 <div class="permission-types readonly-mode">
                     @{
                         var typeList = ViewBag.PermissionTypeList as IEnumerable<HumanResourcesProduction.Models.PermissionType> ?? new List<HumanResourcesProduction.Models.PermissionType>();
-                        var typeConfigs = ViewBag.PermissionTypeConfigs as Dictionary<int, HumanResourcesProduction.Controllers.PermissionController.PermissionTypeCardConfig> ?? new Dictionary<int, HumanResourcesProduction.Controllers.PermissionController.PermissionTypeCardConfig>();
+                        var typeConfigs = ViewBag.PermissionTypeConfigs as Dictionary<int, HumanResourcesProduction.Features.Permissions.PermissionController.PermissionTypeCardConfig> ?? new Dictionary<int, HumanResourcesProduction.Features.Permissions.PermissionController.PermissionTypeCardConfig>();
                         var jsonOptions = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
                     }
                     @foreach (var type in typeList)
