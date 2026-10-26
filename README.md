@@ -8,20 +8,27 @@ Sistema de gestión de recursos humanos del **TecNM Campus Monclova** para el co
 
 ```
 itsmRH_GestionPermisos/
-├── HumanResourcesProduction/        # Backend — ASP.NET Core 10
-│   ├── Features/
-│   │   ├── Areas/                   # CRUD áreas (soft-delete + reactivar)
-│   │   ├── Departments/             # CRUD departamentos
-│   │   ├── Positions/               # CRUD puestos (paginado)
-│   │   ├── Permissions/             # Gestión de permisos laborales
-│   │   ├── Users/                   # Gestión de colaboradores
-│   │   ├── Auth/                    # Autenticación JWT
-│   │   ├── Cutoffs/                 # Periodos de corte/nómina
-│   │   ├── Sync/                    # Sincronización de datos
-│   │   ├── ApiKeys/                 # Administración de API Keys
-│   │   ├── Admin/                   # Panel administrativo
-│   │   └── Shared/                  # Utilidades compartidas
-│   └── Program.cs
+├── Backend/                         # Backend — ASP.NET Core 10 (Screaming Architecture)
+│   ├── HumanResourcesProduction.sln # Solución .NET
+│   ├── HumanResourcesProduction/    # API Web / Endpoints por Features
+│   │   ├── Features/
+│   │   │   ├── Areas/               # CRUD áreas (soft-delete + reactivar)
+│   │   │   ├── Departments/         # CRUD departamentos
+│   │   │   ├── Positions/           # CRUD puestos (paginado)
+│   │   │   ├── Permissions/         # Gestión de permisos laborales
+│   │   │   ├── Users/               # Gestión de colaboradores
+│   │   │   ├── Auth/                # Autenticación JWT
+│   │   │   ├── Cutoffs/             # Periodos de corte/nómina
+│   │   │   ├── Sync/                # Sincronización de datos
+│   │   │   ├── ApiKeys/             # Administración de API Keys
+│   │   │   ├── Admin/               # Panel administrativo
+│   │   │   └── Shared/              # Utilidades compartidas
+│   │   └── Program.cs
+│   ├── HumanResourcesProduction.Core/        # Entidades, interfaces y DTOs
+│   ├── HumanResourcesProduction.Data/        # DbContext y persistencia
+│   ├── HumanResourcesProduction.Services/    # Servicios de negocio (ExcelImport, etc.)
+│   ├── HumanResourcesProduction.Crosscutting/# Logging y seguridad
+│   └── HumanResourcesProduction.Tests/       # Pruebas unitarias backend (xUnit)
 ├── Frontend/                        # Frontend — Vue 3 + Vite + TypeScript
 │   └── src/
 │       ├── features/

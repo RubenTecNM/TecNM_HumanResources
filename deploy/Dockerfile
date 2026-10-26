@@ -23,16 +23,16 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore
-COPY ["HumanResourcesProduction/HumanResourcesProduction.csproj", "HumanResourcesProduction/"]
-COPY ["HumanResourcesProduction.Core/HumanResourcesProduction.Core.csproj", "HumanResourcesProduction.Core/"]
-COPY ["HumanResourcesProduction.Data/HumanResourcesProduction.Data.csproj", "HumanResourcesProduction.Data/"]
-COPY ["HumanResourcesProduction.Crosscutting/HumanResourcesProduction.Crosscutting.csproj", "HumanResourcesProduction.Crosscutting/"]
-COPY ["HumanResourcesProduction.Services/HumanResourcesProduction.Services.csproj", "HumanResourcesProduction.Services/"]
-RUN dotnet restore "HumanResourcesProduction/HumanResourcesProduction.csproj"
+COPY ["Backend/HumanResourcesProduction/HumanResourcesProduction.csproj", "Backend/HumanResourcesProduction/"]
+COPY ["Backend/HumanResourcesProduction.Core/HumanResourcesProduction.Core.csproj", "Backend/HumanResourcesProduction.Core/"]
+COPY ["Backend/HumanResourcesProduction.Data/HumanResourcesProduction.Data.csproj", "Backend/HumanResourcesProduction.Data/"]
+COPY ["Backend/HumanResourcesProduction.Crosscutting/HumanResourcesProduction.Crosscutting.csproj", "Backend/HumanResourcesProduction.Crosscutting/"]
+COPY ["Backend/HumanResourcesProduction.Services/HumanResourcesProduction.Services.csproj", "Backend/HumanResourcesProduction.Services/"]
+RUN dotnet restore "Backend/HumanResourcesProduction/HumanResourcesProduction.csproj"
 
 # Copy everything and build
 COPY . .
-WORKDIR "/src/HumanResourcesProduction"
+WORKDIR "/src/Backend/HumanResourcesProduction"
 RUN dotnet build "HumanResourcesProduction.csproj" -c Release -o /app/build
 
 # Stage 3: Publish

@@ -220,7 +220,7 @@ using (var scope = app.Services.CreateScope())
 
             {
                 // 4.1 Inserción de Datos Básicos
-                var seedBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath }
+                var seedBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath, Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "..")) }
                     .FirstOrDefault(dir => File.Exists(Path.Combine(dir, "db", "inserts.sql")))
                     ?? AppContext.BaseDirectory;
                 var insertsPath = Path.Combine(seedBase, "db", "inserts.sql");
@@ -260,7 +260,7 @@ using (var scope = app.Services.CreateScope())
             }
 
             // Aplicar upgrades de esquema versionados (idempotentes) a bases existentes
-            var upgradeBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath }
+            var upgradeBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath, Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "..")) }
                 .FirstOrDefault(dir => Directory.Exists(Path.Combine(dir, "db", "upgrade")))
                 ?? AppContext.BaseDirectory;
             SchemaUpgradeRunner.ApplyPendingUpgrades(context, logger, upgradeBase);
