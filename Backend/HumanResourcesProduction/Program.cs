@@ -221,9 +221,9 @@ using (var scope = app.Services.CreateScope())
             {
                 // 4.1 Inserción de Datos Básicos
                 var seedBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath, Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "..")) }
-                    .FirstOrDefault(dir => File.Exists(Path.Combine(dir, "db", "inserts.sql")))
+                    .FirstOrDefault(dir => File.Exists(Path.Combine(dir, "database", "inserts.sql")))
                     ?? AppContext.BaseDirectory;
-                var insertsPath = Path.Combine(seedBase, "db", "inserts.sql");
+                var insertsPath = Path.Combine(seedBase, "database", "inserts.sql");
                 if (File.Exists(insertsPath))
                 {
                     logger.LogInformation("Poblando base de datos con datos básicos...");
@@ -232,7 +232,7 @@ using (var scope = app.Services.CreateScope())
                 }
 
                 // 4.2 Creación de Objetos (SPs, Triggers, etc.)
-                var objectsPath = Path.Combine(seedBase, "db", "schema_objects.sql");
+                var objectsPath = Path.Combine(seedBase, "database", "schema_objects.sql");
                 if (File.Exists(objectsPath))
                 {
                     logger.LogInformation("Creando procedimientos almacenados y triggers...");
@@ -261,7 +261,7 @@ using (var scope = app.Services.CreateScope())
 
             // Aplicar upgrades de esquema versionados (idempotentes) a bases existentes
             var upgradeBase = new[] { AppContext.BaseDirectory, app.Environment.ContentRootPath, Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "..")) }
-                .FirstOrDefault(dir => Directory.Exists(Path.Combine(dir, "db", "upgrade")))
+                .FirstOrDefault(dir => Directory.Exists(Path.Combine(dir, "database", "upgrade")))
                 ?? AppContext.BaseDirectory;
             SchemaUpgradeRunner.ApplyPendingUpgrades(context, logger, upgradeBase);
 

@@ -44,9 +44,8 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=frontend-build /app/Frontend/dist ./wwwroot
-COPY db/inserts.sql ./db/inserts.sql
-COPY db/schema_objects.sql ./db/schema_objects.sql
-COPY db/upgrade ./db/upgrade
+COPY database/inserts.sql ./database/inserts.sql
+COPY database/schema_objects.sql ./database/schema_objects.sql
 
 ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080

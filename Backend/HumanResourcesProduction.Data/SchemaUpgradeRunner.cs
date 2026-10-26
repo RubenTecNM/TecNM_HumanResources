@@ -12,7 +12,7 @@ public static class SchemaUpgradeRunner
     {
         EnsureTrackingTable(context);
 
-        var upgradeDirectory = Path.Combine(baseDirectory, "db", UpgradeFolder);
+        var upgradeDirectory = Path.Combine(baseDirectory, "database", UpgradeFolder);
         if (!Directory.Exists(upgradeDirectory)) return;
 
         var applied = context.Database

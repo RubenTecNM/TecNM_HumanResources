@@ -44,12 +44,13 @@ itsmRH_GestionPermisos/
 │       ├── layouts/                 # AppLayout (nav lateral)
 │       ├── components/              # Componentes globales (AppModal, etc.)
 │       └── assets/css/              # Estilos TecNM estandarizados
-├── db/
-│   ├── schema_objects.sql           # Esquema de tablas y relaciones
+├── database/                        # Scripts SQL y configuración de base de datos
+│   ├── schema_objects.sql           # Esquema de SPs, triggers y table types
 │   ├── inserts.sql                  # Catálogos iniciales (áreas, departamentos, puestos)
-│   └── upgrade/                     # Scripts de migración incremental
-├── deploy/
-│   └── Dockerfile                   # Build multi-stage (backend + frontend + tests)
+│   └── setup.sh                     # Instalador y configurador interactivo
+├── docker/                          # Configuración y despliegue de contenedores
+│   ├── Dockerfile                   # Build multi-stage (backend + frontend + tests)
+│   └── docker-compose.yml           # Orquestación de servicios
 └── docs/                            # Documentación técnica
 ```
 
@@ -85,11 +86,11 @@ itsmRH_GestionPermisos/
 
 ## ⚡ Instalación rápida
 
-El script `db/setup.sh` guía paso a paso con confirmaciones interactivas `[s/N]` en cada etapa:
+El script `database/setup.sh` guía paso a paso con confirmaciones interactivas `[s/N]` en cada etapa:
 
 ```bash
 git clone https://github.com/rriojas/itsmRH_GestionPermisos.git
-cd itsmRH_GestionPermisos/db
+cd itsmRH_GestionPermisos/database
 
 # Modo interactivo (valida [s/N] antes de cada acción):
 sudo bash setup.sh
@@ -163,8 +164,8 @@ docker logs nexsmart_central_db_sql | grep "ready for client"
 Ejecuta los scripts en orden desde tu cliente SQL preferido (VS Code + SQL Server Extension, DBeaver, sqlcmd):
 
 ```
-db/schema_objects.sql   →  Crea tablas, relaciones e índices
-db/inserts.sql          →  Carga catálogos base (Áreas, Departamentos, Puestos, Tipos de permiso)
+database/schema_objects.sql   →  Crea tablas, relaciones e índices
+database/inserts.sql          →  Carga catálogos base (Áreas, Departamentos, Puestos, Tipos de permiso)
 ```
 
 Parámetros de conexión:
@@ -178,7 +179,7 @@ Parámetros de conexión:
 # Build (incluye tests de frontend con Vitest)
 sudo docker build \
   -t itsmrh_gestion_permisos_api:refactor-screaming \
-  -f deploy/Dockerfile . \
+  -f docker/Dockerfile . \
   --build-arg RUN_FRONTEND_TESTS=true
 
 # Ejecutar

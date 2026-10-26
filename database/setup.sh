@@ -260,18 +260,18 @@ step_init_database() {
             -Q "IF DB_ID('$MSSQL_DB_NAME') IS NULL CREATE DATABASE [$MSSQL_DB_NAME];"
 
         # Copiar y ejecutar inserts.sql si el usuario lo solicita
-        if [ -f "$REPO_DIR/db/inserts.sql" ]; then
-            if ask_confirm "¿Desea ejecutar 'db/inserts.sql' para poblar catálogos base?" "s"; then
-                docker cp "$REPO_DIR/db/inserts.sql" "$MSSQL_CONTAINER:/tmp/inserts.sql"
+        if [ -f "$REPO_DIR/database/inserts.sql" ]; then
+            if ask_confirm "¿Desea ejecutar 'database/inserts.sql' para poblar catálogos base?" "s"; then
+                docker cp "$REPO_DIR/database/inserts.sql" "$MSSQL_CONTAINER:/tmp/inserts.sql"
                 docker exec "$MSSQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d "$MSSQL_DB_NAME" -i /tmp/inserts.sql
                 log_success "inserts.sql ejecutado correctamente."
             fi
         fi
 
         # Copiar y ejecutar schema_objects.sql si el usuario lo solicita
-        if [ -f "$REPO_DIR/db/schema_objects.sql" ]; then
-            if ask_confirm "¿Desea ejecutar 'db/schema_objects.sql' para crear SPs y funciones?" "s"; then
-                docker cp "$REPO_DIR/db/schema_objects.sql" "$MSSQL_CONTAINER:/tmp/schema_objects.sql"
+        if [ -f "$REPO_DIR/database/schema_objects.sql" ]; then
+            if ask_confirm "¿Desea ejecutar 'database/schema_objects.sql' para crear SPs y funciones?" "s"; then
+                docker cp "$REPO_DIR/database/schema_objects.sql" "$MSSQL_CONTAINER:/tmp/schema_objects.sql"
                 docker exec "$MSSQL_CONTAINER" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -C -d "$MSSQL_DB_NAME" -i /tmp/schema_objects.sql
                 log_success "schema_objects.sql ejecutado correctamente."
             fi
@@ -286,8 +286,8 @@ step_deploy_app() {
     echo ""
     log_info "Paso 6: Construcción y Despliegue de la Aplicación (Docker)"
 
-    if [ ! -f "$REPO_DIR/deploy/Dockerfile" ]; then
-        log_warn "No se encontró '$REPO_DIR/deploy/Dockerfile'. Omitiendo build de la app."
+    if [ ! -f "$REPO_DIR/docker/Dockerfile" ]; then
+        log_warn "No se encontró '$REPO_DIR/docker/Dockerfile'. Omitiendo build de la app."
         return 0
     fi
 
@@ -295,7 +295,7 @@ step_deploy_app() {
         log_info "Iniciando docker build (esto puede tomar 2-4 minutos)..."
         docker build \
             -t "$APP_IMAGE" \
-            -f "$REPO_DIR/deploy/Dockerfile" \
+            -f "$REPO_DIR/docker/Dockerfile" \
             "$REPO_DIR" \
             --build-arg RUN_FRONTEND_TESTS=true
 
