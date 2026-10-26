@@ -186,7 +186,14 @@ sudo docker build \
 sudo docker run -d \
   --name itsmrh_gestion_permisos_api \
   --restart unless-stopped \
+  --network nexsmart_shared_network \
   -p 5013:8080 \
+  -e ASPNETCORE_ENVIRONMENT=Production \
+  -e ASPNETCORE_URLS=http://+:8080 \
+  -e "ConnectionStrings__HumanResourcesContext=Server=nexsmart_central_db_sql;Database=HumanResourcesProduction;User Id=sa;Password=<tu-password>;Encrypt=False;TrustServerCertificate=True;" \
+  -v deploy_itsmrh_dataprotection_keys:/app/keys \
+  -v deploy_itsmrh_evidences:/app/App_Data/Evidences \
+  -v deploy_itsmrh_logs:/app/logs \
   itsmrh_gestion_permisos_api:refactor-screaming
 
 # Verificar

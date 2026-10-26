@@ -30,6 +30,7 @@ MSSQL_DB_NAME="${MSSQL_DB_NAME:-HumanResourcesProduction}"
 APP_CONTAINER="${APP_CONTAINER:-itsmrh_gestion_permisos_api}"
 APP_PORT="${APP_PORT:-5013}"
 APP_IMAGE="${APP_IMAGE:-itsmrh_gestion_permisos_api:refactor-screaming}"
+DOCKER_NETWORK="${DOCKER_NETWORK:-nexsmart_shared_network}"
 
 # Parsear argumentos
 while [[ $# -gt 0 ]]; do
@@ -184,6 +185,8 @@ step_docker() {
         apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         systemctl enable --now docker
 
+        docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 || docker network create "$DOCKER_NETWORK"
+
         if [ -n "$SUDO_USER" ]; then
             usermod -aG docker "$SUDO_USER"
             log_info "Usuario $SUDO_USER agregado al grupo 'docker'."
@@ -198,6 +201,8 @@ step_docker() {
 step_mssql_container() {
     echo ""
     log_info "Paso 4: Contenedor de Base de Datos (SQL Server 2025 Express)"
+    docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 || docker network create "$DOCKER_NETWORK"
+
     if docker ps -a --format '{{.Names}}' | grep -Eq "^${MSSQL_CONTAINER}$"; then
         log_success "El contenedor '$MSSQL_CONTAINER' ya existe."
         if docker ps --format '{{.Names}}' | grep -Eq "^${MSSQL_CONTAINER}$"; then
@@ -215,13 +220,14 @@ step_mssql_container() {
         docker run -d \
             --name "$MSSQL_CONTAINER" \
             --restart unless-stopped \
+            --network "$DOCKER_NETWORK" \
             -e 'ACCEPT_EULA=Y' \
             -e "MSSQL_SA_PASSWORD=$MSSQL_SA_PASSWORD" \
             -e 'MSSQL_PID=Express' \
             -p "${MSSQL_PORT}:1433" \
             mcr.microsoft.com/mssql/server:2025-latest
 
-        log_success "Contenedor '$MSSQL_CONTAINER' iniciado en puerto $MSSQL_PORT."
+        log_success "Contenedor '$MSSQL_CONTAINER' iniciado en puerto $MSSQL_PORT y conectado a red '$DOCKER_NETWORK'."
     else
         log_warn "Omitiendo despliegue del contenedor SQL Server."
     fi
@@ -308,10 +314,20 @@ step_deploy_app() {
                 docker rm "$APP_CONTAINER" >/dev/null 2>&1 || true
             fi
 
+            docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 || docker network create "$DOCKER_NETWORK"
+
             docker run -d \
                 --name "$APP_CONTAINER" \
                 --restart unless-stopped \
+                --network "$DOCKER_NETWORK" \
                 -p "${APP_PORT}:8080" \
+                -e ASPNETCORE_ENVIRONMENT=Production \
+                -e ASPNETCORE_URLS=http://+:8080 \
+                -e ASPNETCORE_FORWARDEDHEADERS_ENABLED=true \
+                -e "ConnectionStrings__HumanResourcesContext=Server=${MSSQL_CONTAINER};Database=${MSSQL_DB_NAME};User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=False;TrustServerCertificate=True;" \
+                -v deploy_itsmrh_dataprotection_keys:/app/keys \
+                -v deploy_itsmrh_evidences:/app/App_Data/Evidences \
+                -v deploy_itsmrh_logs:/app/logs \
                 "$APP_IMAGE"
 
             sleep 3
@@ -337,6 +353,7 @@ summary() {
     echo -e "    • Motor SQL Server : Contenedor '${MSSQL_CONTAINER}' (Puerto ${MSSQL_PORT})"
     echo -e "    • Base de Datos    : ${MSSQL_DB_NAME}"
     echo -e "    • App itsmRH       : Contenedor '${APP_CONTAINER}' (Puerto ${APP_PORT})"
+    echo -e "    • Red Docker       : ${DOCKER_NETWORK}"
     echo ""
     echo -e "  ${BOLD}Comandos de Diagnóstico Útiles:${RESET}"
     echo -e "    • Logs de la App   : docker logs -f ${APP_CONTAINER}"
