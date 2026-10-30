@@ -2,13 +2,31 @@
   <div class="tecnm-app" :class="{ 'is-sidebar-expanded': expanded, 'is-sidebar-open': mobileOpen }">
     <AnimatedBackground :enabled="currentTheme.animatedBg" />
 
-    <!-- Persistent top header -->
+    <!-- Persistent Topbar Header -->
     <header class="tecnm-topbar">
-      <button class="tecnm-topbar__menu-btn" aria-label="Abrir menú" @click="mobileOpen = true">
-        <i class="fa fa-bars" aria-hidden="true"></i>
+      <button
+        class="tecnm-sidebar__toggle"
+        aria-label="Alternar menú lateral"
+        :title="expanded ? 'Ocultar menú lateral' : 'Mostrar menú lateral'"
+        @click="toggleSidebar"
+      >
+        <svg
+          class="tecnm-hamburger-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
       </button>
       <div class="tecnm-topbar__brand">
-        <span class="tecnm-brand-title">Tecnológico Nacional de México</span>
+        <b class="tecnm-brand-title">TECNOLÓGICO NACIONAL DE MÉXICO</b>
         <span class="tecnm-brand-subtitle">Sistema de Permisos</span>
       </div>
     </header>
@@ -18,111 +36,198 @@
 
     <!-- Sidebar -->
     <aside class="tecnm-sidebar" aria-label="Menú principal">
-      <div class="tecnm-sidebar__brand">
-        <button
-          class="tecnm-sidebar__toggle"
-          aria-label="Expandir menú lateral"
-          :title="expanded ? 'Contraer menú lateral' : 'Expandir menú lateral'"
-          @click="toggleSidebar"
-        >
-          <i class="fa fa-layer-group" aria-hidden="true"></i>
-        </button>
-        <div v-if="expanded" class="tecnm-sidebar__brand-text">
-          <span class="tecnm-sidebar__brand-name">TecNM</span>
-          <span class="tecnm-sidebar__brand-sub">Sistema de Permisos</span>
-        </div>
+      <!-- Live Search in sidebar (shown when expanded) -->
+      <div class="sidebar-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
+        <input
+          ref="searchInput"
+          v-model="searchQuery"
+          type="search"
+          placeholder="Buscar en el menú…"
+          autocomplete="off"
+          aria-label="Buscar en el menú"
+          @keydown="handleSearchKeydown"
+        />
+        <kbd>/</kbd>
       </div>
 
-      <ul class="tecnm-sidebar__menu">
-        <li class="tecnm-sidebar__label">Navegación</li>
-        <li class="tecnm-sidebar__item" :class="{ active: isActive('permissions') }">
-          <RouterLink to="/permissions" class="tecnm-sidebar__link">
-            <i class="fa fa-file-text-o" aria-hidden="true"></i>
-            <span>Permisos</span>
+      <!-- Nav with sections -->
+      <nav ref="navEl" class="sidebar-nav" @keydown="handleNavKeydown">
+        <!-- Section: NAVEGACIÓN -->
+        <div v-if="hasVisibleItems('navegacion')" class="sidebar-sec">
+          <h6>NAVEGACIÓN</h6>
+          <RouterLink
+            v-for="item in sectionItems('navegacion')"
+            :key="item.id"
+            :to="item.to"
+            class="sidebar-item"
+            :class="{ active: isActive(item.match), hide: !itemMatches(item) }"
+            
+            @click="mobileOpen = false"
+          >
+            <component :is="item.icon" />
+            <span v-html="highlight(item.label, searchQuery)"></span>
+            <em v-if="item.badge" class="sidebar-badge">{{ item.badge }}</em>
           </RouterLink>
-        </li>
+        </div>
 
-        <template v-if="authStore.isRHOrAdmin">
-          <li class="tecnm-sidebar__label">Gestión</li>
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('cutoffs') }">
-            <RouterLink to="/cutoffs" class="tecnm-sidebar__link">
-              <i class="fa fa-calendar-check-o" aria-hidden="true"></i>
-              <span>Cortes</span>
-            </RouterLink>
-          </li>
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('users') }">
-            <RouterLink to="/users" class="tecnm-sidebar__link">
-              <i class="fa fa-users" aria-hidden="true"></i>
-              <span>Usuarios</span>
-            </RouterLink>
-          </li>
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('departments') }">
-            <RouterLink to="/departments" class="tecnm-sidebar__link">
-              <i class="fa fa-sitemap" aria-hidden="true"></i>
-              <span>Departamentos</span>
-            </RouterLink>
-          </li>
+        <!-- Section: GESTIÓN -->
+        <div v-if="authStore.isRHOrAdmin && hasVisibleItems('gestion')" class="sidebar-sec">
+          <h6>GESTIÓN</h6>
+          <RouterLink
+            v-for="item in sectionItems('gestion')"
+            :key="item.id"
+            :to="item.to"
+            class="sidebar-item"
+            :class="{ active: isActive(item.match), hide: !itemMatches(item) }"
+            
+            @click="mobileOpen = false"
+          >
+            <component :is="item.icon" />
+            <span v-html="highlight(item.label, searchQuery)"></span>
+            <em v-if="item.badge" class="sidebar-badge">{{ item.badge }}</em>
+          </RouterLink>
+        </div>
 
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('areas') }">
-            <RouterLink to="/areas" class="tecnm-sidebar__link">
-              <i class="fa fa-folder" aria-hidden="true"></i>
-              <span>Áreas</span>
-            </RouterLink>
-          </li>
-        </template>
+        <!-- Section: ADMINISTRACIÓN -->
+        <div v-if="authStore.isAdmin && hasVisibleItems('administracion')" class="sidebar-sec">
+          <h6>ADMINISTRACIÓN</h6>
+          <RouterLink
+            v-for="item in sectionItems('administracion')"
+            :key="item.id"
+            :to="item.to"
+            class="sidebar-item"
+            :class="{ active: isActive(item.match), hide: !itemMatches(item) }"
+            
+            @click="mobileOpen = false"
+          >
+            <component :is="item.icon" />
+            <span v-html="highlight(item.label, searchQuery)"></span>
+            <em v-if="item.badge" class="sidebar-badge">{{ item.badge }}</em>
+          </RouterLink>
+        </div>
 
-        <template v-if="authStore.isAdmin">
-          <li class="tecnm-sidebar__label">Administración</li>
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('audit') }">
-            <RouterLink to="/audit" class="tecnm-sidebar__link">
-              <i class="fa fa-history" aria-hidden="true"></i>
-              <span>Auditoría</span>
-            </RouterLink>
-          </li>
-          <li class="tecnm-sidebar__item" :class="{ active: isActive('api-keys') }">
-            <RouterLink to="/api-keys" class="tecnm-sidebar__link">
-              <i class="fa fa-key" aria-hidden="true"></i>
-              <span>API Keys</span>
-            </RouterLink>
-          </li>
-          <li v-if="authStore.isRHOrAdmin" class="tecnm-sidebar__item" :class="{ active: isActive('sync') }">
-            <RouterLink to="/sync" class="tecnm-sidebar__link">
-              <i class="fa fa-upload" aria-hidden="true"></i>
-              <span>Sincronizar</span>
-            </RouterLink>
-          </li>
-        </template>
-      </ul>
+        <!-- Empty search results state -->
+        <div v-if="totalVisibleItems === 0" class="sidebar-empty">
+          Sin resultados para “<b>{{ searchQuery }}</b>”
+        </div>
+      </nav>
 
-      <div class="tecnm-sidebar__footer">
-        <div class="tecnm-sidebar__footer-actions">
-          <button type="button" class="tecnm-sidebar__link profile-btn" @click="showProfile = true" title="Mi perfil">
-            <i class="fa fa-user" aria-hidden="true"></i>
-            <span v-if="expanded">{{ authStore.user?.name }}</span>
+      <!-- Sidebar Footer (Sin el selectlist de temas, 100% fiel al Sidebar TecNM) -->
+      <div class="sidebar-foot">
+        <div class="sidebar-profile">
+          <button
+            type="button"
+            class="sidebar-user-btn"
+            @click="showProfile = true"
+            :title="authStore.user?.name ? `Perfil: ${authStore.user.name}` : 'Mi perfil'"
+          >
+            <div class="sidebar-av">{{ authStore.initial }}</div>
+            <div class="sidebar-user-info">
+              <b>{{ authStore.user?.name || 'Usuario' }}</b>
+              <small>{{ roleLabel }}</small>
+            </div>
           </button>
-          <ThemeSwitcher :collapsed="!expanded" />
-          <button type="button" class="tecnm-logout-btn" @click="logout">
-            <i class="fa fa-power-off" aria-hidden="true"></i>
-            <span v-if="expanded">Salir</span>
+          <button
+            type="button"
+            class="sidebar-out-btn"
+            @click="logout"
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M12 3v8M6.3 6.5a8 8 0 1 0 11.4 0" />
+            </svg>
           </button>
         </div>
       </div>
 
+      <!-- User Profile Modal (Estándar Guía de Modales TecNM Sección 4.1) -->
       <AppModal
         v-model:show="showProfile"
-        title="Mi perfil"
-        icon="fa-user"
+        :title="authStore.user?.name || 'Mi perfil'"
+        eyebrow="MI PERFIL"
+        header-variant="identity"
+        :avatar-initial="authStore.initial"
+        :pill="roleLabel"
+        size="md"
         :show-cancel="false"
         confirm-text="Cerrar"
         @confirm="showProfile = false"
       >
-        <div class="user-detail-grid" v-if="authStore.user">
-          <div class="detail-row"><span class="detail-label">Nombre</span><span class="detail-value">{{ authStore.user.name }}</span></div>
-          <div class="detail-row"><span class="detail-label">Correo</span><span class="detail-value">{{ authStore.user.email }}</span></div>
-          <div class="detail-row"><span class="detail-label">Tipo de Usuario</span><span class="detail-value">{{ roleLabel }}</span></div>
-          <div v-if="authStore.user.position" class="detail-row"><span class="detail-label">Puesto</span><span class="detail-value">{{ authStore.user.position }}</span></div>
-          <div v-if="authStore.user.department" class="detail-row"><span class="detail-label">Departamento</span><span class="detail-value">{{ authStore.user.department }}</span></div>
-          <div v-if="authStore.user.area" class="detail-row"><span class="detail-label">Área</span><span class="detail-value">{{ authStore.user.area }}</span></div>
+        <div v-if="authStore.user">
+          <h3 class="sec">CONTACTO</h3>
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>CORREO INSTITUCIONAL</small>
+              <span>{{ authStore.user.email }}</span>
+            </div>
+          </div>
+
+          <h3 class="sec">ADSCRIPCIÓN</h3>
+          <div class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>TIPO DE USUARIO</small>
+              <span>{{ roleLabel }}</span>
+            </div>
+          </div>
+
+          <div v-if="authStore.user.position" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>PUESTO</small>
+              <span>{{ authStore.user.position }}</span>
+            </div>
+          </div>
+
+          <div v-if="authStore.user.department" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="3" width="6" height="5" rx="1" />
+                <rect x="2" y="16" width="6" height="5" rx="1" />
+                <rect x="16" y="16" width="6" height="5" rx="1" />
+                <path d="M12 8v4M5 16v-4h14v4" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>DEPARTAMENTO</small>
+              <span>{{ authStore.user.department }}</span>
+            </div>
+          </div>
+
+          <div v-if="authStore.user.area" class="row">
+            <div class="ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              </svg>
+            </div>
+            <div class="tx">
+              <small>ÁREA</small>
+              <span>{{ authStore.user.area }}</span>
+            </div>
+          </div>
         </div>
       </AppModal>
     </aside>
@@ -136,23 +241,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore, USER_TYPE } from '@/stores/auth'
-import { useTheme } from '@/composables/useTheme'
-import { askConfirmation } from '@/composables/useAlerts'
-import AnimatedBackground from '@/components/AnimatedBackground.vue'
-import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
-import AppModal from '@/components/AppModal.vue'
+import { ref, computed, onMounted, onUnmounted, h, defineComponent } from 'vue'
+import { useRoute, useRouter, RouterLink, RouterView } from 'vue-router'
+import { useAuthStore, USER_TYPE } from '@/features/auth/stores/auth'
+import { useTheme } from '@/shared/composables/useTheme'
+import { askConfirmation } from '@/shared/composables/useAlerts'
+import AnimatedBackground from '@/shared/components/AnimatedBackground.vue'
+import AppModal from '@/shared/components/AppModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const { currentTheme } = useTheme()
 
-const expanded = ref(localStorage.getItem('sidebar-expanded') === 'true')
+const expanded = ref(localStorage.getItem('sidebar-expanded') !== 'false')
 const mobileOpen = ref(false)
 const showProfile = ref(false)
+
+const searchQuery = ref('')
+const searchInput = ref<HTMLInputElement | null>(null)
+const navEl = ref<HTMLElement | null>(null)
 
 const ROLE_LABELS: Record<number, string> = {
   [USER_TYPE.ADMINISTRADOR]: 'Administrador',
@@ -162,13 +270,17 @@ const ROLE_LABELS: Record<number, string> = {
 const roleLabel = computed(() => ROLE_LABELS[authStore.userType ?? 0] ?? 'Empleado')
 
 function toggleSidebar() {
-  expanded.value = !expanded.value
-  localStorage.setItem('sidebar-expanded', String(expanded.value))
+  if (typeof window !== 'undefined' && window.innerWidth < 992) {
+    mobileOpen.value = !mobileOpen.value
+  } else {
+    expanded.value = !expanded.value
+    localStorage.setItem('sidebar-expanded', String(expanded.value))
+  }
 }
 
-function isActive(...names: string[]): boolean {
+function isActive(match: string): boolean {
   const path = route.path
-  return names.some((n) => path.startsWith(`/${n}`) || path.startsWith('/' + n + '/'))
+  return path.startsWith(`/${match}`) || path.startsWith(`/${match}/`)
 }
 
 async function logout() {
@@ -177,15 +289,223 @@ async function logout() {
   await authStore.logout()
   router.push({ name: 'login' })
 }
+
+// Inline SVGs from Sidebar TecNM design
+const createSvg = (svgContent: string) =>
+  defineComponent({
+    name: 'SidebarIcon',
+    render() {
+      return h('svg', {
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: '1.8',
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        'aria-hidden': 'true',
+        innerHTML: svgContent,
+      })
+    },
+  })
+
+const IconPermisos = createSvg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>')
+const IconCortes = createSvg('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18m-11 5 2 2 3-4"/>')
+const IconUsuarios = createSvg('<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M16 14c3 0 5 2 5 5"/>')
+const IconDepartamentos = createSvg('<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M5 16v-4h14v4"/>')
+const IconAreas = createSvg('<path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')
+const IconOrganizacion = createSvg('<circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v5m0 0H5v5m7-5h7v5"/>')
+const IconPuestos = createSvg('<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/>')
+const IconApiKeys = createSvg('<circle cx="8" cy="8" r="4"/><path d="m11 11 9 9m-3-3 2-2m-5-1 2-2"/>')
+const IconSync = createSvg('<path d="M12 14V4m-4 4 4-4 4 4M4 15v4h16v-4"/>')
+
+interface NavItem {
+  id: string
+  label: string
+  to: string
+  icon: any
+  section: 'navegacion' | 'gestion' | 'administracion'
+  visible: () => boolean
+  badge?: string | number
+  match: string
+}
+
+const navItems: NavItem[] = [
+  {
+    id: 'permisos',
+    label: 'Permisos',
+    to: '/permissions',
+    icon: IconPermisos,
+    section: 'navegacion',
+    visible: () => true,
+    match: 'permissions',
+  },
+  {
+    id: 'cortes',
+    label: 'Cortes',
+    to: '/cutoffs',
+    icon: IconCortes,
+    section: 'gestion',
+    visible: () => authStore.isRHOrAdmin,
+    match: 'cutoffs',
+  },
+  {
+    id: 'usuarios',
+    label: 'Usuarios',
+    to: '/users',
+    icon: IconUsuarios,
+    section: 'gestion',
+    visible: () => authStore.isRHOrAdmin,
+    match: 'users',
+  },
+  {
+    id: 'organizacion',
+    label: 'Estructura Org.',
+    to: '/organization',
+    icon: IconOrganizacion,
+    section: 'gestion',
+    visible: () => authStore.isRHOrAdmin,
+    match: 'organization',
+  },
+  {
+    id: 'departamentos',
+    label: 'Departamentos',
+    to: '/departments',
+    icon: IconDepartamentos,
+    section: 'gestion',
+    visible: () => authStore.isRHOrAdmin,
+    match: 'departments',
+  },
+  {
+    id: 'areas',
+    label: 'Áreas',
+    to: '/areas',
+    icon: IconAreas,
+    section: 'gestion',
+    visible: () => authStore.isRHOrAdmin,
+    match: 'areas',
+  },
+  {
+    id: 'puestos',
+    label: 'Puestos',
+    to: '/positions',
+    icon: IconPuestos,
+    section: 'gestion',
+    visible: () => authStore.isRHOrAdmin,
+    match: 'positions',
+  },
+
+  {
+    id: 'api-keys',
+    label: 'API Keys',
+    to: '/api-keys',
+    icon: IconApiKeys,
+    section: 'administracion',
+    visible: () => authStore.isAdmin,
+    match: 'api-keys',
+  },
+  {
+    id: 'sincronizar',
+    label: 'Sincronizar',
+    to: '/sync',
+    icon: IconSync,
+    section: 'administracion',
+    visible: () => authStore.isRHOrAdmin,
+    match: 'sync',
+  },
+]
+
+const norm = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+function itemMatches(item: NavItem): boolean {
+  if (!item.visible()) return false
+  const q = norm(searchQuery.value.trim())
+  if (!q) return true
+  return norm(item.label).includes(q)
+}
+
+function sectionItems(sec: 'navegacion' | 'gestion' | 'administracion'): NavItem[] {
+  return navItems.filter((i) => i.section === sec && i.visible())
+}
+
+function hasVisibleItems(sec: 'navegacion' | 'gestion' | 'administracion'): boolean {
+  return navItems.some((i) => i.section === sec && itemMatches(i))
+}
+
+const totalVisibleItems = computed(() => {
+  return navItems.filter((i) => itemMatches(i)).length
+})
+
+function highlight(label: string, query: string): string {
+  const q = norm(query.trim())
+  if (!q) return label
+  const idx = norm(label).indexOf(q)
+  if (idx === -1) return label
+  return `${label.slice(0, idx)}<mark>${label.slice(idx, idx + q.length)}</mark>${label.slice(idx + q.length)}`
+}
+
+function handleSearchKeydown(e: KeyboardEvent) {
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    const firstLink = navEl.value?.querySelector<HTMLAnchorElement>('.sidebar-item:not(.hide)')
+    firstLink?.focus()
+  } else if (e.key === 'Enter') {
+    const firstLink = navEl.value?.querySelector<HTMLAnchorElement>('.sidebar-item:not(.hide)')
+    firstLink?.click()
+  } else if (e.key === 'Escape') {
+    searchQuery.value = ''
+    searchInput.value?.blur()
+  }
+}
+
+function handleNavKeydown(e: KeyboardEvent) {
+  const items = Array.from(navEl.value?.querySelectorAll<HTMLAnchorElement>('.sidebar-item:not(.hide)') || [])
+  const currentIndex = items.indexOf(document.activeElement as HTMLAnchorElement)
+  if (currentIndex === -1) return
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    const next = items[currentIndex + 1] || items[currentIndex]
+    next.focus()
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    if (currentIndex === 0) {
+      searchInput.value?.focus()
+    } else {
+      items[currentIndex - 1]?.focus()
+    }
+  }
+}
+
+function onGlobalKeydown(e: KeyboardEvent) {
+  const target = e.target as HTMLElement | null
+  const isInput =
+    target &&
+    (target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.isContentEditable)
+  if (e.key === '/' && !isInput) {
+    e.preventDefault()
+    if (!expanded.value) {
+      expanded.value = true
+      localStorage.setItem('sidebar-expanded', 'true')
+    }
+    setTimeout(() => {
+      searchInput.value?.focus()
+    }, 60)
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
+})
 </script>
 
 <style scoped>
-.tecnm-sidebar__item .tecnm-logout-btn {
-  text-decoration: none;
-  border-radius: var(--tecnm-radius-md);
-  font-family: inherit;
-}
-
 .user-detail-grid {
   display: flex;
   flex-direction: column;

@@ -1,32 +1,17 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
-const BACKEND = 'http://localhost:5270'
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
 
-const proxyEntry = {
-  target: BACKEND,
-  changeOrigin: true,
-  // Reescribe el dominio de las cookies para que el navegador las envíe
-  // correctamente desde :5173 al volver a pasar por el proxy hacia :5270.
-  cookieDomainRewrite: 'localhost'
-}
-
+// https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  },
-  server: {
-    port: 5173,
-    proxy: {
-      '/api':          proxyEntry,
-      '/Account':      proxyEntry,
-      '/Permission':   proxyEntry,
-      '/ResetPassword': proxyEntry,
-      '/health':       proxyEntry
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@/features': fileURLToPath(new URL('./src/features', import.meta.url)),
+      '@/shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
+      '@/app': fileURLToPath(new URL('./src/app', import.meta.url))
     }
   }
 })

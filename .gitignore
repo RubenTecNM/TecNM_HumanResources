@@ -423,3 +423,5 @@ secrets.json
 # Frontend (Vue)
 Frontend/dist/
 Frontend/*.local
+Frontend/.pnpm-store/
+Frontend/coverage/
