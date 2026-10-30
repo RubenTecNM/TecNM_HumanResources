@@ -419,3 +419,9 @@ secrets.json
 
 # PowerShell scripts (project-specific, not for version control)
 *.ps1
+
+# Frontend (Vue)
+Frontend/dist/
+Frontend/*.local
+Frontend/.pnpm-store/
+Frontend/coverage/

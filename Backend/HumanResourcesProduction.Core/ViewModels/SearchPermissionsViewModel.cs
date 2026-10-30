@@ -1,0 +1,27 @@
+﻿using HumanResourcesProduction.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
+using X.PagedList;
+using System.Collections.Generic;
+
+namespace HumanResourcesProduction.Models.ViewModels
+{
+    public class SearchPermissionsViewModel
+    {
+        public IPagedList<PermissionsDTO> Permissions { get; set; }
+        public List<UsersDTO> Users { get; set; } = new List<UsersDTO>();
+        public List<AreasDTO> Areas { get; set; } = new List<AreasDTO>();
+        public string SelectedUser { get; set; }
+        public int? SelectedArea { get; set; }
+        public int? StatusId { get; set; }
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public string? UserName { get; set; }
+        public int? UserId { get; set; }
+        public int? AreaId { get; set; }
+        public int? PermissionTypeId { get; set; }
+
+        // Resultados
+        public string? Reason { get; internal set; }
+        public int Id { get; internal set; }
+    }
+}
